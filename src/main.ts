@@ -1,3 +1,5 @@
+console.log('[STARTUP] Main.ts is executing...');
+
 import './style.css'
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
