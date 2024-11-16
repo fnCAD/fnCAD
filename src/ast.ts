@@ -47,11 +47,3 @@ export interface FunctionCallNode extends Node {
   evaluate(context: Record<string, number>): number;
 }
 
-// Built-in math functions
-const mathFunctions: Record<string, (...args: number[]) => number> = {
-  sqrt: Math.sqrt,
-  sin: Math.sin,
-  cos: Math.cos,
-  tan: Math.tan,
-  abs: Math.abs,
-};

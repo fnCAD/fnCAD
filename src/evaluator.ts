@@ -65,7 +65,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         throw new Error(`Unknown function: ${name}`);
       }
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
-      return fn(...evaluatedArgs);
+      return fn.apply(Math, evaluatedArgs);
     }
   };
 }
