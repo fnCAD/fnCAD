@@ -33,13 +33,12 @@ export function generateShader(ast: Node): string {
       // Visualize ray direction as color
       vec3 debugCol = 0.5 + 0.5 * normalize(rd);
       
-      // Project camera position to screen space for red dot
-      vec4 projectedCamera = vec4(0.0, 0.0, 0.0, 1.0); // Origin in camera space
-      projectedCamera = vec4(projectedCamera.xyz / projectedCamera.w, 1.0);
-      vec2 cameraScreenPos = projectedCamera.xy;
+      // Project world-space camera position to view space
+      vec3 viewSpaceCamera = (customViewMatrix * vec4(ro, 1.0)).xyz;
+      vec2 cameraScreenPos = viewSpaceCamera.xy / -viewSpaceCamera.z;
       
-      // Add a dot at projected camera position
-      float cameraDot = smoothstep(0.05, 0.02, length(uv - cameraScreenPos));
+      // Add a dot at the projected camera position
+      float cameraDot = smoothstep(0.03, 0.01, length(uv - cameraScreenPos));
       debugCol = mix(debugCol, vec3(1.0, 0.0, 0.0), cameraDot);
       
       gl_FragColor = vec4(debugCol, 1.0);
