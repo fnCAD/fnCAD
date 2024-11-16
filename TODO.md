@@ -6,55 +6,67 @@
 - [ ] Basic UI layout (editor/preview/controls)
 - [ ] WebGL context setup
 
-## 2. SDF Editor
-- [ ] Code editor integration
-- [ ] Basic SDF function parser/compiler
-- [ ] Simple predefined SDF primitives (sphere, box, etc.)
-- [ ] SDF combining operations (union, intersection, difference)
+## 2. Development Environment
+- [ ] Setup Vite build system
+- [ ] Three.js integration
+- [ ] Code editor (Monaco) integration
+- [ ] Hot reload setup
+- [ ] TypeScript configuration
 
-## 3. Ray Marching Preview
+## 3. SDF Core
+- [ ] AST parser for SDF functions
+- [ ] Function transpiler with multiple targets:
+  - [ ] Interval arithmetic evaluator
+  - [ ] Rational number evaluator
+  - [ ] GLSL shader code generator
+- [ ] Basic SDF primitives library
+- [ ] Combining operations (union, intersection, difference)
+
+## 4. Ray Marching Preview
 - [ ] Fragment shader for SDF evaluation
 - [ ] Basic ray marching implementation
 - [ ] Camera controls
-- [ ] Normal calculation and basic lighting
-- [ ] Performance optimization for preview
+- [ ] Optimized lighting:
+  - [ ] Depth-based normal approximation
+  - [ ] Frame-to-frame normal caching
+  - [ ] Basic directional lighting
 
-## 4. Octree Generation
+## 5. Octree Generation
 - [ ] Interval arithmetic implementation
 - [ ] Recursive octree subdivision
 - [ ] SDF boundary detection
 - [ ] Visualization of octree structure
 - [ ] Adaptive subdivision based on SDF complexity
 
-## 5. Initial Mesh Generation
+## 6. Initial Mesh Generation
 - [ ] Octree to mesh conversion
 - [ ] Surface cell identification
 - [ ] Vertex placement strategy
 - [ ] Face generation
 - [ ] Preview of raw octree mesh
 
-## 6. Mesh Refinement
+## 7. Mesh Refinement
 - [ ] SDF gradient calculation
 - [ ] Vertex optimization
 - [ ] Surface smoothing
 - [ ] Error metrics
 - [ ] Progressive refinement visualization
 
-## 7. Export and UI Polish
+## 8. Export and UI Polish
 - [ ] STL export
 - [ ] Progress indicators
 - [ ] Error handling
 - [ ] UI controls for all stages
 - [ ] Performance settings
 
-## 8. Advanced Features
+## 9. Advanced Features
 - [ ] Custom SDF function library
 - [ ] Undo/redo
 - [ ] Project save/load
 - [ ] Multiple viewport angles
 - [ ] Material/color support
 
-## 9. Documentation & Examples
+## 10. Documentation & Examples
 - [ ] User guide
 - [ ] SDF function reference
 - [ ] Example gallery
