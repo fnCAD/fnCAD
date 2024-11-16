@@ -28,10 +28,10 @@ export function generateShader(ast: Node): string {
       // Ray origin is the camera position
       vec3 ro = customCameraPosition;
       
-      // Ray direction starts in camera space
-      vec3 rd = normalize(vec3(uv.x, uv.y, -1.0));
+      // Ray direction in camera space accounting for FOV
+      vec3 rd = normalize(vec3(uv.x, uv.y, -1.0/tan(radians(37.5)))); // 75 degrees FOV = 37.5 degrees half-angle
       // Transform ray direction to world space
-      rd = (customViewMatrix * vec4(rd, 0.0)).xyz;
+      rd = (inverse(customViewMatrix) * vec4(rd, 0.0)).xyz;
 
       // Raymarching
       float t = 0.0;
