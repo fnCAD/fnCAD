@@ -5,7 +5,7 @@ export function createNumberNode(value: number): NumberNode {
     type: 'Number',
     value,
     evaluate: () => value,
-    toGLSL: () => value.toString()
+    toGLSL: () => Number.isInteger(value) ? `${value}.0` : value.toString()
   };
 }
 
