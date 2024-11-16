@@ -30,8 +30,8 @@ window._editor = editor;
 // Set up Three.js scene
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-camera.position.set(0, 0, -4);
-camera.lookAt(0, 0, 0);
+camera.position.set(2, 2, 2);  // Position camera at an angle
+camera.lookAt(0, 0, 0);        // Look at origin
 
 const previewPane = document.getElementById('preview-pane')!;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -46,6 +46,9 @@ controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
 controls.minDistance = 1;
 controls.maxDistance = 10;
+controls.target.set(0, 0, 0);  // Set orbit target to origin
+controls.autoRotate = true;     // Enable auto-rotation
+controls.autoRotateSpeed = 0.5; // Gentle rotation speed
 controls.update();
 
 // Create a full-screen quad for ray marching
