@@ -12,8 +12,11 @@ class Parser {
   private current: number = 0;
 
   constructor(expression: string) {
+    // Remove single-line comments
+    const noComments = expression.replace(/\/\/.*$/gm, '').trim();
+    
     // Very simple tokenizer for now
-    this.tokens = expression.replace(/([+\-*/(),.])/g, ' $1 ')
+    this.tokens = noComments.replace(/([+\-*/(),.])/g, ' $1 ')
       .trim()
       .split(/\s+/)
       .filter(t => t.length > 0);
