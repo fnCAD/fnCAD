@@ -90,6 +90,17 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
 
       throw new Error(`Unknown function: ${name}`);
     },
-    toGLSL: () => `${name}(${args.map(arg => arg.toGLSL()).join(', ')})`
+    toGLSL: () => {
+      // Handle min/max with more than 2 arguments by nesting calls
+      if ((name === 'min' || name === 'max') && args.length > 2) {
+        // Fold multiple arguments into nested min/max calls
+        return args.reduce((acc, arg, i) => {
+          if (i === 0) return arg.toGLSL();
+          return `${name}(${acc}, ${arg.toGLSL()})`;
+        });
+      }
+      // Default case for other functions or min/max with 2 args
+      return `${name}(${args.map(arg => arg.toGLSL()).join(', ')})`;
+    }
   };
 }

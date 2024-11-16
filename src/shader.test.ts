@@ -33,4 +33,14 @@ describe('Shader Generation', () => {
   it.skip('generates valid shader for simple expressions', async () => {
     expect(await testShader('x * x + y * y + z * z - 1')).toBe(true);
   });
+
+  it('generates correct GLSL for multi-argument min/max', async () => {
+    const ast = parse('min(1, 2, 3)');
+    const shaderCode = generateShader(ast);
+    expect(shaderCode).toContain('min(min(1.0, 2.0), 3.0)');
+
+    const ast2 = parse('max(1, 2, 3, 4)');
+    const shaderCode2 = generateShader(ast2);
+    expect(shaderCode2).toContain('max(max(max(1.0, 2.0), 3.0), 4.0)');
+  });
 });
