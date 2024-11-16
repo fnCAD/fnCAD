@@ -43,7 +43,9 @@ export function generateShader(ast: Node): string {
         if(t > 20.0) break;
         t += d;
       }
-      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      // Create a subtle background gradient based on view direction
+      vec3 bgCol = vec3(0.1) + 0.05 * rd;
+      gl_FragColor = vec4(bgCol, 1.0);
     }
   `;
 }
