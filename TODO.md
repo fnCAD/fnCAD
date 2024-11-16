@@ -17,7 +17,7 @@
 - [x] AST parser for SDF functions
 - [x] Function transpiler with multiple targets:
   - [ ] Interval arithmetic evaluator
-  - [ ] Rational number evaluator
+  - [ ] Float number evaluator
   - [x] GLSL shader code generator
 - [x] Basic SDF primitives library
 - [ ] Combining operations (union, intersection, difference)
@@ -28,7 +28,7 @@
 - [x] Camera controls
 - [x] Optimized lighting:
   - [x] Depth-based normal approximation
-  - [ ] Frame-to-frame normal caching
+  - [ ] Frame-to-frame normal caching (NICE TO HAVE, NOT URGENT)
   - [x] Basic directional lighting
 
 ## 5. Octree Generation

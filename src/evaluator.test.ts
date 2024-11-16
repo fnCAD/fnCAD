@@ -31,4 +31,11 @@ describe('Expression Evaluation', () => {
     expect(evaluate('sqrt(16)')).toBe(4);
     expect(evaluate('sin(0)')).toBe(0);
   });
+
+  it('evaluates min and max functions', () => {
+    expect(evaluate('min(3, 5)')).toBe(3);
+    expect(evaluate('max(3, 5)')).toBe(5);
+    expect(evaluate('min(-2, 2)')).toBe(-2);
+    expect(evaluate('max(-2, 2)')).toBe(2);
+  });
 });
