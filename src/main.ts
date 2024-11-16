@@ -17,7 +17,7 @@ Split(['#editor-pane', '#preview-pane'], {
 const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
   // Store editor instance for later use with shader compilation
   value: `// Classic sphere SDF
-sqrt(x*x + y*y + z*z) - 1`,
+sqrt(p.x * p.x + p.y * p.y + p.z * p.z) - 1.0`,
   language: 'typescript',
   theme: 'vs-dark',
   minimap: { enabled: false },

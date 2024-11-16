@@ -19,7 +19,14 @@ export function createVariableNode(name: string): VariableNode {
       }
       return context[name];
     },
-    toGLSL: () => name
+    toGLSL: () => {
+      // Handle vector component access (e.g., p.x, p.y, p.z)
+      const parts = name.split('.');
+      if (parts.length === 2 && parts[0] === 'p') {
+        return `p.${parts[1]}`;
+      }
+      return name;
+    }
   };
 }
 

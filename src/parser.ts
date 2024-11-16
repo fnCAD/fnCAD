@@ -13,7 +13,7 @@ class Parser {
 
   constructor(expression: string) {
     // Very simple tokenizer for now
-    this.tokens = expression.replace(/([+\-*/(),])/g, ' $1 ')
+    this.tokens = expression.replace(/([+\-*/(),.])/g, ' $1 ')
       .trim()
       .split(/\s+/)
       .filter(t => t.length > 0);
