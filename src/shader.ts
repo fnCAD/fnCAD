@@ -33,6 +33,10 @@ export function generateShader(ast: Node): string {
       // Transform ray direction to world space
       rd = (inverse(customViewMatrix) * vec4(rd, 0.0)).xyz;
 
+      // Background visualization based on ray direction
+      vec3 background = normalize(rd) * 0.5 + 0.5; // Map from [-1,1] to [0,1]
+      background *= background; // Make colors more vibrant
+      
       // Raymarching
       float t = 0.0;
       float tmax = 20.0;
@@ -45,16 +49,16 @@ export function generateShader(ast: Node): string {
         if(d < 0.001) {
           // Calculate normal
           vec3 n = calcNormal(p);
-          // Simple lighting
+          // Enhanced lighting with ambient
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
-          vec3 col = vec3(0.5 + 0.5 * diff);
+          vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
           gl_FragColor = vec4(col, 1.0);
           return;
         }
         
         // Missed or too far
         if(t > tmax) {
-          gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
+          gl_FragColor = vec4(background, 1.0);
           return;
         }
         
@@ -62,7 +66,7 @@ export function generateShader(ast: Node): string {
       }
       
       // Max steps reached
-      gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
+      gl_FragColor = vec4(background, 1.0);
     }
   `;
 }
