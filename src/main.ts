@@ -1,12 +1,14 @@
 import './style.css'
 
-// Write to a file to verify code execution
-import { writeFileSync } from 'fs';
+// Write to localStorage to verify code execution
 try {
-  writeFileSync('/tmp/vite-test.txt', `Code executed at ${new Date().toISOString()}\n`);
-  console.log('[STARTUP] Main.ts is executing...');
+  const timestamp = new Date().toISOString();
+  localStorage.setItem('vite-test', timestamp);
+  console.log('[STARTUP] Main.ts executing at:', timestamp);
+  // Force an error to see if error handling works
+  throw new Error('Test error');
 } catch (e) {
-  console.error('[STARTUP] Failed to write file:', e);
+  console.error('[STARTUP] Error:', e);
 }
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
