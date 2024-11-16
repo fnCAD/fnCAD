@@ -70,12 +70,25 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
     name,
     args,
     evaluate: (context) => {
-      const fn = Math[name as keyof typeof Math];
-      if (typeof fn !== 'function') {
-        throw new Error(`Unknown function: ${name}`);
-      }
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
-      return fn.apply(Math, evaluatedArgs);
+      
+      // Handle built-in math functions
+      if (name in Math) {
+        const fn = Math[name as keyof typeof Math];
+        if (typeof fn === 'function') {
+          return fn.apply(Math, evaluatedArgs);
+        }
+      }
+
+      // Handle min/max
+      if (name === 'min' && evaluatedArgs.length === 2) {
+        return Math.min(evaluatedArgs[0], evaluatedArgs[1]);
+      }
+      if (name === 'max' && evaluatedArgs.length === 2) {
+        return Math.max(evaluatedArgs[0], evaluatedArgs[1]);
+      }
+
+      throw new Error(`Unknown function: ${name}`);
     },
     toGLSL: () => `${name}(${args.map(arg => arg.toGLSL()).join(', ')})`
   };

@@ -16,8 +16,13 @@ Split(['#editor-pane', '#preview-pane'], {
 // Initialize Monaco editor
 const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
   // Store editor instance for later use with shader compilation
-  value: `// Classic sphere SDF
-sqrt(p.x * p.x + p.y * p.y + p.z * p.z) - 1.0`,
+  value: `// Combine two spheres using min (union)
+min(
+  // Sphere at origin
+  sqrt(p.x * p.x + p.y * p.y + p.z * p.z) - 1.0,
+  // Sphere offset on x-axis
+  sqrt((p.x - 2.0) * (p.x - 2.0) + p.y * p.y + p.z * p.z) - 0.7
+)`,
   language: 'typescript',
   theme: 'vs-dark',
   minimap: { enabled: false },
