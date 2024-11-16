@@ -2,16 +2,16 @@
 
 ## Rendering
 
-### Curved Horizon Effect
-When viewing the scene from certain angles, the horizon/background appears to curve unnaturally. This may be related to:
+### Downward View Distortion
+When looking downward at steep angles, the scene appears to distort unnaturally. This may be related to:
 - Ray direction calculation in the shader
 - Field of view handling
-- Ray marching step size adjustments
+- Camera matrix transformation issues
 
 The effect is most noticeable when:
-- Looking towards the horizon
-- Viewing large flat surfaces at shallow angles
-- Moving the camera to extreme positions
+- Looking down at steep angles towards the floor
+- Orbiting the camera to high elevation angles
+- Moving the camera to positions above the scene
 
 This is currently under investigation but does not impact the core functionality of the SDF preview.
 
