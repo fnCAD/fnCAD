@@ -1,35 +1,35 @@
 # Implementation Steps
 
 ## 1. Basic Setup
-- [ ] Project structure and build system
-- [ ] Development server
-- [ ] Basic UI layout (editor/preview/controls)
-- [ ] WebGL context setup
+- [x] Project structure and build system
+- [x] Development server
+- [x] Basic UI layout (editor/preview/controls)
+- [x] WebGL context setup
 
 ## 2. Development Environment
-- [ ] Setup Vite build system
-- [ ] Three.js integration
-- [ ] Code editor (Monaco) integration
-- [ ] Hot reload setup
-- [ ] TypeScript configuration
+- [x] Setup Vite build system
+- [x] Three.js integration
+- [x] Code editor (Monaco) integration
+- [x] Hot reload setup
+- [x] TypeScript configuration
 
 ## 3. SDF Core
-- [ ] AST parser for SDF functions
-- [ ] Function transpiler with multiple targets:
+- [x] AST parser for SDF functions
+- [x] Function transpiler with multiple targets:
   - [ ] Interval arithmetic evaluator
   - [ ] Rational number evaluator
-  - [ ] GLSL shader code generator
-- [ ] Basic SDF primitives library
+  - [x] GLSL shader code generator
+- [x] Basic SDF primitives library
 - [ ] Combining operations (union, intersection, difference)
 
 ## 4. Ray Marching Preview
-- [ ] Fragment shader for SDF evaluation
-- [ ] Basic ray marching implementation
-- [ ] Camera controls
-- [ ] Optimized lighting:
-  - [ ] Depth-based normal approximation
+- [x] Fragment shader for SDF evaluation
+- [x] Basic ray marching implementation
+- [x] Camera controls
+- [x] Optimized lighting:
+  - [x] Depth-based normal approximation
   - [ ] Frame-to-frame normal caching
-  - [ ] Basic directional lighting
+  - [x] Basic directional lighting
 
 ## 5. Octree Generation
 - [ ] Interval arithmetic implementation
