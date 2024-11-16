@@ -1,6 +1,13 @@
-console.log('[STARTUP] Main.ts is executing...');
-
 import './style.css'
+
+// Write to a file to verify code execution
+import { writeFileSync } from 'fs';
+try {
+  writeFileSync('/tmp/vite-test.txt', `Code executed at ${new Date().toISOString()}\n`);
+  console.log('[STARTUP] Main.ts is executing...');
+} catch (e) {
+  console.error('[STARTUP] Failed to write file:', e);
+}
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
