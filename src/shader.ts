@@ -25,16 +25,21 @@ export function generateShader(ast: Node): string {
       vec2 uv = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
       
       vec3 ro = customCameraPosition;
+      
       // Create view ray using camera transform
-      // Debug visualization
       vec3 rd = normalize(vec3(uv.x, uv.y, -1.0));  // Ray in camera space
       rd = (customViewMatrix * vec4(rd, 0.0)).xyz;   // Transform to world space
       
       // Visualize ray direction as color
       vec3 debugCol = 0.5 + 0.5 * normalize(rd);
       
-      // Add a dot at camera position
-      float cameraDot = smoothstep(0.1, 0.05, length(uv - (ro.xy)));
+      // Project camera position to screen space for red dot
+      vec4 projectedCamera = vec4(0.0, 0.0, 0.0, 1.0); // Origin in camera space
+      projectedCamera = vec4(projectedCamera.xyz / projectedCamera.w, 1.0);
+      vec2 cameraScreenPos = projectedCamera.xy;
+      
+      // Add a dot at projected camera position
+      float cameraDot = smoothstep(0.05, 0.02, length(uv - cameraScreenPos));
       debugCol = mix(debugCol, vec3(1.0, 0.0, 0.0), cameraDot);
       
       gl_FragColor = vec4(debugCol, 1.0);
