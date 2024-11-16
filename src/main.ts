@@ -49,8 +49,8 @@ const geometry = new THREE.PlaneGeometry(2, 2);
 let material = new THREE.ShaderMaterial({
   uniforms: {
     resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
-    viewMatrix: { value: camera.matrixWorldInverse },
-    cameraPosition: { value: camera.position }
+    customViewMatrix: { value: camera.matrixWorldInverse },
+    customCameraPosition: { value: camera.position }
   },
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
