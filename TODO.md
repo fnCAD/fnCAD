@@ -20,7 +20,8 @@
   - [ ] Float number evaluator
   - [x] GLSL shader code generator
 - [x] Basic SDF primitives library
-- [ ] Combining operations (union, intersection, difference)
+- [x] Combining operations (min/max for union)
+- [ ] Additional combining operations (smooth union, intersection, difference)
 
 ## 4. Ray Marching Preview
 - [x] Fragment shader for SDF evaluation
