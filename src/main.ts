@@ -22,10 +22,3 @@ sqrt(x*x + y*y + z*z) - 1`,
 
 // Store editor instance for later use with shader compilation
 window._editor = editor;
-  value: `// Classic sphere SDF
-sqrt(x*x + y*y + z*z) - 1`,
-  language: 'typescript',
-  theme: 'vs-dark',
-  minimap: { enabled: false },
-  automaticLayout: true,
-})
