@@ -26,27 +26,18 @@ export function generateShader(ast: Node): string {
       
       vec3 ro = customCameraPosition;
       // Create view ray using camera transform
+      // Debug visualization
       vec3 rd = normalize(vec3(uv.x, uv.y, -1.0));  // Ray in camera space
       rd = (customViewMatrix * vec4(rd, 0.0)).xyz;   // Transform to world space
       
-      float t = 0.0;
-      for(int i = 0; i < 100; i++) {
-        vec3 p = ro + rd * t;
-        float d = scene(p);
-        if(d < 0.001) {
-          vec3 n = calcNormal(p);
-          vec3 l = normalize(vec3(1.0, 1.0, 1.0));
-          float diff = max(0.0, dot(n, l));
-          vec3 col = vec3(0.5 + 0.5 * diff);
-          gl_FragColor = vec4(col, 1.0);
-          return;
-        }
-        if(t > 20.0) break;
-        t += d;
-      }
-      // Create a subtle background gradient based on view direction
-      vec3 bgCol = vec3(0.1) + 0.05 * rd;
-      gl_FragColor = vec4(bgCol, 1.0);
+      // Visualize ray direction as color
+      vec3 debugCol = 0.5 + 0.5 * normalize(rd);
+      
+      // Add a dot at camera position
+      float cameraDot = smoothstep(0.1, 0.05, length(uv - (ro.xy)));
+      debugCol = mix(debugCol, vec3(1.0, 0.0, 0.0), cameraDot);
+      
+      gl_FragColor = vec4(debugCol, 1.0);
     }
   `;
 }

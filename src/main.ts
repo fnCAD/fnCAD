@@ -56,22 +56,44 @@ controls.target.set(0, 0, 0);
 controls.enablePan = false;     // Disable panning to force orbiting behavior
 controls.update();
 
-// Create a simple triangle
-const geometry = new THREE.BufferGeometry();
-const vertices = new Float32Array([
-  -1.0, -1.0, 0.0,  // vertex 1
-   1.0, -1.0, 0.0,  // vertex 2
-   0.0,  1.0, 0.0   // vertex 3
-]);
-geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-
-const material = new THREE.MeshBasicMaterial({ 
-  color: 0x00ff00,
-  side: THREE.DoubleSide
+// Create a full-screen quad for ray marching
+const geometry = new THREE.PlaneGeometry(2, 2);
+let material = new THREE.ShaderMaterial({
+  uniforms: {
+    resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
+    customViewMatrix: { value: camera.matrixWorldInverse },
+    customCameraPosition: { value: camera.position }
+  },
+  fragmentShader: generateShader(parse(editor.getValue())),
+  vertexShader: `
+    void main() {
+      gl_Position = vec4(position, 1.0);
+    }
+  `
 });
+const quad = new THREE.Mesh(geometry, material);
+scene.add(quad);
 
-const triangle = new THREE.Mesh(geometry, material);
-scene.add(triangle);
+// Update shader when editor content changes
+editor.onDidChangeModelContent(() => {
+  try {
+    const editorContent = editor.getValue();
+    const ast = parse(editorContent);
+    const fragmentShader = generateShader(ast);
+    material = new THREE.ShaderMaterial({
+      uniforms: {
+        resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
+        customViewMatrix: { value: camera.matrixWorldInverse },
+        customCameraPosition: { value: camera.position }
+      },
+      fragmentShader,
+      vertexShader: material.vertexShader
+    });
+    quad.material = material;
+  } catch (e) {
+    console.error('Shader compilation failed:', e);
+  }
+});
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -88,6 +110,9 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
   
+  // Update shader uniforms
+  material.uniforms.customViewMatrix.value.copy(camera.matrixWorldInverse);
+  material.uniforms.customCameraPosition.value.copy(camera.position);
   renderer.render(scene, camera);
 }
 animate();
