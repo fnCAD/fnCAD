@@ -30,8 +30,8 @@ export function generateShader(ast: Node): string {
       
       // Ray direction in camera space accounting for FOV
       vec3 rd = normalize(vec3(uv.x, uv.y, -1.0/tan(radians(37.5)))); // 75 degrees FOV = 37.5 degrees half-angle
-      // Transform ray direction to world space
-      rd = (inverse(customViewMatrix) * vec4(rd, 0.0)).xyz;
+      // Transform ray direction to world space and re-normalize to prevent distortion
+      rd = normalize((inverse(customViewMatrix) * vec4(rd, 0.0)).xyz);
 
       // Background visualization based on ray direction
       vec3 background = normalize(rd) * 0.5 + 0.5; // Map from [-1,1] to [0,1]

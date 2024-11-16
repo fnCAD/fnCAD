@@ -20,7 +20,6 @@ class Parser {
       .trim()
       .split(/\s+/)
       .filter(t => t.length > 0);
-    console.log('Tokenized expression:', this.tokens);
   }
 
   parse(): Node {
