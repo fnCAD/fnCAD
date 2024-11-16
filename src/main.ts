@@ -11,11 +11,8 @@ Split(['#editor-pane', '#preview-pane'], {
 
 // Initialize Monaco editor
 const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
-  value: `import { sphere } from './sdf';
-
-// Classic sphere SDF
-const scene = sphere(1);
-`,
+  value: `// Classic sphere SDF
+sqrt(x*x + y*y + z*z) - 1`,
   language: 'typescript',
   theme: 'vs-dark',
   minimap: { enabled: false },
