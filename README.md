@@ -1,6 +1,6 @@
-# WebSDF
+# fnCAD
 
-A browser-based CAD tool that lets you design 3D objects using Signed Distance Fields (SDFs). Create complex geometries with mathematical precision and export them as meshes.
+A functional CAD tool inspired by OpenSCAD that lets you design 3D objects using Signed Distance Fields (SDFs). Create complex geometries with mathematical precision and export them as meshes.
 
 ## Features
 
