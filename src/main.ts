@@ -1,15 +1,4 @@
 import './style.css'
-
-// Write to localStorage to verify code execution
-try {
-  const timestamp = new Date().toISOString();
-  localStorage.setItem('vite-test', timestamp);
-  console.log('[STARTUP] Main.ts executing at:', timestamp);
-  // Force an error to see if error handling works
-  throw new Error('Test error');
-} catch (e) {
-  console.error('[STARTUP] Error:', e);
-}
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
