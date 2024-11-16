@@ -97,7 +97,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         return args.reduce((acc, arg, i) => {
           if (i === 0) return arg.toGLSL();
           return `${name}(${acc}, ${arg.toGLSL()})`;
-        });
+        }, '');
       }
       // Default case for other functions or min/max with 2 args
       return `${name}(${args.map(arg => arg.toGLSL()).join(', ')})`;
