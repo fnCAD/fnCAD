@@ -46,9 +46,7 @@ controls.enableDamping = true;
 const geometry = new THREE.PlaneGeometry(2, 2);
 let material = new THREE.ShaderMaterial({
   uniforms: {
-    resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
-    cameraPosition: { value: camera.position },
-    viewMatrix: { value: camera.matrixWorldInverse }
+    resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) }
   },
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
@@ -75,6 +73,9 @@ editor.onDidChangeModelContent(() => {
     const ast = parse(editor.getValue());
     const fragmentShader = generateShader(ast);
     material = new THREE.ShaderMaterial({
+      uniforms: {
+        resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) }
+      },
       fragmentShader,
       vertexShader: material.vertexShader
     });

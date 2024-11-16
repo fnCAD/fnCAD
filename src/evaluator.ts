@@ -19,7 +19,7 @@ export function createVariableNode(name: string): VariableNode {
       }
       return context[name];
     },
-    toGLSL: () => `p.${name}`
+    toGLSL: () => name
   };
 }
 

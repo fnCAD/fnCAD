@@ -3,8 +3,6 @@ import { Node, NodeType } from './ast';
 export function generateShader(ast: Node): string {
   return `
     uniform vec2 resolution;
-    uniform vec3 cameraPosition;
-    uniform mat4 viewMatrix;
 
     float scene(vec3 p) {
       return ${ast.toGLSL()};
