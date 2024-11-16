@@ -1,4 +1,11 @@
-import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
+import { Node } from './ast';
+import { 
+  createNumberNode,
+  createVariableNode,
+  createBinaryOpNode,
+  createUnaryOpNode,
+  createFunctionCallNode
+} from './evaluator';
 
 class Parser {
   private tokens: string[];
@@ -56,11 +63,7 @@ class Parser {
 
   private unary(): Node {
     if (this.match('-')) {
-      return {
-        type: 'UnaryOp',
-        operator: '-',
-        operand: this.unary()
-      };
+      return createUnaryOpNode('-', this.unary());
     }
 
     return this.primary();
@@ -71,7 +74,7 @@ class Parser {
 
     if (this.isNumber(this.peek())) {
       const num = parseFloat(this.advance());
-      return { type: 'Number', value: num };
+      return createNumberNode(num);
     }
 
     if (this.match('(')) {
@@ -90,14 +93,10 @@ class Parser {
         } while (this.match(','));
       }
       this.consume(')');
-      return {
-        type: 'FunctionCall',
-        name: identifier,
-        args
-      };
+      return createFunctionCallNode(identifier, args);
     }
 
-    return { type: 'Variable', name: identifier };
+    return createVariableNode(identifier);
   }
 
   private match(...tokens: string[]): boolean {
