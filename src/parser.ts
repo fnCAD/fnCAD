@@ -33,12 +33,7 @@ class Parser {
     while (this.match('+', '-')) {
       const operator = this.previous();
       const right = this.multiplicative();
-      left = {
-        type: 'BinaryOp',
-        operator: operator as '+' | '-',
-        left,
-        right
-      };
+      left = createBinaryOpNode(operator as '+' | '-', left, right);
     }
 
     return left;
@@ -50,12 +45,7 @@ class Parser {
     while (this.match('*', '/')) {
       const operator = this.previous();
       const right = this.unary();
-      left = {
-        type: 'BinaryOp',
-        operator: operator as '*' | '/',
-        left,
-        right
-      };
+      left = createBinaryOpNode(operator as '*' | '/', left, right);
     }
 
     return left;
