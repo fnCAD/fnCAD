@@ -80,12 +80,12 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         }
       }
 
-      // Handle min/max
-      if (name === 'min' && evaluatedArgs.length === 2) {
-        return Math.min(evaluatedArgs[0], evaluatedArgs[1]);
+      // Handle min/max with any number of arguments
+      if (name === 'min' && evaluatedArgs.length >= 2) {
+        return Math.min(...evaluatedArgs);
       }
-      if (name === 'max' && evaluatedArgs.length === 2) {
-        return Math.max(evaluatedArgs[0], evaluatedArgs[1]);
+      if (name === 'max' && evaluatedArgs.length >= 2) {
+        return Math.max(...evaluatedArgs);
       }
 
       throw new Error(`Unknown function: ${name}`);

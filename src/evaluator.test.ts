@@ -37,5 +37,9 @@ describe('Expression Evaluation', () => {
     expect(evaluate('max(3, 5)')).toBe(5);
     expect(evaluate('min(-2, 2)')).toBe(-2);
     expect(evaluate('max(-2, 2)')).toBe(2);
+    expect(evaluate('min(1, 2, 3)')).toBe(1);
+    expect(evaluate('max(1, 2, 3)')).toBe(3);
+    expect(evaluate('min(3, 1, 2)')).toBe(1);
+    expect(evaluate('max(3, 1, 2)')).toBe(3);
   });
 });

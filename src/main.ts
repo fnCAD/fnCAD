@@ -16,12 +16,16 @@ Split(['#editor-pane', '#preview-pane'], {
 // Initialize Monaco editor
 const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
   // Store editor instance for later use with shader compilation
-  value: `// Combine two spheres using min (union)
+  value: `// Scene with two spheres and a floor
 min(
-  // Sphere at origin
-  sqrt(p.x * p.x + p.y * p.y + p.z * p.z) - 1.0,
-  // Sphere offset on x-axis
-  sqrt((p.x - 2.0) * (p.x - 2.0) + p.y * p.y + p.z * p.z) - 0.7
+  // Floor plane
+  p.y + 1.0,
+  min(
+    // Sphere at origin
+    sqrt(p.x * p.x + p.y * p.y + p.z * p.z) - 1.0,
+    // Sphere offset on x-axis
+    sqrt((p.x - 2.0) * (p.x - 2.0) + p.y * p.y + p.z * p.z) - 0.7
+  )
 )`,
   language: 'typescript',
   theme: 'vs-dark',
