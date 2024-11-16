@@ -15,8 +15,8 @@ class Parser {
     // Remove single-line comments
     const noComments = expression.replace(/\/\/.*$/gm, '').trim();
     
-    // Very simple tokenizer for now
-    this.tokens = noComments.replace(/([+\-*/(),.])/g, ' $1 ')
+    // Tokenize keeping floating point numbers intact
+    this.tokens = noComments.replace(/([+\-*/(),])/g, ' $1 ')
       .trim()
       .split(/\s+/)
       .filter(t => t.length > 0);
@@ -115,7 +115,7 @@ class Parser {
 
   private consume(token: string): string {
     if (this.check(token)) return this.advance();
-    throw new Error(`Expected ${token}`);
+    throw new Error(`Expected '${token}' but found '${this.peek()}' at position ${this.current}`);
   }
 
   private isAtEnd(): boolean {
