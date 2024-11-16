@@ -30,7 +30,7 @@ window._editor = editor;
 // Set up Three.js scene
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-camera.position.set(2, 2, 2);
+camera.position.set(0, 0, -4);
 camera.lookAt(0, 0, 0);
 
 const previewPane = document.getElementById('preview-pane')!;
@@ -42,7 +42,6 @@ previewPane.appendChild(renderer.domElement);
 // Add orbit controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.target.set(0, 0, 0);
 controls.update();
 
 // Create a full-screen quad for ray marching
