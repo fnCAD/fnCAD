@@ -15,7 +15,7 @@ describe('Shader Generation', () => {
     });
     
     try {
-      const material = new THREE.ShaderMaterial({
+      new THREE.ShaderMaterial({
         fragmentShader: shaderCode,
         vertexShader: THREE.ShaderLib.basic.vertexShader
       });

@@ -1,6 +1,6 @@
 import { Node } from './ast';
 
-export function generateShader(ast: Node): string {
+export function generateShader(_ast: Node): string {
   // Placeholder - we'll implement this next
   return `
     void main() {
