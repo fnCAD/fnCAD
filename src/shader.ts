@@ -22,26 +22,47 @@ export function generateShader(ast: Node): string {
     }
 
     void main() {
+      // Convert pixel coordinates to normalized device coordinates (-1 to +1)
       vec2 uv = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
       
+      // Ray origin is the camera position
       vec3 ro = customCameraPosition;
       
-      // Create view ray using camera transform
-      vec3 rd = normalize(vec3(uv.x, uv.y, -1.0));  // Ray in camera space
-      rd = (customViewMatrix * vec4(rd, 0.0)).xyz;   // Transform to world space
+      // Ray direction starts in camera space
+      vec3 rd = normalize(vec3(uv.x, uv.y, -1.0));
+      // Transform ray direction to world space
+      rd = (customViewMatrix * vec4(rd, 0.0)).xyz;
+
+      // Raymarching
+      float t = 0.0;
+      float tmax = 20.0;
       
-      // Visualize ray direction as color
-      vec3 debugCol = 0.5 + 0.5 * normalize(rd);
+      for(int i = 0; i < 100; i++) {
+        vec3 p = ro + rd * t;
+        float d = scene(p);
+        
+        // Hit check
+        if(d < 0.001) {
+          // Calculate normal
+          vec3 n = calcNormal(p);
+          // Simple lighting
+          float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
+          vec3 col = vec3(0.5 + 0.5 * diff);
+          gl_FragColor = vec4(col, 1.0);
+          return;
+        }
+        
+        // Missed or too far
+        if(t > tmax) {
+          gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
+          return;
+        }
+        
+        t += d;
+      }
       
-      // Project world-space camera position to view space
-      vec3 viewSpaceCamera = (customViewMatrix * vec4(ro, 1.0)).xyz;
-      vec2 cameraScreenPos = viewSpaceCamera.xy / -viewSpaceCamera.z;
-      
-      // Add a dot at the projected camera position
-      float cameraDot = smoothstep(0.03, 0.01, length(uv - cameraScreenPos));
-      debugCol = mix(debugCol, vec3(1.0, 0.0, 0.0), cameraDot);
-      
-      gl_FragColor = vec4(debugCol, 1.0);
+      // Max steps reached
+      gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
     }
   `;
 }
