@@ -3,8 +3,8 @@ import { Node, NodeType } from './ast';
 export function generateShader(ast: Node): string {
   return `
     uniform vec2 resolution;
-    uniform mat4 viewMatrix;
-    uniform vec3 cameraPosition;
+    uniform mat4 customViewMatrix;
+    uniform vec3 customCameraPosition;
 
     float scene(vec3 p) {
       return ${ast.toGLSL()};
@@ -24,9 +24,9 @@ export function generateShader(ast: Node): string {
     void main() {
       vec2 uv = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
       
-      vec3 ro = cameraPosition;
+      vec3 ro = customCameraPosition;
       vec3 rd = normalize(vec3(uv, -1.0));
-      rd = normalize((viewMatrix * vec4(rd, 0.0)).xyz);
+      rd = normalize((customViewMatrix * vec4(rd, 0.0)).xyz);
       
       float t = 0.0;
       for(int i = 0; i < 100; i++) {

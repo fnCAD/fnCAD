@@ -83,8 +83,8 @@ editor.onDidChangeModelContent(() => {
     material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
-        viewMatrix: { value: camera.matrixWorldInverse },
-        cameraPosition: { value: camera.position }
+        customViewMatrix: { value: camera.matrixWorldInverse },
+        customCameraPosition: { value: camera.position }
       },
       fragmentShader,
       vertexShader: material.vertexShader
@@ -101,8 +101,8 @@ function animate() {
   controls.update();
   
   // Update shader uniforms
-  material.uniforms.viewMatrix.value.copy(camera.matrixWorldInverse);
-  material.uniforms.cameraPosition.value.copy(camera.position);
+  material.uniforms.customViewMatrix.value.copy(camera.matrixWorldInverse);
+  material.uniforms.customCameraPosition.value.copy(camera.position);
   
   renderer.render(scene, camera);
 }
