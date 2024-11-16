@@ -5,7 +5,7 @@ export function createNumberNode(value: number): NumberNode {
     type: 'Number',
     value,
     evaluate: () => value,
-    toGLSL: () => `float d = ${value};`
+    toGLSL: () => value.toString()
   };
 }
 
@@ -19,7 +19,7 @@ export function createVariableNode(name: string): VariableNode {
       }
       return context[name];
     },
-    toGLSL: () => `float d = p.${name};`
+    toGLSL: () => `p.${name}`
   };
 }
 
@@ -41,11 +41,7 @@ export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, 
           return lval / rval;
       }
     },
-    toGLSL: () => `
-      float d1 = ${left.toGLSL()};
-      float d2 = ${right.toGLSL()};
-      float d = d1 ${operator} d2;
-    `
+    toGLSL: () => `(${left.toGLSL()} ${operator} ${right.toGLSL()})`
   };
 }
 
@@ -58,10 +54,7 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
       const val = operand.evaluate(context);
       return -val;
     },
-    toGLSL: () => `
-      float d = ${operand.toGLSL()};
-      d = -d;
-    `
+    toGLSL: () => `(-${operand.toGLSL()})`
   };
 }
 
@@ -78,6 +71,6 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
       return fn.apply(Math, evaluatedArgs);
     },
-    toGLSL: () => `float d = ${name}(${args.map(arg => arg.toGLSL()).join(', ')});`
+    toGLSL: () => `${name}(${args.map(arg => arg.toGLSL()).join(', ')})`
   };
 }

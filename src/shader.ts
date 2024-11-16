@@ -7,8 +7,7 @@ export function generateShader(ast: Node): string {
     uniform mat4 viewMatrix;
 
     float scene(vec3 p) {
-      ${generateNode(ast)}
-      return d;
+      return ${ast.toGLSL()};
     }
 
     vec3 calcNormal(vec3 p) {
