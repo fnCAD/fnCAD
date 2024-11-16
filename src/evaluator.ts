@@ -22,9 +22,13 @@ export function createVariableNode(name: string): VariableNode {
     toGLSL: () => {
       // Handle vector component access (e.g., p.x, p.y, p.z)
       const parts = name.split('.');
+      console.log('Variable parts:', parts);
       if (parts.length === 2 && parts[0] === 'p') {
-        return `p.${parts[1]}`;
+        const result = `p.${parts[1]}`;
+        console.log('Generated GLSL for variable:', result);
+        return result;
       }
+      console.log('Generated GLSL for variable:', name);
       return name;
     }
   };

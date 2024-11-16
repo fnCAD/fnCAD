@@ -70,8 +70,12 @@ window.addEventListener('resize', () => {
 // Update shader when editor content changes
 editor.onDidChangeModelContent(() => {
   try {
-    const ast = parse(editor.getValue());
+    const editorContent = editor.getValue();
+    console.log('Editor content:', editorContent);
+    const ast = parse(editorContent);
+    console.log('Parsed AST:', ast);
     const fragmentShader = generateShader(ast);
+    console.log('Generated shader:', fragmentShader);
     material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) }
