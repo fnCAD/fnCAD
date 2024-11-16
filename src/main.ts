@@ -90,10 +90,6 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
   
-  // Update uniforms
-  material.uniforms.cameraPosition.value.copy(camera.position);
-  material.uniforms.viewMatrix.value.copy(camera.matrixWorldInverse);
-  
   renderer.render(scene, camera);
 }
 animate();
