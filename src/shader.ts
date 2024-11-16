@@ -1,10 +1,75 @@
-import { Node } from './ast';
+import { Node, NodeType } from './ast';
 
-export function generateShader(_ast: Node): string {
-  // Placeholder - we'll implement this next
+export function generateShader(ast: Node): string {
   return `
+    uniform vec2 resolution;
+    uniform vec3 cameraPosition;
+    uniform mat4 viewMatrix;
+
+    float scene(vec3 p) {
+      ${generateNode(ast)}
+      return d;
+    }
+
+    vec3 calcNormal(vec3 p) {
+      const float h = 0.0001;
+      const vec2 k = vec2(1,-1);
+      return normalize(
+        k.xyy * scene(p + k.xyy*h) +
+        k.yyx * scene(p + k.yyx*h) +
+        k.yxy * scene(p + k.yxy*h) +
+        k.xxx * scene(p + k.xxx*h)
+      );
+    }
+
     void main() {
-      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      vec2 uv = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
+      
+      vec3 ro = cameraPosition;
+      vec3 rd = normalize(vec3(uv, -1.0));
+      rd = (viewMatrix * vec4(rd, 0.0)).xyz;
+      
+      float t = 0.0;
+      for(int i = 0; i < 100; i++) {
+        vec3 p = ro + rd * t;
+        float d = scene(p);
+        if(d < 0.001) {
+          vec3 n = calcNormal(p);
+          vec3 l = normalize(vec3(1.0, 1.0, 1.0));
+          float diff = max(0.0, dot(n, l));
+          vec3 col = vec3(0.5 + 0.5 * diff);
+          gl_FragColor = vec4(col, 1.0);
+          return;
+        }
+        if(t > 20.0) break;
+        t += d;
+      }
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     }
   `;
+}
+
+function generateNode(node: Node): string {
+  switch (node.type) {
+    case 'Number':
+      return `float d = ${node.value};`;
+    case 'Variable':
+      return `float d = p.${node.name};`;
+    case 'BinaryOp':
+      return `
+        float d1 = ${generateNode(node.left)};
+        float d2 = ${generateNode(node.right)};
+        float d = d1 ${node.operator} d2;
+      `;
+    case 'UnaryOp':
+      return `
+        float d = ${generateNode(node.operand)};
+        d = -d;
+      `;
+    case 'FunctionCall':
+      // For now, just handle basic math functions
+      return `float d = ${node.name}(${node.args.map(generateNode).join(', ')});`;
+    default:
+      throw new Error(`Unsupported node type: ${(node as Node).type}`);
+  }
 }
