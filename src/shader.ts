@@ -69,8 +69,10 @@ export function generateShader(ast: Node): string {
         t += d;
       }
       
-      // Max steps reached
-      gl_FragColor = vec4(background, 1.0);
+      // Max steps reached - visualize number of steps taken
+      float stepViz = float(i) / 100.0; // Normalize steps to 0-1 range
+      vec3 debugColor = vec3(stepViz, 0.0, 0.0); // Red channel shows step count
+      gl_FragColor = vec4(mix(background, debugColor, 0.5), 1.0);
     }
   `;
 }
