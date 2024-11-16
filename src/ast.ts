@@ -11,18 +11,21 @@ export type UnaryOperator = '-';
 export interface Node {
   type: NodeType;
   evaluate(context: Record<string, number>): number;
+  toGLSL(): string;
 }
 
 export interface NumberNode extends Node {
   type: 'Number';
   value: number;
   evaluate(): number;
+  toGLSL(): string;
 }
 
 export interface VariableNode extends Node {
   type: 'Variable';
   name: string;
   evaluate(context: Record<string, number>): number;
+  toGLSL(): string;
 }
 
 export interface BinaryOpNode extends Node {
@@ -31,6 +34,7 @@ export interface BinaryOpNode extends Node {
   left: Node;
   right: Node;
   evaluate(context: Record<string, number>): number;
+  toGLSL(): string;
 }
 
 export interface UnaryOpNode extends Node {
@@ -38,6 +42,7 @@ export interface UnaryOpNode extends Node {
   operator: UnaryOperator;
   operand: Node;
   evaluate(context: Record<string, number>): number;
+  toGLSL(): string;
 }
 
 export interface FunctionCallNode extends Node {
@@ -45,5 +50,6 @@ export interface FunctionCallNode extends Node {
   name: string;
   args: Node[];
   evaluate(context: Record<string, number>): number;
+  toGLSL(): string;
 }
 

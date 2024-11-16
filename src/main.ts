@@ -45,6 +45,11 @@ controls.enableDamping = true;
 // Create a full-screen quad for ray marching
 const geometry = new THREE.PlaneGeometry(2, 2);
 let material = new THREE.ShaderMaterial({
+  uniforms: {
+    resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
+    cameraPosition: { value: camera.position },
+    viewMatrix: { value: camera.matrixWorldInverse }
+  },
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
     void main() {
@@ -83,6 +88,11 @@ editor.onDidChangeModelContent(() => {
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+  
+  // Update uniforms
+  material.uniforms.cameraPosition.value.copy(camera.position);
+  material.uniforms.viewMatrix.value.copy(camera.matrixWorldInverse);
+  
   renderer.render(scene, camera);
 }
 animate();

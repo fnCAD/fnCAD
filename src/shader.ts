@@ -49,27 +49,3 @@ export function generateShader(ast: Node): string {
   `;
 }
 
-function generateNode(node: Node): string {
-  switch (node.type) {
-    case 'Number':
-      return `float d = ${node.value};`;
-    case 'Variable':
-      return `float d = p.${node.name};`;
-    case 'BinaryOp':
-      return `
-        float d1 = ${generateNode(node.left)};
-        float d2 = ${generateNode(node.right)};
-        float d = d1 ${node.operator} d2;
-      `;
-    case 'UnaryOp':
-      return `
-        float d = ${generateNode(node.operand)};
-        d = -d;
-      `;
-    case 'FunctionCall':
-      // For now, just handle basic math functions
-      return `float d = ${node.name}(${node.args.map(generateNode).join(', ')});`;
-    default:
-      throw new Error(`Unsupported node type: ${(node as Node).type}`);
-  }
-}
