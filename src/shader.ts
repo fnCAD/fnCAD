@@ -25,8 +25,9 @@ export function generateShader(ast: Node): string {
       vec2 uv = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
       
       vec3 ro = customCameraPosition;
-      vec3 rd = normalize(vec3(uv, -1.0));
-      rd = normalize((customViewMatrix * vec4(rd, 0.0)).xyz);
+      // Create view ray using camera transform
+      vec3 rd = normalize(vec3(uv.x, uv.y, -1.0));  // Ray in camera space
+      rd = (customViewMatrix * vec4(rd, 0.0)).xyz;   // Transform to world space
       
       float t = 0.0;
       for(int i = 0; i < 100; i++) {

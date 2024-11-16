@@ -29,9 +29,13 @@ window._editor = editor;
 
 // Set up Three.js scene
 const scene = new THREE.Scene();
+// Add coordinate axes helper
+const axesHelper = new THREE.AxesHelper(2);
+scene.add(axesHelper);
 const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-// Position camera at a 45-degree angle above and to the right of the sphere
-camera.position.set(3, 3, 3);
+// Set up camera for proper orbit viewing
+camera.position.set(3, 2, 3);
+camera.up.set(0, 1, 0);  // Ensure up vector is aligned with Y axis
 camera.lookAt(0, 0, 0);
 
 const previewPane = document.getElementById('preview-pane')!;
