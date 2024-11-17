@@ -121,16 +121,10 @@ export class OctreeNode {
     
     const interval = this.evaluate();
 
-    // If the interval is entirely positive or negative, we don't need to subdivide
-    if (interval.min > 0 || interval.max < 0) {
-      this.createEdges();
-      return 1;
-    }
-
-    // If we've reached minimum size, stop subdividing
+    // If the interval is entirely positive or negative, or we've reached minimum size,
+    // we don't need to subdivide further
     const newSize = this.size / 2;
-    if (newSize < minSize) {
-      this.createEdges();
+    if (interval.min > 0 || interval.max < 0 || newSize < minSize) {
       return 1;
     }
 
