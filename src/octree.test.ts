@@ -28,7 +28,7 @@ function assertOctreesEqual(a: OctreeNode, b: OctreeNode): {equal: boolean, reas
     }
     
     if (aChild && bChild) {
-      const childComparison = compareOctrees(aChild, bChild);
+      const childComparison = assertOctreesEqual(aChild, bChild);
       if (!childComparison.equal) {
         return {equal: false, reason: `Child ${i}: ${childComparison.reason}`};
       }
@@ -40,6 +40,9 @@ function assertOctreesEqual(a: OctreeNode, b: OctreeNode): {equal: boolean, reas
 
 describe('Octree', () => {
   it('maintains consistent geometry after render settings change', () => {
+    // Test that the order of adjusting min cell size and min render size sliders
+    // does not affect the final octree structure - the end result should be
+    // the same regardless of which slider was moved first
     // Create a simple sphere SDF
     const ast = parse('sqrt(x*x + y*y + z*z) - 1.0');
     const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
