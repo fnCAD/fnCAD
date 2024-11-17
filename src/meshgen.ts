@@ -103,7 +103,6 @@ export class MeshGenerator {
                 });
             }
         });
-    }
 
     private optimizeVertices() {
         const maxIterations = 10;
