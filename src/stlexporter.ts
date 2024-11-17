@@ -5,6 +5,8 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     const position = geometry.attributes.position;
     const triangleCount = position.count / 3;
     
+    console.log(`STL Export: Processing ${triangleCount} triangles`);
+    
     // Binary STL format:
     // 80 bytes - Header
     // 4 bytes - Number of triangles (uint32)
@@ -12,7 +14,12 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     //   12 bytes - Normal vector (3 floats)
     //   36 bytes - Vertices (9 floats)
     //   2 bytes - Attribute byte count (uint16)
-    const bufferSize = 80 + 4 + (50 * triangleCount);
+    // Binary STL format size calculation:
+    // 80 bytes header + 4 bytes triangle count + (12+36+2) bytes per triangle
+    const HEADER_SIZE = 80;
+    const COUNT_SIZE = 4;
+    const TRIANGLE_SIZE = 50; // 12 bytes normal + 36 bytes vertices + 2 bytes attribute
+    const bufferSize = HEADER_SIZE + COUNT_SIZE + (TRIANGLE_SIZE * triangleCount);
     const buffer = new ArrayBuffer(bufferSize);
     const view = new DataView(buffer);
     
@@ -50,18 +57,22 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
         view.setFloat32(offset, normal.y, true); offset += 4;
         view.setFloat32(offset, normal.z, true); offset += 4;
         
-        // Write vertices
-        view.setFloat32(offset, v1.x, true); offset += 4;
-        view.setFloat32(offset, v1.y, true); offset += 4;
-        view.setFloat32(offset, v1.z, true); offset += 4;
-        
-        view.setFloat32(offset, v2.x, true); offset += 4;
-        view.setFloat32(offset, v2.y, true); offset += 4;
-        view.setFloat32(offset, v2.z, true); offset += 4;
-        
-        view.setFloat32(offset, v3.x, true); offset += 4;
-        view.setFloat32(offset, v3.y, true); offset += 4;
-        view.setFloat32(offset, v3.z, true); offset += 4;
+        // Write vertices with bounds checking
+        if (offset + 36 <= bufferSize) {  // 36 = 9 floats * 4 bytes
+            view.setFloat32(offset, v1.x, true); offset += 4;
+            view.setFloat32(offset, v1.y, true); offset += 4;
+            view.setFloat32(offset, v1.z, true); offset += 4;
+            
+            view.setFloat32(offset, v2.x, true); offset += 4;
+            view.setFloat32(offset, v2.y, true); offset += 4;
+            view.setFloat32(offset, v2.z, true); offset += 4;
+            
+            view.setFloat32(offset, v3.x, true); offset += 4;
+            view.setFloat32(offset, v3.y, true); offset += 4;
+            view.setFloat32(offset, v3.z, true); offset += 4;
+        } else {
+            throw new Error(`Buffer overflow at offset ${offset} while writing vertices`);
+        }
         
         // Write attribute byte count (unused)
         view.setUint16(offset, 0, true); offset += 2;
