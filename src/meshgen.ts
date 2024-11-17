@@ -94,11 +94,44 @@ export class MeshGenerator {
         });
     }
 
+    private optimizeVertices() {
+        console.log('Optimizing vertex positions...');
+        const maxIterations = 10;
+        const epsilon = 0.0001;
+        
+        for (let iter = 0; iter < maxIterations; iter++) {
+            let maxMove = 0;
+            
+            for (let i = 0; i < this.vertices.length; i++) {
+                const vertex = this.vertices[i];
+                const distance = this.octree.evaluatePoint(vertex);
+                const gradient = this.octree.evaluateGradient(vertex);
+                
+                // Move vertex along gradient to surface
+                const move = -distance;
+                vertex.addScaledVector(gradient, move);
+                
+                maxMove = Math.max(maxMove, Math.abs(move));
+            }
+            
+            console.log(`Iteration ${iter + 1}, max movement: ${maxMove}`);
+            
+            // Stop if vertices barely moved
+            if (maxMove < epsilon) {
+                console.log(`Optimization converged after ${iter + 1} iterations`);
+                break;
+            }
+        }
+    }
+
     private createMesh(): THREE.Mesh {
         console.log('Creating mesh from:', {
             vertexCount: this.vertices.length,
             faceCount: this.faces.length / 3
         });
+
+        // Optimize vertex positions
+        this.optimizeVertices();
 
         const geometry = new THREE.BufferGeometry();
         

@@ -83,6 +83,26 @@ export class OctreeNode {
     return this.sdf.evaluateInterval(context);
   }
 
+  evaluatePoint(point: THREE.Vector3): number {
+    const context: Record<string, number> = {
+      x: point.x,
+      y: point.y,
+      z: point.z
+    };
+    return this.sdf.evaluate(context);
+  }
+
+  evaluateGradient(point: THREE.Vector3): THREE.Vector3 {
+    const h = 0.0001; // Small delta for finite differences
+    const dx = (this.evaluatePoint(new THREE.Vector3(point.x + h, point.y, point.z)) -
+               this.evaluatePoint(new THREE.Vector3(point.x - h, point.y, point.z))) / (2 * h);
+    const dy = (this.evaluatePoint(new THREE.Vector3(point.x, point.y + h, point.z)) -
+               this.evaluatePoint(new THREE.Vector3(point.x, point.y - h, point.z))) / (2 * h);
+    const dz = (this.evaluatePoint(new THREE.Vector3(point.x, point.y, point.z + h)) -
+               this.evaluatePoint(new THREE.Vector3(point.x, point.y, point.z - h))) / (2 * h);
+    return new THREE.Vector3(dx, dy, dz).normalize();
+  }
+
   isSurfaceCell(): boolean {
     return this.state === CellState.Boundary;
   }
