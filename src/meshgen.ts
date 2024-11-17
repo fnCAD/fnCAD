@@ -60,25 +60,37 @@ export class MeshGenerator {
             ));
         });
 
-        // Add faces (triangles) for the cube
+        // Define faces and their normal directions
         const faces = [
-            // Front
-            0, 1, 2,  2, 1, 3,
-            // Back
-            4, 6, 5,  5, 6, 7,
-            // Left
-            0, 2, 4,  4, 2, 6,
-            // Right
-            1, 5, 3,  3, 5, 7,
-            // Top
-            2, 3, 6,  6, 3, 7,
-            // Bottom
-            0, 4, 1,  1, 4, 5
+            // Front (negative Z)
+            { indices: [0, 1, 2, 2, 1, 3], normal: new THREE.Vector3(0, 0, -1) },
+            // Back (positive Z)
+            { indices: [4, 6, 5, 5, 6, 7], normal: new THREE.Vector3(0, 0, 1) },
+            // Left (negative X)
+            { indices: [0, 2, 4, 4, 2, 6], normal: new THREE.Vector3(-1, 0, 0) },
+            // Right (positive X)
+            { indices: [1, 5, 3, 3, 5, 7], normal: new THREE.Vector3(1, 0, 0) },
+            // Top (positive Y)
+            { indices: [2, 3, 6, 6, 3, 7], normal: new THREE.Vector3(0, 1, 0) },
+            // Bottom (negative Y)
+            { indices: [0, 4, 1, 1, 4, 5], normal: new THREE.Vector3(0, -1, 0) }
         ];
 
-        // Add faces with correct vertex indices
-        faces.forEach(idx => {
-            this.faces.push(startIndex + idx);
+        // Check each face's neighboring cell before adding it
+        faces.forEach(face => {
+            const neighborCenter = new THREE.Vector3()
+                .copy(node.center)
+                .addScaledVector(face.normal, node.size);
+            
+            // Create a temporary node to evaluate the neighbor's space
+            const neighborNode = new OctreeNode(neighborCenter, node.size, node.sdf);
+            
+            // Only add the face if the neighbor is outside
+            if (neighborNode.isFullyOutside()) {
+                face.indices.forEach(idx => {
+                    this.faces.push(startIndex + idx);
+                });
+            }
         });
     }
 
