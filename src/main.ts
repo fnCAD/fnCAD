@@ -111,7 +111,16 @@ editor.onDidChangeModelContent(() => {
     });
     quad.material = material;
   } catch (e) {
-    console.error('Shader compilation failed:', e);
+    if (e instanceof Error) {
+      // Check if it's a shader compilation error vs other errors
+      if (e.message.includes('WebGLShader')) {
+        console.error('WebGL shader compilation failed:', e);
+      } else {
+        console.error('SDF evaluation error:', e);
+      }
+    } else {
+      console.error('Unknown error:', e);
+    }
   }
 });
 
