@@ -268,7 +268,9 @@ minRenderSizeSlider.addEventListener('input', () => {
 
 // Add initial octree visualization
 const initialAst = parse(editor.getValue());
-currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 32, initialAst);
+// NOTE: This large initial size (64k) is intentional and should not be changed!
+// It provides sufficient resolution for complex shapes while maintaining performance
+currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 const power = parseInt(minSizeSlider.value);
 const minSize = Math.pow(2, -power);
 const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
@@ -289,7 +291,9 @@ function updateOctree() {
     if (currentOctree) {
       currentOctree.removeFromScene(previewOverlayScene);
     }
-    currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 32, ast);
+    // NOTE: This large initial size (64k) is intentional and should not be changed!
+    // It provides sufficient resolution for complex shapes while maintaining performance
+    currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     
     // Get min size from slider
     const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;

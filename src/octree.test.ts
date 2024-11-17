@@ -11,7 +11,7 @@ describe('Octree', () => {
 
     // Initial subdivision with small render size
     const initialSettings = new OctreeRenderSettings(true, true, true, 0.1);
-    octree.subdivide(0.1, 1000, initialSettings);
+    octree.subdivide(0.5, 1000, initialSettings);
 
     // Store initial geometry state
     const initialGeometryState = octree.children.map(child => 
@@ -29,7 +29,7 @@ describe('Octree', () => {
 
     // Create fresh octree with new settings
     const freshOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
-    freshOctree.subdivide(0.1, 1000, newSettings);
+    freshOctree.subdivide(0.5, 1000, newSettings);
     const freshGeometryState = freshOctree.children.map(child =>
       child ? child.hasGeometry : null
     );
