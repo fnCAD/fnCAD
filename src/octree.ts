@@ -24,6 +24,24 @@ export class OctreeNode {
     return this.sdf.evaluateInterval(context);
   }
 
+  isSurfaceCell(): boolean {
+    const interval = this.evaluate();
+    // A cell contains a surface if its interval spans zero
+    return interval.min <= 0 && interval.max >= 0;
+  }
+
+  isFullyInside(): boolean {
+    const interval = this.evaluate();
+    // Cell is fully inside if its maximum value is negative
+    return interval.max < 0;
+  }
+
+  isFullyOutside(): boolean {
+    const interval = this.evaluate();
+    // Cell is fully outside if its minimum value is positive
+    return interval.min > 0;
+  }
+
   subdivide(minSize: number = 0.1): void {
     const interval = this.evaluate();
 
