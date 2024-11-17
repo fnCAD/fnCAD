@@ -7,16 +7,6 @@ export function generateShader(ast: Node): string {
     uniform vec3 customCameraPosition;
     uniform sampler2D octreeBuffer;
 
-    // Convert world position to UV coordinates for octree texture lookup
-    vec2 worldToUV(vec3 worldPos) {
-      // Project point using same view/projection as octree render
-      vec4 projected = customViewMatrix * vec4(worldPos, 1.0);
-      // Convert to NDC space (-1 to 1)
-      vec2 ndc = projected.xy / projected.w;
-      // Convert to UV space [0,1]
-      return vec2(ndc.x * 0.5 + 0.5, ndc.y * 0.5 + 0.5);
-    }
-
     float scene(vec3 pos) {
       return ${ast.toGLSL()};
     }
@@ -45,42 +35,78 @@ export function generateShader(ast: Node): string {
     }
 
     void main() {
-      vec2 uv = gl_FragCoord.xy / resolution;
-      vec3 rayDir = getRayDirection(uv, customCameraPosition, customViewMatrix);
-      vec3 rayOrigin = customCameraPosition;
-      
+      // Convert pixel coordinates to normalized device coordinates (-1 to +1)
+      vec2 ndc = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
+      vec2 uv = ndc * 0.5 + 0.5;
+
+      // Ray origin is the camera position
+      vec3 ro = customCameraPosition;
+
+      // Calculate ray direction with proper FOV and aspect ratio
+      float fov = radians(75.0); // 75 degree field of view
+      float aspect = resolution.x / resolution.y;
+      vec3 rd = normalize(vec3(ndc.x * aspect * tan(fov/2.0),
+                              ndc.y * tan(fov/2.0),
+                              -1.0));
+      // Transform ray direction to world space
+      rd = (inverse(customViewMatrix) * vec4(rd, 0.0)).xyz;
+
+      // Background visualization based on ray direction
+      vec3 background = normalize(rd) * 0.5 + 0.5; // Map from [-1,1] to [0,1]
+      background *= background; // Make colors more vibrant
+
+      // Raymarching
       float t = 0.0;
-      const int MAX_STEPS = 100;
-      const float MAX_DIST = 100.0;
-      const float EPSILON = 0.001;
-      
-      // Raymarching loop
-      for(int i = 0; i < MAX_STEPS; i++) {
-        vec3 pos = rayOrigin + rayDir * t;
-        float d = scene(pos);
-        
-        if(d < EPSILON) {
-          // Hit surface - calculate normal and lighting
-          vec3 normal = calcNormal(pos);
-          vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
-          float diff = max(dot(normal, lightDir), 0.0);
-          vec3 color = vec3(0.8) * (0.2 + 0.8 * diff);
-          
-          gl_FragColor = vec4(color, 1.0);
+      float tmax = 20.0;
+
+      for(int i = 0; i < 100; i++) {
+        vec3 p = ro + rd * t;
+
+        float d = scene(p);
+
+        // Sample octree at current position
+        vec4 octreeData = texture2D(octreeBuffer, uv);
+
+        // Hit check
+        if(d < 0.001) {
+          // Calculate normal
+          vec3 n = calcNormal(p);
+          // Enhanced lighting with ambient
+          float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
+          vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
+
+          // Mix in octree visualization if cell is occupied
+          if(octreeData.a > 0.5) {
+            vec3 octreeColor = vec3(0.0, 1.0, 0.0) * 0.2; // Dim green for octree
+            col = mix(col, octreeColor, 0.2); // Subtle overlay
+          }
+
+          gl_FragColor = vec4(col, 1.0);
           return;
         }
-        
-        if(t > MAX_DIST) {
-          // Miss - show background color
-          gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
+
+        // If no hit but octree cell is occupied, show octree visualization
+        if(octreeData.a > 0.5) {
+          vec3 octreeColor = vec3(0.2, 1.0, 0.2); // Brighter green
+          float depth = length(p - customCameraPosition); // Use distance for depth effect
+          gl_FragColor = vec4(octreeColor * (1.0 - depth * 0.1), 1.0); // Fade with depth
           return;
         }
-        
+
+        // Missed or too far
+        if(t > tmax) {
+          gl_FragColor = vec4(background, 1.0);
+          return;
+        }
+
         t += d;
       }
-      
-      // Max steps reached - show debug color
-      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+
+      // Max steps reached - visualize number of steps taken
+      int steps = 100; // Store the max steps reached
+      float stepViz = float(steps) / 100.0; // Normalize steps to 0-1 range
+      vec3 debugColor = vec3(stepViz, 0.0, 0.0); // Red channel shows step count
+      gl_FragColor = vec4(mix(background, debugColor, 0.5), 1.0);
     }
   `;
 }
