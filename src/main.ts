@@ -91,10 +91,26 @@ settingsPanel.innerHTML = `
       <input type="checkbox" id="show-boundary" checked>
       <label for="show-boundary">Show Boundary Cells</label>
     </div>
-    <div class="setting-row">
-      <label for="min-size">Min Cell Size:</label>
-      <input type="range" id="min-size" min="0" max="4" step="1" value="0">
-      <span class="value-display">0.1</span>
+    <div class="setting-group">
+      <h4>Octree Computation</h4>
+      <div class="setting-row">
+        <label for="min-size">Min Cell Size:</label>
+        <input type="range" id="min-size" min="0" max="4" step="1" value="0">
+        <span class="value-display">0.1</span>
+      </div>
+      <div class="setting-row">
+        <label for="cell-budget">Cell Budget:</label>
+        <input type="range" id="cell-budget" min="1000" max="1000000" step="1000" value="100000">
+        <span class="value-display">100000</span>
+      </div>
+    </div>
+    <div class="setting-group">
+      <h4>Visualization</h4>
+      <div class="setting-row">
+        <label for="vis-detail">Detail Level:</label>
+        <input type="range" id="vis-detail" min="0" max="100" step="1" value="100">
+        <span class="value-display">100%</span>
+      </div>
     </div>
     <div class="setting-row">
       <button id="generate-mesh">Generate Mesh</button>
@@ -117,12 +133,13 @@ const showBoundaryCheckbox = document.getElementById('show-boundary') as HTMLInp
 
 function updateOctreeVisibility() {
   if (currentOctree) {
+    const visDetail = parseInt((document.getElementById('vis-detail') as HTMLInputElement).value) / 100;
     previewOverlayScene.visible = showOctreeCheckbox.checked;
     if (showOctreeCheckbox.checked) {
       currentOctree.updateVisibility(
-        showOutsideCheckbox.checked,
-        showInsideCheckbox.checked,
-        showBoundaryCheckbox.checked
+        showOutsideCheckbox.checked && Math.random() < visDetail,
+        showInsideCheckbox.checked && Math.random() < visDetail,
+        showBoundaryCheckbox.checked && Math.random() < visDetail
       );
     }
   }
@@ -196,8 +213,11 @@ let material = new THREE.ShaderMaterial({
 const quad = new THREE.Mesh(geometry, material);
 scene.add(quad);
 
-// Set up min size slider handler
+// Set up computation sliders
 const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
+const cellBudgetSlider = document.getElementById('cell-budget') as HTMLInputElement;
+const visDetailSlider = document.getElementById('vis-detail') as HTMLInputElement;
+
 minSizeSlider.addEventListener('input', () => {
   const power = parseInt(minSizeSlider.value);
   const value = Math.pow(2, -power);  // Convert to inverse power of 2
@@ -206,12 +226,27 @@ minSizeSlider.addEventListener('input', () => {
   updateOctree();
 });
 
+cellBudgetSlider.addEventListener('input', () => {
+  const value = parseInt(cellBudgetSlider.value);
+  const display = cellBudgetSlider.nextElementSibling as HTMLSpanElement;
+  display.textContent = value.toString();
+  updateOctree();
+});
+
+visDetailSlider.addEventListener('input', () => {
+  const value = parseInt(visDetailSlider.value);
+  const display = visDetailSlider.nextElementSibling as HTMLSpanElement;
+  display.textContent = `${value}%`;
+  updateOctreeVisibility();
+});
+
 // Add initial octree visualization
 const initialAst = parse(editor.getValue());
 currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 const power = parseInt(minSizeSlider.value);
 const minSize = Math.pow(2, -power);
-const totalCells = currentOctree.subdivide(minSize, 100000);
+const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
+const totalCells = currentOctree.subdivide(minSize, cellBudget);
 statsPanel.textContent = `Octree cells: ${totalCells}`;
 currentOctree.addToScene(previewOverlayScene);
 
