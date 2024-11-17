@@ -8,34 +8,25 @@ export class MeshGenerator {
     constructor(private octree: OctreeNode) {}
 
     generate(): THREE.Mesh {
-        console.log('Starting mesh generation');
         this.collectSurfaceCells(this.octree);
-        console.log(`Collected ${this.vertices.length} vertices and ${this.faces.length} face indices`);
         const mesh = this.createMesh();
-        console.log('Mesh generation complete');
         return mesh;
     }
 
     private collectSurfaceCells(node: OctreeNode) {
-        console.log(`Checking node at ${node.center.toArray()} with size ${node.size}`);
-        
         if (!node.isSurfaceCell()) {
-            console.log('Not a surface cell, skipping');
             return;
         }
 
         // If this is a leaf node or small enough, add its vertices
         if (node.children.every(child => child === null) || node.size < 0.2) {
-            console.log('Adding vertices for surface cell');
             this.addCellVertices(node);
             return;
         }
 
         // Otherwise recurse into children
-        console.log('Recursing into children');
-        node.children.forEach((child, index) => {
+        node.children.forEach(child => {
             if (child) {
-                console.log(`Processing child ${index}`);
                 this.collectSurfaceCells(child);
             }
         });
@@ -95,7 +86,6 @@ export class MeshGenerator {
     }
 
     private optimizeVertices() {
-        console.log('Optimizing vertex positions...');
         const maxIterations = 10;
         const epsilon = 0.0001;
         
@@ -114,21 +104,15 @@ export class MeshGenerator {
                 maxMove = Math.max(maxMove, Math.abs(move));
             }
             
-            console.log(`Iteration ${iter + 1}, max movement: ${maxMove}`);
             
             // Stop if vertices barely moved
             if (maxMove < epsilon) {
-                console.log(`Optimization converged after ${iter + 1} iterations`);
                 break;
             }
         }
     }
 
     private createMesh(): THREE.Mesh {
-        console.log('Creating mesh from:', {
-            vertexCount: this.vertices.length,
-            faceCount: this.faces.length / 3
-        });
 
         // Optimize vertex positions
         this.optimizeVertices();
@@ -143,10 +127,6 @@ export class MeshGenerator {
             positions[i * 3 + 2] = vertex.z;
         });
 
-        console.log('First few vertices:', 
-            this.vertices.slice(0, 3).map(v => `(${v.x}, ${v.y}, ${v.z})`));
-        console.log('First few faces:', 
-            this.faces.slice(0, 9).join(', '));
 
         // Set attributes
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -169,7 +149,6 @@ export class MeshGenerator {
         });
 
         const mesh = new THREE.Mesh(geometry, material);
-        console.log('Created mesh:', mesh);
         return mesh;
     }
 }
