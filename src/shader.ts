@@ -103,7 +103,7 @@ export function generateShader(ast: Node): string {
           // Mix in octree visualization if cell is occupied and closer
           if(octreeData.a > 0.5) {
             vec3 octreeColor = octreeData.rgb;
-            
+
             // Compare depths in [0,1] space
             // Smaller depth values are closer to camera
             if (octreeDepth < rayDepth) {
