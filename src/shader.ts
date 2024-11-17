@@ -38,10 +38,11 @@ export function generateShader(ast: Node): string {
       // Sample octree texture
       vec4 octreeData = texture2D(octreeBuffer, uv);
       
-      // For debugging: Show octree data directly
-      // Red channel shows octree alpha value
-      // Other channels are set to 0 for clarity
-      gl_FragColor = vec4(octreeData.a, 0.0, 0.0, 1.0);
+      // Debug visualization:
+      // Red: Alpha channel
+      // Green: G channel
+      // Blue: 0 for clarity
+      gl_FragColor = vec4(octreeData.a, octreeData.g, 0.0, 1.0);
     }
   `;
 }
