@@ -17,6 +17,17 @@ export enum Direction {
   NegZ
 }
 
+// Convert Vector3 direction to enum
+function vectorToDirection(direction: THREE.Vector3): Direction {
+  if (Math.abs(direction.x) > Math.abs(direction.y) && Math.abs(direction.x) > Math.abs(direction.z)) {
+    return direction.x > 0 ? Direction.PosX : Direction.NegX;
+  } else if (Math.abs(direction.y) > Math.abs(direction.z)) {
+    return direction.y > 0 ? Direction.PosY : Direction.NegY;
+  } else {
+    return direction.z > 0 ? Direction.PosZ : Direction.NegZ;
+  }
+}
+
 export class OctreeNode {
   children: (OctreeNode | null)[] = new Array(8).fill(null);
   vertices: THREE.Vector3[] = [];
@@ -163,17 +174,9 @@ export class OctreeNode {
     return parentNeighbor.children[targetOctant] || parentNeighbor;
   }
 
+  // Vector3 interface delegates to enum-based version
   getNeighbor(direction: THREE.Vector3): OctreeNode | null {
-    // Convert Vector3 direction to enum
-    let dir: Direction;
-    if (Math.abs(direction.x) > Math.abs(direction.y) && Math.abs(direction.x) > Math.abs(direction.z)) {
-      dir = direction.x > 0 ? Direction.PosX : Direction.NegX;
-    } else if (Math.abs(direction.y) > Math.abs(direction.z)) {
-      dir = direction.y > 0 ? Direction.PosY : Direction.NegY;
-    } else {
-      dir = direction.z > 0 ? Direction.PosZ : Direction.NegZ;
-    }
-    return this.getNeighborAtLevel(dir);
+    return this.getNeighborAtLevel(vectorToDirection(direction));
   }
 
   evaluate(): Interval {
