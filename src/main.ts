@@ -1,5 +1,9 @@
 import './style.css'
 import Split from 'split.js'
+import { getRuntimeBasePath } from './utils/runtime-base'
+
+// Set runtime base path for assets
+const BASE_PATH = getRuntimeBasePath();
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
 import { downloadSTL } from './stlexporter'
