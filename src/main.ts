@@ -225,6 +225,7 @@ function updateOctree() {
       statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
     }
 function updateMaterial() {
+  try {
     material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
@@ -238,9 +239,7 @@ function updateMaterial() {
       fragmentShader,
       vertexShader: material.vertexShader
     });
-    updateMaterial();
     quad.material = material;
-  } catch (e) {
     if (e instanceof Error) {
       // Check if it's a shader compilation error vs other errors
       if (e.message.includes('WebGLShader')) {
