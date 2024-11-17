@@ -148,8 +148,8 @@ export class OctreeNode {
       transparent: true,
       opacity: 1.0,
       blending: THREE.AdditiveBlending,  // Make lines add up where they overlap
-      depthWrite: this.isFullyOutside(), // Only write depth for outside cells
-      depthTest: true     // Always test against depth buffer
+      depthWrite: true,   // Write to depth buffer
+      depthTest: true     // And test against it
     });
     this.edges = new THREE.LineSegments(geometry, material);
   }
