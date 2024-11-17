@@ -91,7 +91,6 @@ export function visualizeOctree(root: OctreeNode, settings: OctreeRenderSettings
   // Create a group to hold all octree geometries
   const group = new THREE.Group();
   group.userData.isOctreeVisualization = true;
-  const group = new THREE.Group();
   
   function addNodeToGroup(node: OctreeNode) {
     const geom = createOctreeGeometry(node, settings);
