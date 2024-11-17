@@ -116,17 +116,20 @@ export class OctreeNode {
     return this.state === CellState.Outside;
   }
 
-  subdivide(minSize: number = 0.1, cellBudget: number = 100000, renderSettings: OctreeRenderSettings): number {
+  subdivide(minSize: number = 0.1, cellBudget: number = 100000, renderSettings?: OctreeRenderSettings): number {
     const startBudget = cellBudget;
     
     const interval = this.evaluate();
+
+    // Create default settings if none provided
+    const settings = renderSettings || new OctreeRenderSettings();
 
     // If the interval is entirely positive or negative, or we've reached minimum size,
     // we don't need to subdivide further
     const newSize = this.size / 2;
     if (interval.min > 0 || interval.max < 0 || newSize < minSize) {
       // Update geometry for this node
-      this.updateLocalGeometry(renderSettings);
+      this.updateLocalGeometry(settings);
       return 1;
     }
 
@@ -155,7 +158,7 @@ export class OctreeNode {
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
       // Try to subdivide child with current budget
-      const cellsCreated = this.children[i].subdivide(minSize, cellBudget, renderSettings);
+      const cellsCreated = this.children[i].subdivide(minSize, cellBudget, settings);
       cellBudget -= cellsCreated;
       if (this.children[i].hasGeometry) {
         this.hasGeometry = true;
