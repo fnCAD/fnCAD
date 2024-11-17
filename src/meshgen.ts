@@ -83,6 +83,11 @@ export class MeshGenerator {
     }
 
     private createMesh(): THREE.Mesh {
+        console.log('Creating mesh from:', {
+            vertexCount: this.vertices.length,
+            faceCount: this.faces.length / 3
+        });
+
         const geometry = new THREE.BufferGeometry();
         
         // Convert vertices to flat array
@@ -92,6 +97,11 @@ export class MeshGenerator {
             positions[i * 3 + 1] = vertex.y;
             positions[i * 3 + 2] = vertex.z;
         });
+
+        console.log('First few vertices:', 
+            this.vertices.slice(0, 3).map(v => `(${v.x}, ${v.y}, ${v.z})`));
+        console.log('First few faces:', 
+            this.faces.slice(0, 9).join(', '));
 
         // Set attributes
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -104,9 +114,12 @@ export class MeshGenerator {
         const material = new THREE.MeshPhongMaterial({
             color: 0xffd700,
             side: THREE.DoubleSide,
-            flatShading: true
+            flatShading: true,
+            wireframe: true  // Add wireframe to help debug
         });
 
-        return new THREE.Mesh(geometry, material);
+        const mesh = new THREE.Mesh(geometry, material);
+        console.log('Created mesh:', mesh);
+        return mesh;
     }
 }

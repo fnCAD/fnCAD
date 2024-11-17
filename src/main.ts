@@ -269,12 +269,23 @@ generateMeshButton.addEventListener('click', () => {
   if (currentMesh) {
     console.log('Removing existing mesh');
     scene.remove(currentMesh);
+    currentMesh.geometry.dispose();
+    currentMesh.material.dispose();
+    currentMesh = null;
   }
   if (currentOctree) {
     console.log('Creating mesh generator');
     const meshGen = new MeshGenerator(currentOctree);
     currentMesh = meshGen.generate();
     console.log(`Generated mesh with ${currentMesh.geometry.attributes.position.count} vertices`);
+    console.log('Adding mesh to scene at position:', currentMesh.position);
+    
+    // Ensure mesh is visible
+    currentMesh.visible = true;
+    currentMesh.material.needsUpdate = true;
+    currentMesh.geometry.computeBoundingSphere();
+    console.log('Mesh bounds:', currentMesh.geometry.boundingSphere);
+    
     scene.add(currentMesh);
   } else {
     console.warn('No octree available for mesh generation');
