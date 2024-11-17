@@ -10,7 +10,7 @@ export function generateShader(ast: Node): string {
     varying vec3 p;
 
     float scene(vec3 pos) {
-      p = pos;  // Assign to varying for use in the SDF
+      vec3 p = pos;  // Local variable for SDF evaluation
       return ${ast.toGLSL()};
     }
 
