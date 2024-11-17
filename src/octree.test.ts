@@ -25,7 +25,7 @@ function assertOctreesEqual(a: OctreeNode, b: OctreeNode): void {
 }
 
 describe('Octree', () => {
-  it('maintains consistent structure regardless of render size changes', () => {
+  it('maintains consistent structure when increasing render detail', () => {
     // Define render sizes we'll test with
     const smallRenderSize = 0.1;  // High detail
     const largeRenderSize = 0.5;  // Low detail
@@ -35,26 +35,26 @@ describe('Octree', () => {
     // Create a simple sphere SDF
     const ast = parse('sqrt(x*x + y*y + z*z) - 1.0');
 
-    // Path 1: Start with high detail, then switch to low detail
-    const highDetailFirst = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
-    highDetailFirst.subdivide(subdivisionSize, cellBudget, 
+    // Path 1: Start with low detail, then switch to high detail
+    const lowDetailFirst = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    lowDetailFirst.subdivide(subdivisionSize, cellBudget,
+      new OctreeRenderSettings(true, true, true, largeRenderSize));
+    lowDetailFirst.updateGeometry(
       new OctreeRenderSettings(true, true, true, smallRenderSize));
-    highDetailFirst.updateGeometry(
-      new OctreeRenderSettings(true, true, true, largeRenderSize));
 
-    // Path 2: Start directly with low detail
-    const lowDetailDirect = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
-    lowDetailDirect.subdivide(subdivisionSize, cellBudget,
-      new OctreeRenderSettings(true, true, true, largeRenderSize));
-
-    // Both paths should result in identical octree structures
-    assertOctreesEqual(highDetailFirst, lowDetailDirect);
-
-    // Verify that high detail actually creates more geometry
+    // Path 2: Start directly with high detail
     const highDetailDirect = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
     highDetailDirect.subdivide(subdivisionSize, cellBudget,
       new OctreeRenderSettings(true, true, true, smallRenderSize));
-    expect(() => assertOctreesEqual(highDetailDirect, lowDetailDirect))
+
+    // Both paths should result in identical octree structures
+    assertOctreesEqual(lowDetailFirst, highDetailDirect);
+
+    // Verify that low detail actually creates less geometry
+    const lowDetailDirect = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    lowDetailDirect.subdivide(subdivisionSize, cellBudget,
+      new OctreeRenderSettings(true, true, true, largeRenderSize));
+    expect(() => assertOctreesEqual(lowDetailDirect, highDetailDirect))
       .toThrow('Octrees should differ due to render size');
   });
 });
