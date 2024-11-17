@@ -102,14 +102,10 @@ export class OctreeNode {
     }
     console.log(`Found parent's neighbor at ${parentNeighbor.center.toArray()}`);
 
-    // Calculate target position in neighbor's space
-    const targetPos = new THREE.Vector3()
-      .copy(this.center)
-      .addScaledVector(direction, this.size);
-
     // Get position relative to neighbor's coordinate system
     const neighborRelativePos = new THREE.Vector3()
-      .copy(targetPos)
+      .copy(this.center)
+      .addScaledVector(direction, this.size)
       .sub(parentNeighbor.center)
       .divideScalar(parentNeighbor.size / 2);
 
