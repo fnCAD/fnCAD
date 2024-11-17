@@ -240,6 +240,7 @@ function updateMaterial() {
       vertexShader: material.vertexShader
     });
     quad.material = material;
+  } catch (e) {
     if (e instanceof Error) {
       // Check if it's a shader compilation error vs other errors
       if (e.message.includes('WebGLShader')) {
@@ -251,7 +252,7 @@ function updateMaterial() {
       console.error('Unknown error:', e);
     }
   }
-});
+}
 
 // Handle window resize
 window.addEventListener('resize', () => {
