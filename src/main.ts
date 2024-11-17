@@ -50,7 +50,7 @@ let currentOctree: OctreeNode | null = null;
 renderer.setClearColor(0x000000, 0); // Clear to transparent black
 
 // Create render target for octree
-const octreeRenderTarget = new WebGLRenderTarget(
+const octreeRenderTarget = new THREE.WebGLRenderTarget(
   previewPane.clientWidth, 
   previewPane.clientHeight,
   {
