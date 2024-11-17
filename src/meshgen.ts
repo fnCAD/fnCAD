@@ -114,8 +114,7 @@ export class MeshGenerator {
         const material = new THREE.MeshPhongMaterial({
             color: 0xffd700,
             side: THREE.DoubleSide,
-            flatShading: true,
-            wireframe: true  // Add wireframe to help debug
+            flatShading: true
         });
 
         const mesh = new THREE.Mesh(geometry, material);
