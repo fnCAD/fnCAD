@@ -3,8 +3,8 @@ import { OctreeNode, OctreeRenderSettings } from './octree';
 import { parse } from './parser';
 import * as THREE from 'three';
 
-// Test helper to compare octrees
-function compareOctrees(a: OctreeNode, b: OctreeNode): {equal: boolean, reason?: string} {
+// Test helper to assert octree equality
+function assertOctreesEqual(a: OctreeNode, b: OctreeNode): {equal: boolean, reason?: string} {
   if (a.size !== b.size) {
     return {equal: false, reason: `Size mismatch: ${a.size} vs ${b.size}`};
   }
@@ -60,10 +60,10 @@ describe('Octree', () => {
     freshOctree.subdivide(0.5, 1000, newSettings);
 
     // Compare octrees
-    const freshComparison = octree.equals(freshOctree);
+    const freshComparison = assertOctreesEqual(octree, freshOctree);
     expect(freshComparison.equal).toBe(true, `Fresh comparison failed: ${freshComparison.reason}`);
 
-    const initialComparison = compareOctrees(octree, initialOctree);
+    const initialComparison = assertOctreesEqual(octree, initialOctree);
     expect(initialComparison.equal).toBe(false, 'Octree should differ from initial state');
   });
 });
