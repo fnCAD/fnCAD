@@ -213,17 +213,9 @@ export class OctreeNode {
   isSurfaceCell(): boolean {
     // Only count as boundary if:
     // 1. We are actually a boundary cell AND
-    // 2. Either we are a leaf node OR all our children are leaves
-    if (this.state !== CellState.Boundary) {
-      return false;
-    }
-    
-    const isLeaf = this.children.every(child => child === null);
-    const hasSubdividedChildren = this.children.some(child => 
-      child?.children.some(grandchild => grandchild !== null)
-    );
-    
-    return isLeaf || !hasSubdividedChildren;
+    // 2. We are a leaf node (no children)
+    return this.state === CellState.Boundary && 
+           this.children.every(child => child === null);
   }
 
   isFullyInside(): boolean {
