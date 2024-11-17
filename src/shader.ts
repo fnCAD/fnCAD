@@ -62,7 +62,6 @@ export function generateShader(ast: Node): string {
 
       // Sample octree at current position
       vec4 octreeData = texture2D(octreeBuffer, uv);
-      float octreeDepthValue = texture2D(octreeDepth, uv).r;
 
       for(int i = 0; i < 100; i++) {
         vec3 p = ro + rd * t;
@@ -80,23 +79,22 @@ export function generateShader(ast: Node): string {
           // Convert raymarch distance to NDC depth
           vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
           float ndcDepth = (clipPos.z/clipPos.w) * 0.5 + 0.5;
-          
+
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
             // Convert depth buffer value to linear depth
             float near = 0.1;
             float far = 1000.0;
-            float linearOctreeDepth = (2.0 * near) / (far + near - octreeDepthValue * (far - near));
+            float octreeDepthValue = texture2D(octreeDepth, uv).r * 2.0 - 1.0;
+            float linearOctreeDepth = (2.0 * near * far) / (far + near - octreeDepthValue * (far - near));
             
             // Compare linear octree depth with raymarched depth (which is already linear)
-            float depthDiff = linearOctreeDepth - t;
-            vec3 octreeColor = vec3(
-              max(0.0, depthDiff) * 10.0,  // Red when octree is in front (scaled up for visibility)
-              0.2,                         // Slight green tint to show octree
-              max(0.0, -depthDiff) * 10.0  // Blue when octree is behind (scaled up for visibility)
-            );
-            float strength = 0.5;
-            col = mix(col, octreeColor, strength);
+            if (linearOctreeDepth < t) {
+              // octree in front (smaller depth); draw octree (0.5 strength)
+              gl_FragColor = vec4(mix(col, vec3(0.2, 1.0, 0.2), 0.5), 1.0);
+              return;
+            }
+            // TODO: UI toggle for "draw octree inside objects" will cause mixing-in of octree data here as well.
           }
 
           gl_FragColor = vec4(col, 1.0);
@@ -110,10 +108,9 @@ export function generateShader(ast: Node): string {
         t += d;
       }
 
-      // If no hit but octree cell is occupied, show octree visualization
+      // If no hit but octree cell is occupied, show octree visualization as if unoccluded
       if(octreeData.a > 0.5) {
-        vec3 octreeColor = vec3(0.2, 1.0, 0.2); // Brighter green
-        gl_FragColor = vec4(octreeColor, 1.0);
+        gl_FragColor = vec4(mix(background, vec3(0.2, 1.0, 0.2), 0.5), 1.0);
         return;
       }
 
