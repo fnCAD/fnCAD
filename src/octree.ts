@@ -13,6 +13,7 @@ export class OctreeNode {
   vertices: THREE.Vector3[] = [];
   edges: THREE.LineSegments | null = null;
   state: CellState;
+  private wasAddedToScene: boolean = false;
 
   constructor(
     public center: THREE.Vector3,
@@ -247,13 +248,20 @@ export class OctreeNode {
   addToScene(scene: THREE.Scene): void {
     if (this.edges) {
       scene.add(this.edges);
+      this.wasAddedToScene = true;
     }
     this.children.forEach(child => child?.addToScene(scene));
   }
 
   removeFromScene(scene: THREE.Scene): void {
+    // Skip removal if this subtree was never added
+    if (!this.wasAddedToScene && !this.children.some(child => child?.wasAddedToScene)) {
+      return;
+    }
+    
     if (this.edges) {
       scene.remove(this.edges);
+      this.wasAddedToScene = false;
     }
     this.children.forEach(child => child?.removeFromScene(scene));
   }
