@@ -100,6 +100,11 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           return evaluatedArgs[0].sqrt();
         case 'sqr':
           return evaluatedArgs[0].multiply(evaluatedArgs[0]);
+        case 'abs':
+          return new Interval(
+            Math.min(Math.abs(evaluatedArgs[0].min), Math.abs(evaluatedArgs[0].max)),
+            Math.max(Math.abs(evaluatedArgs[0].min), Math.abs(evaluatedArgs[0].max))
+          );
         case 'sin':
           return evaluatedArgs[0].sin();
         case 'cos':
@@ -134,6 +139,9 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       // Handle built-in math functions
       if (name === 'sqr') {
         return evaluatedArgs[0] * evaluatedArgs[0];
+      }
+      if (name === 'abs') {
+        return Math.abs(evaluatedArgs[0]);
       }
       if (name in Math) {
         const fn = Math[name as keyof typeof Math];

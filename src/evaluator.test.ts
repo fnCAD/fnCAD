@@ -44,4 +44,11 @@ describe('Expression Evaluation', () => {
     expect(evaluate('min(3, 1, 2)')).toBe(1);
     expect(evaluate('max(3, 1, 2)')).toBe(3);
   });
+
+  it('evaluates abs function', () => {
+    expect(evaluate('abs(-3)')).toBe(3);
+    expect(evaluate('abs(3)')).toBe(3);
+    expect(evaluate('abs(0)')).toBe(0);
+    expect(evaluate('abs(-2.5)')).toBe(2.5);
+  });
 });
