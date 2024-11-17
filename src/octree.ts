@@ -13,7 +13,6 @@ export class OctreeNode {
   vertices: THREE.Vector3[] = [];
   edges: THREE.LineSegments | null = null;
   state: CellState;
-  private wasAddedToScene: boolean = false;
   private hasGeometry: boolean = false;
 
   constructor(
@@ -125,6 +124,7 @@ export class OctreeNode {
     // If the interval is entirely positive or negative, we don't need to subdivide
     if (interval.min > 0 || interval.max < 0) {
       this.createEdges();
+      this.hasGeometry = true;
       return 1;
     }
 
@@ -132,6 +132,7 @@ export class OctreeNode {
     const newSize = this.size / 2;
     if (newSize < minSize) {
       this.createEdges();
+      this.hasGeometry = true;
       return 1;
     }
 
@@ -160,7 +161,11 @@ export class OctreeNode {
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
       // Try to subdivide child with current budget
-      cellBudget -= this.children[i].subdivide(minSize, cellBudget);
+      const cellsCreated = this.children[i].subdivide(minSize, cellBudget);
+      cellBudget -= cellsCreated;
+      if (this.children[i].hasGeometry) {
+        this.hasGeometry = true;
+      }
     }
 
     // Return number of cells created (difference between start and end budget)
@@ -203,7 +208,6 @@ export class OctreeNode {
   }
 
   private createEdges(): void {
-    this.hasGeometry = true;
     const half = this.size / 2;
     // Create vertices for cube corners
     const corners = [
@@ -245,30 +249,27 @@ export class OctreeNode {
       depthTest: true     // And test against it
     });
     this.edges = new THREE.LineSegments(geometry, material);
+    this.hasGeometry = true;
   }
 
   addToScene(scene: THREE.Scene): void {
-    // Skip if this subtree has no geometry
-    if (!this.hasGeometry && !this.children.some(child => child?.hasGeometry)) {
+    if (!this.hasGeometry) {
       return;
     }
     
     if (this.edges) {
       scene.add(this.edges);
-      this.wasAddedToScene = true;
     }
     this.children.forEach(child => child?.addToScene(scene));
   }
 
   removeFromScene(scene: THREE.Scene): void {
-    // Skip if this subtree has no geometry
-    if (!this.hasGeometry && !this.children.some(child => child?.hasGeometry)) {
+    if (!this.hasGeometry) {
       return;
     }
     
     if (this.edges) {
       scene.remove(this.edges);
-      this.wasAddedToScene = false;
     }
     this.children.forEach(child => child?.removeFromScene(scene));
   }
