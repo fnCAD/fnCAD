@@ -224,6 +224,14 @@ function updateOctree() {
     if (statsPanel) {
       statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
     }
+    
+    // Update material with new shader
+    updateMaterial();
+  } catch (e) {
+    console.error('Error updating octree:', e);
+  }
+}
+
 function updateMaterial() {
   try {
     material = new THREE.ShaderMaterial({
