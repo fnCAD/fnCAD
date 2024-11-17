@@ -251,7 +251,7 @@ minRenderSizeSlider.addEventListener('input', () => {
   const value = Math.pow(2, power);  // Use positive power for display
   const display = minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
   display.textContent = value === 1 ? '1' : `1/${value}`;
-  updateOctreeGeometry();
+  updateOctree();
 });
 
 // Add initial octree visualization
