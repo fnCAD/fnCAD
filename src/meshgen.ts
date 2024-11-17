@@ -102,7 +102,6 @@ export class MeshGenerator {
                     this.faces.push(startIndex + idx);
                 });
             }
-        });
 
     private optimizeVertices() {
         const maxIterations = 10;
