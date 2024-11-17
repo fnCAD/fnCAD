@@ -8,6 +8,15 @@ export enum CellState {
   Boundary
 }
 
+export enum Direction {
+  PosX,
+  NegX,
+  PosY,
+  NegY,
+  PosZ,
+  NegZ
+}
+
 export class OctreeNode {
   children: (OctreeNode | null)[] = new Array(8).fill(null);
   vertices: THREE.Vector3[] = [];
@@ -33,103 +42,138 @@ export class OctreeNode {
     }
   }
 
-  getNeighbor(direction: THREE.Vector3): OctreeNode | null {
-    // If we're at root, check if target is within our bounds
+  private getNeighborOctant(octant: number, direction: Direction): number {
+    // Octant mapping for each direction
+    const octantMaps = {
+      [Direction.PosX]: [1, 0, 3, 2, 5, 4, 7, 6],
+      [Direction.NegX]: [1, 0, 3, 2, 5, 4, 7, 6],
+      [Direction.PosY]: [2, 3, 0, 1, 6, 7, 4, 5],
+      [Direction.NegY]: [2, 3, 0, 1, 6, 7, 4, 5],
+      [Direction.PosZ]: [4, 5, 6, 7, 0, 1, 2, 3],
+      [Direction.NegZ]: [4, 5, 6, 7, 0, 1, 2, 3]
+    };
+    return octantMaps[direction][octant];
+  }
+
+  private getMirrorOctant(octant: number, direction: Direction): number {
+    // Mirror the octant across the appropriate axis
+    switch (direction) {
+      case Direction.PosX:
+      case Direction.NegX:
+        return octant ^ 1; // Flip x bit
+      case Direction.PosY:
+      case Direction.NegY:
+        return octant ^ 2; // Flip y bit
+      case Direction.PosZ:
+      case Direction.NegZ:
+        return octant ^ 4; // Flip z bit
+    }
+  }
+
+  private isNeighborInSameParent(octant: number, direction: Direction): boolean {
+    // Check if moving in the given direction stays within the same parent
+    switch (direction) {
+      case Direction.PosX:
+        return (octant & 1) === 0; // x bit is 0
+      case Direction.NegX:
+        return (octant & 1) === 1; // x bit is 1
+      case Direction.PosY:
+        return (octant & 2) === 0; // y bit is 0
+      case Direction.NegY:
+        return (octant & 2) === 2; // y bit is 1
+      case Direction.PosZ:
+        return (octant & 4) === 0; // z bit is 0
+      case Direction.NegZ:
+        return (octant & 4) === 4; // z bit is 1
+    }
+  }
+
+  private isAtBoundary(direction: Direction): boolean {
     if (!this.parent) {
-      console.log('At root node, checking if target is within bounds');
-      const targetPos = new THREE.Vector3()
-        .copy(this.center)
-        .addScaledVector(direction, this.size);
-      
-      // Check if target position is within root bounds
-      const half = this.size / 2;
-      const withinBounds = Math.abs(targetPos.x - this.center.x) <= half &&
-                          Math.abs(targetPos.y - this.center.y) <= half &&
-                          Math.abs(targetPos.z - this.center.z) <= half;
-      
-      console.log(`Target position at root: ${targetPos.toArray()}`);
-      console.log(`Root bounds check: ${withinBounds}`);
-      
-      if (withinBounds) {
-        // Find the octant containing the target position
-        const tx = targetPos.x > this.center.x ? 1 : 0;
-        const ty = targetPos.y > this.center.y ? 1 : 0;
-        const tz = targetPos.z > this.center.z ? 1 : 0;
-        const targetOctant = tx + ty * 2 + tz * 4;
-        return this.children[targetOctant];
-      }
+      return true;
+    }
+
+    const parentSize = this.parent.size;
+    const parentCenter = this.parent.center;
+
+    switch (direction) {
+      case Direction.PosX:
+        return this.center.x + this.size/2 >= parentCenter.x + parentSize/2;
+      case Direction.NegX:
+        return this.center.x - this.size/2 <= parentCenter.x - parentSize/2;
+      case Direction.PosY:
+        return this.center.y + this.size/2 >= parentCenter.y + parentSize/2;
+      case Direction.NegY:
+        return this.center.y - this.size/2 <= parentCenter.y - parentSize/2;
+      case Direction.PosZ:
+        return this.center.z + this.size/2 >= parentCenter.z + parentSize/2;
+      case Direction.NegZ:
+        return this.center.z - this.size/2 <= parentCenter.z - parentSize/2;
+    }
+  }
+
+  getNeighborAtLevel(direction: Direction): OctreeNode | null {
+    // If at root, handle boundary case
+    if (!this.parent) {
       return null;
     }
 
-    // Get relative position in parent's octants
-    const relativePos = new THREE.Vector3()
-      .copy(this.center)
-      .sub(this.parent.center)
-      .divideScalar(this.parent.size / 2); // Scale by parent's half-size to get [-1,1] range
+    // Get our octant index in parent
+    const myOctant = this.octant;
 
-    // Calculate target position in parent's space
-    const targetPos = new THREE.Vector3()
-      .copy(relativePos)
-      .add(direction);
-
-    console.log(`Current node center: ${this.center.toArray()}`);
-    console.log(`Parent center: ${this.parent.center.toArray()}`);
-    console.log(`Relative position in parent space: ${relativePos.toArray()}`);
-
-    // If target is within parent's bounds, traverse down
-    const withinBounds = Math.abs(targetPos.x) <= 1 && 
-                        Math.abs(targetPos.y) <= 1 && 
-                        Math.abs(targetPos.z) <= 1;
-    
-    console.log(`Target position relative to parent: ${targetPos.toArray()}`);
-    console.log(`Within parent bounds: ${withinBounds}`);
-    
-    if (withinBounds) {
-      // Find target octant in parent
-      const tx = targetPos.x > 0 ? 1 : 0;
-      const ty = targetPos.y > 0 ? 1 : 0;
-      const tz = targetPos.z > 0 ? 1 : 0;
-      const targetOctant = tx + ty * 2 + tz * 4;
-      return this.parent.children[targetOctant];
+    // If we're at a boundary in this direction, need to go up
+    if (this.isAtBoundary(direction)) {
+      const parentNeighbor = this.parent.getNeighborAtLevel(direction);
+      if (!parentNeighbor) {
+        // Create virtual outside node at boundary
+        const directionVector = new THREE.Vector3();
+        switch (direction) {
+          case Direction.PosX: directionVector.set(1, 0, 0); break;
+          case Direction.NegX: directionVector.set(-1, 0, 0); break;
+          case Direction.PosY: directionVector.set(0, 1, 0); break;
+          case Direction.NegY: directionVector.set(0, -1, 0); break;
+          case Direction.PosZ: directionVector.set(0, 0, 1); break;
+          case Direction.NegZ: directionVector.set(0, 0, -1); break;
+        }
+        const virtualCenter = new THREE.Vector3()
+          .copy(this.center)
+          .addScaledVector(directionVector, this.size);
+        return new OctreeNode(virtualCenter, this.size, this.sdf);
+      }
+      
+      // Get the mirror octant in the neighbor
+      const neighborOctant = this.getMirrorOctant(myOctant, direction);
+      return parentNeighbor.children[neighborOctant] || parentNeighbor;
     }
 
-    // Otherwise need to go up and over
-    console.log(`Looking for neighbor in parent's direction`);
-    const parentNeighbor = this.parent.getNeighbor(direction);
+    // If neighbor is in same parent, just return sibling
+    if (this.isNeighborInSameParent(myOctant, direction)) {
+      const neighborOctant = this.getNeighborOctant(myOctant, direction);
+      return this.parent.children[neighborOctant];
+    }
+
+    // Otherwise get parent's neighbor and traverse down
+    const parentNeighbor = this.parent.getNeighborAtLevel(direction);
     if (!parentNeighbor) {
-      // If we can't find a neighbor in the parent's direction, we're at a boundary
-      // Return a virtual neighbor cell that's fully outside
-      const virtualCenter = new THREE.Vector3()
-        .copy(this.center)
-        .addScaledVector(direction, this.size);
-      return new OctreeNode(virtualCenter, this.size, this.sdf);
+      return null;
     }
-    console.log(`Found parent's neighbor at ${parentNeighbor.center.toArray()}`);
 
-    // Get position relative to neighbor's coordinate system
-    const neighborRelativePos = new THREE.Vector3()
-      .copy(this.center)
-      .addScaledVector(direction, this.size)
-      .sub(parentNeighbor.center)
-      .divideScalar(parentNeighbor.size / 2);
+    // Return appropriate child of parent's neighbor
+    const targetOctant = this.getMirrorOctant(myOctant, direction);
+    return parentNeighbor.children[targetOctant] || parentNeighbor;
+  }
 
-    // Select octant in neighbor's space based on target position
-    const tx = neighborRelativePos.x >= 0 ? 1 : 0;
-    const ty = neighborRelativePos.y >= 0 ? 1 : 0;
-    const tz = neighborRelativePos.z >= 0 ? 1 : 0;
-    const targetOctant = tx + ty * 2 + tz * 4;
-
-    // If the neighbor exists but has no children, it's our neighbor
-    const neighborChild = parentNeighbor.children[targetOctant];
-    if (!neighborChild && parentNeighbor.size === this.size) {
-      return parentNeighbor;
-    } else if (!neighborChild) {
-      console.log(`No child found in parent neighbor's octant ${targetOctant}`);
-      console.log(`Parent neighbor center: ${parentNeighbor.center.toArray()}`);
-      console.log(`Target position: ${targetPos.toArray()}`);
-      console.log(`Position relative to neighbor: ${neighborRelativePos.toArray()}`);
+  getNeighbor(direction: THREE.Vector3): OctreeNode | null {
+    // Convert Vector3 direction to enum
+    let dir: Direction;
+    if (Math.abs(direction.x) > Math.abs(direction.y) && Math.abs(direction.x) > Math.abs(direction.z)) {
+      dir = direction.x > 0 ? Direction.PosX : Direction.NegX;
+    } else if (Math.abs(direction.y) > Math.abs(direction.z)) {
+      dir = direction.y > 0 ? Direction.PosY : Direction.NegY;
+    } else {
+      dir = direction.z > 0 ? Direction.PosZ : Direction.NegZ;
     }
-    return neighborChild;
+    return this.getNeighborAtLevel(dir);
   }
 
   evaluate(): Interval {
