@@ -7,10 +7,27 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
+    chunkSizeWarningLimit: 1000, // Increase warning threshold to 1MB
     rollupOptions: {
       output: {
-        // Ensure clean URLs work
-        manualChunks: undefined
+        manualChunks: {
+          'vendor': [
+            'three',
+            'monaco-editor',
+            'split.js'
+          ],
+          'core': [
+            './src/parser.ts',
+            './src/evaluator.ts',
+            './src/ast.ts'
+          ],
+          'rendering': [
+            './src/shader.ts',
+            './src/octree.ts',
+            './src/octreevis.ts',
+            './src/meshgen.ts'
+          ]
+        }
       }
     }
   },
