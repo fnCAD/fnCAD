@@ -112,9 +112,6 @@ export function generateShader(ast: Node): string {
             }
           }
 
-          // Simple surface coloring without lighting
-          col = vec3(1.0, 0.85, 0.0); // Gold color
-
           gl_FragColor = vec4(col, 1.0);
           return;
         }
