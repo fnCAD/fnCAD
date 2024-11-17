@@ -18,16 +18,12 @@ Split(['#editor-pane', '#preview-pane'], {
 // Initialize Monaco editor
 const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
   // Store editor instance for later use with shader compilation
-  value: `// Scene with two spheres and a floor
+  value: `// Scene with two spheres
 min(
-  // Floor plane
-  y + 1.0,
-  min(
-    // Sphere at origin
-    sqrt(x * x + y * y + z * z) - 1.0,
-    // Sphere offset on x-axis
-    sqrt((x - 2.0) * (x - 2.0) + y * y + z * z) - 0.7
-  )
+  // Sphere at origin
+  sqrt(x * x + y * y + z * z) - 1.0,
+  // Sphere offset on x-axis
+  sqrt((x - 2.0) * (x - 2.0) + y * y + z * z) - 0.7
 )`,
   language: 'typescript',
   theme: 'vs-dark',
