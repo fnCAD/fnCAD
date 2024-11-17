@@ -12,6 +12,7 @@ export interface Node {
   type: NodeType;
   evaluate(context: Record<string, number>): number;
   toGLSL(): string;
+  evaluateInterval(context: Record<string, Interval>): Interval;
 }
 
 export interface NumberNode extends Node {
