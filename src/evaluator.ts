@@ -23,7 +23,7 @@ export function createVariableNode(name: string): VariableNode {
     },
     evaluateInterval: (context: Record<string, Interval>) => {
       if (!(name in context)) {
-        return context[name];
+        throw new Error(`Undefined variable: ${name}`);
       }
       return context[name];
     },
