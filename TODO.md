@@ -33,11 +33,11 @@
   - [x] Basic directional lighting
 
 ## 5. Octree Generation
-- [ ] Interval arithmetic implementation
-- [ ] Recursive octree subdivision
-- [ ] SDF boundary detection
-- [ ] Visualization of octree structure
-- [ ] Adaptive subdivision based on SDF complexity
+- [x] Interval arithmetic implementation
+- [x] Recursive octree subdivision
+- [x] SDF boundary detection
+- [x] Visualization of octree structure
+- [x] Adaptive subdivision based on SDF complexity
 
 ## 6. Initial Mesh Generation
 - [ ] Octree to mesh conversion
