@@ -31,28 +31,28 @@ describe('Octree', () => {
     // the same regardless of which slider was moved first
     // Create a simple sphere SDF
     const ast = parse('sqrt(x*x + y*y + z*z) - 1.0');
-    const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    const modifiedOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
 
-    // Initial subdivision with small render size
-    const initialSettings = new OctreeRenderSettings(true, true, true, 0.1);
-    octree.subdivide(0.5, 1000, initialSettings);
+    // Initial subdivision with small render size (0.1)
+    const smallRenderSettings = new OctreeRenderSettings(true, true, true, 0.1);
+    modifiedOctree.subdivide(0.5, 1000, smallRenderSettings);
 
-    // Make a copy of the initial octree
-    const initialOctree = octree.dup();
+    // Save a copy before modification
+    const originalOctree = modifiedOctree.dup();
 
-    // Update original with larger render size
-    const newSettings = new OctreeRenderSettings(true, true, true, 0.5);
-    octree.updateGeometry(newSettings);
+    // Update the octree with larger render size (0.5)
+    const largeRenderSettings = new OctreeRenderSettings(true, true, true, 0.5);
+    modifiedOctree.updateGeometry(largeRenderSettings);
 
-    // Create fresh octree with new settings
-    const freshOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
-    freshOctree.subdivide(0.5, 1000, newSettings);
+    // Create new octree directly with large render size
+    const referenceOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    referenceOctree.subdivide(0.5, 1000, largeRenderSettings);
 
-    // Compare octrees - should throw if not equal
-    assertOctreesEqual(octree, freshOctree);
+    // The modified octree should match one created fresh with large settings
+    assertOctreesEqual(modifiedOctree, referenceOctree);
 
-    // Should throw when comparing with initial octree
-    expect(() => assertOctreesEqual(octree, initialOctree))
+    // But should differ from its original state with small settings
+    expect(() => assertOctreesEqual(modifiedOctree, originalOctree))
       .toThrow('Octree should differ from initial state');
   });
 });
