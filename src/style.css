@@ -88,6 +88,18 @@ body {
   display: none;
 }
 
+#stats-panel {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(45, 45, 45, 0.9);
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #444;
+  font-size: 12px;
+  color: #ddd;
+}
+
 .settings-content {
   display: flex;
   flex-direction: column;

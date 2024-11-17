@@ -48,6 +48,12 @@ renderer.setClearColor(0x000000, 0); // Clear to transparent black
 previewPane.innerHTML = '';
 previewPane.appendChild(renderer.domElement);
 
+// Add stats panel
+const statsPanel = document.createElement('div');
+statsPanel.id = 'stats-panel';
+statsPanel.textContent = 'Octree cells: 0';
+previewPane.appendChild(statsPanel);
+
 // Add settings panel
 const settingsPanel = document.createElement('div');
 settingsPanel.id = 'settings-panel';
@@ -159,6 +165,12 @@ editor.onDidChangeModelContent(() => {
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     currentOctree.subdivide(0.1);
     currentOctree.addToScene(octreeScene);
+    
+    // Update stats
+    const statsPanel = document.getElementById('stats-panel');
+    if (statsPanel) {
+      statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
+    }
     material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },

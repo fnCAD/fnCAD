@@ -124,4 +124,14 @@ export class OctreeNode {
     }
     this.children.forEach(child => child?.removeFromScene(scene));
   }
+
+  countCells(): number {
+    // Count this cell
+    let count = 1;
+    // Add counts from non-null children
+    this.children.forEach(child => {
+      if (child) count += child.countCells();
+    });
+    return count;
+  }
 }
