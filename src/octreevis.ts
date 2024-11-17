@@ -87,25 +87,6 @@ function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings):
   return new THREE.LineSegments(geometry, material);
 }
 
-function getColorForCell(node: OctreeNode): THREE.Color {
-  // Map size to a color - red for small cells, green for large
-  // Using log scale since sizes vary greatly
-  const maxSize = 65536; // Our current max size
-  const t = Math.log(node.size) / Math.log(maxSize); // Normalized 0-1
-  
-  if (node.state === CellState.Boundary) {
-    return new THREE.Color(1, 1, 0); // Bright yellow for leaf boundary cells
-  } else if (node.state === CellState.BoundarySubdivided) {
-    // Darker yellow for subdivided boundary cells, gets darker with depth
-    const darkness = Math.max(0.2, t); // Limit darkness
-    return new THREE.Color(darkness, darkness, 0);
-  } else if (node.state === CellState.Inside) {
-    return new THREE.Color(0, 1, 0); // Green for inside cells
-  } else {
-    return new THREE.Color(1, 0, 0); // Red for outside cells
-  }
-}
-
 export function visualizeOctree(root: OctreeNode, settings: OctreeRenderSettings): THREE.Group {
   // Create a group to hold all octree geometries
   const group = new THREE.Group();
