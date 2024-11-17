@@ -115,8 +115,12 @@ export class MeshGenerator {
             color: 0xffd700,
             side: THREE.DoubleSide,
             flatShading: true,
-            emissive: 0x222222,  // Add some base illumination
-            shininess: 30        // Make it more reflective
+            emissive: 0x222222,
+            shininess: 30,
+            transparent: true,
+            opacity: 0.8,
+            depthWrite: true,
+            depthTest: true
         });
 
         const mesh = new THREE.Mesh(geometry, material);
