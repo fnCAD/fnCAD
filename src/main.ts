@@ -95,7 +95,7 @@ settingsPanel.innerHTML = `
       <h4>Octree Computation</h4>
       <div class="setting-row">
         <label for="min-size">Min Cell Size:</label>
-        <input type="range" id="min-size" min="0" max="4" step="1" value="0">
+        <input type="range" id="min-size" min="0" max="6" step="1" value="0">
         <span class="value-display">0.1</span>
       </div>
       <div class="setting-row">
@@ -108,7 +108,7 @@ settingsPanel.innerHTML = `
       <h4>Visualization</h4>
       <div class="setting-row">
         <label for="min-render-size">Min Render Size:</label>
-        <input type="range" id="min-render-size" min="0" max="4" step="1" value="0">
+        <input type="range" id="min-render-size" min="0" max="6" step="1" value="0">
         <span class="value-display">0.1</span>
       </div>
     </div>
