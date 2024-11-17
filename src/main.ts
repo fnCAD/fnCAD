@@ -116,7 +116,7 @@ scene.add(quad);
 
 // Add initial octree visualization
 const initialAst = parse(editor.getValue());
-currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, initialAst);
+currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 currentOctree.subdivide(0.1);
 currentOctree.addToScene(octreeScene);
 
@@ -132,7 +132,7 @@ editor.onDidChangeModelContent(() => {
     if (currentOctree) {
       currentOctree.removeFromScene(scene);
     }
-    currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     currentOctree.subdivide(0.1);
     currentOctree.addToScene(octreeScene);
     material = new THREE.ShaderMaterial({
