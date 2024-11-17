@@ -99,7 +99,12 @@ export class MeshGenerator {
         });
     }
 
-    private optimizeVertices() {
+    private optimizeVertices(optimize: boolean = true) {
+        if (!optimize) {
+            console.log('Mesh optimization disabled');
+            return;
+        }
+
         const maxIterations = 10;
         const epsilon = 0.0001;
         
@@ -118,7 +123,6 @@ export class MeshGenerator {
                 maxMove = Math.max(maxMove, Math.abs(move));
             }
             
-            
             // Stop if vertices barely moved
             console.log(`Iteration ${iter + 1}, max movement: ${maxMove}`);
             if (maxMove < epsilon) {
@@ -128,10 +132,11 @@ export class MeshGenerator {
         }
     }
 
-    private createMesh(): THREE.Mesh {
+    constructor(private octree: OctreeNode, private optimize: boolean = true) {}
 
-        // Optimize vertex positions
-        this.optimizeVertices();
+    private createMesh(): THREE.Mesh {
+        // Optimize vertex positions if enabled
+        this.optimizeVertices(this.optimize);
 
         const geometry = new THREE.BufferGeometry();
         

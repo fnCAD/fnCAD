@@ -114,6 +114,10 @@ settingsPanel.innerHTML = `
       </div>
     </div>
     <div class="setting-row">
+      <input type="checkbox" id="optimize-mesh" checked>
+      <label for="optimize-mesh">Optimize Mesh</label>
+    </div>
+    <div class="setting-row">
       <button id="generate-mesh">Generate Mesh</button>
     </div>
   </div>
@@ -376,7 +380,9 @@ generateMeshButton.addEventListener('click', () => {
   }
   if (currentOctree) {
     console.log('Creating mesh generator');
-    const meshGen = new MeshGenerator(currentOctree);
+    // Get optimization setting
+    const optimize = (document.getElementById('optimize-mesh') as HTMLInputElement).checked;
+    const meshGen = new MeshGenerator(currentOctree, optimize);
     currentMesh = meshGen.generate();
     console.log(`Generated mesh with ${currentMesh.geometry.attributes.position.count} vertices`);
     console.log('Adding mesh to scene at position:', currentMesh.position);
