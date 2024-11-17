@@ -98,15 +98,7 @@ export function generateShader(ast: Node): string {
               gl_FragColor = vec4(mix(col, octreeColor, 0.5), 1.0);
               return;
             }
-            // For inside cells, we want to ensure they're only visible when they're actually
-            // in front of the surface
-            if (octreeDepthValue < ndcDepth) {
-              // Only show octree color if it's genuinely in front
-              gl_FragColor = vec4(octreeColor, 1.0);
-            } else {
-              // Otherwise show the surface
-              gl_FragColor = vec4(col, 1.0);
-            }
+            // Otherwise show the surface
           }
 
           gl_FragColor = vec4(col, 1.0);
