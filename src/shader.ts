@@ -31,8 +31,14 @@ export function generateShader(ast: Node): string {
       // Convert UV to NDC space (-1 to 1)
       vec2 ndc = (uv * 2.0 - 1.0);
       
-      // Create ray in view space
-      vec3 rayView = normalize(vec3(ndc.x, ndc.y, -1.0));
+      // Create ray in view space with proper perspective
+      float fov = radians(75.0);
+      float aspect = resolution.x / resolution.y;
+      vec3 rayView = normalize(vec3(
+        ndc.x * aspect * tan(fov/2.0),
+        ndc.y * tan(fov/2.0),
+        -1.0
+      ));
       
       // Convert ray to world space using the inverse view matrix
       vec4 rayWorld = inverse(viewMatrix) * vec4(rayView, 0.0);
@@ -47,14 +53,8 @@ export function generateShader(ast: Node): string {
       // Ray origin is the camera position
       vec3 ro = customCameraPosition;
 
-      // Calculate ray direction with proper FOV and aspect ratio
-      float fov = radians(75.0); // 75 degree field of view
-      float aspect = resolution.x / resolution.y;
-      vec3 rd = normalize(vec3(ndc.x * aspect * tan(fov/2.0),
-                              ndc.y * tan(fov/2.0),
-                              -1.0));
-      // Transform ray direction to world space
-      rd = (inverse(customViewMatrix) * vec4(rd, 0.0)).xyz;
+      // Get ray direction using our helper function
+      vec3 rd = getRayDirection(gl_FragCoord.xy / resolution.xy, ro, customViewMatrix);
 
       // Background visualization based on ray direction
       vec3 background = normalize(rd) * 0.5 + 0.5; // Map from [-1,1] to [0,1]
