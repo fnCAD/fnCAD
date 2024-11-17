@@ -260,7 +260,9 @@ minRenderSizeSlider.addEventListener('input', () => {
       showBoundaryCheckbox.checked,
       minRenderSize
     );
+    currentOctree.removeFromScene(previewOverlayScene);
     currentOctree.updateGeometry(renderSettings);
+    currentOctree.addToScene(previewOverlayScene);
   }
 });
 
