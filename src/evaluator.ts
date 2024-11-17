@@ -22,7 +22,10 @@ export function createVariableNode(name: string): VariableNode {
       return context[name];
     },
     evaluateInterval: (context: Record<string, Interval>) => {
-      const evaluatedArgs: Interval[] = args.map(arg => arg.evaluateInterval(context));
+      if (!(name in context)) {
+        return context[name];
+      }
+      const evaluatedArgs: Interval[] = this.args.map((arg: Node) => arg.evaluateInterval(context));
       
       // Handle built-in math functions
       if (name === 'sqrt') {

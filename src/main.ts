@@ -2,7 +2,7 @@ import './style.css'
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { parse } from './parser'
 import { generateShader } from './shader'
 
