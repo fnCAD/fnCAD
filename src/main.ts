@@ -225,6 +225,7 @@ function updateOctree() {
       statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
     }
 function updateMaterial() {
+    material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
         customViewMatrix: { value: camera.matrixWorldInverse },
