@@ -318,8 +318,17 @@ export class OctreeNode {
       this.hasGeometry = false;
     }
     
-    // Only create geometry if cell is large enough and matches visibility criteria
-    if (this.size >= settings.minRenderSize) {
+    // Create geometry if:
+    // 1. Cell is large enough AND
+    // 2. Either:
+    //    a) Cell is a leaf node (no children) OR
+    //    b) Cell has children but they're all too small to render
+    const isLeaf = this.children.every(child => child === null);
+    const hasVisibleChildren = this.children.some(child => 
+      child !== null && child.size >= settings.minRenderSize
+    );
+
+    if (this.size >= settings.minRenderSize && (isLeaf || !hasVisibleChildren)) {
       if ((this.isSurfaceCell() && settings.showBoundary) ||
           (this.isFullyInside() && settings.showInside) ||
           (this.isFullyOutside() && settings.showOutside)) {
