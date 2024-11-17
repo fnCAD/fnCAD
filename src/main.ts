@@ -41,13 +41,16 @@ window._editor = editor;
 // Get preview pane element
 const previewPane = document.getElementById('preview-pane')!;
 
-// Set up Three.js scene
+// Set up Three.js scene, renderer and camera
 const scene = new THREE.Scene();
 const octreeScene = new THREE.Scene();
 let currentOctree: OctreeNode | null = null;
 
-// Set up renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(previewPane.clientWidth, previewPane.clientHeight);
 renderer.setClearColor(0x000000, 0); // Clear to transparent black
+previewPane.innerHTML = '';
+previewPane.appendChild(renderer.domElement);
 
 // Create render target for octree
 const octreeRenderTarget = new THREE.WebGLRenderTarget(
@@ -73,10 +76,6 @@ camera.position.set(3, 2, 3);
 camera.up.set(0, 1, 0);  // Ensure up vector is aligned with Y axis
 camera.lookAt(0, 0, 0);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(previewPane.clientWidth, previewPane.clientHeight);
-previewPane.innerHTML = '';
-previewPane.appendChild(renderer.domElement);
 
 // Add orbit controls
 const controls = new OrbitControls(camera, renderer.domElement);
