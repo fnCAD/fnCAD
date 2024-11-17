@@ -5,18 +5,16 @@ import * as THREE from 'three';
 
 // Test helper to assert octree equality
 function assertOctreesEqual(a: OctreeNode, b: OctreeNode): void {
-  expect(a.size).withContext(`Size mismatch: ${a.size} vs ${b.size}`).toBe(b.size);
-  expect(a.state).withContext(`State mismatch: ${a.state} vs ${b.state}`).toBe(b.state);
-  expect(a.center.equals(b.center))
-    .withContext(`Center mismatch: ${a.center.toArray()} vs ${b.center.toArray()}`)
-    .toBe(true);
+  expect(a.size).toBe(b.size); // Size mismatch
+  expect(a.state).toBe(b.state); // State mismatch
+  expect(a.center.equals(b.center)).toBe(true); // Center mismatch
   
   // Compare children recursively
   for (let i = 0; i < 8; i++) {
     const aChild = a.children[i];
     const bChild = b.children[i];
     
-    expect(!!aChild).withContext(`Child presence mismatch at index ${i}`).toBe(!!bChild);
+    expect(!!aChild).toBe(!!bChild); // Child presence mismatch at index ${i}
     
     if (aChild && bChild) {
       assertOctreesEqual(aChild, bChild);

@@ -310,7 +310,9 @@ function updateOctree() {
     const renderSettings = new OctreeRenderSettings(true, true, true, minRenderSize);
     const totalCells = currentOctree.subdivide(minSize, cellBudget, renderSettings);
     const octreeGroup = visualizeOctree(currentOctree, renderSettings);
-    previewOverlayScene.add(octreeGroup);
+    if (octreeGroup) {
+      previewOverlayScene.add(octreeGroup);
+    }
     
     // Update stats
     const statsPanel = document.getElementById('stats-panel');
