@@ -7,7 +7,7 @@ describe('Octree', () => {
   it('maintains consistent geometry after render settings change', () => {
     // Create a simple sphere SDF
     const ast = parse('sqrt(x*x + y*y + z*z) - 1.0');
-    const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 8, ast);
+    const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
 
     // Initial subdivision with small render size
     const initialSettings = new OctreeRenderSettings(true, true, true, 0.1);
@@ -28,7 +28,7 @@ describe('Octree', () => {
     );
 
     // Create fresh octree with new settings
-    const freshOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 8, ast);
+    const freshOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
     freshOctree.subdivide(0.1, 1000, newSettings);
     const freshGeometryState = freshOctree.children.map(child =>
       child ? child.hasGeometry : null
