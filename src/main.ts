@@ -277,7 +277,8 @@ function updateOctree() {
     minSizeDisplay.textContent = minSize.toString();
     
     // Create and add new octree with current min size
-    const totalCells = currentOctree.subdivide(minSize, 100000);
+    const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
+    const totalCells = currentOctree.subdivide(minSize, cellBudget);
     currentOctree.addToScene(previewOverlayScene);
     
     // Update stats
@@ -285,6 +286,9 @@ function updateOctree() {
     if (statsPanel) {
       statsPanel.textContent = `Octree cells: ${totalCells}`;
     }
+
+    // Update visibility with current render size
+    updateOctreeVisibility();
     
     // Update material with new shader
     updateMaterial();
