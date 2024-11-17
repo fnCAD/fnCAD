@@ -14,16 +14,11 @@ export class MeshGenerator {
     }
 
     private collectSurfaceCells(node: OctreeNode) {
-        console.log(`Checking node at ${node.center.toArray()} with size ${node.size}`);
-        
         // Check if this is a boundary cell (either leaf or subdivided)
         if (node.state === CellState.Boundary || node.state === CellState.BoundarySubdivided) {
-            console.log('Found boundary cell');
-            
             // Add vertices for leaf nodes or nodes at minimum size
             const isLeaf = node.children.every(child => child === null);
             if (isLeaf || node.state === CellState.Boundary) {
-                console.log('Adding vertices for boundary cell');
                 this.addCellVertices(node);
                 return;
             }
@@ -38,7 +33,6 @@ export class MeshGenerator {
     }
 
     private addCellVertices(node: OctreeNode) {
-        console.log(`Adding vertices for cell at ${node.center.toArray()} with size ${node.size}`);
         // Get existing vertices or create new ones
         const startIndex = this.vertices.length;
         
@@ -85,13 +79,10 @@ export class MeshGenerator {
             else direction = Direction.NegZ;
 
             // Get neighbor using enum-based method
-            console.log(`Finding neighbor for face in direction ${Direction[direction]} at position ${node.center.toArray()} with size ${node.size}`);
             const neighbor = node.getNeighborAtLevel(direction);
             if (!neighbor) {
                 throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}, face normal ${face.normal.toArray()}`);
             } else {
-                console.log(`Found neighbor at ${neighbor.center.toArray()} with size ${neighbor.size}`);
-                
                 // Add face if the neighbor is outside or at a coarser level
                 if (neighbor.isFullyOutside() || 
                     (neighbor.state === CellState.Outside && neighbor.size > node.size)) {
@@ -105,7 +96,6 @@ export class MeshGenerator {
 
     private optimizeVertices(optimize: boolean = true) {
         if (!optimize) {
-            console.log('Mesh optimization disabled');
             return;
         }
 
@@ -128,9 +118,7 @@ export class MeshGenerator {
             }
             
             // Stop if vertices barely moved
-            console.log(`Iteration ${iter + 1}, max movement: ${maxMove}`);
             if (maxMove < epsilon) {
-                console.log(`Optimization converged after ${iter + 1} iterations`);
                 break;
             }
         }
