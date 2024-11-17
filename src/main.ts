@@ -98,7 +98,7 @@ const showBoundaryCheckbox = document.getElementById('show-boundary') as HTMLInp
 
 function updateOctreeVisibility() {
   if (currentOctree) {
-    octreeScene.visible = showOctreeCheckbox.checked;
+    previewOverlayScene.visible = showOctreeCheckbox.checked;
     if (showOctreeCheckbox.checked) {
       currentOctree.updateVisibility(
         showOutsideCheckbox.checked,
