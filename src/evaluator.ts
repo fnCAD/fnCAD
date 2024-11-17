@@ -130,6 +130,9 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
       
       // Handle built-in math functions
+      if (name === 'sqr') {
+        return evaluatedArgs[0] * evaluatedArgs[0];
+      }
       if (name in Math) {
         const fn = Math[name as keyof typeof Math];
         if (typeof fn === 'function') {
