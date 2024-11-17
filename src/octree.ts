@@ -127,11 +127,16 @@ export class OctreeNode {
       return cellCount;
     }
 
-    // If we've reached minimum size or no budget left, stop subdividing
+    // If we've reached minimum size, stop subdividing
     const newSize = this.size / 2;
-    if (newSize < minSize || cellBudget <= 1) {
+    if (newSize < minSize) {
       this.createEdges();
       return cellCount;
+    }
+
+    // If no budget left, throw
+    if (cellBudget <= 1) {
+      throw new Error('Cell budget exhausted');
     }
 
     // Calculate budget for children (reserving 1 for this cell)
