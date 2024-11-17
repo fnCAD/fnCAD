@@ -167,6 +167,7 @@ function animate() {
 
   // First render octree to texture
   renderer.setRenderTarget(octreeRenderTarget);
+  renderer.clear(); // Clear previous frame
   renderer.render(octreeScene, camera);
   renderer.setRenderTarget(null);
   

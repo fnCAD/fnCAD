@@ -11,10 +11,10 @@ export function generateShader(ast: Node): string {
     vec2 worldToUV(vec3 worldPos) {
       // Project point using same view/projection as octree render
       vec4 projected = customViewMatrix * vec4(worldPos, 1.0);
-      // Convert to NDC space
+      // Convert to NDC space (-1 to 1)
       vec2 ndc = projected.xy / projected.w;
-      // Convert to UV space [0,1]
-      return ndc * 0.5 + 0.5;
+      // Convert to UV space [0,1] and flip Y coordinate
+      return vec2(ndc.x * 0.5 + 0.5, -ndc.y * 0.5 + 0.5);
     }
 
     float scene(vec3 pos) {
