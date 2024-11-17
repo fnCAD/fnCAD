@@ -281,7 +281,8 @@ const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
 const renderSettings = new OctreeRenderSettings(true, true, true, minRenderSize);
 const totalCells = currentOctree.subdivide(minSize, cellBudget, renderSettings);
 statsPanel.textContent = `Octree cells: ${totalCells}`;
-currentOctree.addToScene(previewOverlayScene);
+const octreeGroup = visualizeOctree(currentOctree, renderSettings);
+previewOverlayScene.add(octreeGroup);
 
 
 // Function to update the octree visualization
@@ -316,7 +317,8 @@ function updateOctree() {
     const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
     const renderSettings = new OctreeRenderSettings(true, true, true, minRenderSize);
     const totalCells = currentOctree.subdivide(minSize, cellBudget, renderSettings);
-    currentOctree.addToScene(previewOverlayScene);
+    const octreeGroup = visualizeOctree(currentOctree, renderSettings);
+    previewOverlayScene.add(octreeGroup);
     
     // Update stats
     const statsPanel = document.getElementById('stats-panel');
