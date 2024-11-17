@@ -1,0 +1,33 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /fncad/
+  
+  # If the request is not for a file that exists
+  RewriteCond %{REQUEST_FILENAME} !-f
+  # If the request is not for a directory that exists
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Rewrite all requests to index.html
+  RewriteRule ^(.*)$ index.html [QSA,L]
+</IfModule>
+
+# Set correct MIME types
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType application/json .json
+  AddType text/css .css
+  AddType image/svg+xml .svg
+</IfModule>
+
+# Enable CORS for development
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+# Cache control
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType application/json "access plus 0 seconds"
+  ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
