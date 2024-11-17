@@ -101,11 +101,16 @@ export function generateShader(ast: Node): string {
               gl_FragColor = vec4(mix(col, octreeColor, 0.5), 1.0);
               return;
             }
-            // Mix octree color with surface color when inside objects
-            // This has to be *really weak* because it's very high frequency,
-            // so if it's more than extremely faint it visually drowns
-            // out the low-frequency shape of the surface.
-            gl_FragColor = vec4(mix(col, octreeColor, 0.01), 1.0);
+            // For inside cells, we want to ensure they're only visible when they're actually
+            // in front of the surface, using the depth buffer
+            float surfaceDepth = t;
+            if (linearOctreeDepth < surfaceDepth) {
+              // Only show octree color if it's genuinely in front
+              gl_FragColor = vec4(octreeColor, 1.0);
+            } else {
+              // Otherwise show the surface
+              gl_FragColor = vec4(col, 1.0);
+            }
           }
 
           gl_FragColor = vec4(col, 1.0);
