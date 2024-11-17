@@ -83,11 +83,7 @@ export class MeshGenerator {
             console.log(`Finding neighbor for face with normal ${face.normal.toArray()} at position ${node.center.toArray()} with size ${node.size}`);
             const neighbor = node.getNeighbor(face.normal);
             if (!neighbor) {
-                console.log(`No neighbor found for face with normal ${face.normal.toArray()}`);
-                // If we're at the boundary of our volume, add the face
-                face.indices.forEach(idx => {
-                    this.faces.push(startIndex + idx);
-                });
+                throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}, face normal ${face.normal.toArray()}`);
             } else {
                 console.log(`Found neighbor at ${neighbor.center.toArray()} with size ${neighbor.size}`);
                 
@@ -98,6 +94,7 @@ export class MeshGenerator {
                     });
                 }
             }
+        });
     }
 
     private optimizeVertices() {
