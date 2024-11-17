@@ -2,6 +2,7 @@ import './style.css'
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
+import { OctreeNode } from './octree'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { parse } from './parser'
 import { generateShader } from './shader'
@@ -38,6 +39,7 @@ window._editor = editor;
 
 // Set up Three.js scene
 const scene = new THREE.Scene();
+let currentOctree: OctreeNode | null = null;
 // Add coordinate axes helper
 const axesHelper = new THREE.AxesHelper(2);
 scene.add(axesHelper);
@@ -89,6 +91,14 @@ editor.onDidChangeModelContent(() => {
     const editorContent = editor.getValue();
     const ast = parse(editorContent);
     const fragmentShader = generateShader(ast);
+
+    // Update octree visualization
+    if (currentOctree) {
+      currentOctree.removeFromScene(scene);
+    }
+    currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    currentOctree.subdivide(0.1);
+    currentOctree.addToScene(scene);
     material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
