@@ -62,16 +62,19 @@ export class OctreeNode {
     }
 
     // Get relative position in parent's octants
-    const parentSize = this.size * 2;
     const relativePos = new THREE.Vector3()
       .copy(this.center)
       .sub(this.parent.center)
-      .divideScalar(this.size);
+      .divideScalar(this.parent.size / 2); // Scale by parent's half-size to get [-1,1] range
 
-    // Calculate target position
+    // Calculate target position in parent's space
     const targetPos = new THREE.Vector3()
       .copy(relativePos)
       .add(direction);
+
+    console.log(`Current node center: ${this.center.toArray()}`);
+    console.log(`Parent center: ${this.parent.center.toArray()}`);
+    console.log(`Relative position in parent space: ${relativePos.toArray()}`);
 
     // If target is within parent's bounds, traverse down
     const withinBounds = Math.abs(targetPos.x) <= 1 && 
