@@ -5,7 +5,8 @@ import * as THREE from 'three';
 export enum CellState {
   Inside,
   Outside,
-  Boundary
+  Boundary,
+  BoundarySubdivided
 }
 
 export enum Direction {
@@ -49,6 +50,7 @@ export class OctreeNode {
     } else if (interval.min > 0) {
       this.state = CellState.Outside;
     } else {
+      // Start as regular boundary, will be updated to BoundarySubdivided if needed
       this.state = CellState.Boundary;
     }
   }
@@ -237,7 +239,8 @@ export class OctreeNode {
     // If the interval is entirely positive or negative, or we've reached minimum size,
     // we don't need to subdivide further
     const newSize = this.size / 2;
-    if (interval.min > 0 || interval.max < 0 || newSize < minSize) {
+    if ((interval.min > 0 || interval.max < 0 || newSize < minSize) && 
+        this.state !== CellState.Boundary) {
       // Update geometry for this node
       this.updateLocalGeometry(settings);
       return 1;
@@ -258,6 +261,11 @@ export class OctreeNode {
       [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
     ];
 
+    // If we're subdividing a boundary cell, mark it as such
+    if (this.state === CellState.Boundary) {
+      this.state = CellState.BoundarySubdivided;
+    }
+    
     // Create 8 children with equal portion of remaining budget
     for (let i = 0; i < 8; i++) {
       const [x, y, z] = offsets[i];
@@ -285,9 +293,11 @@ export class OctreeNode {
     const maxSize = 65536; // Our current max size
     const t = Math.log(this.size) / Math.log(maxSize); // Normalized 0-1
     
-    if (this.isSurfaceCell()) {
-      return new THREE.Color(1, 1, 0); // Yellow for boundary cells
-    } else if (this.isFullyInside()) {
+    if (this.state === CellState.Boundary) {
+      return new THREE.Color(1, 1, 0); // Bright yellow for leaf boundary cells
+    } else if (this.state === CellState.BoundarySubdivided) {
+      return new THREE.Color(0.5, 0.5, 0); // Dark yellow for subdivided boundary cells
+    } else if (this.state === CellState.Inside) {
       return new THREE.Color(0, 1, 0); // Green for inside cells
     } else {
       return new THREE.Color(1, 0, 0); // Red for outside cells
