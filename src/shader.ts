@@ -6,7 +6,11 @@ export function generateShader(ast: Node): string {
     uniform mat4 customViewMatrix;
     uniform vec3 customCameraPosition;
 
-    float scene(vec3 p) {
+    // Position vector used by the SDF
+    varying vec3 p;
+
+    float scene(vec3 pos) {
+      p = pos;  // Assign to varying for use in the SDF
       return ${ast.toGLSL()};
     }
 
