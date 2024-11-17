@@ -301,9 +301,6 @@ function updateOctree() {
       statsPanel.textContent = `Octree cells: ${totalCells}`;
     }
 
-    // Update visibility with current render size
-    updateOctreeVisibility();
-    
     // Update material with new shader
     updateMaterial();
   } catch (e) {
