@@ -85,21 +85,30 @@ export function generateShader(ast: Node): string {
           vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
           float viewSpaceDepth = -clipPos.z; // View space depth is negative of z in view space
           
-          // Get depth from octree depth buffer [0,1]
+          // Get depth from octree depth buffer [0,1] where 0 is near plane, 1 is far plane
           float octreeDepthValue = texture2D(octreeDepth, uv).r;
           
-          // Convert octree depth from [0,1] to view space
-          float near = 0.1;
-          float far = 1000.0;
-          float ndc = octreeDepthValue * 2.0 - 1.0; // Convert [0,1] to [-1,1]
-          float viewSpaceOctreeDepth = near * far / (far + near - ndc * (far - near));
-
+          // Convert octree depth from [0,1] to view space using perspective projection formula
+          // View space Z is negative (objects further from camera have more negative Z)
+          float near = 0.1;   // Near plane distance (positive)
+          float far = 1000.0; // Far plane distance (positive)
+          
+          // Convert [0,1] depth to NDC [-1,1] where -1 is near, +1 is far
+          float ndc = octreeDepthValue * 2.0 - 1.0;
+          
+          // Convert NDC to view space using inverse perspective projection
+          // Result will be negative, ranging from -near (closest) to -far (furthest)
+          float viewSpaceOctreeDepth = 2.0 * near * far / (far + near - ndc * (far - near));
+          
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
             vec3 octreeColor = octreeData.rgb;
             
-            // Compare depths - show octree only if it's closer than the surface
-            if (-viewSpaceOctreeDepth < -viewSpaceDepth) {
+            // Compare view space depths
+            // viewSpaceDepth is already negative from raymarching
+            // viewSpaceOctreeDepth is negative from perspective transform
+            // Less negative = closer to camera
+            if (viewSpaceOctreeDepth > viewSpaceDepth) {
               gl_FragColor = vec4(octreeColor, 1.0);
               return;
             }
