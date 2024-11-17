@@ -1,7 +1,6 @@
 # fnCAD
 
 Created by Claude 3.5 Sonnet (Anthropic)
-Copyright (c) 2024 FeepingCreature
 
 A functional CAD tool inspired by OpenSCAD that lets you design 3D objects using Signed Distance Fields (SDFs). Create complex geometries with mathematical precision and export them as meshes.
 
