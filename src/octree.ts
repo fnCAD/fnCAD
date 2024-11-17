@@ -13,17 +13,19 @@ export class OctreeNode {
     private sdf: Node
   ) {}
 
-  evaluate(context: Record<string, Interval>): Interval {
+  evaluate(): Interval {
     // Evaluate SDF over the cube bounds
     const half = this.size / 2;
-    context['x'] = new Interval(this.center.x - half, this.center.x + half);
-    context['y'] = new Interval(this.center.y - half, this.center.y + half);
-    context['z'] = new Interval(this.center.z - half, this.center.z + half);
+    const context: Record<string, Interval> = {
+      x: new Interval(this.center.x - half, this.center.x + half),
+      y: new Interval(this.center.y - half, this.center.y + half),
+      z: new Interval(this.center.z - half, this.center.z + half)
+    };
     return this.sdf.evaluateInterval(context);
   }
 
   subdivide(minSize: number = 0.1): void {
-    const interval = this.evaluate({});
+    const interval = this.evaluate();
 
     // If the interval is entirely positive or negative, we don't need to subdivide
     if (interval.min > 0 || interval.max < 0) {
