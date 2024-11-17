@@ -100,19 +100,19 @@ export function generateShader(ast: Node): string {
           // Convert to depth buffer space [0,1]
           float rayDepth = rayNDC.z * 0.5 + 0.5;
           
-          // Mix in octree visualization if cell is occupied and closer
+          // Mix in preview scene if visible and closer
           if(octreeData.a > 0.5) {
-            vec3 octreeColor = octreeData.rgb;
+            vec3 previewSceneColor = octreeData.rgb;
 
             // Compare depths in [0,1] space
             // Smaller depth values are closer to camera
             if (octreeDepth < rayDepth) {
-              gl_FragColor = vec4(octreeColor, 1.0);
+              gl_FragColor = vec4(previewSceneColor, 1.0);
               return;
             }
           }
 
-          // Add basic lighting for the mesh
+          // Calculate lighting for the raymarched surface
           vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
           float diffuse = max(dot(n, lightDir), 0.0);
           vec3 ambient = vec3(0.2);
