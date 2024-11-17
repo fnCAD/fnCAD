@@ -1,10 +1,7 @@
 import * as THREE from 'three';
 import { OctreeNode, CellState } from './octree';
 
-import * as THREE from 'three';
-import { OctreeNode, CellState } from './octree';
-
-export interface OctreeRenderSettings {
+export class OctreeRenderSettings {
   showOutside: boolean;
   showInside: boolean;
   showBoundary: boolean;
