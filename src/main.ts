@@ -33,6 +33,11 @@ min(
   automaticLayout: true,
 });
 
+// Add change listener to update shader
+editor.onDidChangeModelContent(() => {
+  updateOctree();
+});
+
 // Store editor instance for later use with shader compilation
 window._editor = editor;
 
