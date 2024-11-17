@@ -1,4 +1,4 @@
-import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
+import { Interval } from './interval';
 import { Interval } from './interval';
 
 export function createNumberNode(value: number): NumberNode {
@@ -21,14 +21,11 @@ export function createVariableNode(name: string): VariableNode {
       }
       return context[name];
     },
-    evaluateInterval: (context) => {
+    evaluateInterval: (context: Record<string, Interval>) => {
       if (!(name in context)) {
         throw new Error(`Undefined variable: ${name}`);
       }
       return context[name];
-    },
-    evaluateInterval: (context) => {
-      const evaluatedArgs = args.map(arg => arg.evaluateInterval(context));
       
       // Handle built-in math functions
       if (name === 'sqrt') {
@@ -124,10 +121,44 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
 
 export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode {
   return {
-    type: 'FunctionCall',
+    type: 'FunctionCall' as const,
     name,
     args,
-    evaluate: (context) => {
+    evaluateInterval: (context: Record<string, Interval>) => {
+      const evaluatedArgs = args.map(arg => arg.evaluateInterval(context));
+      
+      // Handle built-in math functions
+      if (name === 'sqrt') {
+        return evaluatedArgs[0].sqrt();
+      }
+      if (name === 'sin') {
+        return evaluatedArgs[0].sin();
+      }
+      if (name === 'cos') {
+        return evaluatedArgs[0].cos();
+      }
+
+      // Handle min/max with any number of arguments
+      if (name === 'min' && evaluatedArgs.length >= 2) {
+        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
+          return new Interval(
+            Math.min(acc.min, interval.min),
+            Math.min(acc.max, interval.max)
+          );
+        });
+      }
+      if (name === 'max' && evaluatedArgs.length >= 2) {
+        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
+          return new Interval(
+            Math.max(acc.min, interval.min),
+            Math.max(acc.max, interval.max)
+          );
+        });
+      }
+
+      throw new Error(`Unknown function: ${name}`);
+    },
+    evaluate: (context: Record<string, number>) => {
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
       
       // Handle built-in math functions
