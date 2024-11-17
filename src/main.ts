@@ -203,8 +203,10 @@ minSizeSlider.addEventListener('input', () => {
 
 // Add initial octree visualization
 const initialAst = parse(editor.getValue());
-currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
-currentOctree.subdivide(parseFloat(minSizeSlider.value));
+currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 8, initialAst);
+const power = parseInt(minSizeSlider.value);
+const minSize = Math.pow(2, -power);
+currentOctree.subdivide(minSize);
 currentOctree.addToScene(previewOverlayScene);
 
 // Update initial stats
@@ -224,7 +226,7 @@ function updateOctree() {
     if (currentOctree) {
       currentOctree.removeFromScene(previewOverlayScene);
     }
-    currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
+    currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 8, ast);
     
     // Get min size from slider
     const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
