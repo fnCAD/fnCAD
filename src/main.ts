@@ -272,9 +272,10 @@ function updateOctree() {
     const power = parseInt(minSizeSlider.value);
     const minSize = Math.pow(2, -power);
     
-    // Update display
+    // Update display with fraction format
+    const value = Math.pow(2, power);  // Use positive power for display
     const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
-    minSizeDisplay.textContent = minSize.toString();
+    minSizeDisplay.textContent = value === 1 ? '1' : `1/${value}`;
     
     // Create and add new octree with current min size
     const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
