@@ -1,0 +1,100 @@
+import * as THREE from 'three';
+import { OctreeNode } from './octree';
+
+export class MeshGenerator {
+    private vertices: THREE.Vector3[] = [];
+    private faces: number[] = [];
+    
+    constructor(private octree: OctreeNode) {}
+
+    generate(): THREE.Mesh {
+        this.collectSurfaceCells(this.octree);
+        return this.createMesh();
+    }
+
+    private collectSurfaceCells(node: OctreeNode) {
+        if (!node.isSurfaceCell()) {
+            return;
+        }
+
+        // If this is a leaf node or small enough, add its vertices
+        if (node.children.every(child => child === null) || node.size < 0.2) {
+            this.addCellVertices(node);
+            return;
+        }
+
+        // Otherwise recurse into children
+        node.children.forEach(child => {
+            if (child) this.collectSurfaceCells(child);
+        });
+    }
+
+    private addCellVertices(node: OctreeNode) {
+        // Get existing vertices or create new ones
+        const startIndex = this.vertices.length;
+        
+        // Add vertices for this cell
+        const half = node.size / 2;
+        const corners = [
+            [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
+            [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
+        ];
+        
+        corners.forEach(([x, y, z]) => {
+            this.vertices.push(new THREE.Vector3(
+                node.center.x + x * half,
+                node.center.y + y * half,
+                node.center.z + z * half
+            ));
+        });
+
+        // Add faces (triangles) for the cube
+        const faces = [
+            // Front
+            0, 1, 2,  2, 1, 3,
+            // Back
+            4, 6, 5,  5, 6, 7,
+            // Left
+            0, 2, 4,  4, 2, 6,
+            // Right
+            1, 5, 3,  3, 5, 7,
+            // Top
+            2, 3, 6,  6, 3, 7,
+            // Bottom
+            0, 4, 1,  1, 4, 5
+        ];
+
+        // Add faces with correct vertex indices
+        faces.forEach(idx => {
+            this.faces.push(startIndex + idx);
+        });
+    }
+
+    private createMesh(): THREE.Mesh {
+        const geometry = new THREE.BufferGeometry();
+        
+        // Convert vertices to flat array
+        const positions = new Float32Array(this.vertices.length * 3);
+        this.vertices.forEach((vertex, i) => {
+            positions[i * 3] = vertex.x;
+            positions[i * 3 + 1] = vertex.y;
+            positions[i * 3 + 2] = vertex.z;
+        });
+
+        // Set attributes
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setIndex(this.faces);
+        
+        // Compute normals
+        geometry.computeVertexNormals();
+
+        // Create mesh with basic material
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xffd700,
+            side: THREE.DoubleSide,
+            flatShading: true
+        });
+
+        return new THREE.Mesh(geometry, material);
+    }
+}

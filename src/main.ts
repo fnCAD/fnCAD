@@ -4,6 +4,7 @@ import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
 import { WebGLRenderTarget } from 'three'
 import { OctreeNode } from './octree'
+import { MeshGenerator } from './meshgen'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { parse } from './parser'
 import { generateShader } from './shader'
@@ -75,6 +76,9 @@ settingsPanel.innerHTML = `
     <div class="setting-row">
       <input type="checkbox" id="show-boundary" checked>
       <label for="show-boundary">Show Boundary Cells</label>
+    </div>
+    <div class="setting-row">
+      <button id="generate-mesh">Generate Mesh</button>
     </div>
   </div>
 `;
@@ -257,4 +261,18 @@ function animate() {
   // Then render main scene
   renderer.render(scene, camera);
 }
+// Add mesh generation handler
+let currentMesh: THREE.Mesh | null = null;
+const generateMeshButton = document.getElementById('generate-mesh') as HTMLButtonElement;
+generateMeshButton.addEventListener('click', () => {
+  if (currentMesh) {
+    scene.remove(currentMesh);
+  }
+  if (currentOctree) {
+    const meshGen = new MeshGenerator(currentOctree);
+    currentMesh = meshGen.generate();
+    scene.add(currentMesh);
+  }
+});
+
 animate();
