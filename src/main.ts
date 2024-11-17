@@ -107,9 +107,9 @@ settingsPanel.innerHTML = `
     <div class="setting-group">
       <h4>Visualization</h4>
       <div class="setting-row">
-        <label for="vis-detail">Detail Level:</label>
-        <input type="range" id="vis-detail" min="0" max="100" step="1" value="100">
-        <span class="value-display">100%</span>
+        <label for="min-render-size">Min Render Size:</label>
+        <input type="range" id="min-render-size" min="0" max="4" step="1" value="0">
+        <span class="value-display">0.1</span>
       </div>
     </div>
     <div class="setting-row">
@@ -133,13 +133,15 @@ const showBoundaryCheckbox = document.getElementById('show-boundary') as HTMLInp
 
 function updateOctreeVisibility() {
   if (currentOctree) {
-    const visDetail = parseInt((document.getElementById('vis-detail') as HTMLInputElement).value) / 100;
+    const power = parseInt((document.getElementById('min-render-size') as HTMLInputElement).value);
+    const minRenderSize = Math.pow(2, -power);
     previewOverlayScene.visible = showOctreeCheckbox.checked;
     if (showOctreeCheckbox.checked) {
       currentOctree.updateVisibility(
-        showOutsideCheckbox.checked && Math.random() < visDetail,
-        showInsideCheckbox.checked && Math.random() < visDetail,
-        showBoundaryCheckbox.checked && Math.random() < visDetail
+        showOutsideCheckbox.checked,
+        showInsideCheckbox.checked,
+        showBoundaryCheckbox.checked,
+        minRenderSize
       );
     }
   }
@@ -233,10 +235,12 @@ cellBudgetSlider.addEventListener('input', () => {
   updateOctree();
 });
 
-visDetailSlider.addEventListener('input', () => {
-  const value = parseInt(visDetailSlider.value);
-  const display = visDetailSlider.nextElementSibling as HTMLSpanElement;
-  display.textContent = `${value}%`;
+const minRenderSizeSlider = document.getElementById('min-render-size') as HTMLInputElement;
+minRenderSizeSlider.addEventListener('input', () => {
+  const power = parseInt(minRenderSizeSlider.value);
+  const value = Math.pow(2, -power);  // Convert to inverse power of 2
+  const display = minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
+  display.textContent = value.toFixed(4);
   updateOctreeVisibility();
 });
 

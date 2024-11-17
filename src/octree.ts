@@ -180,20 +180,22 @@ export class OctreeNode {
     }
   }
 
-  updateVisibility(showOutside: boolean, showInside: boolean, showBoundary: boolean): void {
+  updateVisibility(showOutside: boolean, showInside: boolean, showBoundary: boolean, minRenderSize: number = 0.1): void {
     if (this.edges) {
+      // Only show cells larger than minimum render size
+      const visible = this.size >= minRenderSize;
       if (this.isSurfaceCell()) {
-        this.edges.visible = showBoundary;
+        this.edges.visible = showBoundary && visible;
       } else if (this.isFullyInside()) {
-        this.edges.visible = showInside;
+        this.edges.visible = showInside && visible;
       } else {
-        this.edges.visible = showOutside;
+        this.edges.visible = showOutside && visible;
       }
     }
     
     this.children.forEach(child => {
       if (child) {
-        child.updateVisibility(showOutside, showInside, showBoundary);
+        child.updateVisibility(showOutside, showInside, showBoundary, minRenderSize);
       }
     });
   }
