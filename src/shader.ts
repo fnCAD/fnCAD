@@ -81,17 +81,16 @@ export function generateShader(ast: Node): string {
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
           vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
 
-          // Convert raymarch distance to NDC depth
+          // Convert hit point to clip space
           vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
-          float ndcDepth = (clipPos.z/clipPos.w) * 0.5 + 0.5;
+          
+          // Convert to NDC space
+          vec4 ndcPos = customProjectionMatrix * clipPos;
+          float ndcDepth = (ndcPos.z / ndcPos.w);
 
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
-            // Convert depth buffer value to linear depth
-            float near = 0.1;
-            float far = 1000.0;
-            float octreeDepthValue = texture2D(octreeDepth, uv).r * 2.0 - 1.0;
-            float linearOctreeDepth = (2.0 * near * far) / (far + near - octreeDepthValue * (far - near));
+            float octreeDepthValue = texture2D(octreeDepth, uv).r;
             
             // Get octree color from the buffer
             vec3 octreeColor = octreeData.rgb;
