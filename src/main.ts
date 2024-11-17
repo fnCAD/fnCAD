@@ -132,7 +132,8 @@ const octreeRenderTarget = new THREE.WebGLRenderTarget(
 // Add coordinate axes helper
 const axesHelper = new THREE.AxesHelper(2);
 scene.add(axesHelper);
-const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+const FOV = 45; // Narrower FOV for better perspective
+const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 1000);
 // Set up camera for proper orbit viewing
 camera.position.set(3, 2, 3);
 camera.up.set(0, 1, 0);  // Ensure up vector is aligned with Y axis
@@ -158,6 +159,7 @@ let material = new THREE.ShaderMaterial({
     resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
     customViewMatrix: { value: camera.matrixWorldInverse },
     customCameraPosition: { value: camera.position },
+    fov: { value: FOV },
     octreeBuffer: { value: octreeRenderTarget.texture },
     octreeDepth: { value: octreeRenderTarget.depthTexture }
   },
