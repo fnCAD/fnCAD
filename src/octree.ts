@@ -32,6 +32,7 @@ function vectorToDirection(direction: THREE.Vector3): Direction {
 export class OctreeNode {
   children: (OctreeNode | null)[] = new Array(8).fill(null);
   state: CellState;
+  hasGeometry: boolean = false;
 
   dup(): OctreeNode {
     const copy = new OctreeNode(
@@ -226,7 +227,9 @@ export class OctreeNode {
 
   isSurfaceCell(): boolean {
     // Only leaf boundary cells are surface cells
-    return this.state === CellState.Boundary;
+    const isBoundary = this.state === CellState.Boundary;
+    this.hasGeometry = isBoundary;
+    return isBoundary;
   }
 
   isFullyInside(): boolean {

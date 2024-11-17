@@ -14,9 +14,12 @@ export class MeshGenerator {
     }
 
     private collectSurfaceCells(node: OctreeNode) {
+        console.log(`Checking node at ${node.center.toArray()} with size ${node.size}`);
         if (!node.isSurfaceCell()) {
+            console.log('Not a surface cell, skipping');
             return;
         }
+        console.log('Found surface cell, adding vertices');
 
         // Only add vertices for leaf nodes (no children) or nodes at minimum size
         const isLeaf = node.children.every(child => child === null);
@@ -36,6 +39,7 @@ export class MeshGenerator {
     }
 
     private addCellVertices(node: OctreeNode) {
+        console.log(`Adding vertices for cell at ${node.center.toArray()} with size ${node.size}`);
         // Get existing vertices or create new ones
         const startIndex = this.vertices.length;
         
