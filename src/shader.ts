@@ -96,14 +96,8 @@ export function generateShader(ast: Node): string {
             // Get octree color from the buffer
             vec3 octreeColor = octreeData.rgb;
             
-            // Compare depths in view space with a small epsilon to prevent z-fighting
-            float depthDiff = viewSpaceOctreeDepth - viewSpaceDepth;
-            if (abs(depthDiff) < 0.001) {
-              // Depths are approximately equal - this is a boundary cell
-              gl_FragColor = vec4(mix(col, octreeColor, 0.5), 1.0);
-              return;
-            } else if (depthDiff < 0.0) {
-              // Octree is in front
+            // Only show octree if it's in front of the surface
+            if (viewSpaceOctreeDepth < viewSpaceDepth) {
               gl_FragColor = vec4(octreeColor, 1.0);
               return;
             }
