@@ -265,13 +265,19 @@ function animate() {
 let currentMesh: THREE.Mesh | null = null;
 const generateMeshButton = document.getElementById('generate-mesh') as HTMLButtonElement;
 generateMeshButton.addEventListener('click', () => {
+  console.log('Generate mesh button clicked');
   if (currentMesh) {
+    console.log('Removing existing mesh');
     scene.remove(currentMesh);
   }
   if (currentOctree) {
+    console.log('Creating mesh generator');
     const meshGen = new MeshGenerator(currentOctree);
     currentMesh = meshGen.generate();
+    console.log(`Generated mesh with ${currentMesh.geometry.attributes.position.count} vertices`);
     scene.add(currentMesh);
+  } else {
+    console.warn('No octree available for mesh generation');
   }
 });
 

@@ -8,24 +8,36 @@ export class MeshGenerator {
     constructor(private octree: OctreeNode) {}
 
     generate(): THREE.Mesh {
+        console.log('Starting mesh generation');
         this.collectSurfaceCells(this.octree);
-        return this.createMesh();
+        console.log(`Collected ${this.vertices.length} vertices and ${this.faces.length} face indices`);
+        const mesh = this.createMesh();
+        console.log('Mesh generation complete');
+        return mesh;
     }
 
     private collectSurfaceCells(node: OctreeNode) {
+        console.log(`Checking node at ${node.center.toArray()} with size ${node.size}`);
+        
         if (!node.isSurfaceCell()) {
+            console.log('Not a surface cell, skipping');
             return;
         }
 
         // If this is a leaf node or small enough, add its vertices
         if (node.children.every(child => child === null) || node.size < 0.2) {
+            console.log('Adding vertices for surface cell');
             this.addCellVertices(node);
             return;
         }
 
         // Otherwise recurse into children
-        node.children.forEach(child => {
-            if (child) this.collectSurfaceCells(child);
+        console.log('Recursing into children');
+        node.children.forEach((child, index) => {
+            if (child) {
+                console.log(`Processing child ${index}`);
+                this.collectSurfaceCells(child);
+            }
         });
     }
 
