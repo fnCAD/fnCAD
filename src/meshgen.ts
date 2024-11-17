@@ -72,16 +72,18 @@ export class MeshGenerator {
 
         // Check each face's neighboring cell before adding it
         faces.forEach(face => {
-            const neighborCenter = new THREE.Vector3()
-                .copy(node.center)
-                .addScaledVector(face.normal, node.size);
-            
-            // Create a temporary node to evaluate the neighbor's space
-            const neighborNode = new OctreeNode(neighborCenter, node.size, node.sdf);
-            
-            // Get neighbor from octree - there should always be one in our volume
-            console.log(`Finding neighbor for face with normal ${face.normal.toArray()} at position ${node.center.toArray()} with size ${node.size}`);
-            const neighbor = node.getNeighbor(face.normal);
+            // Convert face normal to Direction enum
+            let direction: Direction;
+            if (face.normal.x > 0) direction = Direction.PosX;
+            else if (face.normal.x < 0) direction = Direction.NegX;
+            else if (face.normal.y > 0) direction = Direction.PosY;
+            else if (face.normal.y < 0) direction = Direction.NegY;
+            else if (face.normal.z > 0) direction = Direction.PosZ;
+            else direction = Direction.NegZ;
+
+            // Get neighbor using enum-based method
+            console.log(`Finding neighbor for face in direction ${Direction[direction]} at position ${node.center.toArray()} with size ${node.size}`);
+            const neighbor = node.getNeighborAtLevel(direction);
             if (!neighbor) {
                 throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}, face normal ${face.normal.toArray()}`);
             } else {
