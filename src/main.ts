@@ -264,6 +264,7 @@ minSizeSlider.addEventListener('input', () => {
   const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
   minSizeDisplay.textContent = value === 1 ? '1' : `1/${value}`;
   updateOctree();
+  updateOctreeVisualization();
 });
 
 cellBudgetSlider.addEventListener('input', () => {
