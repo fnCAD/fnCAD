@@ -112,6 +112,13 @@ export function generateShader(ast: Node): string {
             }
           }
 
+          // Add basic lighting for the mesh
+          vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+          float diffuse = max(dot(n, lightDir), 0.0);
+          vec3 ambient = vec3(0.2);
+          vec3 meshColor = vec3(1.0, 0.85, 0.0); // Gold color
+          col = meshColor * (ambient + diffuse);
+
           gl_FragColor = vec4(col, 1.0);
           return;
         }
