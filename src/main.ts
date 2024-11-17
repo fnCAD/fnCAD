@@ -40,7 +40,7 @@ const previewPane = document.getElementById('preview-pane')!;
 
 // Set up Three.js scene, renderer and camera
 const scene = new THREE.Scene();
-const octreeScene = new THREE.Scene();
+const previewOverlayScene = new THREE.Scene();
 let currentOctree: OctreeNode | null = null;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -181,7 +181,7 @@ scene.add(quad);
 const initialAst = parse(editor.getValue());
 currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 currentOctree.subdivide(0.1);
-currentOctree.addToScene(octreeScene);
+currentOctree.addToScene(previewOverlayScene);
 
 // Update initial stats
 if (statsPanel) {
@@ -198,11 +198,11 @@ editor.onDidChangeModelContent(() => {
 
     // Update octree visualization
     if (currentOctree) {
-      currentOctree.removeFromScene(octreeScene);
+      currentOctree.removeFromScene(previewOverlayScene);
     }
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     currentOctree.subdivide(0.1);
-    currentOctree.addToScene(octreeScene);
+    currentOctree.addToScene(previewOverlayScene);
     
     // Update stats
     const statsPanel = document.getElementById('stats-panel');
@@ -255,7 +255,7 @@ function animate() {
   // First render octree to texture
   renderer.setRenderTarget(octreeRenderTarget);
   renderer.clear(); // Clear previous frame
-  renderer.render(octreeScene, camera);
+  renderer.render(previewOverlayScene, camera);
   renderer.setRenderTarget(null);
   
   // Then render main scene
@@ -268,7 +268,7 @@ generateMeshButton.addEventListener('click', () => {
   console.log('Generate mesh button clicked');
   if (currentMesh) {
     console.log('Removing existing mesh');
-    scene.remove(currentMesh);
+    previewOverlayScene.remove(currentMesh);
     currentMesh.geometry.dispose();
     currentMesh.material.dispose();
     currentMesh = null;
@@ -286,7 +286,7 @@ generateMeshButton.addEventListener('click', () => {
     currentMesh.geometry.computeBoundingSphere();
     console.log('Mesh bounds:', currentMesh.geometry.boundingSphere);
     
-    scene.add(currentMesh);
+    previewOverlayScene.add(currentMesh);
   } else {
     console.warn('No octree available for mesh generation');
   }
