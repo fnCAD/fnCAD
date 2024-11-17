@@ -77,11 +77,15 @@ export function generateShader(ast: Node): string {
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
           vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
 
+          // Convert raymarch distance to NDC depth
+          vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
+          float ndcDepth = (clipPos.z/clipPos.w) * 0.5 + 0.5;
+          
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
             vec3 octreeColor = vec3(0.0, 1.0, 0.0) * 0.2; // Dim green for octree
-            // TODO how do I convert our ray depth to depth buffer?
-            float strength = (t > octreeDepthValue) ? 0.8 : 0.2;
+            // Compare NDC depths
+            float strength = (abs(ndcDepth - octreeDepthValue) < 0.001) ? 0.8 : 0.2;
             col = mix(col, octreeColor, strength);
           }
 
