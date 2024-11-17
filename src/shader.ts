@@ -32,17 +32,55 @@ export function generateShader(ast: Node): string {
       );
     }
 
+    vec3 getRayDirection(vec2 uv, vec3 camPos, mat4 viewMatrix) {
+      // Convert UV to NDC space (-1 to 1)
+      vec2 ndc = (uv * 2.0 - 1.0);
+      
+      // Create ray in view space
+      vec3 rayView = normalize(vec3(ndc.x, ndc.y, -1.0));
+      
+      // Convert ray to world space using the inverse view matrix
+      vec4 rayWorld = inverse(viewMatrix) * vec4(rayView, 0.0);
+      return normalize(rayWorld.xyz);
+    }
+
     void main() {
       vec2 uv = gl_FragCoord.xy / resolution;
+      vec3 rayDir = getRayDirection(uv, customCameraPosition, customViewMatrix);
+      vec3 rayOrigin = customCameraPosition;
       
-      // Sample octree texture
-      vec4 octreeData = texture2D(octreeBuffer, uv);
+      float t = 0.0;
+      const int MAX_STEPS = 100;
+      const float MAX_DIST = 100.0;
+      const float EPSILON = 0.001;
       
-      // Debug visualization:
-      // Red: Alpha channel
-      // Green: G channel
-      // Blue: 0 for clarity
-      gl_FragColor = vec4(octreeData.a, octreeData.g, 0.0, 1.0);
+      // Raymarching loop
+      for(int i = 0; i < MAX_STEPS; i++) {
+        vec3 pos = rayOrigin + rayDir * t;
+        float d = scene(pos);
+        
+        if(d < EPSILON) {
+          // Hit surface - calculate normal and lighting
+          vec3 normal = calcNormal(pos);
+          vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+          float diff = max(dot(normal, lightDir), 0.0);
+          vec3 color = vec3(0.8) * (0.2 + 0.8 * diff);
+          
+          gl_FragColor = vec4(color, 1.0);
+          return;
+        }
+        
+        if(t > MAX_DIST) {
+          // Miss - show background color
+          gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
+          return;
+        }
+        
+        t += d;
+      }
+      
+      // Max steps reached - show debug color
+      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
   `;
 }
