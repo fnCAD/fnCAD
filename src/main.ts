@@ -37,6 +37,34 @@ window._editor = editor;
 // Get preview pane element
 const previewPane = document.getElementById('preview-pane')!;
 
+// Add settings panel
+const settingsPanel = document.createElement('div');
+settingsPanel.id = 'settings-panel';
+settingsPanel.innerHTML = `
+  <h3>Settings</h3>
+  <div class="settings-content">
+    <div class="setting-row">
+      <input type="checkbox" id="show-octree" checked>
+      <label for="show-octree">Show Octree Grid</label>
+    </div>
+  </div>
+`;
+previewPane.appendChild(settingsPanel);
+
+// Add settings panel collapse behavior
+const settingsHeader = settingsPanel.querySelector('h3')!;
+settingsHeader.addEventListener('click', () => {
+  settingsPanel.classList.toggle('collapsed');
+});
+
+// Add octree visibility control
+const showOctreeCheckbox = document.getElementById('show-octree') as HTMLInputElement;
+showOctreeCheckbox.addEventListener('change', () => {
+  if (currentOctree) {
+    octreeScene.visible = showOctreeCheckbox.checked;
+  }
+});
+
 // Set up Three.js scene, renderer and camera
 const scene = new THREE.Scene();
 const octreeScene = new THREE.Scene();
