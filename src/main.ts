@@ -2,6 +2,7 @@ import './style.css'
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
+import { downloadSTL } from './stlexporter'
 import { WebGLRenderTarget } from 'three'
 import { OctreeNode } from './octree'
 import { MeshGenerator } from './meshgen'
@@ -297,6 +298,16 @@ generateMeshButton.addEventListener('click', () => {
     previewOverlayScene.add(currentMesh);
   } else {
     console.warn('No octree available for mesh generation');
+  }
+});
+
+// Add STL export handler
+const saveStlButton = document.getElementById('save-stl') as HTMLButtonElement;
+saveStlButton.addEventListener('click', () => {
+  if (currentMesh) {
+    downloadSTL(currentMesh, 'model.stl');
+  } else {
+    alert('Please generate a mesh first');
   }
 });
 
