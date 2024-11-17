@@ -138,14 +138,8 @@ const showInsideCheckbox = document.getElementById('show-inside') as HTMLInputEl
 const showBoundaryCheckbox = document.getElementById('show-boundary') as HTMLInputElement;
 
 function updateOctreeGeometry() {
-  if (currentOctree && showOctreeCheckbox.checked) {
-    updateOctreeVisualization();
-  } else {
-    // Remove visualization if checkbox is unchecked
-    previewOverlayScene.children = previewOverlayScene.children.filter(child => 
-      !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
-    );
-  }
+  // Always call visualization update - it handles the checkbox state internally
+  updateOctreeVisualization();
 }
 
 [showOctreeCheckbox, showOutsideCheckbox, showInsideCheckbox, showBoundaryCheckbox].forEach(checkbox => {
@@ -276,12 +270,10 @@ currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 const power = parseInt(minSizeSlider.value);
 const minSize = Math.pow(2, -power);
 const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
-const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
-const renderSettings = new OctreeRenderSettings(true, true, true, minRenderSize);
-const totalCells = currentOctree.subdivide(minSize, cellBudget, renderSettings);
+const totalCells = currentOctree.subdivide(minSize, cellBudget);
 statsPanel.textContent = `Octree cells: ${totalCells}`;
-const octreeGroup = visualizeOctree(currentOctree, renderSettings);
-previewOverlayScene.add(octreeGroup);
+// Initial visualization
+updateOctreeVisualization();
 
 
 // Function to update the octree visualization

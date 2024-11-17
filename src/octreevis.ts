@@ -2,10 +2,12 @@ import * as THREE from 'three';
 import { OctreeNode, CellState } from './octree';
 
 export class OctreeRenderSettings {
-  showOutside: boolean;
-  showInside: boolean;
-  showBoundary: boolean;
-  minRenderSize: number;
+  constructor(
+    public showOutside: boolean = true,
+    public showInside: boolean = true,
+    public showBoundary: boolean = true,
+    public minRenderSize: number = 0.1
+  ) {}
 }
 
 function getColorForCell(node: OctreeNode): THREE.Color {
