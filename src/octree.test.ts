@@ -13,29 +13,22 @@ describe('Octree', () => {
     const initialSettings = new OctreeRenderSettings(true, true, true, 0.1);
     octree.subdivide(0.5, 1000, initialSettings);
 
-    // Store initial geometry state
-    const initialGeometryState = octree.children.map(child => 
-      child ? child.hasGeometry : null
-    );
+    // Make a copy of the initial octree
+    const initialOctree = octree.dup();
 
-    // Update with larger render size
+    // Update original with larger render size
     const newSettings = new OctreeRenderSettings(true, true, true, 0.5);
     octree.updateGeometry(newSettings);
-
-    // Store new geometry state
-    const updatedGeometryState = octree.children.map(child =>
-      child ? child.hasGeometry : null
-    );
 
     // Create fresh octree with new settings
     const freshOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
     freshOctree.subdivide(0.5, 1000, newSettings);
-    const freshGeometryState = freshOctree.children.map(child =>
-      child ? child.hasGeometry : null
-    );
 
-    // Compare states
-    expect(updatedGeometryState).toEqual(freshGeometryState);
-    expect(updatedGeometryState).not.toEqual(initialGeometryState);
+    // Compare octrees
+    const freshComparison = octree.equals(freshOctree);
+    expect(freshComparison.equal).toBe(true, `Fresh comparison failed: ${freshComparison.reason}`);
+
+    const initialComparison = octree.equals(initialOctree);
+    expect(initialComparison.equal).toBe(false, 'Octree should differ from initial state');
   });
 });
