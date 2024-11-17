@@ -213,11 +213,21 @@ export class OctreeNode {
   }
 
   isSurfaceCell(): boolean {
-    // Only count as boundary if:
-    // 1. We are actually a boundary cell AND
-    // 2. We are a leaf node (no children)
-    return this.state === CellState.Boundary && 
-           this.children.every(child => child === null);
+    // A cell is a surface cell if:
+    // 1. It's a leaf boundary cell OR
+    // 2. It's a subdivided boundary cell with no further subdivided children
+    if (this.state === CellState.Boundary) {
+      return true; // Leaf boundary cell
+    }
+    
+    if (this.state === CellState.BoundarySubdivided) {
+      // Check if any children are themselves subdivided boundary cells
+      return !this.children.some(child => 
+        child?.state === CellState.BoundarySubdivided
+      );
+    }
+    
+    return false;
   }
 
   isFullyInside(): boolean {
@@ -296,7 +306,9 @@ export class OctreeNode {
     if (this.state === CellState.Boundary) {
       return new THREE.Color(1, 1, 0); // Bright yellow for leaf boundary cells
     } else if (this.state === CellState.BoundarySubdivided) {
-      return new THREE.Color(0.5, 0.5, 0); // Dark yellow for subdivided boundary cells
+      // Darker yellow for subdivided boundary cells, gets darker with depth
+      const darkness = Math.max(0.2, t); // Limit darkness
+      return new THREE.Color(darkness, darkness, 0);
     } else if (this.state === CellState.Inside) {
       return new THREE.Color(0, 1, 0); // Green for inside cells
     } else {
