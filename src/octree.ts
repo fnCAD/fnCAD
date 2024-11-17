@@ -57,6 +57,14 @@ export class OctreeNode {
     }
   }
 
+  private getColorForSize(): THREE.Color {
+    // Map size to a color - red for small cells, green for large
+    // Using log scale since sizes vary greatly
+    const maxSize = 65536; // Our current max size
+    const t = Math.log(this.size) / Math.log(maxSize); // Normalized 0-1
+    return new THREE.Color(1.0 - t, t, 0); // Red to Green
+  }
+
   private createEdges(): void {
     const half = this.size / 2;
     // Create vertices for cube corners
@@ -91,7 +99,7 @@ export class OctreeNode {
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     const material = new THREE.LineBasicMaterial({ 
-      color: 0x00ff00,  // Green color
+      color: this.getColorForSize(),
       transparent: true,
       opacity: 1.0,
       blending: THREE.AdditiveBlending,  // Make lines add up where they overlap
