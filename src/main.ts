@@ -62,6 +62,11 @@ const octreeRenderTarget = new THREE.WebGLRenderTarget(
     format: THREE.RGBAFormat,
     type: THREE.FloatType,
     depthBuffer: true,
+    depthTexture: new THREE.DepthTexture(
+      previewPane.clientWidth,
+      previewPane.clientHeight,
+      THREE.FloatType
+    ),
     stencilBuffer: false,
     colorSpace: THREE.LinearSRGBColorSpace
   }
@@ -96,7 +101,8 @@ let material = new THREE.ShaderMaterial({
     resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
     customViewMatrix: { value: camera.matrixWorldInverse },
     customCameraPosition: { value: camera.position },
-    octreeBuffer: { value: octreeRenderTarget.texture }
+    octreeBuffer: { value: octreeRenderTarget.texture },
+    octreeDepth: { value: octreeRenderTarget.depthTexture }
   },
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
@@ -134,7 +140,8 @@ editor.onDidChangeModelContent(() => {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
         customViewMatrix: { value: camera.matrixWorldInverse },
         customCameraPosition: { value: camera.position },
-        octreeBuffer: { value: octreeRenderTarget.texture }
+        octreeBuffer: { value: octreeRenderTarget.texture },
+        octreeDepth: { value: octreeRenderTarget.depthTexture }
       },
       fragmentShader,
       vertexShader: material.vertexShader
