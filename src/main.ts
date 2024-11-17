@@ -85,7 +85,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
 controls.minDistance = 1;
-controls.maxDistance = 10;
+controls.maxDistance = 100;
 controls.target.set(0, 0, 0);
 controls.enablePan = false;     // Disable panning to force orbiting behavior
 controls.update();
