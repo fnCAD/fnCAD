@@ -8,6 +8,10 @@ export function generateShader(ast: Node): string {
     uniform sampler2D octreeBuffer;
     uniform sampler2D octreeDepth;
 
+    float sqr(float x) {
+      return x * x;
+    }
+
     float scene(vec3 pos) {
       return ${ast.toGLSL()};
     }
