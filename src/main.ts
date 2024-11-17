@@ -224,19 +224,6 @@ function updateOctree() {
     if (statsPanel) {
       statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
     }
-// Add min size slider handler
-const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
-const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
-
-minSizeSlider.addEventListener('input', (e) => {
-  const value = (e.target as HTMLInputElement).value;
-  minSizeDisplay.textContent = value;
-  updateOctree();
-});
-
-// Update shader when editor content changes
-editor.onDidChangeModelContent(updateOctree);
-
 function updateMaterial() {
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
