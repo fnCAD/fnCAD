@@ -41,6 +41,14 @@ const previewPane = document.getElementById('preview-pane')!;
 // Set up Three.js scene, renderer and camera
 const scene = new THREE.Scene();
 const previewOverlayScene = new THREE.Scene();
+
+// Add lighting for mesh visualization
+const ambientLight = new THREE.AmbientLight(0x404040);
+previewOverlayScene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(1, 2, 3);
+previewOverlayScene.add(directionalLight);
 let currentOctree: OctreeNode | null = null;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
