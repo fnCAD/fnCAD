@@ -22,10 +22,7 @@ export function createVariableNode(name: string): VariableNode {
       return context[name];
     },
     evaluateInterval: (context: Record<string, Interval>) => {
-      if (!(name in context)) {
-        throw new Error(`Undefined variable: ${name}`);
-      }
-      return context[name];
+      const evaluatedArgs: Interval[] = args.map(arg => arg.evaluateInterval(context));
       
       // Handle built-in math functions
       if (name === 'sqrt') {
@@ -40,8 +37,7 @@ export function createVariableNode(name: string): VariableNode {
 
       // Handle min/max with any number of arguments
       if (name === 'min' && evaluatedArgs.length >= 2) {
-        return evaluatedArgs.reduce((acc, interval) => {
-          // TODO: Implement proper interval min/max
+        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
           return new Interval(
             Math.min(acc.min, interval.min),
             Math.min(acc.max, interval.max)
@@ -49,8 +45,7 @@ export function createVariableNode(name: string): VariableNode {
         });
       }
       if (name === 'max' && evaluatedArgs.length >= 2) {
-        return evaluatedArgs.reduce((acc, interval) => {
-          // TODO: Implement proper interval min/max
+        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
           return new Interval(
             Math.max(acc.min, interval.min),
             Math.max(acc.max, interval.max)
