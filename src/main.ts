@@ -88,7 +88,7 @@ settingsPanel.innerHTML = `
     </div>
     <div class="setting-row">
       <label for="min-size">Min Cell Size:</label>
-      <input type="range" id="min-size" min="0.1" max="10.0" step="0.1" value="0.5">
+      <input type="range" id="min-size" min="0" max="4" step="1" value="0">
       <span class="value-display">0.1</span>
     </div>
     <div class="setting-row">
@@ -194,9 +194,10 @@ scene.add(quad);
 // Set up min size slider handler
 const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
 minSizeSlider.addEventListener('input', () => {
-  const value = parseFloat(minSizeSlider.value);
+  const power = parseInt(minSizeSlider.value);
+  const value = Math.pow(2, -power);  // Convert to inverse power of 2
   const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
-  minSizeDisplay.textContent = value.toString();
+  minSizeDisplay.textContent = value.toFixed(4);
   updateOctree();
 });
 
@@ -227,7 +228,8 @@ function updateOctree() {
     
     // Get min size from slider
     const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
-    const minSize = parseFloat(minSizeSlider.value);
+    const power = parseInt(minSizeSlider.value);
+    const minSize = Math.pow(2, -power);
     
     // Update display
     const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
