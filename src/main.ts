@@ -38,6 +38,9 @@ min(
 // Store editor instance for later use with shader compilation
 window._editor = editor;
 
+// Get preview pane element
+const previewPane = document.getElementById('preview-pane')!;
+
 // Set up Three.js scene
 const scene = new THREE.Scene();
 const octreeScene = new THREE.Scene();
@@ -45,7 +48,7 @@ let currentOctree: OctreeNode | null = null;
 
 // Create render target for octree
 const octreeRenderTarget = new WebGLRenderTarget(
-  previewPane.clientWidth,
+  previewPane.clientWidth, 
   previewPane.clientHeight,
   {
     minFilter: THREE.NearestFilter,
