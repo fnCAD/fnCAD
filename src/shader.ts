@@ -60,13 +60,14 @@ export function generateShader(ast: Node): string {
       float t = 0.0;
       float tmax = 20.0;
 
+      // Sample octree at current position
+      vec4 octreeData = texture2D(octreeBuffer, uv);
+      float octreeDepthValue = texture2D(octreeDepth, uv).r;
+
       for(int i = 0; i < 100; i++) {
         vec3 p = ro + rd * t;
 
         float d = scene(p);
-
-        // Sample octree at current position
-        vec4 octreeData = texture2D(octreeBuffer, uv);
 
         // Hit check
         if(d < 0.001) {
@@ -79,35 +80,30 @@ export function generateShader(ast: Node): string {
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
             vec3 octreeColor = vec3(0.0, 1.0, 0.0) * 0.2; // Dim green for octree
-            col = mix(col, octreeColor, 0.2); // Subtle overlay
+            // TODO how do I convert our ray depth to depth buffer?
+            float strength = (t > octreeDepthValue) ? 0.8 : 0.2;
+            col = mix(col, octreeColor, strength);
           }
 
           gl_FragColor = vec4(col, 1.0);
           return;
         }
-
-        // If no hit but octree cell is occupied, show octree visualization
-        if(octreeData.a > 0.5) {
-          vec3 octreeColor = vec3(0.2, 1.0, 0.2); // Brighter green
-          float depth = length(p - customCameraPosition); // Use distance for depth effect
-          gl_FragColor = vec4(octreeColor * (1.0 - depth * 0.1), 1.0); // Fade with depth
-          return;
-        }
-
         // Missed or too far
         if(t > tmax) {
-          gl_FragColor = vec4(background, 1.0);
-          return;
+          break;
         }
 
         t += d;
       }
 
-      // Max steps reached - visualize number of steps taken
-      int steps = 100; // Store the max steps reached
-      float stepViz = float(steps) / 100.0; // Normalize steps to 0-1 range
-      vec3 debugColor = vec3(stepViz, 0.0, 0.0); // Red channel shows step count
-      gl_FragColor = vec4(mix(background, debugColor, 0.5), 1.0);
+      // If no hit but octree cell is occupied, show octree visualization
+      if(octreeData.a > 0.5) {
+        vec3 octreeColor = vec3(0.2, 1.0, 0.2); // Brighter green
+        gl_FragColor = vec4(octreeColor, 1.0);
+        return;
+      }
+
+      gl_FragColor = vec4(background, 1.0);
     }
   `;
 }
