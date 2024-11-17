@@ -3,7 +3,6 @@ import Split from 'split.js'
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
 import { downloadSTL } from './stlexporter'
-import { WebGLRenderTarget } from 'three'
 import { OctreeNode } from './octree'
 import { OctreeRenderSettings, visualizeOctree } from './octreevis'
 import { MeshGenerator } from './meshgen'
@@ -230,7 +229,9 @@ function updateOctreeVisualization() {
   
   const octreeGroup = visualizeOctree(currentOctree, renderSettings);
   if (octreeGroup) {
-    previewOverlayScene.add(octreeGroup);
+    if (octreeGroup) {
+      previewOverlayScene.add(octreeGroup);
+    }
   }
 }
 
@@ -388,7 +389,11 @@ generateMeshButton.addEventListener('click', () => {
     console.log('Removing existing mesh');
     previewOverlayScene.remove(currentMesh);
     currentMesh.geometry.dispose();
-    currentMesh.material.dispose();
+    if (currentMesh.material instanceof THREE.Material) {
+      currentMesh.material.dispose();
+    } else {
+      currentMesh.material.forEach(m => m.dispose());
+    }
     currentMesh = null;
   }
   if (currentOctree) {
@@ -402,7 +407,11 @@ generateMeshButton.addEventListener('click', () => {
     
     // Ensure mesh is visible
     currentMesh.visible = true;
-    currentMesh.material.needsUpdate = true;
+    if (currentMesh.material instanceof THREE.Material) {
+      currentMesh.material.needsUpdate = true;
+    } else {
+      currentMesh.material.forEach(m => m.needsUpdate = true);
+    }
     currentMesh.geometry.computeBoundingSphere();
     console.log('Mesh bounds:', currentMesh.geometry.boundingSphere);
     

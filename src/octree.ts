@@ -283,7 +283,9 @@ export class OctreeNode {
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
       // Try to subdivide child with current budget
-      const cellsCreated = this.children[i].subdivide(minSize, cellBudget, settings);
+      const child = this.children[i];
+      if (!child) continue;
+      const cellsCreated = child.subdivide(minSize, cellBudget, settings);
       cellBudget -= cellsCreated;
     }
 
