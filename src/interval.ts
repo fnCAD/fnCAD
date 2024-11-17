@@ -74,12 +74,11 @@ export class Interval {
 
   // Math functions
   sqrt(): Interval {
-    if (this.min < 0) {
-      throw new Error('Square root of negative interval');
-    }
+    // Clamp negative values to 0 for SDF operations
+    const clampedMin = Math.max(0, this.min);
     return new Interval(
-      Math.sqrt(this.min),
-      Math.sqrt(this.max)
+      Math.sqrt(clampedMin),
+      Math.sqrt(Math.max(0, this.max))
     );
   }
 

@@ -53,8 +53,11 @@ describe('Interval', () => {
     expect(sqrt.min).toBe(0);
     expect(sqrt.max).toBe(2);
 
+    // Should handle negative values by clamping to 0
     const neg = new Interval(-1, 1);
-    expect(() => neg.sqrt()).toThrow();
+    const sqrtNeg = neg.sqrt();
+    expect(sqrtNeg.min).toBe(0);
+    expect(sqrtNeg.max).toBe(1);
   });
 
   it('checks containment', () => {
