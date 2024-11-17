@@ -251,7 +251,17 @@ minRenderSizeSlider.addEventListener('input', () => {
   const value = Math.pow(2, power);  // Use positive power for display
   const display = minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
   display.textContent = value === 1 ? '1' : `1/${value}`;
-  updateOctree();
+  
+  if (currentOctree) {
+    const minRenderSize = Math.pow(2, -power);
+    const renderSettings = new OctreeRenderSettings(
+      showOutsideCheckbox.checked,
+      showInsideCheckbox.checked,
+      showBoundaryCheckbox.checked,
+      minRenderSize
+    );
+    currentOctree.updateGeometry(renderSettings);
+  }
 });
 
 // Add initial octree visualization
