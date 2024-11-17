@@ -257,15 +257,6 @@ minRenderSizeSlider.addEventListener('input', () => {
   display.textContent = value === 1 ? '1' : `1/${value}`;
   
   if (currentOctree) {
-    const minRenderSize = Math.pow(2, -power);
-    const renderSettings = new OctreeRenderSettings(
-      showOutsideCheckbox.checked,
-      showInsideCheckbox.checked,
-      showBoundaryCheckbox.checked,
-      minRenderSize
-    );
-    currentOctree.removeFromScene(previewOverlayScene);
-    currentOctree.updateGeometry(renderSettings);
     const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
     const renderSettings = new OctreeRenderSettings(
       showOutsideCheckbox.checked,
