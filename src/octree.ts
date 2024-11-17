@@ -115,20 +115,30 @@ export class OctreeNode {
     return this.state === CellState.Outside;
   }
 
-  subdivide(minSize: number = 0.1, maxCells: number = 100000): void {
+  subdivide(minSize: number = 0.1, cellBudget: number = 100000): number {
+    // Start with this cell
+    let cellCount = 1;
+    
     const interval = this.evaluate();
 
     // If the interval is entirely positive or negative, we don't need to subdivide
     if (interval.min > 0 || interval.max < 0) {
       this.createEdges();
-      return;
+      return cellCount;
     }
 
-    // If we've reached minimum size or max cells, stop subdividing
+    // If we've reached minimum size or no budget left, stop subdividing
     const newSize = this.size / 2;
-    if (newSize < minSize || this.countCells() >= maxCells) {
+    if (newSize < minSize || cellBudget <= 1) {
       this.createEdges();
-      return;
+      return cellCount;
+    }
+
+    // Calculate budget for children (reserving 1 for this cell)
+    const childBudget = Math.floor((cellBudget - 1) / 8);
+    if (childBudget < 1) {
+      this.createEdges();
+      return cellCount;
     }
 
     // Create 8 children
@@ -138,6 +148,7 @@ export class OctreeNode {
       [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
     ];
 
+    // Create 8 children with equal portion of remaining budget
     for (let i = 0; i < 8; i++) {
       const [x, y, z] = offsets[i];
       const childCenter = new THREE.Vector3(
@@ -146,8 +157,10 @@ export class OctreeNode {
         this.center.z + z * half/2
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
-      this.children[i].subdivide(minSize);
+      cellCount += this.children[i].subdivide(minSize, childBudget);
     }
+
+    return cellCount;
   }
 
   private getColorForSize(): THREE.Color {
@@ -241,13 +254,4 @@ export class OctreeNode {
     this.children.forEach(child => child?.removeFromScene(scene));
   }
 
-  countCells(): number {
-    // Count this cell
-    let count = 1;
-    // Add counts from non-null children
-    this.children.forEach(child => {
-      if (child) count += child.countCells();
-    });
-    return count;
-  }
 }
