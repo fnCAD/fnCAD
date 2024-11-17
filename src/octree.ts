@@ -125,6 +125,8 @@ export class OctreeNode {
     // we don't need to subdivide further
     const newSize = this.size / 2;
     if (interval.min > 0 || interval.max < 0 || newSize < minSize) {
+      // Update geometry for this leaf node
+      this.updateLocalGeometry(true, true, true, minRenderSize);
       return 1;
     }
 
