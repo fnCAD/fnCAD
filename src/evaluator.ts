@@ -101,10 +101,19 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         case 'sqr':
           return evaluatedArgs[0].multiply(evaluatedArgs[0]);
         case 'abs':
-          return new Interval(
-            Math.min(Math.abs(evaluatedArgs[0].min), Math.abs(evaluatedArgs[0].max)),
-            Math.max(Math.abs(evaluatedArgs[0].min), Math.abs(evaluatedArgs[0].max))
-          );
+          if (evaluatedArgs[0].max < 0) {
+            // Entirely negative interval
+            return new Interval(-evaluatedArgs[0].max, -evaluatedArgs[0].min);
+          } else if (evaluatedArgs[0].min > 0) {
+            // Entirely positive interval
+            return evaluatedArgs[0];
+          } else {
+            // Interval contains zero
+            return new Interval(
+              0,
+              Math.max(-evaluatedArgs[0].min, evaluatedArgs[0].max)
+            );
+          }
         case 'sin':
           return evaluatedArgs[0].sin();
         case 'cos':

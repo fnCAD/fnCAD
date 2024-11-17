@@ -51,4 +51,11 @@ describe('Expression Evaluation', () => {
     expect(evaluate('abs(0)')).toBe(0);
     expect(evaluate('abs(-2.5)')).toBe(2.5);
   });
+
+  it('evaluates abs with intervals', () => {
+    const ast = parse('abs(x)');
+    expect(ast.evaluateInterval({ x: new Interval(-3, -1) })).toEqual(new Interval(1, 3));
+    expect(ast.evaluateInterval({ x: new Interval(1, 3) })).toEqual(new Interval(1, 3));
+    expect(ast.evaluateInterval({ x: new Interval(-1, 2) })).toEqual(new Interval(0, 2));
+  });
 });
