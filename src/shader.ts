@@ -83,10 +83,11 @@ export function generateShader(ast: Node): string {
           return;
         }
         
-        // If no hit but octree cell is occupied, show solid green
+        // If no hit but octree cell is occupied, show octree visualization
         if(octreeData.a > 0.5) {
-          vec3 octreeColor = vec3(0.0, 0.3, 0.0); // Darker green so it doesn't overwhelm
-          gl_FragColor = vec4(octreeColor, 1.0);
+          vec3 octreeColor = vec3(0.2, 1.0, 0.2); // Brighter green
+          float depth = length(p - customCameraPosition); // Use distance for depth effect
+          gl_FragColor = vec4(octreeColor * (1.0 - depth * 0.1), 1.0); // Fade with depth
           return;
         }
         

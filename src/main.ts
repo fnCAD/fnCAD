@@ -54,7 +54,9 @@ const octreeRenderTarget = new WebGLRenderTarget(
     minFilter: THREE.NearestFilter,
     magFilter: THREE.NearestFilter,
     format: THREE.RGBAFormat,
-    type: THREE.FloatType
+    type: THREE.FloatType,
+    depthBuffer: true,
+    stencilBuffer: false
   }
 );
 // Add coordinate axes helper
