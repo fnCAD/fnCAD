@@ -28,7 +28,10 @@ export default defineConfig({
         chunkFileNames: (chunkInfo) => {
           console.log('Creating chunk:', chunkInfo.name);
           return '[name]-[hash].js';
-        },
+        }
+      }
+    }
+  },
   server: {
     cors: true,
     hmr: {
