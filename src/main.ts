@@ -176,9 +176,12 @@ const previewRenderTarget = new THREE.WebGLRenderTarget(
   }
 );
 
-// Add coordinate axes helper
-const axesHelper = new THREE.AxesHelper(2);
-scene.add(axesHelper);
+// Add coordinate axes helper to both scenes
+const mainAxesHelper = new THREE.AxesHelper(2);
+scene.add(mainAxesHelper);
+
+const overlayAxesHelper = new THREE.AxesHelper(2);
+previewOverlayScene.add(overlayAxesHelper);
 const FOV = 45; // Narrower FOV for better perspective
 const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 1000);
 // Set up camera for proper orbit viewing
@@ -196,7 +199,12 @@ controls.screenSpacePanning = false;
 controls.minDistance = 1;
 controls.maxDistance = 100;
 controls.target.set(0, 0, 0);
-controls.enablePan = false;     // Disable panning to force orbiting behavior
+controls.enablePan = true;      // Enable panning
+controls.mouseButtons = {
+  LEFT: THREE.MOUSE.ROTATE,    // Left button rotates
+  MIDDLE: THREE.MOUSE.DOLLY,   // Middle button zooms
+  RIGHT: THREE.MOUSE.PAN       // Right button pans
+};
 controls.update();
 
 // Set up raymarching quad
