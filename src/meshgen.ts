@@ -98,10 +98,6 @@ export class MeshGenerator {
                     });
                 }
             }
-                face.indices.forEach(idx => {
-                    this.faces.push(startIndex + idx);
-                });
-            }
     }
 
     private optimizeVertices() {
