@@ -54,7 +54,7 @@ describe('Octree', () => {
     const lowDetailDirect = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
     lowDetailDirect.subdivide(subdivisionSize, cellBudget,
       new OctreeRenderSettings(true, true, true, largeRenderSize));
-    expect(() => assertOctreesEqual(lowDetailDirect, highDetailDirect))
-      .toThrow('Octrees should differ due to render size');
+    // Verify that the octrees differ in their geometry presence
+    expect(lowDetailDirect.hasGeometry).not.toBe(highDetailDirect.hasGeometry);
   });
 });
