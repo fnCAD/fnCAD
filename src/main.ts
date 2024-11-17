@@ -243,7 +243,7 @@ minSizeSlider.addEventListener('input', () => {
   const power = parseInt(minSizeSlider.value);
   const value = Math.pow(2, power);  // Use positive power for display
   const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
-  minSizeDisplay.textContent = power === 0 ? '1' : `1/${value}`;
+  minSizeDisplay.textContent = value === 1 ? '1' : `1/${value}`;
   updateOctree();
 });
 
