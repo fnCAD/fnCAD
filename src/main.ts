@@ -218,12 +218,13 @@ scene.add(quad);
 
 // Helper function to update octree visualization
 function updateOctreeVisualization() {
-  if (!currentOctree) return;
-
-  // Remove existing octree visualization
+  // Remove existing octree visualization first
   previewOverlayScene.children = previewOverlayScene.children.filter(child => 
     !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
   );
+
+  // Early return if visualization is disabled
+  if (!showOctreeCheckbox.checked) return;
 
   const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
   const renderSettings = new OctreeRenderSettings(
@@ -234,7 +235,9 @@ function updateOctreeVisualization() {
   );
   
   const octreeGroup = visualizeOctree(currentOctree, renderSettings);
-  previewOverlayScene.add(octreeGroup);
+  if (octreeGroup) {
+    previewOverlayScene.add(octreeGroup);
+  }
 }
 
 // Set up computation sliders

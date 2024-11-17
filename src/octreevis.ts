@@ -84,7 +84,9 @@ function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings):
   return new THREE.LineSegments(geometry, material);
 }
 
-export function visualizeOctree(root: OctreeNode, settings: OctreeRenderSettings): THREE.Group {
+export function visualizeOctree(root: OctreeNode | null, settings: OctreeRenderSettings): THREE.Group | null {
+  if (!root) return null;
+
   // Create a group to hold all octree geometries
   const group = new THREE.Group();
   group.userData.isOctreeVisualization = true;
