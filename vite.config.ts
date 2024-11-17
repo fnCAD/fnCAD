@@ -11,11 +11,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': [
-            'three',
-            'monaco-editor',
-            'split.js'
-          ],
+          'three': ['three'],
+          'monaco-core': ['monaco-editor/esm/vs/editor/editor.api'],
+          'split': ['split.js'],
           'core': [
             './src/parser.ts',
             './src/evaluator.ts',
