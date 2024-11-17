@@ -102,12 +102,26 @@ export class OctreeNode {
     }
     console.log(`Found parent's neighbor at ${parentNeighbor.center.toArray()}`);
 
-    // Find corresponding child in the neighbor
-    const tx = relativePos.x * direction.x < 0 ? 1 : 0;
-    const ty = relativePos.y * direction.y < 0 ? 1 : 0;
-    const tz = relativePos.z * direction.z < 0 ? 1 : 0;
+    // Find corresponding child in the neighbor based on our position relative to the neighbor
+    const neighborRelativePos = new THREE.Vector3()
+      .copy(this.center)
+      .sub(parentNeighbor.center)
+      .divideScalar(parentNeighbor.size / 2);
+
+    // Select octant in neighbor's space that's closest to our position
+    const tx = neighborRelativePos.x > 0 ? 1 : 0;
+    const ty = neighborRelativePos.y > 0 ? 1 : 0;
+    const tz = neighborRelativePos.z > 0 ? 1 : 0;
     const targetOctant = tx + ty * 2 + tz * 4;
-    return parentNeighbor.children[targetOctant];
+
+    // Return the child if it exists
+    const neighborChild = parentNeighbor.children[targetOctant];
+    if (!neighborChild) {
+      console.log(`No child found in parent neighbor's octant ${targetOctant}`);
+      console.log(`Parent neighbor center: ${parentNeighbor.center.toArray()}`);
+      console.log(`Our position relative to neighbor: ${neighborRelativePos.toArray()}`);
+    }
+    return neighborChild;
   }
 
   evaluate(): Interval {
