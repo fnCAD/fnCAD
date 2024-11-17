@@ -66,8 +66,8 @@ export function generateShader(ast: Node): string {
       float t = 0.0;
       float tmax = 20.0;
 
-      // Sample octree at current position
-      vec4 octreeData = texture2D(octreeBuffer, uv);
+      // Sample preview scene at current position
+      vec4 previewSceneData = texture2D(octreeBuffer, uv);
 
       for(int i = 0; i < 100; i++) {
         vec3 p = ro + rd * t;
@@ -86,8 +86,8 @@ export function generateShader(ast: Node): string {
           vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
           float viewSpaceDepth = -clipPos.z; // View space depth is negative of z in view space
           
-          // Get depth from octree depth buffer [0,1]
-          float octreeDepth = texture2D(octreeDepth, uv).r;
+          // Get depth from preview scene depth buffer [0,1]
+          float previewSceneDepth = texture2D(octreeDepth, uv).r;
           
           // Convert raymarched hit point to clip space using view and projection matrices
           vec4 rayWorldPos = vec4(ro + rd * t, 1.0);
@@ -101,23 +101,19 @@ export function generateShader(ast: Node): string {
           float rayDepth = rayNDC.z * 0.5 + 0.5;
           
           // Mix in preview scene if visible and closer
-          if(octreeData.a > 0.5) {
-            vec3 previewSceneColor = octreeData.rgb;
+          if(previewSceneData.a > 0.5) {
+            vec3 previewSceneColor = previewSceneData.rgb;
 
             // Compare depths in [0,1] space
             // Smaller depth values are closer to camera
-            if (octreeDepth < rayDepth) {
+            if (previewSceneDepth < rayDepth) {
               gl_FragColor = vec4(previewSceneColor, 1.0);
               return;
             }
           }
 
-          // Calculate lighting for the raymarched surface
-          vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
-          float diffuse = max(dot(n, lightDir), 0.0);
-          vec3 ambient = vec3(0.2);
-          vec3 meshColor = vec3(1.0, 0.85, 0.0); // Gold color
-          col = meshColor * (ambient + diffuse);
+          // Simple surface coloring without lighting
+          col = vec3(1.0, 0.85, 0.0); // Gold color
 
           gl_FragColor = vec4(col, 1.0);
           return;
