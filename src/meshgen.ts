@@ -15,22 +15,21 @@ export class MeshGenerator {
 
     private collectSurfaceCells(node: OctreeNode) {
         console.log(`Checking node at ${node.center.toArray()} with size ${node.size}`);
-        if (!node.isSurfaceCell()) {
-            console.log('Not a surface cell, skipping');
-            return;
-        }
-        console.log('Found surface cell, adding vertices');
-
-        // Only add vertices for leaf nodes (no children) or nodes at minimum size
-        const isLeaf = node.children.every(child => child === null);
-        const hasSubdividedChildren = node.children.some(child => child?.children.some(c => c !== null));
         
-        if (isLeaf || !hasSubdividedChildren) {
-            this.addCellVertices(node);
-            return;
+        // Check if this is a boundary cell (either leaf or subdivided)
+        if (node.state === CellState.Boundary || node.state === CellState.BoundarySubdivided) {
+            console.log('Found boundary cell');
+            
+            // Add vertices for leaf nodes or nodes at minimum size
+            const isLeaf = node.children.every(child => child === null);
+            if (isLeaf || node.state === CellState.Boundary) {
+                console.log('Adding vertices for boundary cell');
+                this.addCellVertices(node);
+                return;
+            }
         }
 
-        // Otherwise recurse into children
+        // Recurse into children for subdivided nodes
         node.children.forEach(child => {
             if (child) {
                 this.collectSurfaceCells(child);
@@ -93,8 +92,9 @@ export class MeshGenerator {
             } else {
                 console.log(`Found neighbor at ${neighbor.center.toArray()} with size ${neighbor.size}`);
                 
-                // Only add face if the neighbor is fully outside
-                if (neighbor.isFullyOutside()) {
+                // Add face if the neighbor is outside or at a coarser level
+                if (neighbor.isFullyOutside() || 
+                    (neighbor.state === CellState.Outside && neighbor.size > node.size)) {
                     face.indices.forEach(idx => {
                         this.faces.push(startIndex + idx);
                     });
