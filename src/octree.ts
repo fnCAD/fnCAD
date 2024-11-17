@@ -50,39 +50,6 @@ export class OctreeNode {
     return copy;
   }
 
-  equals(other: OctreeNode): {equal: boolean, reason?: string} {
-    if (this.size !== other.size) {
-      return {equal: false, reason: `Size mismatch: ${this.size} vs ${other.size}`};
-    }
-    if (this.state !== other.state) {
-      return {equal: false, reason: `State mismatch: ${this.state} vs ${other.state}`};
-    }
-    if (this.hasGeometry !== other.hasGeometry) {
-      return {equal: false, reason: 'Geometry presence mismatch'};
-    }
-    if (!this.center.equals(other.center)) {
-      return {equal: false, reason: `Center mismatch: ${this.center.toArray()} vs ${other.center.toArray()}`};
-    }
-    
-    // Compare children recursively
-    for (let i = 0; i < 8; i++) {
-      const thisChild = this.children[i];
-      const otherChild = other.children[i];
-      
-      if (!!thisChild !== !!otherChild) {
-        return {equal: false, reason: `Child presence mismatch at index ${i}`};
-      }
-      
-      if (thisChild && otherChild) {
-        const childComparison = thisChild.equals(otherChild);
-        if (!childComparison.equal) {
-          return {equal: false, reason: `Child ${i}: ${childComparison.reason}`};
-        }
-      }
-    }
-    
-    return {equal: true};
-  }
 
   constructor(
     public center: THREE.Vector3,
