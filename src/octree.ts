@@ -232,8 +232,14 @@ export class OctreeNode {
     // Create default settings if none provided
     const settings = renderSettings || new OctreeRenderSettings();
 
-    // Stop subdividing if we've reached minimum size or we're not a boundary cell
-    if (newSize < minSize || this.state !== CellState.Boundary) {
+    // If we're not a boundary cell, stop subdividing
+    if (this.state !== CellState.Boundary) {
+      this.updateLocalGeometry(settings);
+      return 1;
+    }
+
+    // If we've reached minimum size, stay as boundary cell
+    if (newSize < minSize) {
       this.updateLocalGeometry(settings);
       return 1;
     }
@@ -321,16 +327,20 @@ export class OctreeNode {
     // Create geometry if:
     // 1. Cell is large enough AND
     // 2. Either:
-    //    a) Cell is a leaf node (no children) OR
-    //    b) Cell has children but they're all too small to render
-    const isLeaf = this.children.every(child => child === null);
+    //    a) Cell is a boundary cell (not subdivided) OR
+    //    b) Cell is subdivided but children are too small to render
     const hasVisibleChildren = this.children.some(child => 
       child !== null && child.size >= settings.minRenderSize
     );
 
-    if (this.size >= settings.minRenderSize && (isLeaf || !hasVisibleChildren)) {
-      if ((this.isSurfaceCell() && settings.showBoundary) ||
-          (this.isFullyInside() && settings.showInside) ||
+    if (this.size >= settings.minRenderSize && 
+        ((this.state === CellState.Boundary) || 
+         (this.state === CellState.BoundarySubdivided && !hasVisibleChildren))) {
+      if (settings.showBoundary) {
+        this.createEdges();
+      }
+    } else if (this.size >= settings.minRenderSize) {
+      if ((this.isFullyInside() && settings.showInside) ||
           (this.isFullyOutside() && settings.showOutside)) {
         this.createEdges();
       }
