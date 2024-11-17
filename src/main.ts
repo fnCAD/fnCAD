@@ -154,7 +154,7 @@ editor.onDidChangeModelContent(() => {
 
     // Update octree visualization
     if (currentOctree) {
-      currentOctree.removeFromScene(scene);
+      currentOctree.removeFromScene(octreeScene);
     }
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     currentOctree.subdivide(0.1);
