@@ -56,7 +56,9 @@ window._editor = editor;
 // Get preview pane element
 const previewPane = document.getElementById('preview-pane')!;
 
-// Set up Three.js scene, renderer and camera
+// Set up Three.js scenes:
+// - scene: Used only for raymarching quad, DO NOT add other geometry here as it won't be visible
+// - previewOverlayScene: Used for debug visualization (octree, mesh preview, etc)
 const scene = new THREE.Scene();
 const previewOverlayScene = new THREE.Scene();
 
@@ -176,10 +178,7 @@ const previewRenderTarget = new THREE.WebGLRenderTarget(
   }
 );
 
-// Add coordinate axes helper to both scenes
-const mainAxesHelper = new THREE.AxesHelper(2);
-scene.add(mainAxesHelper);
-
+// Add coordinate axes helper to preview scene
 const overlayAxesHelper = new THREE.AxesHelper(2);
 previewOverlayScene.add(overlayAxesHelper);
 const FOV = 45; // Narrower FOV for better perspective
