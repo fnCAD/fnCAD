@@ -4,7 +4,8 @@ import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
 import { downloadSTL } from './stlexporter'
 import { WebGLRenderTarget } from 'three'
-import { OctreeNode, OctreeRenderSettings } from './octree'
+import { OctreeNode } from './octree'
+import { OctreeRenderSettings, visualizeOctree } from './octreevis'
 import { MeshGenerator } from './meshgen'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { parse } from './parser'
@@ -265,7 +266,15 @@ minRenderSizeSlider.addEventListener('input', () => {
     );
     currentOctree.removeFromScene(previewOverlayScene);
     currentOctree.updateGeometry(renderSettings);
-    currentOctree.addToScene(previewOverlayScene);
+    const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
+    const renderSettings = new OctreeRenderSettings(
+      showOutsideCheckbox.checked,
+      showInsideCheckbox.checked,
+      showBoundaryCheckbox.checked,
+      minRenderSize
+    );
+    const octreeGroup = visualizeOctree(currentOctree, renderSettings);
+    previewOverlayScene.add(octreeGroup);
   }
 });
 
@@ -292,7 +301,10 @@ function updateOctree() {
 
     // Update octree visualization
     if (currentOctree) {
-      currentOctree.removeFromScene(previewOverlayScene);
+      // Remove existing octree visualization
+      previewOverlayScene.children = previewOverlayScene.children.filter(child => 
+        !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
+      );
     }
     // NOTE: This large initial size (64k) is intentional and should not be changed!
     // It provides sufficient resolution for complex shapes while maintaining performance
