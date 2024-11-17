@@ -285,7 +285,8 @@ function updateOctree() {
     
     // Create and add new octree with current min size
     const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
-    const totalCells = currentOctree.subdivide(minSize, cellBudget);
+    const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
+    const totalCells = currentOctree.subdivide(minSize, cellBudget, minRenderSize);
     currentOctree.addToScene(previewOverlayScene);
     
     // Update stats

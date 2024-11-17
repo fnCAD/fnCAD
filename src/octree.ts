@@ -116,7 +116,7 @@ export class OctreeNode {
     return this.state === CellState.Outside;
   }
 
-  subdivide(minSize: number = 0.1, cellBudget: number = 100000): number {
+  subdivide(minSize: number = 0.1, cellBudget: number = 100000, minRenderSize: number = 0.1): number {
     const startBudget = cellBudget;
     
     const interval = this.evaluate();
@@ -159,7 +159,7 @@ export class OctreeNode {
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
       // Try to subdivide child with current budget
-      const cellsCreated = this.children[i].subdivide(minSize, cellBudget);
+      const cellsCreated = this.children[i].subdivide(minSize, cellBudget, minRenderSize);
       cellBudget -= cellsCreated;
       if (this.children[i].hasGeometry) {
         this.hasGeometry = true;
@@ -186,6 +186,17 @@ export class OctreeNode {
   }
 
   updateGeometry(showOutside: boolean, showInside: boolean, showBoundary: boolean, minRenderSize: number = 0.1): void {
+    this.updateLocalGeometry(showOutside, showInside, showBoundary, minRenderSize);
+    
+    // Recursively update children
+    this.children.forEach(child => {
+      if (child) {
+        child.updateGeometry(showOutside, showInside, showBoundary, minRenderSize);
+      }
+    });
+  }
+
+  private updateLocalGeometry(showOutside: boolean, showInside: boolean, showBoundary: boolean, minRenderSize: number): void {
     // Remove existing geometry
     if (this.edges) {
       this.edges.geometry.dispose();
@@ -194,7 +205,7 @@ export class OctreeNode {
       this.hasGeometry = false;
     }
     
-    // Only create geometry for cells we want to show and that are large enough
+    // Only create geometry if cell is large enough and matches visibility criteria
     if (this.size >= minRenderSize) {
       if ((this.isSurfaceCell() && showBoundary) ||
           (this.isFullyInside() && showInside) ||
@@ -202,13 +213,6 @@ export class OctreeNode {
         this.createEdges();
       }
     }
-    
-    // Recursively update children
-    this.children.forEach(child => {
-      if (child) {
-        child.updateGeometry(showOutside, showInside, showBoundary, minRenderSize);
-      }
-    });
   }
 
   private createEdges(): void {
