@@ -5,7 +5,7 @@ export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
     private faces: number[] = [];
     
-    constructor(private octree: OctreeNode) {}
+    constructor(private octree: OctreeNode, private optimize: boolean = true) {}
 
     generate(): THREE.Mesh {
         this.collectSurfaceCells(this.octree);
@@ -131,8 +131,6 @@ export class MeshGenerator {
             }
         }
     }
-
-    constructor(private octree: OctreeNode, private optimize: boolean = true) {}
 
     private createMesh(): THREE.Mesh {
         // Optimize vertex positions if enabled
