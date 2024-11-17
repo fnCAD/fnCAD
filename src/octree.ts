@@ -229,16 +229,16 @@ export class OctreeNode {
     const startBudget = cellBudget;
     
     const interval = this.evaluate();
+    const newSize = this.size / 2;
 
     // Create default settings if none provided
     const settings = renderSettings || new OctreeRenderSettings();
 
-    // If the interval is entirely positive or negative, or we've reached minimum size,
-    // we don't need to subdivide further
-    const newSize = this.size / 2;
-    if ((interval.min > 0 || interval.max < 0 || newSize < minSize) && 
-        this.state !== CellState.Boundary) {
-      // Update geometry for this node
+    // Stop subdividing if:
+    // 1. We've reached minimum size OR
+    // 2. The interval is entirely inside/outside AND we're not a boundary cell
+    if (newSize < minSize || 
+        ((interval.min > 0 || interval.max < 0) && this.state !== CellState.Boundary)) {
       this.updateLocalGeometry(settings);
       return 1;
     }
@@ -258,7 +258,7 @@ export class OctreeNode {
       [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
     ];
 
-    // If we're subdividing a boundary cell, mark it as such
+    // Mark boundary cells as subdivided before creating children
     if (this.state === CellState.Boundary) {
       this.state = CellState.BoundarySubdivided;
     }
