@@ -25,38 +25,7 @@ export function createVariableNode(name: string): VariableNode {
       if (!(name in context)) {
         return context[name];
       }
-      const evaluatedArgs: Interval[] = this.args.map((arg: Node) => arg.evaluateInterval(context));
-      
-      // Handle built-in math functions
-      if (name === 'sqrt') {
-        return evaluatedArgs[0].sqrt();
-      }
-      if (name === 'sin') {
-        return evaluatedArgs[0].sin();
-      }
-      if (name === 'cos') {
-        return evaluatedArgs[0].cos();
-      }
-
-      // Handle min/max with any number of arguments
-      if (name === 'min' && evaluatedArgs.length >= 2) {
-        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
-          return new Interval(
-            Math.min(acc.min, interval.min),
-            Math.min(acc.max, interval.max)
-          );
-        });
-      }
-      if (name === 'max' && evaluatedArgs.length >= 2) {
-        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
-          return new Interval(
-            Math.max(acc.min, interval.min),
-            Math.max(acc.max, interval.max)
-          );
-        });
-      }
-
-      throw new Error(`Unknown function: ${name}`);
+      return context[name];
     },
     toGLSL: () => {
       // Map x,y,z to p.x, p.y, p.z for vector components
