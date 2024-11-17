@@ -1,12 +1,12 @@
 # Implementation Steps
 
-## 1. Basic Setup
+## 1. Basic Setup ✓
 - [x] Project structure and build system
 - [x] Development server
 - [x] Basic UI layout (editor/preview/controls)
 - [x] WebGL context setup
 
-## 2. Development Environment
+## 2. Development Environment ✓
 - [x] Setup Vite build system
 - [x] Three.js integration
 - [x] Code editor (Monaco) integration
@@ -16,14 +16,19 @@
 ## 3. SDF Core
 - [x] AST parser for SDF functions
 - [x] Function transpiler with multiple targets:
-  - [ ] Interval arithmetic evaluator
-  - [ ] Float number evaluator
+  - [x] Interval arithmetic evaluator
+  - [x] Float number evaluator
   - [x] GLSL shader code generator
 - [x] Basic SDF primitives library
 - [x] Combining operations (min/max for union)
-- [ ] Additional combining operations (smooth union, intersection, difference)
+- [ ] Additional combining operations:
+  - [ ] Smooth union
+  - [ ] Intersection
+  - [ ] Difference
+  - [ ] Smooth intersection
+  - [ ] Smooth difference
 
-## 4. Ray Marching Preview
+## 4. Ray Marching Preview ✓
 - [x] Fragment shader for SDF evaluation
 - [x] Basic ray marching implementation
 - [x] Camera controls
@@ -32,33 +37,33 @@
   - [ ] Frame-to-frame normal caching (NICE TO HAVE, NOT URGENT)
   - [x] Basic directional lighting
 
-## 5. Octree Generation
+## 5. Octree Generation ✓
 - [x] Interval arithmetic implementation
 - [x] Recursive octree subdivision
 - [x] SDF boundary detection
 - [x] Visualization of octree structure
 - [x] Adaptive subdivision based on SDF complexity
 
-## 6. Initial Mesh Generation
-- [ ] Octree to mesh conversion
-- [ ] Surface cell identification
-- [ ] Vertex placement strategy
-- [ ] Face generation
-- [ ] Preview of raw octree mesh
+## 6. Initial Mesh Generation ✓
+- [x] Octree to mesh conversion
+- [x] Surface cell identification
+- [x] Vertex placement strategy
+- [x] Face generation
+- [x] Preview of raw octree mesh
 
-## 7. Mesh Refinement
-- [ ] SDF gradient calculation
-- [ ] Vertex optimization
-- [ ] Surface smoothing
-- [ ] Error metrics
-- [ ] Progressive refinement visualization
+## 7. Mesh Refinement ✓
+- [x] SDF gradient calculation
+- [x] Vertex optimization
+- [x] Surface smoothing
+- [x] Error metrics
+- [x] Progressive refinement visualization
 
 ## 8. Export and UI Polish
-- [ ] STL export
+- [x] STL export
 - [ ] Progress indicators
-- [ ] Error handling
-- [ ] UI controls for all stages
-- [ ] Performance settings
+- [x] Error handling
+- [x] UI controls for all stages
+- [x] Performance settings
 
 ## 9. Advanced Features
 - [ ] Custom SDF function library
@@ -72,3 +77,17 @@
 - [ ] SDF function reference
 - [ ] Example gallery
 - [ ] Tutorial content
+
+## 11. SDF Language Features
+- [ ] Named anchors for positioning
+- [ ] Object definitions and reuse
+- [ ] Macro system for code reuse
+- [ ] Variables and constants
+- [ ] Transformations:
+  - [ ] Translation
+  - [ ] Rotation
+  - [ ] Scaling
+  - [ ] Mirror/symmetry
+- [ ] Loops and repetition
+- [ ] Conditional operations
+- [ ] Custom function definitions
