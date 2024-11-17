@@ -34,9 +34,30 @@ export class OctreeNode {
   }
 
   getNeighbor(direction: THREE.Vector3): OctreeNode | null {
-    // If we're at root, no neighbor
+    // If we're at root, check if target is within our bounds
     if (!this.parent) {
-      console.log('No parent node - at root');
+      console.log('At root node, checking if target is within bounds');
+      const targetPos = new THREE.Vector3()
+        .copy(this.center)
+        .addScaledVector(direction, this.size);
+      
+      // Check if target position is within root bounds
+      const half = this.size / 2;
+      const withinBounds = Math.abs(targetPos.x - this.center.x) <= half &&
+                          Math.abs(targetPos.y - this.center.y) <= half &&
+                          Math.abs(targetPos.z - this.center.z) <= half;
+      
+      console.log(`Target position at root: ${targetPos.toArray()}`);
+      console.log(`Root bounds check: ${withinBounds}`);
+      
+      if (withinBounds) {
+        // Find the octant containing the target position
+        const tx = targetPos.x > this.center.x ? 1 : 0;
+        const ty = targetPos.y > this.center.y ? 1 : 0;
+        const tz = targetPos.z > this.center.z ? 1 : 0;
+        const targetOctant = tx + ty * 2 + tz * 4;
+        return this.children[targetOctant];
+      }
       return null;
     }
 
