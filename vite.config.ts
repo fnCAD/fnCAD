@@ -2,6 +2,15 @@ import { defineConfig } from 'vite'
 import { copyFileSync } from 'fs'
 
 export default defineConfig({
+  logLevel: 'info',
+  clearScreen: false,
+  server: {
+    cors: true,
+    hmr: {
+      protocol: 'ws',
+      timeout: 5000,
+    },
+  },
   base: '/~user/fncad/',
   build: {
     outDir: 'dist',
