@@ -56,9 +56,11 @@ const octreeRenderTarget = new WebGLRenderTarget(
     format: THREE.RGBAFormat,
     type: THREE.FloatType,
     depthBuffer: true,
-    stencilBuffer: false
+    stencilBuffer: false,
+    colorSpace: THREE.LinearSRGBColorSpace
   }
 );
+renderer.setClearColor(0x000000, 0); // Clear to transparent black
 // Add coordinate axes helper
 const axesHelper = new THREE.AxesHelper(2);
 scene.add(axesHelper);

@@ -93,8 +93,10 @@ export class OctreeNode {
     const material = new THREE.LineBasicMaterial({ 
       color: 0x00ff00,  // Green color
       transparent: true,
-      opacity: 1.0,     // Full opacity to ensure alpha channel is set
-      blending: THREE.AdditiveBlending  // Make lines add up where they overlap
+      opacity: 1.0,
+      blending: THREE.AdditiveBlending,  // Make lines add up where they overlap
+      depthWrite: false,  // Don't write to depth buffer
+      depthTest: true    // But do test against it
     });
     this.edges = new THREE.Line(geometry, material);
   }
