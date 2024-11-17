@@ -7,6 +7,16 @@ export function generateShader(ast: Node): string {
     uniform vec3 customCameraPosition;
     uniform sampler2D octreeBuffer;
 
+    // Convert world position to UV coordinates for octree texture lookup
+    vec2 worldToUV(vec3 worldPos) {
+      // Project point using same view/projection as octree render
+      vec4 projected = customViewMatrix * vec4(worldPos, 1.0);
+      // Convert to NDC space
+      vec2 ndc = projected.xy / projected.w;
+      // Convert to UV space [0,1]
+      return ndc * 0.5 + 0.5;
+    }
+
     float scene(vec3 pos) {
       return ${ast.toGLSL()};
     }
@@ -48,6 +58,18 @@ export function generateShader(ast: Node): string {
       
       for(int i = 0; i < 100; i++) {
         vec3 p = ro + rd * t;
+        
+        // Check octree texture
+        vec2 uv = worldToUV(p);
+        vec4 octreeData = texture2D(octreeBuffer, uv);
+        
+        // If octree shows this cell is empty (alpha = 0), we can skip it
+        if (octreeData.a < 0.5) {
+          // Use cell size as minimum step
+          t += max(0.1, octreeData.r);
+          continue;
+        }
+        
         float d = scene(p);
         
         // Hit check
