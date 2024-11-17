@@ -139,14 +139,8 @@ export class OctreeNode {
       throw new Error('Cell budget exhausted');
     }
 
-    // Calculate remaining budget after this cell
+    // Pass full remaining budget to each child
     const remainingBudget = cellBudget - 1;
-    if (remainingBudget < 8) { // Need at least 8 cells for children
-      this.createEdges();
-      return cellCount;
-    }
-    // Distribute remaining budget among children
-    const childBudget = Math.floor(remainingBudget / 8);
 
     // Create 8 children
     const half = newSize;
@@ -164,7 +158,7 @@ export class OctreeNode {
         this.center.z + z * half/2
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
-      cellCount += this.children[i].subdivide(minSize, childBudget);
+      cellCount += this.children[i].subdivide(minSize, remainingBudget);
     }
 
     return cellCount;
