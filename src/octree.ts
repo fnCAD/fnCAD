@@ -91,7 +91,7 @@ export class OctreeNode {
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     const material = new THREE.LineBasicMaterial({ 
-      color: 0xff0000,  // Red color
+      color: 0x00ff00,  // Green color
       transparent: true,
       opacity: 1.0,     // Full opacity to ensure alpha channel is set
       blending: THREE.AdditiveBlending  // Make lines add up where they overlap
