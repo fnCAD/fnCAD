@@ -219,8 +219,6 @@ function updateOctree() {
   try {
     const editorContent = editor.getValue();
     const ast = parse(editorContent);
-    const fragmentShader = generateShader(ast);
-    console.log('Generated GLSL:', fragmentShader);
 
     // Update octree visualization
     if (currentOctree) {
@@ -256,6 +254,7 @@ function updateOctree() {
 
 function updateMaterial() {
   try {
+    const fragmentShader = generateShader(parse(editor.getValue()));
     material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
