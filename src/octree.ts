@@ -139,12 +139,14 @@ export class OctreeNode {
       throw new Error('Cell budget exhausted');
     }
 
-    // Calculate budget for children (reserving 1 for this cell)
-    const childBudget = Math.floor((cellBudget - 1) / 8);
-    if (childBudget < 1) {
+    // Calculate remaining budget after this cell
+    const remainingBudget = cellBudget - 1;
+    if (remainingBudget < 8) { // Need at least 8 cells for children
       this.createEdges();
       return cellCount;
     }
+    // Distribute remaining budget among children
+    const childBudget = Math.floor(remainingBudget / 8);
 
     // Create 8 children
     const half = newSize;
