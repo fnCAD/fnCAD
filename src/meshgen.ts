@@ -106,7 +106,9 @@ export class MeshGenerator {
             
             
             // Stop if vertices barely moved
+            console.log(`Iteration ${iter + 1}, max movement: ${maxMove}`);
             if (maxMove < epsilon) {
+                console.log(`Optimization converged after ${iter + 1} iterations`);
                 break;
             }
         }
