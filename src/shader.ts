@@ -83,10 +83,7 @@ export function generateShader(ast: Node): string {
 
           // Convert hit point to clip space
           vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
-          
-          // Convert to NDC space
-          vec4 ndcPos = customProjectionMatrix * clipPos;
-          float ndcDepth = (ndcPos.z / ndcPos.w);
+          float ndcDepth = clipPos.z;
 
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
@@ -95,16 +92,15 @@ export function generateShader(ast: Node): string {
             // Get octree color from the buffer
             vec3 octreeColor = octreeData.rgb;
             
-            // Compare linear octree depth with raymarched depth (which is already linear)
-            if (linearOctreeDepth < t) {
-              // Octree in front (smaller depth); draw octree with its actual color
+            // Compare depths directly
+            if (octreeDepthValue < ndcDepth) {
+              // Octree in front; draw octree with its actual color
               gl_FragColor = vec4(mix(col, octreeColor, 0.5), 1.0);
               return;
             }
             // For inside cells, we want to ensure they're only visible when they're actually
-            // in front of the surface, using the depth buffer
-            float surfaceDepth = t;
-            if (linearOctreeDepth < surfaceDepth) {
+            // in front of the surface
+            if (octreeDepthValue < ndcDepth) {
               // Only show octree color if it's genuinely in front
               gl_FragColor = vec4(octreeColor, 1.0);
             } else {
