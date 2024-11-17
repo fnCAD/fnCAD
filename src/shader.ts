@@ -35,15 +35,15 @@ export function generateShader(ast: Node): string {
       // Calculate ray direction in view space using FOV
       float halfFovRad = radians(fov) * 0.5;
       float aspect = resolution.x / resolution.y;
-      vec3 rayView = normalize(vec3(
+      vec3 rayView = vec3(
         ndc.x * aspect * tan(halfFovRad),
         ndc.y * tan(halfFovRad),
         -1.0
-      ));
+      );
       
       // Transform ray to world space
       mat3 viewToWorld = mat3(inverse(viewMatrix));
-      return normalize(viewToWorld * rayView);
+      return viewToWorld * rayView;
     }
 
     void main() {
