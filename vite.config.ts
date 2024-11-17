@@ -7,12 +7,8 @@ export default defineConfig({
   build: {
     // Show detailed build progress
     reportCompressedSize: true,
-    minify: 'terser',
-    terserOptions: {
-      format: {
-        comments: true
-      }
-    },
+    minify: 'esbuild',
+    target: 'esnext',
     // Log each asset and its size
     manifest: true,
     // Show build time stats
