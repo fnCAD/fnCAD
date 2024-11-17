@@ -246,13 +246,11 @@ export class OctreeNode {
 
     // If we're not a boundary cell, stop subdividing
     if (this.state !== CellState.Boundary) {
-      this.updateLocalGeometry(settings);
       return 1;
     }
 
     // If we've reached minimum size, stay as boundary cell
     if (newSize < minSize) {
-      this.updateLocalGeometry(settings);
       return 1;
     }
 
