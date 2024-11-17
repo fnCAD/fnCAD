@@ -3,11 +3,11 @@ import * as THREE from 'three';
 export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     const geometry = mesh.geometry;
     const position = geometry.attributes.position;
-    const triangleCount = position.count / 3;
+    const triangleCount = Math.floor(position.count / 3);  // Must be whole number
     
     console.log(`STL Export: Processing ${triangleCount} triangles`);
     console.log(`Position attribute count: ${position.count}`);
-    console.log(`Vertices per triangle: ${position.count / triangleCount}`);
+    console.log(`Vertices per triangle: 3`);
     
     // Binary STL format:
     // 80 bytes - Header
@@ -18,13 +18,13 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     //   2 bytes - Attribute byte count (uint16)
     // Binary STL format size calculation:
     // 80 bytes header + 4 bytes triangle count + (12+36+2) bytes per triangle
-    const HEADER_SIZE = 80;
-    const COUNT_SIZE = 4;
-    const NORMAL_SIZE = 12;   // 3 floats * 4 bytes
-    const VERTEX_SIZE = 36;   // 9 floats * 4 bytes
-    const ATTR_SIZE = 2;      // Uint16 attribute
+    const HEADER_SIZE = 80;            // Header
+    const COUNT_SIZE = 4;              // Uint32 count
+    const NORMAL_SIZE = 12;            // 3 floats * 4 bytes
+    const VERTEX_SIZE = 36;            // 9 floats * 4 bytes
+    const ATTR_SIZE = 2;               // Uint16 attribute
     const TRIANGLE_SIZE = NORMAL_SIZE + VERTEX_SIZE + ATTR_SIZE;
-    const bufferSize = HEADER_SIZE + COUNT_SIZE + (TRIANGLE_SIZE * triangleCount);
+    const bufferSize = Math.ceil(HEADER_SIZE + COUNT_SIZE + (TRIANGLE_SIZE * triangleCount));
     
     console.log('Buffer allocation:', {
         headerSize: HEADER_SIZE,
