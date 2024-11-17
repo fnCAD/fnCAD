@@ -90,15 +90,15 @@ export function generateShader(ast: Node): string {
           float octreeDepth = texture2D(octreeDepth, uv).r;
           
           // Convert raymarched hit point to clip space using view and projection matrices
-          vec4 worldPos = vec4(ro + rd * t, 1.0);
-          vec4 viewPos = customViewMatrix * worldPos;
-          vec4 clipPos = projectionMatrix * viewPos;
+          vec4 rayWorldPos = vec4(ro + rd * t, 1.0);
+          vec4 rayViewPos = customViewMatrix * rayWorldPos;
+          vec4 rayClipPos = projectionMatrix * rayViewPos;
           
           // Perspective divide to get NDC coordinates
-          vec3 ndc = clipPos.xyz / clipPos.w;
+          vec3 rayNDC = rayClipPos.xyz / rayClipPos.w;
           
           // Convert to depth buffer space [0,1]
-          float rayDepth = ndc.z * 0.5 + 0.5;
+          float rayDepth = rayNDC.z * 0.5 + 0.5;
           
           // Mix in octree visualization if cell is occupied and closer
           if(octreeData.a > 0.5) {
