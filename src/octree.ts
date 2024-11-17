@@ -82,7 +82,32 @@ export class OctreeNode {
     // Using log scale since sizes vary greatly
     const maxSize = 65536; // Our current max size
     const t = Math.log(this.size) / Math.log(maxSize); // Normalized 0-1
-    return new THREE.Color(1.0 - t, t, 0); // Red to Green
+    
+    if (this.isSurfaceCell()) {
+      return new THREE.Color(1, 1, 0); // Yellow for boundary cells
+    } else if (this.isFullyInside()) {
+      return new THREE.Color(0, 1, 0); // Green for inside cells
+    } else {
+      return new THREE.Color(1, 0, 0); // Red for outside cells
+    }
+  }
+
+  updateVisibility(showOutside: boolean, showInside: boolean, showBoundary: boolean): void {
+    if (this.edges) {
+      if (this.isSurfaceCell()) {
+        this.edges.visible = showBoundary;
+      } else if (this.isFullyInside()) {
+        this.edges.visible = showInside;
+      } else {
+        this.edges.visible = showOutside;
+      }
+    }
+    
+    this.children.forEach(child => {
+      if (child) {
+        child.updateVisibility(showOutside, showInside, showBoundary);
+      }
+    });
   }
 
   private createEdges(): void {

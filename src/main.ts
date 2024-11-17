@@ -64,6 +64,18 @@ settingsPanel.innerHTML = `
       <input type="checkbox" id="show-octree" checked>
       <label for="show-octree">Show Octree Grid</label>
     </div>
+    <div class="setting-row">
+      <input type="checkbox" id="show-outside" checked>
+      <label for="show-outside">Show Outside Cells</label>
+    </div>
+    <div class="setting-row">
+      <input type="checkbox" id="show-inside" checked>
+      <label for="show-inside">Show Inside Cells</label>
+    </div>
+    <div class="setting-row">
+      <input type="checkbox" id="show-boundary" checked>
+      <label for="show-boundary">Show Boundary Cells</label>
+    </div>
   </div>
 `;
 previewPane.appendChild(settingsPanel);
@@ -74,12 +86,27 @@ settingsHeader.addEventListener('click', () => {
   settingsPanel.classList.toggle('collapsed');
 });
 
-// Add octree visibility control
+// Add visibility controls
 const showOctreeCheckbox = document.getElementById('show-octree') as HTMLInputElement;
-showOctreeCheckbox.addEventListener('change', () => {
+const showOutsideCheckbox = document.getElementById('show-outside') as HTMLInputElement;
+const showInsideCheckbox = document.getElementById('show-inside') as HTMLInputElement;
+const showBoundaryCheckbox = document.getElementById('show-boundary') as HTMLInputElement;
+
+function updateOctreeVisibility() {
   if (currentOctree) {
     octreeScene.visible = showOctreeCheckbox.checked;
+    if (showOctreeCheckbox.checked) {
+      currentOctree.updateVisibility(
+        showOutsideCheckbox.checked,
+        showInsideCheckbox.checked,
+        showBoundaryCheckbox.checked
+      );
+    }
   }
+}
+
+[showOctreeCheckbox, showOutsideCheckbox, showInsideCheckbox, showBoundaryCheckbox].forEach(checkbox => {
+  checkbox.addEventListener('change', updateOctreeVisibility);
 });
 
 // Create render target for octree
