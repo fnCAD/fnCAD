@@ -144,6 +144,18 @@ body {
 .setting-row label {
   font-size: 12px;
   color: #ddd;
+  flex: 1;
+}
+
+.setting-row input[type="range"] {
+  width: 100px;
+}
+
+.setting-row .value-display {
+  font-size: 12px;
+  color: #ddd;
+  min-width: 40px;
+  text-align: right;
 }
 
 .logo {

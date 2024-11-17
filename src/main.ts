@@ -87,6 +87,11 @@ settingsPanel.innerHTML = `
       <label for="show-boundary">Show Boundary Cells</label>
     </div>
     <div class="setting-row">
+      <label for="min-size">Min Cell Size:</label>
+      <input type="range" id="min-size" min="0.1" max="2.0" step="0.1" value="0.1">
+      <span class="value-display">0.1</span>
+    </div>
+    <div class="setting-row">
       <button id="generate-mesh">Generate Mesh</button>
     </div>
   </div>
@@ -197,8 +202,8 @@ if (statsPanel) {
   statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
 }
 
-// Update shader when editor content changes
-editor.onDidChangeModelContent(() => {
+// Function to update the octree visualization
+function updateOctree() {
   try {
     const editorContent = editor.getValue();
     const ast = parse(editorContent);
@@ -210,7 +215,8 @@ editor.onDidChangeModelContent(() => {
       currentOctree.removeFromScene(previewOverlayScene);
     }
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
-    currentOctree.subdivide(0.1);
+    const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
+    currentOctree.subdivide(parseFloat(minSizeSlider.value));
     currentOctree.addToScene(previewOverlayScene);
     
     // Update stats
@@ -218,7 +224,20 @@ editor.onDidChangeModelContent(() => {
     if (statsPanel) {
       statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
     }
-    material = new THREE.ShaderMaterial({
+// Add min size slider handler
+const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
+const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
+
+minSizeSlider.addEventListener('input', (e) => {
+  const value = (e.target as HTMLInputElement).value;
+  minSizeDisplay.textContent = value;
+  updateOctree();
+});
+
+// Update shader when editor content changes
+editor.onDidChangeModelContent(updateOctree);
+
+function updateMaterial() {
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
         customViewMatrix: { value: camera.matrixWorldInverse },
@@ -231,6 +250,7 @@ editor.onDidChangeModelContent(() => {
       fragmentShader,
       vertexShader: material.vertexShader
     });
+    updateMaterial();
     quad.material = material;
   } catch (e) {
     if (e instanceof Error) {
