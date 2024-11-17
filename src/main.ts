@@ -66,7 +66,6 @@ camera.position.set(3, 2, 3);
 camera.up.set(0, 1, 0);  // Ensure up vector is aligned with Y axis
 camera.lookAt(0, 0, 0);
 
-const previewPane = document.getElementById('preview-pane')!;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(previewPane.clientWidth, previewPane.clientHeight);
 previewPane.innerHTML = '';
