@@ -211,7 +211,7 @@ const initialAst = parse(editor.getValue());
 currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 const power = parseInt(minSizeSlider.value);
 const minSize = Math.pow(2, -power);
-currentOctree.subdivide(minSize);
+currentOctree.subdivide(minSize, 100000);
 currentOctree.addToScene(previewOverlayScene);
 
 // Update initial stats
@@ -241,7 +241,7 @@ function updateOctree() {
     minSizeDisplay.textContent = minSize.toString();
     
     // Create and add new octree with current min size
-    currentOctree.subdivide(minSize);
+    currentOctree.subdivide(minSize, 100000);
     currentOctree.addToScene(previewOverlayScene);
     
     // Update stats

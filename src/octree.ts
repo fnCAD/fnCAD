@@ -115,7 +115,7 @@ export class OctreeNode {
     return this.state === CellState.Outside;
   }
 
-  subdivide(minSize: number = 0.1): void {
+  subdivide(minSize: number = 0.1, maxCells: number = 100000): void {
     const interval = this.evaluate();
 
     // If the interval is entirely positive or negative, we don't need to subdivide
@@ -124,9 +124,9 @@ export class OctreeNode {
       return;
     }
 
-    // If we've reached minimum size, stop subdividing
+    // If we've reached minimum size or max cells, stop subdividing
     const newSize = this.size / 2;
-    if (newSize < minSize) {
+    if (newSize < minSize || this.countCells() >= maxCells) {
       this.createEdges();
       return;
     }
