@@ -5,7 +5,7 @@ import * as THREE from 'three';
 export class OctreeNode {
   children: (OctreeNode | null)[] = new Array(8).fill(null);
   vertices: THREE.Vector3[] = [];
-  edges: THREE.Line | null = null;
+  edges: THREE.LineSegments | null = null;
 
   constructor(
     public center: THREE.Vector3,
@@ -98,7 +98,7 @@ export class OctreeNode {
       depthWrite: true,   // Write to depth buffer
       depthTest: true     // And test against it
     });
-    this.edges = new THREE.Line(geometry, material);
+    this.edges = new THREE.LineSegments(geometry, material);
   }
 
   addToScene(scene: THREE.Scene): void {
