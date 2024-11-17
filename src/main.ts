@@ -138,27 +138,13 @@ const showInsideCheckbox = document.getElementById('show-inside') as HTMLInputEl
 const showBoundaryCheckbox = document.getElementById('show-boundary') as HTMLInputElement;
 
 function updateOctreeGeometry() {
-  if (currentOctree) {
-    const power = parseInt((document.getElementById('min-render-size') as HTMLInputElement).value);
-    const minRenderSize = Math.pow(2, -power);
-    
-    // Remove all geometry first
-    // Remove existing octree visualization
+  if (currentOctree && showOctreeCheckbox.checked) {
+    updateOctreeVisualization();
+  } else {
+    // Remove visualization if checkbox is unchecked
     previewOverlayScene.children = previewOverlayScene.children.filter(child => 
       !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
     );
-    
-    if (showOctreeCheckbox.checked) {
-      // Create new visualization based on current settings
-      const settings = {
-        showOutside: showOutsideCheckbox.checked,
-        showInside: showInsideCheckbox.checked,
-        showBoundary: showBoundaryCheckbox.checked,
-        minRenderSize: minRenderSize
-      };
-      const octreeGroup = visualizeOctree(currentOctree, settings);
-      previewOverlayScene.add(octreeGroup);
-    }
   }
 }
 
@@ -230,9 +216,31 @@ let material = new THREE.ShaderMaterial({
 const quad = new THREE.Mesh(geometry, material);
 scene.add(quad);
 
+// Helper function to update octree visualization
+function updateOctreeVisualization() {
+  if (!currentOctree) return;
+
+  // Remove existing octree visualization
+  previewOverlayScene.children = previewOverlayScene.children.filter(child => 
+    !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
+  );
+
+  const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
+  const renderSettings = new OctreeRenderSettings(
+    showOutsideCheckbox.checked,
+    showInsideCheckbox.checked,
+    showBoundaryCheckbox.checked,
+    minRenderSize
+  );
+  
+  const octreeGroup = visualizeOctree(currentOctree, renderSettings);
+  previewOverlayScene.add(octreeGroup);
+}
+
 // Set up computation sliders
 const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
 const cellBudgetSlider = document.getElementById('cell-budget') as HTMLInputElement;
+const minRenderSizeSlider = document.getElementById('min-render-size') as HTMLInputElement;
 
 minSizeSlider.addEventListener('input', () => {
   const power = parseInt(minSizeSlider.value);
@@ -249,24 +257,12 @@ cellBudgetSlider.addEventListener('input', () => {
   updateOctree();
 });
 
-const minRenderSizeSlider = document.getElementById('min-render-size') as HTMLInputElement;
 minRenderSizeSlider.addEventListener('input', () => {
   const power = parseInt(minRenderSizeSlider.value);
   const value = Math.pow(2, power);  // Use positive power for display
   const display = minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
   display.textContent = value === 1 ? '1' : `1/${value}`;
-  
-  if (currentOctree) {
-    const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
-    const renderSettings = new OctreeRenderSettings(
-      showOutsideCheckbox.checked,
-      showInsideCheckbox.checked,
-      showBoundaryCheckbox.checked,
-      minRenderSize
-    );
-    const octreeGroup = visualizeOctree(currentOctree, renderSettings);
-    previewOverlayScene.add(octreeGroup);
-  }
+  updateOctreeVisualization();
 });
 
 // Add initial octree visualization
