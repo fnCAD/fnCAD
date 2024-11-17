@@ -33,11 +33,10 @@ export function generateShader(ast: Node): string {
       vec2 ndc = (uv * 2.0 - 1.0);
       
       // Create ray in view space with proper perspective
-      float fovRad = radians(fov);
       float aspect = resolution.x / resolution.y;
       vec3 rayView = normalize(vec3(
-        ndc.x * aspect * tan(fovRad/2.0),
-        ndc.y * tan(fovRad/2.0),
+        ndc.x * aspect * tan(fov/2.0),
+        ndc.y * tan(fov/2.0),
         -1.0
       ));
       
