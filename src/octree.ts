@@ -213,21 +213,8 @@ export class OctreeNode {
   }
 
   isSurfaceCell(): boolean {
-    // A cell is a surface cell if:
-    // 1. It's a leaf boundary cell OR
-    // 2. It's a subdivided boundary cell with no further subdivided children
-    if (this.state === CellState.Boundary) {
-      return true; // Leaf boundary cell
-    }
-    
-    if (this.state === CellState.BoundarySubdivided) {
-      // Check if any children are themselves subdivided boundary cells
-      return !this.children.some(child => 
-        child?.state === CellState.BoundarySubdivided
-      );
-    }
-    
-    return false;
+    // Only leaf boundary cells are surface cells
+    return this.state === CellState.Boundary;
   }
 
   isFullyInside(): boolean {
