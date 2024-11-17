@@ -98,7 +98,10 @@ export function generateShader(ast: Node): string {
               return;
             }
             // Mix octree color with surface color when inside objects
-            col = mix(col, octreeColor, 0.2);
+            // This has to be *really weak* because it's very high frequency,
+            // so if it's more than extremely faint it visually drowns
+            // out the low-frequency shape of the surface.
+            gl_FragColor = vec4(mix(col, octreeColor, 0.01), 1.0);
           }
 
           gl_FragColor = vec4(col, 1.0);
