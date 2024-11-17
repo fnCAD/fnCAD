@@ -31,10 +31,7 @@ function vectorToDirection(direction: THREE.Vector3): Direction {
 
 export class OctreeNode {
   children: (OctreeNode | null)[] = new Array(8).fill(null);
-  vertices: THREE.Vector3[] = [];
-  edges: THREE.LineSegments | null = null;
   state: CellState;
-  private hasGeometry: boolean = false;
 
   dup(): OctreeNode {
     const copy = new OctreeNode(
