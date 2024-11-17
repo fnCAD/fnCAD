@@ -2,6 +2,7 @@ import './style.css'
 import Split from 'split.js'
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
+import { WebGLRenderTarget } from 'three'
 import { OctreeNode } from './octree'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { parse } from './parser'
@@ -39,7 +40,20 @@ window._editor = editor;
 
 // Set up Three.js scene
 const scene = new THREE.Scene();
+const octreeScene = new THREE.Scene();
 let currentOctree: OctreeNode | null = null;
+
+// Create render target for octree
+const octreeRenderTarget = new WebGLRenderTarget(
+  previewPane.clientWidth,
+  previewPane.clientHeight,
+  {
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
+    format: THREE.RGBAFormat,
+    type: THREE.FloatType
+  }
+);
 // Add coordinate axes helper
 const axesHelper = new THREE.AxesHelper(2);
 scene.add(axesHelper);
@@ -67,29 +81,30 @@ controls.target.set(0, 0, 0);
 controls.enablePan = false;     // Disable panning to force orbiting behavior
 controls.update();
 
-// Temporarily comment out raymarching quad
-// const geometry = new THREE.PlaneGeometry(2, 2);
-// let material = new THREE.ShaderMaterial({
-//   uniforms: {
-//     resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
-//     customViewMatrix: { value: camera.matrixWorldInverse },
-//     customCameraPosition: { value: camera.position }
-//   },
-//   fragmentShader: generateShader(parse(editor.getValue())),
-//   vertexShader: `
-//     void main() {
-//       gl_Position = vec4(position, 1.0);
-//     }
-//   `
-// });
-// const quad = new THREE.Mesh(geometry, material);
-// scene.add(quad);
+// Set up raymarching quad
+const geometry = new THREE.PlaneGeometry(2, 2);
+let material = new THREE.ShaderMaterial({
+  uniforms: {
+    resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
+    customViewMatrix: { value: camera.matrixWorldInverse },
+    customCameraPosition: { value: camera.position },
+    octreeBuffer: { value: octreeRenderTarget.texture }
+  },
+  fragmentShader: generateShader(parse(editor.getValue())),
+  vertexShader: `
+    void main() {
+      gl_Position = vec4(position, 1.0);
+    }
+  `
+});
+const quad = new THREE.Mesh(geometry, material);
+scene.add(quad);
 
 // Add initial octree visualization
 const initialAst = parse(editor.getValue());
 currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, initialAst);
 currentOctree.subdivide(0.1);
-currentOctree.addToScene(scene);
+currentOctree.addToScene(octreeScene);
 
 // Update shader when editor content changes
 editor.onDidChangeModelContent(() => {
@@ -105,18 +120,18 @@ editor.onDidChangeModelContent(() => {
     }
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
     currentOctree.subdivide(0.1);
-    currentOctree.addToScene(scene);
-    // Temporarily comment out material update
-    // material = new THREE.ShaderMaterial({
-    //   uniforms: {
-    //     resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
-    //     customViewMatrix: { value: camera.matrixWorldInverse },
-    //     customCameraPosition: { value: camera.position }
-    //   },
-    //   fragmentShader,
-    //   vertexShader: material.vertexShader
-    // });
-    // quad.material = material;
+    currentOctree.addToScene(octreeScene);
+    material = new THREE.ShaderMaterial({
+      uniforms: {
+        resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
+        customViewMatrix: { value: camera.matrixWorldInverse },
+        customCameraPosition: { value: camera.position },
+        octreeBuffer: { value: octreeRenderTarget.texture }
+      },
+      fragmentShader,
+      vertexShader: material.vertexShader
+    });
+    quad.material = material;
   } catch (e) {
     if (e instanceof Error) {
       // Check if it's a shader compilation error vs other errors
@@ -145,10 +160,13 @@ window.addEventListener('resize', () => {
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+
+  // First render octree to texture
+  renderer.setRenderTarget(octreeRenderTarget);
+  renderer.render(octreeScene, camera);
+  renderer.setRenderTarget(null);
   
-  // Temporarily comment out uniform updates
-  // material.uniforms.customViewMatrix.value.copy(camera.matrixWorldInverse);
-  // material.uniforms.customCameraPosition.value.copy(camera.position);
+  // Then render main scene
   renderer.render(scene, camera);
 }
 animate();

@@ -5,6 +5,7 @@ export function generateShader(ast: Node): string {
     uniform vec2 resolution;
     uniform mat4 customViewMatrix;
     uniform vec3 customCameraPosition;
+    uniform sampler2D octreeBuffer;
 
     float scene(vec3 pos) {
       return ${ast.toGLSL()};
