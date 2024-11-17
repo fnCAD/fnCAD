@@ -215,10 +215,6 @@ const totalCells = currentOctree.subdivide(minSize, 100000);
 statsPanel.textContent = `Octree cells: ${totalCells}`;
 currentOctree.addToScene(previewOverlayScene);
 
-// Update initial stats
-if (statsPanel) {
-  statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
-}
 
 // Function to update the octree visualization
 function updateOctree() {
