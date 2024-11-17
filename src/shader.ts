@@ -83,10 +83,10 @@ export function generateShader(ast: Node): string {
           return;
         }
         
-        // If no hit but octree cell is occupied, show transparent green
+        // If no hit but octree cell is occupied, show solid green
         if(octreeData.a > 0.5) {
-          vec3 octreeColor = vec3(0.0, 1.0, 0.0);
-          gl_FragColor = vec4(octreeColor, 0.2);
+          vec3 octreeColor = vec3(0.0, 0.3, 0.0); // Darker green so it doesn't overwhelm
+          gl_FragColor = vec4(octreeColor, 1.0);
           return;
         }
         
