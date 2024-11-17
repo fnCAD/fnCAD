@@ -67,23 +67,29 @@ controls.target.set(0, 0, 0);
 controls.enablePan = false;     // Disable panning to force orbiting behavior
 controls.update();
 
-// Create a full-screen quad for ray marching
-const geometry = new THREE.PlaneGeometry(2, 2);
-let material = new THREE.ShaderMaterial({
-  uniforms: {
-    resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
-    customViewMatrix: { value: camera.matrixWorldInverse },
-    customCameraPosition: { value: camera.position }
-  },
-  fragmentShader: generateShader(parse(editor.getValue())),
-  vertexShader: `
-    void main() {
-      gl_Position = vec4(position, 1.0);
-    }
-  `
-});
-const quad = new THREE.Mesh(geometry, material);
-scene.add(quad);
+// Temporarily comment out raymarching quad
+// const geometry = new THREE.PlaneGeometry(2, 2);
+// let material = new THREE.ShaderMaterial({
+//   uniforms: {
+//     resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
+//     customViewMatrix: { value: camera.matrixWorldInverse },
+//     customCameraPosition: { value: camera.position }
+//   },
+//   fragmentShader: generateShader(parse(editor.getValue())),
+//   vertexShader: `
+//     void main() {
+//       gl_Position = vec4(position, 1.0);
+//     }
+//   `
+// });
+// const quad = new THREE.Mesh(geometry, material);
+// scene.add(quad);
+
+// Add initial octree visualization
+const initialAst = parse(editor.getValue());
+currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, initialAst);
+currentOctree.subdivide(0.1);
+currentOctree.addToScene(scene);
 
 // Update shader when editor content changes
 editor.onDidChangeModelContent(() => {
@@ -100,16 +106,17 @@ editor.onDidChangeModelContent(() => {
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
     currentOctree.subdivide(0.1);
     currentOctree.addToScene(scene);
-    material = new THREE.ShaderMaterial({
-      uniforms: {
-        resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
-        customViewMatrix: { value: camera.matrixWorldInverse },
-        customCameraPosition: { value: camera.position }
-      },
-      fragmentShader,
-      vertexShader: material.vertexShader
-    });
-    quad.material = material;
+    // Temporarily comment out material update
+    // material = new THREE.ShaderMaterial({
+    //   uniforms: {
+    //     resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
+    //     customViewMatrix: { value: camera.matrixWorldInverse },
+    //     customCameraPosition: { value: camera.position }
+    //   },
+    //   fragmentShader,
+    //   vertexShader: material.vertexShader
+    // });
+    // quad.material = material;
   } catch (e) {
     if (e instanceof Error) {
       // Check if it's a shader compilation error vs other errors
@@ -139,9 +146,9 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
   
-  // Update shader uniforms
-  material.uniforms.customViewMatrix.value.copy(camera.matrixWorldInverse);
-  material.uniforms.customCameraPosition.value.copy(camera.position);
+  // Temporarily comment out uniform updates
+  // material.uniforms.customViewMatrix.value.copy(camera.matrixWorldInverse);
+  // material.uniforms.customCameraPosition.value.copy(camera.position);
   renderer.render(scene, camera);
 }
 animate();
