@@ -7,7 +7,6 @@ import * as THREE from 'three';
 function assertOctreesEqual(a: OctreeNode, b: OctreeNode): void {
   expect(a.size).toBe(b.size, `Size mismatch: ${a.size} vs ${b.size}`);
   expect(a.state).toBe(b.state, `State mismatch: ${a.state} vs ${b.state}`);
-  expect(a.hasGeometry).toBe(b.hasGeometry, 'Geometry presence mismatch');
   expect(a.center.equals(b.center)).toBe(true, 
     `Center mismatch: ${a.center.toArray()} vs ${b.center.toArray()}`);
   

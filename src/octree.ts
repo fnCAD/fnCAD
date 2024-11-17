@@ -285,9 +285,6 @@ export class OctreeNode {
       // Try to subdivide child with current budget
       const cellsCreated = this.children[i].subdivide(minSize, cellBudget, settings);
       cellBudget -= cellsCreated;
-      if (this.children[i].hasGeometry) {
-        this.hasGeometry = true;
-      }
     }
 
     // Return number of cells created (difference between start and end budget)
