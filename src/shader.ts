@@ -83,9 +83,10 @@ export function generateShader(ast: Node): string {
           
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
-            vec3 octreeColor = vec3(0.0, 1.0, 0.0); // Bright green for octree
-            // Compare NDC depths - stronger when octree is in front
-            float strength = (octreeDepthValue < ndcDepth) ? 0.8 : 0.2;
+            // Visualize depth difference in red, keep green for octree
+            float depthDiff = abs(octreeDepthValue - ndcDepth);
+            vec3 octreeColor = vec3(depthDiff * 5.0, 1.0, 0.0);
+            float strength = 0.8;
             col = mix(col, octreeColor, strength);
           }
 
