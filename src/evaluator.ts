@@ -28,10 +28,10 @@ export function createVariableNode(name: string): VariableNode {
       return context[name];
     },
     toGLSL: () => {
-      // Map x,y,z to p.x, p.y, p.z for vector components
-      if (name === 'x') return 'p.x';
-      if (name === 'y') return 'p.y';
-      if (name === 'z') return 'p.z';
+      // Map x,y,z to pos.x, pos.y, pos.z for vector components
+      if (name === 'x') return 'pos.x';
+      if (name === 'y') return 'pos.y';
+      if (name === 'z') return 'pos.z';
       return name;
     }
   };

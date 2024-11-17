@@ -77,9 +77,7 @@ let material = new THREE.ShaderMaterial({
   },
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
-    varying vec3 p;
     void main() {
-      p = position;
       gl_Position = vec4(position, 1.0);
     }
   `
