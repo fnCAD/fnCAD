@@ -4,6 +4,7 @@ export function generateShader(ast: Node): string {
   return `
     uniform vec2 resolution;
     uniform mat4 customViewMatrix;
+    uniform mat4 projectionMatrix;
     uniform vec3 customCameraPosition;
     uniform float fov;
     uniform sampler2D octreeBuffer;
@@ -88,9 +89,10 @@ export function generateShader(ast: Node): string {
           // Get depth from octree depth buffer [0,1]
           float octreeDepth = texture2D(octreeDepth, uv).r;
           
-          // Convert raymarched hit point to clip space
-          vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
-          clipPos = projectionMatrix * clipPos;
+          // Convert raymarched hit point to clip space using view and projection matrices
+          vec4 worldPos = vec4(ro + rd * t, 1.0);
+          vec4 viewPos = customViewMatrix * worldPos;
+          vec4 clipPos = projectionMatrix * viewPos;
           
           // Perspective divide to get NDC coordinates
           vec3 ndc = clipPos.xyz / clipPos.w;

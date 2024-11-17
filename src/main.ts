@@ -209,6 +209,7 @@ editor.onDidChangeModelContent(() => {
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
         customViewMatrix: { value: camera.matrixWorldInverse },
+        projectionMatrix: { value: camera.projectionMatrix },
         customCameraPosition: { value: camera.position },
         fov: { value: FOV },
         octreeBuffer: { value: octreeRenderTarget.texture },
