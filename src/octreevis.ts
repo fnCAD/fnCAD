@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { OctreeNode, CellState } from './octree';
 
+import * as THREE from 'three';
+import { OctreeNode, CellState } from './octree';
+
 export interface OctreeRenderSettings {
   showOutside: boolean;
   showInside: boolean;
@@ -8,7 +11,26 @@ export interface OctreeRenderSettings {
   minRenderSize: number;
 }
 
-export function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings): THREE.LineSegments | null {
+function getColorForCell(node: OctreeNode): THREE.Color {
+  // Map size to a color - red for small cells, green for large
+  // Using log scale since sizes vary greatly
+  const maxSize = 65536; // Our current max size
+  const t = Math.log(node.size) / Math.log(maxSize); // Normalized 0-1
+  
+  if (node.state === CellState.Boundary) {
+    return new THREE.Color(1, 1, 0); // Bright yellow for leaf boundary cells
+  } else if (node.state === CellState.BoundarySubdivided) {
+    // Darker yellow for subdivided boundary cells, gets darker with depth
+    const darkness = Math.max(0.2, t); // Limit darkness
+    return new THREE.Color(darkness, darkness, 0);
+  } else if (node.state === CellState.Inside) {
+    return new THREE.Color(0, 1, 0); // Green for inside cells
+  } else {
+    return new THREE.Color(1, 0, 0); // Red for outside cells
+  }
+}
+
+function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings): THREE.LineSegments | null {
   // Skip if cell is too small to render
   if (node.size < settings.minRenderSize) {
     return null;
@@ -85,6 +107,9 @@ function getColorForCell(node: OctreeNode): THREE.Color {
 }
 
 export function visualizeOctree(root: OctreeNode, settings: OctreeRenderSettings): THREE.Group {
+  // Create a group to hold all octree geometries
+  const group = new THREE.Group();
+  group.userData.isOctreeVisualization = true;
   const group = new THREE.Group();
   
   function addNodeToGroup(node: OctreeNode) {

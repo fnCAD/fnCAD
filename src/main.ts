@@ -142,18 +142,21 @@ function updateOctreeGeometry() {
     const minRenderSize = Math.pow(2, -power);
     
     // Remove all geometry first
-    currentOctree.removeFromScene(previewOverlayScene);
+    // Remove existing octree visualization
+    previewOverlayScene.children = previewOverlayScene.children.filter(child => 
+      !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
+    );
     
     if (showOctreeCheckbox.checked) {
-      // Create new geometry based on current settings
-      currentOctree.updateGeometry(new OctreeRenderSettings(
-        showOutsideCheckbox.checked,
-        showInsideCheckbox.checked,
-        showBoundaryCheckbox.checked,
-        minRenderSize
-      ));
-      // Add new geometry to scene
-      currentOctree.addToScene(previewOverlayScene);
+      // Create new visualization based on current settings
+      const settings = {
+        showOutside: showOutsideCheckbox.checked,
+        showInside: showInsideCheckbox.checked,
+        showBoundary: showBoundaryCheckbox.checked,
+        minRenderSize: minRenderSize
+      };
+      const octreeGroup = visualizeOctree(currentOctree, settings);
+      previewOverlayScene.add(octreeGroup);
     }
   }
 }
