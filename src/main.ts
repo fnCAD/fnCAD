@@ -46,6 +46,9 @@ const scene = new THREE.Scene();
 const octreeScene = new THREE.Scene();
 let currentOctree: OctreeNode | null = null;
 
+// Set up renderer
+renderer.setClearColor(0x000000, 0); // Clear to transparent black
+
 // Create render target for octree
 const octreeRenderTarget = new WebGLRenderTarget(
   previewPane.clientWidth, 
@@ -60,7 +63,7 @@ const octreeRenderTarget = new WebGLRenderTarget(
     colorSpace: THREE.LinearSRGBColorSpace
   }
 );
-renderer.setClearColor(0x000000, 0); // Clear to transparent black
+
 // Add coordinate axes helper
 const axesHelper = new THREE.AxesHelper(2);
 scene.add(axesHelper);
