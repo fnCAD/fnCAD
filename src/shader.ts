@@ -83,11 +83,13 @@ export function generateShader(ast: Node): string {
           
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
-            // Convert clip-space Z to NDC depth
-            float ndcOctreeDepth = octreeDepthValue * 2.0 - 1.0;  // Back to [-1,1]
+            // Convert depth buffer value to linear depth
+            float near = 0.1;
+            float far = 1000.0;
+            float linearOctreeDepth = (2.0 * near) / (far + near - octreeDepthValue * (far - near));
             
-            // Compare NDC depths directly
-            float depthDiff = ndcOctreeDepth - ndcDepth;
+            // Compare linear octree depth with raymarched depth (which is already linear)
+            float depthDiff = linearOctreeDepth - t;
             vec3 octreeColor = vec3(
               max(0.0, depthDiff) * 10.0,  // Red when octree is in front (scaled up for visibility)
               0.2,                         // Slight green tint to show octree
