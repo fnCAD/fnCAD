@@ -88,7 +88,7 @@ settingsPanel.innerHTML = `
     </div>
     <div class="setting-row">
       <label for="min-size">Min Cell Size:</label>
-      <input type="range" id="min-size" min="0.1" max="2.0" step="0.1" value="0.1">
+      <input type="range" id="min-size" min="0.1" max="10.0" step="0.1" value="0.5">
       <span class="value-display">0.1</span>
     </div>
     <div class="setting-row">
@@ -191,10 +191,19 @@ let material = new THREE.ShaderMaterial({
 const quad = new THREE.Mesh(geometry, material);
 scene.add(quad);
 
+// Set up min size slider handler
+const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
+minSizeSlider.addEventListener('input', () => {
+  const value = parseFloat(minSizeSlider.value);
+  const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
+  minSizeDisplay.textContent = value.toString();
+  updateOctree();
+});
+
 // Add initial octree visualization
 const initialAst = parse(editor.getValue());
 currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
-currentOctree.subdivide(0.1);
+currentOctree.subdivide(parseFloat(minSizeSlider.value));
 currentOctree.addToScene(previewOverlayScene);
 
 // Update initial stats
@@ -215,19 +224,18 @@ function updateOctree() {
       currentOctree.removeFromScene(previewOverlayScene);
     }
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
+    
+    // Get min size from slider
     const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
-    const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
     const minSize = parseFloat(minSizeSlider.value);
+    
+    // Update display
+    const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
     minSizeDisplay.textContent = minSize.toString();
+    
+    // Create and add new octree with current min size
     currentOctree.subdivide(minSize);
     currentOctree.addToScene(previewOverlayScene);
-
-    // Add min size slider handler
-    minSizeSlider.addEventListener('input', () => {
-      const value = parseFloat(minSizeSlider.value);
-      minSizeDisplay.textContent = value.toString();
-      updateOctree(); // This will rebuild with new min size
-    });
     
     // Update stats
     const statsPanel = document.getElementById('stats-panel');
