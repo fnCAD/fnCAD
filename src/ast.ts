@@ -1,3 +1,5 @@
+import { Interval } from './interval';
+
 export type NodeType = 
   | 'Number'
   | 'Variable'

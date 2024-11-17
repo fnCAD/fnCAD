@@ -1,4 +1,4 @@
-import { Interval } from './interval';
+import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
 import { Interval } from './interval';
 
 export function createNumberNode(value: number): NumberNode {
