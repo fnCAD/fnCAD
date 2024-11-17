@@ -1,4 +1,4 @@
-import { Node, NodeType } from './ast';
+import { Node } from './ast';
 
 export function generateShader(ast: Node): string {
   return `
