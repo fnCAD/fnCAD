@@ -151,7 +151,6 @@ currentOctree.subdivide(0.1);
 currentOctree.addToScene(octreeScene);
 
 // Update initial stats
-const statsPanel = document.getElementById('stats-panel');
 if (statsPanel) {
   statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
 }
