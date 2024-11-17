@@ -18,8 +18,11 @@ export class MeshGenerator {
             return;
         }
 
-        // If this is a leaf node or small enough, add its vertices
-        if (node.children.every(child => child === null) || node.size < 0.2) {
+        // Only add vertices for leaf nodes (no children) or nodes at minimum size
+        const isLeaf = node.children.every(child => child === null);
+        const hasSubdividedChildren = node.children.some(child => child?.children.some(c => c !== null));
+        
+        if (isLeaf || !hasSubdividedChildren) {
             this.addCellVertices(node);
             return;
         }
