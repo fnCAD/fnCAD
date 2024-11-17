@@ -79,8 +79,13 @@ export class MeshGenerator {
             // Create a temporary node to evaluate the neighbor's space
             const neighborNode = new OctreeNode(neighborCenter, node.size, node.sdf);
             
-            // Only add the face if the neighbor is outside
-            if (neighborNode.isFullyOutside()) {
+            // Get actual neighbor from octree
+            const neighbor = node.getNeighbor(face.normal);
+            
+            // Only add face if:
+            // 1. There is no neighbor (edge of volume) OR
+            // 2. The neighbor exists and is fully outside
+            if (!neighbor || neighbor.isFullyOutside()) {
                 face.indices.forEach(idx => {
                     this.faces.push(startIndex + idx);
                 });
