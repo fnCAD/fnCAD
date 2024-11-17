@@ -113,8 +113,8 @@ function updateOctreeVisibility() {
   checkbox.addEventListener('change', updateOctreeVisibility);
 });
 
-// Create render target for octree
-const octreeRenderTarget = new THREE.WebGLRenderTarget(
+// Create render target for preview scene
+const previewRenderTarget = new THREE.WebGLRenderTarget(
   previewPane.clientWidth, 
   previewPane.clientHeight,
   {
@@ -164,8 +164,8 @@ let material = new THREE.ShaderMaterial({
     customViewMatrix: { value: camera.matrixWorldInverse },
     customCameraPosition: { value: camera.position },
     fov: { value: FOV },
-    previewSceneBuffer: { value: octreeRenderTarget.texture },
-    previewSceneDepth: { value: octreeRenderTarget.depthTexture }
+    previewSceneBuffer: { value: previewRenderTarget.texture },
+    previewSceneDepth: { value: previewRenderTarget.depthTexture }
   },
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
@@ -216,8 +216,8 @@ editor.onDidChangeModelContent(() => {
         projectionMatrix: { value: camera.projectionMatrix },
         customCameraPosition: { value: camera.position },
         fov: { value: FOV },
-        previewSceneBuffer: { value: octreeRenderTarget.texture },
-        previewSceneDepth: { value: octreeRenderTarget.depthTexture }
+        previewSceneBuffer: { value: previewRenderTarget.texture },
+        previewSceneDepth: { value: previewRenderTarget.depthTexture }
       },
       fragmentShader,
       vertexShader: material.vertexShader
@@ -253,7 +253,7 @@ function animate() {
   controls.update();
 
   // First render octree to texture
-  renderer.setRenderTarget(octreeRenderTarget);
+  renderer.setRenderTarget(previewRenderTarget);
   renderer.clear(); // Clear previous frame
   renderer.render(previewOverlayScene, camera);
   renderer.setRenderTarget(null);
