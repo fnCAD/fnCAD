@@ -59,18 +59,11 @@ export function generateShader(ast: Node): string {
       for(int i = 0; i < 100; i++) {
         vec3 p = ro + rd * t;
         
-        // Check octree texture
+        float d = scene(p);
+        
+        // Sample octree at current position
         vec2 uv = worldToUV(p);
         vec4 octreeData = texture2D(octreeBuffer, uv);
-        
-        // If octree shows this cell is empty (alpha = 0), we can skip it
-        if (octreeData.a < 0.5) {
-          // Use cell size as minimum step
-          t += max(0.1, octreeData.r);
-          continue;
-        }
-        
-        float d = scene(p);
         
         // Hit check
         if(d < 0.001) {
@@ -79,7 +72,21 @@ export function generateShader(ast: Node): string {
           // Enhanced lighting with ambient
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
           vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
+          
+          // Mix in octree visualization if cell is occupied
+          if(octreeData.a > 0.5) {
+            vec3 octreeColor = vec3(0.0, 1.0, 0.0) * 0.2; // Dim green for octree
+            col = mix(col, octreeColor, 0.2); // Subtle overlay
+          }
+          
           gl_FragColor = vec4(col, 1.0);
+          return;
+        }
+        
+        // If no hit but octree cell is occupied, show transparent green
+        if(octreeData.a > 0.5) {
+          vec3 octreeColor = vec3(0.0, 1.0, 0.0);
+          gl_FragColor = vec4(octreeColor, 0.2);
           return;
         }
         

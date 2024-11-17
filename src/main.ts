@@ -92,6 +92,7 @@ let material = new THREE.ShaderMaterial({
     customCameraPosition: { value: camera.position },
     octreeBuffer: { value: octreeRenderTarget.texture }
   },
+  transparent: true,
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
     void main() {
