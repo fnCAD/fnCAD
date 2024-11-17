@@ -216,8 +216,18 @@ function updateOctree() {
     }
     currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
-    currentOctree.subdivide(parseFloat(minSizeSlider.value));
+    const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
+    const minSize = parseFloat(minSizeSlider.value);
+    minSizeDisplay.textContent = minSize.toString();
+    currentOctree.subdivide(minSize);
     currentOctree.addToScene(previewOverlayScene);
+
+    // Add min size slider handler
+    minSizeSlider.addEventListener('input', () => {
+      const value = parseFloat(minSizeSlider.value);
+      minSizeDisplay.textContent = value.toString();
+      updateOctree(); // This will rebuild with new min size
+    });
     
     // Update stats
     const statsPanel = document.getElementById('stats-panel');
