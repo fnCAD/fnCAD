@@ -14,11 +14,6 @@ export default defineConfig({
     // Show build time stats
     sourcemap: true,
     rollupOptions: {
-      onwarn(warning, warn) {
-        // Log all rollup warnings
-        console.log('Rollup warning:', warning);
-        warn(warning);
-      },
       output: {
         // Log chunk info during build
         chunkFileNames: (chunkInfo) => {
