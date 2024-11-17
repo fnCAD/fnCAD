@@ -97,8 +97,12 @@ export class OctreeNode {
     console.log(`Looking for neighbor in parent's direction`);
     const parentNeighbor = this.parent.getNeighbor(direction);
     if (!parentNeighbor) {
-      console.log(`No neighbor found in parent's direction`);
-      return null;
+      // If we can't find a neighbor in the parent's direction, we're at a boundary
+      // Return a virtual neighbor cell that's fully outside
+      const virtualCenter = new THREE.Vector3()
+        .copy(this.center)
+        .addScaledVector(direction, this.size);
+      return new OctreeNode(virtualCenter, this.size, this.sdf);
     }
     console.log(`Found parent's neighbor at ${parentNeighbor.center.toArray()}`);
 
