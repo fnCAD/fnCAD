@@ -1,13 +1,34 @@
 import * as THREE from 'three';
 
-export function exportToSTL(mesh: THREE.Mesh): string {
+export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     const geometry = mesh.geometry;
     const position = geometry.attributes.position;
+    const triangleCount = position.count / 3;
     
-    let output = 'solid exported\n';
+    // Binary STL format:
+    // 80 bytes - Header
+    // 4 bytes - Number of triangles (uint32)
+    // For each triangle:
+    //   12 bytes - Normal vector (3 floats)
+    //   36 bytes - Vertices (9 floats)
+    //   2 bytes - Attribute byte count (uint16)
+    const bufferSize = 80 + 4 + (50 * triangleCount);
+    const buffer = new ArrayBuffer(bufferSize);
+    const view = new DataView(buffer);
+    
+    // Write header (80 bytes)
+    const encoder = new TextEncoder();
+    const header = encoder.encode('Binary STL file exported from fnCAD');
+    for (let i = 0; i < 80; i++) {
+        view.setUint8(i, i < header.length ? header[i] : 0);
+    }
+    
+    // Write number of triangles
+    view.setUint32(80, triangleCount, true);
+    
+    let offset = 84;  // Start after header and triangle count
     
     for (let i = 0; i < position.count; i += 3) {
-        // Get vertices of the triangle
         const v1 = new THREE.Vector3();
         const v2 = new THREE.Vector3();
         const v3 = new THREE.Vector3();
@@ -24,23 +45,34 @@ export function exportToSTL(mesh: THREE.Mesh): string {
             )
             .normalize();
         
-        // Write facet
-        output += ' facet normal ' + normal.x + ' ' + normal.y + ' ' + normal.z + '\n';
-        output += '  outer loop\n';
-        output += '   vertex ' + v1.x + ' ' + v1.y + ' ' + v1.z + '\n';
-        output += '   vertex ' + v2.x + ' ' + v2.y + ' ' + v2.z + '\n';
-        output += '   vertex ' + v3.x + ' ' + v3.y + ' ' + v3.z + '\n';
-        output += '  endloop\n';
-        output += ' endfacet\n';
+        // Write normal
+        view.setFloat32(offset, normal.x, true); offset += 4;
+        view.setFloat32(offset, normal.y, true); offset += 4;
+        view.setFloat32(offset, normal.z, true); offset += 4;
+        
+        // Write vertices
+        view.setFloat32(offset, v1.x, true); offset += 4;
+        view.setFloat32(offset, v1.y, true); offset += 4;
+        view.setFloat32(offset, v1.z, true); offset += 4;
+        
+        view.setFloat32(offset, v2.x, true); offset += 4;
+        view.setFloat32(offset, v2.y, true); offset += 4;
+        view.setFloat32(offset, v2.z, true); offset += 4;
+        
+        view.setFloat32(offset, v3.x, true); offset += 4;
+        view.setFloat32(offset, v3.y, true); offset += 4;
+        view.setFloat32(offset, v3.z, true); offset += 4;
+        
+        // Write attribute byte count (unused)
+        view.setUint16(offset, 0, true); offset += 2;
     }
     
-    output += 'endsolid exported\n';
-    return output;
+    return buffer;
 }
 
 export function downloadSTL(mesh: THREE.Mesh, filename: string = 'model.stl'): void {
-    const content = exportToSTL(mesh);
-    const blob = new Blob([content], { type: 'text/plain' });
+    const buffer = exportToSTL(mesh);
+    const blob = new Blob([buffer], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement('a');
