@@ -36,6 +36,7 @@ min(
 // Add change listener to update shader
 editor.onDidChangeModelContent(() => {
   updateOctree();
+  updateMaterial();
 });
 
 // Store editor instance for later use with shader compilation
