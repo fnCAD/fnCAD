@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { OctreeNode } from './octree';
+import { OctreeNode, Direction } from './octree';
 
 export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
