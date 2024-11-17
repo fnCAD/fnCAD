@@ -115,9 +115,11 @@ export class OctreeNode {
     const tz = neighborRelativePos.z >= 0 ? 1 : 0;
     const targetOctant = tx + ty * 2 + tz * 4;
 
-    // Return the child if it exists
+    // If the neighbor exists but has no children, it's our neighbor
     const neighborChild = parentNeighbor.children[targetOctant];
-    if (!neighborChild) {
+    if (!neighborChild && parentNeighbor.size === this.size) {
+      return parentNeighbor;
+    } else if (!neighborChild) {
       console.log(`No child found in parent neighbor's octant ${targetOctant}`);
       console.log(`Parent neighbor center: ${parentNeighbor.center.toArray()}`);
       console.log(`Target position: ${targetPos.toArray()}`);
