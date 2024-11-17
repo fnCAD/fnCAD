@@ -82,10 +82,18 @@ export class MeshGenerator {
             // Get actual neighbor from octree
             const neighbor = node.getNeighbor(face.normal);
             
+            // Calculate if this face is at the volume boundary
+            const faceCenter = new THREE.Vector3()
+                .copy(node.center)
+                .addScaledVector(face.normal, node.size/2);
+            const isAtBoundary = Math.abs(faceCenter.x) > 32768 || 
+                                Math.abs(faceCenter.y) > 32768 || 
+                                Math.abs(faceCenter.z) > 32768;
+
             // Only add face if:
-            // 1. There is no neighbor (edge of volume) OR
+            // 1. We're at the volume boundary and have no neighbor OR
             // 2. The neighbor exists and is fully outside
-            if (!neighbor || neighbor.isFullyOutside()) {
+            if ((isAtBoundary && !neighbor) || (neighbor && neighbor.isFullyOutside())) {
                 face.indices.forEach(idx => {
                     this.faces.push(startIndex + idx);
                 });
