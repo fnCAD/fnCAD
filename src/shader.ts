@@ -88,13 +88,17 @@ export function generateShader(ast: Node): string {
             float octreeDepthValue = texture2D(octreeDepth, uv).r * 2.0 - 1.0;
             float linearOctreeDepth = (2.0 * near * far) / (far + near - octreeDepthValue * (far - near));
             
+            // Get octree color from the buffer
+            vec3 octreeColor = octreeData.rgb;
+            
             // Compare linear octree depth with raymarched depth (which is already linear)
             if (linearOctreeDepth < t) {
-              // octree in front (smaller depth); draw octree (0.5 strength)
-              gl_FragColor = vec4(mix(col, vec3(0.2, 1.0, 0.2), 0.5), 1.0);
+              // Octree in front (smaller depth); draw octree with its actual color
+              gl_FragColor = vec4(mix(col, octreeColor, 0.5), 1.0);
               return;
             }
-            // TODO: UI toggle for "draw octree inside objects" will cause mixing-in of octree data here as well.
+            // Mix octree color with surface color when inside objects
+            col = mix(col, octreeColor, 0.2);
           }
 
           gl_FragColor = vec4(col, 1.0);
