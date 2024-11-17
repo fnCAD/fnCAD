@@ -150,6 +150,12 @@ currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 currentOctree.subdivide(0.1);
 currentOctree.addToScene(octreeScene);
 
+// Update initial stats
+const statsPanel = document.getElementById('stats-panel');
+if (statsPanel) {
+  statsPanel.textContent = `Octree cells: ${currentOctree.countCells()}`;
+}
+
 // Update shader when editor content changes
 editor.onDidChangeModelContent(() => {
   try {
