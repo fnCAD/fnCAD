@@ -4,38 +4,24 @@ import { parse } from './parser';
 import * as THREE from 'three';
 
 // Test helper to assert octree equality
-function assertOctreesEqual(a: OctreeNode, b: OctreeNode): {equal: boolean, reason?: string} {
-  if (a.size !== b.size) {
-    return {equal: false, reason: `Size mismatch: ${a.size} vs ${b.size}`};
-  }
-  if (a.state !== b.state) {
-    return {equal: false, reason: `State mismatch: ${a.state} vs ${b.state}`};
-  }
-  if (a.hasGeometry !== b.hasGeometry) {
-    return {equal: false, reason: 'Geometry presence mismatch'};
-  }
-  if (!a.center.equals(b.center)) {
-    return {equal: false, reason: `Center mismatch: ${a.center.toArray()} vs ${b.center.toArray()}`};
-  }
+function assertOctreesEqual(a: OctreeNode, b: OctreeNode): void {
+  expect(a.size).toBe(b.size, `Size mismatch: ${a.size} vs ${b.size}`);
+  expect(a.state).toBe(b.state, `State mismatch: ${a.state} vs ${b.state}`);
+  expect(a.hasGeometry).toBe(b.hasGeometry, 'Geometry presence mismatch');
+  expect(a.center.equals(b.center)).toBe(true, 
+    `Center mismatch: ${a.center.toArray()} vs ${b.center.toArray()}`);
   
   // Compare children recursively
   for (let i = 0; i < 8; i++) {
     const aChild = a.children[i];
     const bChild = b.children[i];
     
-    if (!!aChild !== !!bChild) {
-      return {equal: false, reason: `Child presence mismatch at index ${i}`};
-    }
+    expect(!!aChild).toBe(!!bChild, `Child presence mismatch at index ${i}`);
     
     if (aChild && bChild) {
-      const childComparison = assertOctreesEqual(aChild, bChild);
-      if (!childComparison.equal) {
-        return {equal: false, reason: `Child ${i}: ${childComparison.reason}`};
-      }
+      assertOctreesEqual(aChild, bChild);
     }
   }
-  
-  return {equal: true};
 }
 
 describe('Octree', () => {
@@ -62,11 +48,11 @@ describe('Octree', () => {
     const freshOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
     freshOctree.subdivide(0.5, 1000, newSettings);
 
-    // Compare octrees
-    const freshComparison = assertOctreesEqual(octree, freshOctree);
-    expect(freshComparison.equal).toBe(true, `Fresh comparison failed: ${freshComparison.reason}`);
+    // Compare octrees - should throw if not equal
+    assertOctreesEqual(octree, freshOctree);
 
-    const initialComparison = assertOctreesEqual(octree, initialOctree);
-    expect(initialComparison.equal).toBe(false, 'Octree should differ from initial state');
+    // Should throw when comparing with initial octree
+    expect(() => assertOctreesEqual(octree, initialOctree))
+      .toThrow('Octree should differ from initial state');
   });
 });
