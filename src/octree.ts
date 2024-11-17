@@ -2,16 +2,75 @@ import { Node } from './ast';
 import { Interval } from './interval';
 import * as THREE from 'three';
 
+export enum CellState {
+  Inside,
+  Outside,
+  Boundary
+}
+
 export class OctreeNode {
   children: (OctreeNode | null)[] = new Array(8).fill(null);
   vertices: THREE.Vector3[] = [];
   edges: THREE.LineSegments | null = null;
+  state: CellState;
 
   constructor(
     public center: THREE.Vector3,
     public size: number,
-    private sdf: Node
-  ) {}
+    private sdf: Node,
+    public parent: OctreeNode | null = null,
+    public octant: number = -1
+  ) {
+    // Compute and cache state during construction
+    const interval = this.evaluate();
+    if (interval.max < 0) {
+      this.state = CellState.Inside;
+    } else if (interval.min > 0) {
+      this.state = CellState.Outside;
+    } else {
+      this.state = CellState.Boundary;
+    }
+  }
+
+  getNeighbor(direction: THREE.Vector3): OctreeNode | null {
+    // If we're at root, no neighbor
+    if (!this.parent) return null;
+
+    // Get relative position in parent's octants
+    const parentSize = this.size * 2;
+    const relativePos = new THREE.Vector3()
+      .copy(this.center)
+      .sub(this.parent.center)
+      .divideScalar(this.size);
+
+    // Calculate target position
+    const targetPos = new THREE.Vector3()
+      .copy(relativePos)
+      .add(direction);
+
+    // If target is within parent's bounds, traverse down
+    if (Math.abs(targetPos.x) <= 1 && 
+        Math.abs(targetPos.y) <= 1 && 
+        Math.abs(targetPos.z) <= 1) {
+      // Find target octant in parent
+      const tx = targetPos.x > 0 ? 1 : 0;
+      const ty = targetPos.y > 0 ? 1 : 0;
+      const tz = targetPos.z > 0 ? 1 : 0;
+      const targetOctant = tx + ty * 2 + tz * 4;
+      return this.parent.children[targetOctant];
+    }
+
+    // Otherwise need to go up and over
+    const parentNeighbor = this.parent.getNeighbor(direction);
+    if (!parentNeighbor) return null;
+
+    // Find corresponding child in the neighbor
+    const tx = relativePos.x * direction.x < 0 ? 1 : 0;
+    const ty = relativePos.y * direction.y < 0 ? 1 : 0;
+    const tz = relativePos.z * direction.z < 0 ? 1 : 0;
+    const targetOctant = tx + ty * 2 + tz * 4;
+    return parentNeighbor.children[targetOctant];
+  }
 
   evaluate(): Interval {
     // Evaluate SDF over the cube bounds
@@ -25,21 +84,15 @@ export class OctreeNode {
   }
 
   isSurfaceCell(): boolean {
-    const interval = this.evaluate();
-    // A cell contains a surface if its interval spans zero
-    return interval.min <= 0 && interval.max >= 0;
+    return this.state === CellState.Boundary;
   }
 
   isFullyInside(): boolean {
-    const interval = this.evaluate();
-    // Cell is fully inside if its maximum value is negative
-    return interval.max < 0;
+    return this.state === CellState.Inside;
   }
 
   isFullyOutside(): boolean {
-    const interval = this.evaluate();
-    // Cell is fully outside if its minimum value is positive
-    return interval.min > 0;
+    return this.state === CellState.Outside;
   }
 
   subdivide(minSize: number = 0.1): void {
@@ -72,7 +125,7 @@ export class OctreeNode {
         this.center.y + y * half/2,
         this.center.z + z * half/2
       );
-      this.children[i] = new OctreeNode(childCenter, newSize, this.sdf);
+      this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
       this.children[i].subdivide(minSize);
     }
   }
