@@ -93,6 +93,7 @@ editor.onDidChangeModelContent(() => {
     const editorContent = editor.getValue();
     const ast = parse(editorContent);
     const fragmentShader = generateShader(ast);
+    console.log('Generated GLSL:', fragmentShader);
 
     // Update octree visualization
     if (currentOctree) {
