@@ -131,24 +131,30 @@ const showOutsideCheckbox = document.getElementById('show-outside') as HTMLInput
 const showInsideCheckbox = document.getElementById('show-inside') as HTMLInputElement;
 const showBoundaryCheckbox = document.getElementById('show-boundary') as HTMLInputElement;
 
-function updateOctreeVisibility() {
+function updateOctreeGeometry() {
   if (currentOctree) {
     const power = parseInt((document.getElementById('min-render-size') as HTMLInputElement).value);
     const minRenderSize = Math.pow(2, -power);
-    previewOverlayScene.visible = showOctreeCheckbox.checked;
+    
+    // Remove all geometry first
+    currentOctree.removeFromScene(previewOverlayScene);
+    
     if (showOctreeCheckbox.checked) {
-      currentOctree.updateVisibility(
+      // Create new geometry based on current settings
+      currentOctree.updateGeometry(
         showOutsideCheckbox.checked,
         showInsideCheckbox.checked,
         showBoundaryCheckbox.checked,
         minRenderSize
       );
+      // Add new geometry to scene
+      currentOctree.addToScene(previewOverlayScene);
     }
   }
 }
 
 [showOctreeCheckbox, showOutsideCheckbox, showInsideCheckbox, showBoundaryCheckbox].forEach(checkbox => {
-  checkbox.addEventListener('change', updateOctreeVisibility);
+  checkbox.addEventListener('change', updateOctreeGeometry);
 });
 
 // Create render target for preview scene
@@ -241,7 +247,7 @@ minRenderSizeSlider.addEventListener('input', () => {
   const value = Math.pow(2, power);  // Use positive power for display
   const display = minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
   display.textContent = value === 1 ? '1' : `1/${value}`;
-  updateOctreeVisibility();
+  updateOctreeGeometry();
 });
 
 // Add initial octree visualization

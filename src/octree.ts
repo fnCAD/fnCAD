@@ -185,22 +185,28 @@ export class OctreeNode {
     }
   }
 
-  updateVisibility(showOutside: boolean, showInside: boolean, showBoundary: boolean, minRenderSize: number = 0.1): void {
+  updateGeometry(showOutside: boolean, showInside: boolean, showBoundary: boolean, minRenderSize: number = 0.1): void {
+    // Remove existing geometry
     if (this.edges) {
-      // Only show cells larger than minimum render size
-      const visible = this.size >= minRenderSize;
-      if (this.isSurfaceCell()) {
-        this.edges.visible = showBoundary && visible;
-      } else if (this.isFullyInside()) {
-        this.edges.visible = showInside && visible;
-      } else {
-        this.edges.visible = showOutside && visible;
+      this.edges.geometry.dispose();
+      this.edges.material.dispose();
+      this.edges = null;
+      this.hasGeometry = false;
+    }
+    
+    // Only create geometry for cells we want to show and that are large enough
+    if (this.size >= minRenderSize) {
+      if ((this.isSurfaceCell() && showBoundary) ||
+          (this.isFullyInside() && showInside) ||
+          (this.isFullyOutside() && showOutside)) {
+        this.createEdges();
       }
     }
     
+    // Recursively update children
     this.children.forEach(child => {
       if (child) {
-        child.updateVisibility(showOutside, showInside, showBoundary, minRenderSize);
+        child.updateGeometry(showOutside, showInside, showBoundary, minRenderSize);
       }
     });
   }
