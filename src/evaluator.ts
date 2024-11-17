@@ -95,14 +95,15 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       const evaluatedArgs = args.map(arg => arg.evaluateInterval(context));
       
       // Handle built-in math functions
-      if (name === 'sqrt') {
-        return evaluatedArgs[0].sqrt();
-      }
-      if (name === 'sin') {
-        return evaluatedArgs[0].sin();
-      }
-      if (name === 'cos') {
-        return evaluatedArgs[0].cos();
+      switch (name) {
+        case 'sqrt':
+          return evaluatedArgs[0].sqrt();
+        case 'sqr':
+          return evaluatedArgs[0].multiply(evaluatedArgs[0]);
+        case 'sin':
+          return evaluatedArgs[0].sin();
+        case 'cos':
+          return evaluatedArgs[0].cos();
       }
 
       // Handle min/max with any number of arguments

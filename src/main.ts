@@ -21,9 +21,9 @@ const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
   value: `// Scene with two spheres
 min(
   // Sphere at origin
-  sqrt(x * x + y * y + z * z) - 1.0,
+  sqrt(sqr(x) + sqr(y) + sqr(z)) - 1.0,
   // Sphere offset on x-axis
-  sqrt((x - 2.0) * (x - 2.0) + y * y + z * z) - 0.7
+  sqrt(sqr(x - 2.0) + sqr(y) + sqr(z)) - 0.7
 )`,
   language: 'typescript',
   theme: 'vs-dark',
