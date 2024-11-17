@@ -3,11 +3,17 @@ import * as THREE from 'three';
 export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     const geometry = mesh.geometry;
     const position = geometry.attributes.position;
-    const triangleCount = Math.floor(position.count / 3);  // Must be whole number
+    const index = geometry.index;
+    
+    if (!index) {
+        throw new Error('Geometry must be indexed');
+    }
+    
+    const triangleCount = index.count / 3;  // Each triangle uses 3 indices
     
     console.log(`STL Export: Processing ${triangleCount} triangles`);
+    console.log(`Index count: ${index.count}`);
     console.log(`Position attribute count: ${position.count}`);
-    console.log(`Vertices per triangle: 3`);
     
     // Binary STL format:
     // 80 bytes - Header
@@ -50,14 +56,14 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     
     let offset = 84;  // Start after header and triangle count
     
-    for (let i = 0; i < position.count; i += 3) {
-        const v1 = new THREE.Vector3();
-        const v2 = new THREE.Vector3();
-        const v3 = new THREE.Vector3();
+    for (let i = 0; i < index.count; i += 3) {
+        const idx1 = index.getX(i);
+        const idx2 = index.getX(i + 1);
+        const idx3 = index.getX(i + 2);
         
-        v1.fromBufferAttribute(position, i);
-        v2.fromBufferAttribute(position, i + 1);
-        v3.fromBufferAttribute(position, i + 2);
+        const v1 = new THREE.Vector3().fromBufferAttribute(position, idx1);
+        const v2 = new THREE.Vector3().fromBufferAttribute(position, idx2);
+        const v3 = new THREE.Vector3().fromBufferAttribute(position, idx3);
         
         // Calculate normal
         const normal = new THREE.Vector3()
