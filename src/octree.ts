@@ -14,6 +14,7 @@ export class OctreeNode {
   edges: THREE.LineSegments | null = null;
   state: CellState;
   private wasAddedToScene: boolean = false;
+  private hasGeometry: boolean = false;
 
   constructor(
     public center: THREE.Vector3,
@@ -202,6 +203,7 @@ export class OctreeNode {
   }
 
   private createEdges(): void {
+    this.hasGeometry = true;
     const half = this.size / 2;
     // Create vertices for cube corners
     const corners = [
@@ -246,6 +248,11 @@ export class OctreeNode {
   }
 
   addToScene(scene: THREE.Scene): void {
+    // Skip if this subtree has no geometry
+    if (!this.hasGeometry && !this.children.some(child => child?.hasGeometry)) {
+      return;
+    }
+    
     if (this.edges) {
       scene.add(this.edges);
       this.wasAddedToScene = true;
@@ -254,8 +261,8 @@ export class OctreeNode {
   }
 
   removeFromScene(scene: THREE.Scene): void {
-    // Skip removal if this subtree was never added
-    if (!this.wasAddedToScene && !this.children.some(child => child?.wasAddedToScene)) {
+    // Skip if this subtree has no geometry
+    if (!this.hasGeometry && !this.children.some(child => child?.hasGeometry)) {
       return;
     }
     
