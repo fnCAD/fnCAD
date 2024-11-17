@@ -4,6 +4,13 @@ import { getRuntimeBasePath } from './utils/runtime-base'
 
 // Set runtime base path for assets
 const BASE_PATH = getRuntimeBasePath();
+
+// Configure Monaco's base path for worker loading
+(window as any).MonacoEnvironment = {
+  getWorkerUrl: function(_moduleId: string, label: string) {
+    return `${BASE_PATH}${label}.worker.js`;
+  }
+};
 import * as monaco from 'monaco-editor'
 import * as THREE from 'three'
 import { downloadSTL } from './stlexporter'

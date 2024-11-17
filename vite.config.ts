@@ -46,7 +46,7 @@ export default defineConfig({
       timeout: 5000,
     },
   },
-  base: '/',
+  base: './',
   plugins: [{
     name: 'copy-htaccess',
     closeBundle() {
