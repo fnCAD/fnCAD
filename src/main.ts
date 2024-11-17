@@ -229,7 +229,6 @@ scene.add(quad);
 // Set up computation sliders
 const minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
 const cellBudgetSlider = document.getElementById('cell-budget') as HTMLInputElement;
-const visDetailSlider = document.getElementById('vis-detail') as HTMLInputElement;
 
 minSizeSlider.addEventListener('input', () => {
   const power = parseInt(minSizeSlider.value);
@@ -261,7 +260,9 @@ currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialAst);
 const power = parseInt(minSizeSlider.value);
 const minSize = Math.pow(2, -power);
 const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
-const totalCells = currentOctree.subdivide(minSize, cellBudget);
+const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
+const renderSettings = new OctreeRenderSettings(true, true, true, minRenderSize);
+const totalCells = currentOctree.subdivide(minSize, cellBudget, renderSettings);
 statsPanel.textContent = `Octree cells: ${totalCells}`;
 currentOctree.addToScene(previewOverlayScene);
 
