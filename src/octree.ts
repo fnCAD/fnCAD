@@ -116,22 +116,21 @@ export class OctreeNode {
   }
 
   subdivide(minSize: number = 0.1, cellBudget: number = 100000): number {
-    // Start with this cell
-    let cellCount = 1;
+    const startBudget = cellBudget;
     
     const interval = this.evaluate();
 
     // If the interval is entirely positive or negative, we don't need to subdivide
     if (interval.min > 0 || interval.max < 0) {
       this.createEdges();
-      return cellCount;
+      return 1;
     }
 
     // If we've reached minimum size, stop subdividing
     const newSize = this.size / 2;
     if (newSize < minSize) {
       this.createEdges();
-      return cellCount;
+      return 1;
     }
 
     // If no budget left, throw
@@ -159,13 +158,11 @@ export class OctreeNode {
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
       // Try to subdivide child with current budget
-      const childCells = this.children[i].subdivide(minSize, cellBudget);
-      cellCount += childCells;
-      // Decrement budget by cells actually created
-      cellBudget -= childCells;
+      cellBudget -= this.children[i].subdivide(minSize, cellBudget);
     }
 
-    return cellCount;
+    // Return number of cells created (difference between start and end budget)
+    return startBudget - cellBudget;
   }
 
   private getColorForSize(): THREE.Color {
