@@ -222,9 +222,9 @@ const visDetailSlider = document.getElementById('vis-detail') as HTMLInputElemen
 
 minSizeSlider.addEventListener('input', () => {
   const power = parseInt(minSizeSlider.value);
-  const value = Math.pow(2, -power);  // Convert to inverse power of 2
+  const value = Math.pow(2, power);  // Use positive power for display
   const minSizeDisplay = minSizeSlider.nextElementSibling as HTMLSpanElement;
-  minSizeDisplay.textContent = value.toFixed(4);
+  minSizeDisplay.textContent = value === 1 ? '1' : `1/${value}`;
   updateOctree();
 });
 
@@ -238,9 +238,9 @@ cellBudgetSlider.addEventListener('input', () => {
 const minRenderSizeSlider = document.getElementById('min-render-size') as HTMLInputElement;
 minRenderSizeSlider.addEventListener('input', () => {
   const power = parseInt(minRenderSizeSlider.value);
-  const value = Math.pow(2, -power);  // Convert to inverse power of 2
+  const value = Math.pow(2, power);  // Use positive power for display
   const display = minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
-  display.textContent = value.toFixed(4);
+  display.textContent = value === 1 ? '1' : `1/${value}`;
   updateOctreeVisibility();
 });
 
