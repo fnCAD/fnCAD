@@ -81,24 +81,27 @@ export function generateShader(ast: Node): string {
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
           vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
 
-          // Convert hit point to clip space
+          // Convert hit point to view space
           vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
-          float ndcDepth = clipPos.z;
+          float viewSpaceDepth = -clipPos.z; // View space depth is negative of z in view space
+          
+          // Convert depth buffer value to view space
+          float octreeDepthValue = texture2D(octreeDepth, uv).r * 2.0 - 1.0; // Convert [0,1] to [-1,1]
+          float near = 0.1;
+          float far = 1000.0;
+          float viewSpaceOctreeDepth = -(2.0 * near * far) / (far + near - octreeDepthValue * (far - near));
 
           // Mix in octree visualization if cell is occupied
           if(octreeData.a > 0.5) {
-            float octreeDepthValue = texture2D(octreeDepth, uv).r;
-            
             // Get octree color from the buffer
             vec3 octreeColor = octreeData.rgb;
             
-            // Compare depths directly
-            if (octreeDepthValue < ndcDepth) {
+            // Compare depths in view space
+            if (viewSpaceOctreeDepth < viewSpaceDepth) {
               // Octree in front; draw octree with its actual color
               gl_FragColor = vec4(mix(col, octreeColor, 0.5), 1.0);
               return;
             }
-            // Otherwise show the surface
           }
 
           gl_FragColor = vec4(col, 1.0);
