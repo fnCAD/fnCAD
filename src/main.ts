@@ -141,12 +141,12 @@ function updateOctreeGeometry() {
     
     if (showOctreeCheckbox.checked) {
       // Create new geometry based on current settings
-      currentOctree.updateGeometry(
+      currentOctree.updateGeometry(new OctreeRenderSettings(
         showOutsideCheckbox.checked,
         showInsideCheckbox.checked,
         showBoundaryCheckbox.checked,
         minRenderSize
-      );
+      ));
       // Add new geometry to scene
       currentOctree.addToScene(previewOverlayScene);
     }
@@ -286,7 +286,8 @@ function updateOctree() {
     // Create and add new octree with current min size
     const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
     const minRenderSize = Math.pow(2, -parseInt(minRenderSizeSlider.value));
-    const totalCells = currentOctree.subdivide(minSize, cellBudget, minRenderSize);
+    const renderSettings = new OctreeRenderSettings(true, true, true, minRenderSize);
+    const totalCells = currentOctree.subdivide(minSize, cellBudget, renderSettings);
     currentOctree.addToScene(previewOverlayScene);
     
     // Update stats

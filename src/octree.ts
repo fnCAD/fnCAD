@@ -116,7 +116,7 @@ export class OctreeNode {
     return this.state === CellState.Outside;
   }
 
-  subdivide(minSize: number = 0.1, cellBudget: number = 100000, minRenderSize: number = 0.1): number {
+  subdivide(minSize: number = 0.1, cellBudget: number = 100000, renderSettings: OctreeRenderSettings): number {
     const startBudget = cellBudget;
     
     const interval = this.evaluate();
@@ -125,8 +125,8 @@ export class OctreeNode {
     // we don't need to subdivide further
     const newSize = this.size / 2;
     if (interval.min > 0 || interval.max < 0 || newSize < minSize) {
-      // Update geometry for this leaf node
-      this.updateLocalGeometry(true, true, true, minRenderSize);
+      // Update geometry for this node
+      this.updateLocalGeometry(renderSettings);
       return 1;
     }
 
@@ -155,7 +155,7 @@ export class OctreeNode {
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
       // Try to subdivide child with current budget
-      const cellsCreated = this.children[i].subdivide(minSize, cellBudget, minRenderSize);
+      const cellsCreated = this.children[i].subdivide(minSize, cellBudget, renderSettings);
       cellBudget -= cellsCreated;
       if (this.children[i].hasGeometry) {
         this.hasGeometry = true;
@@ -181,18 +181,18 @@ export class OctreeNode {
     }
   }
 
-  updateGeometry(showOutside: boolean, showInside: boolean, showBoundary: boolean, minRenderSize: number = 0.1): void {
-    this.updateLocalGeometry(showOutside, showInside, showBoundary, minRenderSize);
+  updateGeometry(settings: OctreeRenderSettings): void {
+    this.updateLocalGeometry(settings);
     
     // Recursively update children
     this.children.forEach(child => {
       if (child) {
-        child.updateGeometry(showOutside, showInside, showBoundary, minRenderSize);
+        child.updateGeometry(settings);
       }
     });
   }
 
-  private updateLocalGeometry(showOutside: boolean, showInside: boolean, showBoundary: boolean, minRenderSize: number): void {
+  private updateLocalGeometry(settings: OctreeRenderSettings): void {
     // Remove existing geometry
     if (this.edges) {
       this.edges.geometry.dispose();
@@ -202,10 +202,10 @@ export class OctreeNode {
     }
     
     // Only create geometry if cell is large enough and matches visibility criteria
-    if (this.size >= minRenderSize) {
-      if ((this.isSurfaceCell() && showBoundary) ||
-          (this.isFullyInside() && showInside) ||
-          (this.isFullyOutside() && showOutside)) {
+    if (this.size >= settings.minRenderSize) {
+      if ((this.isSurfaceCell() && settings.showBoundary) ||
+          (this.isFullyInside() && settings.showInside) ||
+          (this.isFullyOutside() && settings.showOutside)) {
         this.createEdges();
       }
     }
@@ -278,4 +278,12 @@ export class OctreeNode {
     this.children.forEach(child => child?.removeFromScene(scene));
   }
 
+}
+export class OctreeRenderSettings {
+  constructor(
+    public showOutside: boolean = true,
+    public showInside: boolean = true,
+    public showBoundary: boolean = true,
+    public minRenderSize: number = 0.1
+  ) {}
 }
