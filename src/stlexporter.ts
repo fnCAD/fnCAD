@@ -66,19 +66,19 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
         view.setFloat32(offset, normal.y, true); offset += 4;
         view.setFloat32(offset, normal.z, true); offset += 4;
         
-        // Write vertices with bounds checking
+        // Write vertices with bounds checking, scaling to millimeters
         if (offset + VERTEX_SIZE <= bufferSize) {
-            view.setFloat32(offset, v1.x, true); offset += 4;
-            view.setFloat32(offset, v1.y, true); offset += 4;
-            view.setFloat32(offset, v1.z, true); offset += 4;
+            view.setFloat32(offset, v1.x * 100, true); offset += 4;
+            view.setFloat32(offset, v1.y * 100, true); offset += 4;
+            view.setFloat32(offset, v1.z * 100, true); offset += 4;
             
-            view.setFloat32(offset, v2.x, true); offset += 4;
-            view.setFloat32(offset, v2.y, true); offset += 4;
-            view.setFloat32(offset, v2.z, true); offset += 4;
+            view.setFloat32(offset, v2.x * 100, true); offset += 4;
+            view.setFloat32(offset, v2.y * 100, true); offset += 4;
+            view.setFloat32(offset, v2.z * 100, true); offset += 4;
             
-            view.setFloat32(offset, v3.x, true); offset += 4;
-            view.setFloat32(offset, v3.y, true); offset += 4;
-            view.setFloat32(offset, v3.z, true); offset += 4;
+            view.setFloat32(offset, v3.x * 100, true); offset += 4;
+            view.setFloat32(offset, v3.y * 100, true); offset += 4;
+            view.setFloat32(offset, v3.z * 100, true); offset += 4;
         } else {
             throw new Error(`Buffer overflow at offset ${offset} while writing vertices`);
         }
