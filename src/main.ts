@@ -37,6 +37,17 @@ window._editor = editor;
 // Get preview pane element
 const previewPane = document.getElementById('preview-pane')!;
 
+// Set up Three.js scene, renderer and camera
+const scene = new THREE.Scene();
+const octreeScene = new THREE.Scene();
+let currentOctree: OctreeNode | null = null;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(previewPane.clientWidth, previewPane.clientHeight);
+renderer.setClearColor(0x000000, 0); // Clear to transparent black
+previewPane.innerHTML = '';
+previewPane.appendChild(renderer.domElement);
+
 // Add settings panel
 const settingsPanel = document.createElement('div');
 settingsPanel.id = 'settings-panel';
@@ -64,17 +75,6 @@ showOctreeCheckbox.addEventListener('change', () => {
     octreeScene.visible = showOctreeCheckbox.checked;
   }
 });
-
-// Set up Three.js scene, renderer and camera
-const scene = new THREE.Scene();
-const octreeScene = new THREE.Scene();
-let currentOctree: OctreeNode | null = null;
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(previewPane.clientWidth, previewPane.clientHeight);
-renderer.setClearColor(0x000000, 0); // Clear to transparent black
-previewPane.innerHTML = '';
-previewPane.appendChild(renderer.domElement);
 
 // Create render target for octree
 const octreeRenderTarget = new THREE.WebGLRenderTarget(
