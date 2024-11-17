@@ -49,7 +49,7 @@ export function generateShader(ast: Node): string {
     void main() {
       // Convert pixel coordinates to normalized device coordinates (-1 to +1)
       vec2 ndc = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
-      vec2 uv = ndc * 0.5 + 0.5;
+      vec2 uv = gl_FragCoord.xy / resolution.xy;
 
       // Ray origin is the camera position
       vec3 ro = customCameraPosition;
