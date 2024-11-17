@@ -114,7 +114,7 @@ export function generateShader(ast: Node): string {
 
       // If no hit but octree cell is occupied, show octree visualization as if unoccluded
       if(octreeData.a > 0.5) {
-        gl_FragColor = vec4(mix(background, vec3(0.2, 1.0, 0.2), 0.5), 1.0);
+        gl_FragColor = vec4(mix(background, octreeData.rgb, 0.5), 1.0);
         return;
       }
 
