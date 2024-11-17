@@ -80,10 +80,12 @@ export class MeshGenerator {
             const neighborNode = new OctreeNode(neighborCenter, node.size, node.sdf);
             
             // Get neighbor from octree - there should always be one in our volume
+            console.log(`Finding neighbor for face with normal ${face.normal.toArray()} at position ${node.center.toArray()} with size ${node.size}`);
             const neighbor = node.getNeighbor(face.normal);
             if (!neighbor) {
-                throw new Error('Missing neighbor cell in octree');
+                throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}, face normal ${face.normal.toArray()}`);
             }
+            console.log(`Found neighbor at ${neighbor.center.toArray()} with size ${neighbor.size}`);
             
             // Only add face if the neighbor is fully outside
             if (neighbor.isFullyOutside()) {

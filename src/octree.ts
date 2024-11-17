@@ -35,7 +35,10 @@ export class OctreeNode {
 
   getNeighbor(direction: THREE.Vector3): OctreeNode | null {
     // If we're at root, no neighbor
-    if (!this.parent) return null;
+    if (!this.parent) {
+      console.log('No parent node - at root');
+      return null;
+    }
 
     // Get relative position in parent's octants
     const parentSize = this.size * 2;
@@ -50,9 +53,14 @@ export class OctreeNode {
       .add(direction);
 
     // If target is within parent's bounds, traverse down
-    if (Math.abs(targetPos.x) <= 1 && 
-        Math.abs(targetPos.y) <= 1 && 
-        Math.abs(targetPos.z) <= 1) {
+    const withinBounds = Math.abs(targetPos.x) <= 1 && 
+                        Math.abs(targetPos.y) <= 1 && 
+                        Math.abs(targetPos.z) <= 1;
+    
+    console.log(`Target position relative to parent: ${targetPos.toArray()}`);
+    console.log(`Within parent bounds: ${withinBounds}`);
+    
+    if (withinBounds) {
       // Find target octant in parent
       const tx = targetPos.x > 0 ? 1 : 0;
       const ty = targetPos.y > 0 ? 1 : 0;
@@ -62,8 +70,13 @@ export class OctreeNode {
     }
 
     // Otherwise need to go up and over
+    console.log(`Looking for neighbor in parent's direction`);
     const parentNeighbor = this.parent.getNeighbor(direction);
-    if (!parentNeighbor) return null;
+    if (!parentNeighbor) {
+      console.log(`No neighbor found in parent's direction`);
+      return null;
+    }
+    console.log(`Found parent's neighbor at ${parentNeighbor.center.toArray()}`);
 
     // Find corresponding child in the neighbor
     const tx = relativePos.x * direction.x < 0 ? 1 : 0;
