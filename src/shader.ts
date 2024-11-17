@@ -7,8 +7,8 @@ export function generateShader(ast: Node): string {
     uniform mat4 projectionMatrix;
     uniform vec3 customCameraPosition;
     uniform float fov;
-    uniform sampler2D octreeBuffer;
-    uniform sampler2D octreeDepth;
+    uniform sampler2D previewSceneBuffer;
+    uniform sampler2D previewSceneDepth;
 
     float sqr(float x) {
       return x * x;
@@ -67,7 +67,7 @@ export function generateShader(ast: Node): string {
       float tmax = 20.0;
 
       // Sample preview scene at current position
-      vec4 previewSceneData = texture2D(octreeBuffer, uv);
+      vec4 previewSceneData = texture2D(previewSceneBuffer, uv);
 
       for(int i = 0; i < 100; i++) {
         vec3 p = ro + rd * t;
@@ -87,7 +87,7 @@ export function generateShader(ast: Node): string {
           float viewSpaceDepth = -clipPos.z; // View space depth is negative of z in view space
           
           // Get depth from preview scene depth buffer [0,1]
-          float previewSceneDepth = texture2D(octreeDepth, uv).r;
+          float previewSceneDepth = texture2D(previewSceneDepth, uv).r;
           
           // Convert raymarched hit point to clip space using view and projection matrices
           vec4 rayWorldPos = vec4(ro + rd * t, 1.0);
@@ -126,9 +126,9 @@ export function generateShader(ast: Node): string {
         t += d;
       }
 
-      // If no hit but octree cell is occupied, show octree visualization as if unoccluded
-      if(octreeData.a > 0.5) {
-        gl_FragColor = vec4(mix(background, octreeData.rgb, 0.5), 1.0);
+      // If no hit but preview scene is visible, show visualization as if unoccluded
+      if(previewSceneData.a > 0.5) {
+        gl_FragColor = vec4(mix(background, previewSceneData.rgb, 0.5), 1.0);
         return;
       }
 

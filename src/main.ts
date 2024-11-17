@@ -164,8 +164,8 @@ let material = new THREE.ShaderMaterial({
     customViewMatrix: { value: camera.matrixWorldInverse },
     customCameraPosition: { value: camera.position },
     fov: { value: FOV },
-    octreeBuffer: { value: octreeRenderTarget.texture },
-    octreeDepth: { value: octreeRenderTarget.depthTexture }
+    previewSceneBuffer: { value: octreeRenderTarget.texture },
+    previewSceneDepth: { value: octreeRenderTarget.depthTexture }
   },
   fragmentShader: generateShader(parse(editor.getValue())),
   vertexShader: `
@@ -216,8 +216,8 @@ editor.onDidChangeModelContent(() => {
         projectionMatrix: { value: camera.projectionMatrix },
         customCameraPosition: { value: camera.position },
         fov: { value: FOV },
-        octreeBuffer: { value: octreeRenderTarget.texture },
-        octreeDepth: { value: octreeRenderTarget.depthTexture }
+        previewSceneBuffer: { value: octreeRenderTarget.texture },
+        previewSceneDepth: { value: octreeRenderTarget.depthTexture }
       },
       fragmentShader,
       vertexShader: material.vertexShader
