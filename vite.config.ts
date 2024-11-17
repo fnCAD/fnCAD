@@ -28,25 +28,7 @@ export default defineConfig({
         chunkFileNames: (chunkInfo) => {
           console.log('Creating chunk:', chunkInfo.name);
           return '[name]-[hash].js';
-        }
-      }
-    }
-  },
-  server: {
-    cors: true,
-    hmr: {
-      protocol: 'ws',
-      timeout: 5000,
-    },
-  },
-  base: '/~user/fncad/',
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    sourcemap: true,
-    chunkSizeWarningLimit: 1000, // Increase warning threshold to 1MB
-    rollupOptions: {
-      output: {
+        },
         manualChunks: {
           'three': ['three'],
           'monaco-core': ['monaco-editor/esm/vs/editor/editor.api'],
@@ -66,6 +48,14 @@ export default defineConfig({
       }
     }
   },
+  server: {
+    cors: true,
+    hmr: {
+      protocol: 'ws',
+      timeout: 5000,
+    },
+  },
+  base: '/~user/fncad/',
   plugins: [{
     name: 'copy-htaccess',
     closeBundle() {
