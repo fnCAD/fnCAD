@@ -6,6 +6,8 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     const triangleCount = position.count / 3;
     
     console.log(`STL Export: Processing ${triangleCount} triangles`);
+    console.log(`Position attribute count: ${position.count}`);
+    console.log(`Vertices per triangle: ${position.count / triangleCount}`);
     
     // Binary STL format:
     // 80 bytes - Header
@@ -18,8 +20,21 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     // 80 bytes header + 4 bytes triangle count + (12+36+2) bytes per triangle
     const HEADER_SIZE = 80;
     const COUNT_SIZE = 4;
-    const TRIANGLE_SIZE = 50; // 12 bytes normal + 36 bytes vertices + 2 bytes attribute
+    const NORMAL_SIZE = 12;   // 3 floats * 4 bytes
+    const VERTEX_SIZE = 36;   // 9 floats * 4 bytes
+    const ATTR_SIZE = 2;      // Uint16 attribute
+    const TRIANGLE_SIZE = NORMAL_SIZE + VERTEX_SIZE + ATTR_SIZE;
     const bufferSize = HEADER_SIZE + COUNT_SIZE + (TRIANGLE_SIZE * triangleCount);
+    
+    console.log('Buffer allocation:', {
+        headerSize: HEADER_SIZE,
+        countSize: COUNT_SIZE,
+        triangleSize: TRIANGLE_SIZE,
+        triangleCount,
+        totalSize: bufferSize,
+        normalOffset: HEADER_SIZE + COUNT_SIZE,
+        firstVertexOffset: HEADER_SIZE + COUNT_SIZE + NORMAL_SIZE
+    });
     const buffer = new ArrayBuffer(bufferSize);
     const view = new DataView(buffer);
     
@@ -58,7 +73,8 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
         view.setFloat32(offset, normal.z, true); offset += 4;
         
         // Write vertices with bounds checking
-        if (offset + 36 <= bufferSize) {  // 36 = 9 floats * 4 bytes
+        if (offset + VERTEX_SIZE <= bufferSize) {
+            console.log(`Writing triangle ${i/3} at offset ${offset}/${bufferSize}`);
             view.setFloat32(offset, v1.x, true); offset += 4;
             view.setFloat32(offset, v1.y, true); offset += 4;
             view.setFloat32(offset, v1.z, true); offset += 4;
