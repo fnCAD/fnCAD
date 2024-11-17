@@ -25,34 +25,36 @@ function assertOctreesEqual(a: OctreeNode, b: OctreeNode): void {
 }
 
 describe('Octree', () => {
-  it('maintains consistent geometry after render settings change', () => {
-    // Test that the order of adjusting min cell size and min render size sliders
-    // does not affect the final octree structure - the end result should be
-    // the same regardless of which slider was moved first
+  it('maintains consistent structure regardless of render size changes', () => {
+    // Define render sizes we'll test with
+    const smallRenderSize = 0.1;  // High detail
+    const largeRenderSize = 0.5;  // Low detail
+    const subdivisionSize = 0.5;  // Fixed subdivision size
+    const cellBudget = 1000;
+
     // Create a simple sphere SDF
     const ast = parse('sqrt(x*x + y*y + z*z) - 1.0');
-    const modifiedOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
 
-    // Initial subdivision with small render size (0.1)
-    const smallRenderSettings = new OctreeRenderSettings(true, true, true, 0.1);
-    modifiedOctree.subdivide(0.5, 1000, smallRenderSettings);
+    // Path 1: Start with high detail, then switch to low detail
+    const highDetailFirst = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    highDetailFirst.subdivide(subdivisionSize, cellBudget, 
+      new OctreeRenderSettings(true, true, true, smallRenderSize));
+    highDetailFirst.updateGeometry(
+      new OctreeRenderSettings(true, true, true, largeRenderSize));
 
-    // Save a copy before modification
-    const originalOctree = modifiedOctree.dup();
+    // Path 2: Start directly with low detail
+    const lowDetailDirect = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    lowDetailDirect.subdivide(subdivisionSize, cellBudget,
+      new OctreeRenderSettings(true, true, true, largeRenderSize));
 
-    // Update the octree with larger render size (0.5)
-    const largeRenderSettings = new OctreeRenderSettings(true, true, true, 0.5);
-    modifiedOctree.updateGeometry(largeRenderSettings);
+    // Both paths should result in identical octree structures
+    assertOctreesEqual(highDetailFirst, lowDetailDirect);
 
-    // Create new octree directly with large render size
-    const referenceOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
-    referenceOctree.subdivide(0.5, 1000, largeRenderSettings);
-
-    // The modified octree should match one created fresh with large settings
-    assertOctreesEqual(modifiedOctree, referenceOctree);
-
-    // But should differ from its original state with small settings
-    expect(() => assertOctreesEqual(modifiedOctree, originalOctree))
-      .toThrow('Octree should differ from initial state');
+    // Verify that high detail actually creates more geometry
+    const highDetailDirect = new OctreeNode(new THREE.Vector3(0, 0, 0), 4, ast);
+    highDetailDirect.subdivide(subdivisionSize, cellBudget,
+      new OctreeRenderSettings(true, true, true, smallRenderSize));
+    expect(() => assertOctreesEqual(highDetailDirect, lowDetailDirect))
+      .toThrow('Octrees should differ due to render size');
   });
 });
