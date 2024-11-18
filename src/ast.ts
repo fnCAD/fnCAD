@@ -1,5 +1,6 @@
 import { Interval } from './interval';
 import { GLSLContext } from './glslgen';
+import { GLSLContext } from './glslgen';
 
 export type NodeType = 
   | 'Number'
@@ -22,7 +23,7 @@ export interface NumberNode extends Node {
   type: 'Number';
   value: number;
   evaluate(): number;
-  toGLSL(): string;
+  toGLSL(context: GLSLContext): string;
 }
 
 export interface VariableNode extends Node {
