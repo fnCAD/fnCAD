@@ -124,11 +124,11 @@ export class Interval {
   }
 
   // Helper to compute bounding box of transformed points
-  static boundingBox(points: number[]): Interval {
+  static boundingBox(points: {x: number, y: number, z: number}[], axis: 'x' | 'y' | 'z'): Interval {
     if (points.length === 0) throw new Error('Cannot compute bounding box of empty point set');
     return new Interval(
-      Math.min(...points),
-      Math.max(...points)
+      Math.min(...points.map(p => p[axis])),
+      Math.max(...points.map(p => p[axis]))
     );
   }
 }

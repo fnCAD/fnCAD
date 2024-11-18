@@ -213,11 +213,18 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           transformedZ.push(nz);
         }
         
-        // Compute bounding box of transformed points
+        // Convert transformed points to array of {x,y,z} objects
+        const transformedPoints = transformedX.map((x, i) => ({
+          x: x,
+          y: transformedY[i],
+          z: transformedZ[i]
+        }));
+        
+        // Compute bounding box for each axis
         const newContext = {...context};
-        newContext['x'] = Interval.boundingBox(transformedX);
-        newContext['y'] = Interval.boundingBox(transformedY);
-        newContext['z'] = Interval.boundingBox(transformedZ);
+        newContext['x'] = Interval.boundingBox(transformedPoints, 'x');
+        newContext['y'] = Interval.boundingBox(transformedPoints, 'y');
+        newContext['z'] = Interval.boundingBox(transformedPoints, 'z');
         
         return body.evaluateInterval(newContext);
       }
