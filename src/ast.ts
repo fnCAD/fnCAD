@@ -1,5 +1,6 @@
 import { Interval } from './interval';
 import { GLSLContext } from './glslgen';
+import { GLSLContext } from './glslgen';
 
 export type NodeType = 
   | 'Number'
@@ -29,7 +30,7 @@ export interface VariableNode extends Node {
   type: 'Variable';
   name: string;
   evaluate(context: Record<string, number>): number;
-  toGLSL(): string;
+  toGLSL(context: GLSLContext): string;
 }
 
 export interface BinaryOpNode extends Node {
@@ -38,7 +39,7 @@ export interface BinaryOpNode extends Node {
   left: Node;
   right: Node;
   evaluate(context: Record<string, number>): number;
-  toGLSL(): string;
+  toGLSL(context: GLSLContext): string;
 }
 
 export interface UnaryOpNode extends Node {
@@ -46,7 +47,7 @@ export interface UnaryOpNode extends Node {
   operator: UnaryOperator;
   operand: Node;
   evaluate(context: Record<string, number>): number;
-  toGLSL(): string;
+  toGLSL(context: GLSLContext): string;
 }
 
 export interface FunctionCallNode extends Node {
