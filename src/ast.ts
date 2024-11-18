@@ -13,7 +13,7 @@ export type UnaryOperator = '-';
 export interface Node {
   type: NodeType;
   evaluate(context: Record<string, number>): number;
-  toGLSL(context?: GLSLContext): string;
+  toGLSL(context: GLSLContext): string;
   evaluateInterval(context: Record<string, Interval>): Interval;
 }
 
