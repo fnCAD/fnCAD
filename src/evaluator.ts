@@ -8,7 +8,7 @@ export function createNumberNode(value: number): NumberNode {
     value,
     evaluate: () => value,
     toGLSL: (context: GLSLContext) => {
-      return context.generator.save(`vec3(${value.toFixed(1)})`);
+      return context.generator.save(value.toFixed(1), 'float');
     },
     evaluateInterval: () => Interval.from(value)
   };
@@ -32,10 +32,10 @@ export function createVariableNode(name: string): VariableNode {
     },
     toGLSL: (context: GLSLContext) => {
       // Map x,y,z to components of the current point
-      if (name === 'x') return context.generator.save(`vec3(${context.getPoint()}.x)`);
-      if (name === 'y') return context.generator.save(`vec3(${context.getPoint()}.y)`);
-      if (name === 'z') return context.generator.save(`vec3(${context.getPoint()}.z)`);
-      return context.generator.save(name);
+      if (name === 'x') return context.generator.save(`${context.getPoint()}.x`, 'float');
+      if (name === 'y') return context.generator.save(`${context.getPoint()}.y`, 'float');
+      if (name === 'z') return context.generator.save(`${context.getPoint()}.z`, 'float');
+      return context.generator.save(name, 'float');
     }
   };
 }
