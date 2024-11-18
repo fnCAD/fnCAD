@@ -6,7 +6,9 @@ export function createNumberNode(value: number): NumberNode {
     type: 'Number',
     value,
     evaluate: () => value,
-    toGLSL: () => `${value.toFixed(1)}`,
+    toGLSL: (context: GLSLContext) => {
+      return context.generator.save(`vec3(${value.toFixed(1)})`);
+    },
     evaluateInterval: () => Interval.from(value)
   };
 }
@@ -27,12 +29,12 @@ export function createVariableNode(name: string): VariableNode {
       }
       return context[name];
     },
-    toGLSL: () => {
-      // Map x,y,z to pos.x, pos.y, pos.z for vector components
-      if (name === 'x') return 'pos.x';
-      if (name === 'y') return 'pos.y';
-      if (name === 'z') return 'pos.z';
-      return name;
+    toGLSL: (context: GLSLContext) => {
+      // Map x,y,z to components of the current point
+      if (name === 'x') return context.generator.save(`vec3(${context.getPoint()}.x)`);
+      if (name === 'y') return context.generator.save(`vec3(${context.getPoint()}.y)`);
+      if (name === 'z') return context.generator.save(`vec3(${context.getPoint()}.z)`);
+      return context.generator.save(name);
     }
   };
 }
@@ -55,7 +57,11 @@ export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, 
           return lval / rval;
       }
     },
-    toGLSL: () => `(${left.toGLSL()} ${operator} ${right.toGLSL()})`,
+    toGLSL: (context: GLSLContext) => {
+      const lval = left.toGLSL(context);
+      const rval = right.toGLSL(context);
+      return context.generator.save(`${lval} ${operator} ${rval}`);
+    },
     evaluateInterval: (context) => {
       const lval = left.evaluateInterval(context);
       const rval = right.evaluateInterval(context);
@@ -78,7 +84,10 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
       const val = operand.evaluate(context);
       return -val;
     },
-    toGLSL: () => `(-${operand.toGLSL()})`,
+    toGLSL: (context: GLSLContext) => {
+      const val = operand.toGLSL(context);
+      return context.generator.save(`-${val}`);
+    },
     evaluateInterval: (context) => {
       const val = operand.evaluateInterval(context);
       return val.negate();
@@ -171,20 +180,22 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
 
       throw new Error(`Unknown function: ${name}`);
     },
-    toGLSL: () => {
+    toGLSL: (context: GLSLContext) => {
+      // Evaluate all arguments first
+      const evalArgs = args.map(arg => arg.toGLSL(context));
+      
       // Handle min/max with any number of arguments
       if (name === 'min' || name === 'max') {
-        if (args.length === 1) return args[0].toGLSL();
-        if (args.length > 2) {
-          // Fold multiple arguments into nested min/max calls
-          return args.reduce((acc, arg, i) => {
-            if (i === 0) return arg.toGLSL();
-            return `${name}(${acc}, ${arg.toGLSL()})`;
-          }, '');
-        }
+        if (args.length === 1) return evalArgs[0];
+        // Fold multiple arguments into nested min/max calls
+        return evalArgs.reduce((acc, arg, i) => {
+          if (i === 0) return arg;
+          return context.generator.save(`${name}(${acc}, ${arg})`);
+        });
       }
-      // Default case for other functions or min/max with 2 args
-      return `${name}(${args.map(arg => arg.toGLSL()).join(', ')})`;
+      
+      // Default case for other functions
+      return context.generator.save(`${name}(${evalArgs.join(', ')})`);
     }
   };
 }
