@@ -1,23 +1,11 @@
-export class GLSLContext {
-  constructor(
-    public readonly point: string,  // The current point variable name
-    public readonly scope: string[] = []  // Accumulated GLSL statements
-  ) {}
-
-  // Create new context with transformed point
-  withPoint(newPoint: string): GLSLContext {
-    return new GLSLContext(newPoint, this.scope);
-  }
-
-  // Add statement to scope
-  addStatement(stmt: string): void {
-    this.scope.push(stmt);
-  }
-}
-
 export class GLSLGenerator {
   private varCounter = 0;
   private statements: string[] = [];
+  private currentPoint: string;
+
+  constructor(initialPoint: string = "pos") {
+    this.currentPoint = initialPoint;
+  }
 
   // Generate new unique variable name
   private freshVar(): string {
@@ -31,12 +19,22 @@ export class GLSLGenerator {
     return varName;
   }
 
-  // Core transformation functions
-  translate(point: string, dx: number, dy: number, dz: number): string {
-    return this.save(`${point} - vec3(${dx}, ${dy}, ${dz})`);
+  // Get current point variable name
+  getPoint(): string {
+    return this.currentPoint;
   }
 
-  rotate(point: string, ax: number, ay: number, az: number): string {
+  // Update current point
+  setPoint(point: string): void {
+    this.currentPoint = point;
+  }
+
+  // Core transformation functions
+  translate(dx: number, dy: number, dz: number): void {
+    this.currentPoint = this.save(`${this.currentPoint} - vec3(${dx}, ${dy}, ${dz})`);
+  }
+
+  rotate(ax: number, ay: number, az: number): void {
     // Create rotation matrix
     const cx = Math.cos(ax), sx = Math.sin(ax);
     const cy = Math.cos(ay), sy = Math.sin(ay);
@@ -51,35 +49,11 @@ export class GLSLGenerator {
       )`
     ].join('\n');
 
-    return this.save(`${rotMatrix} * ${point}`);
+    this.currentPoint = this.save(`${rotMatrix} * ${this.currentPoint}`);
   }
 
   // Generate final GLSL code
   generateCode(): string {
     return this.statements.join('\n');
   }
-}
-
-// Example transformation function that could be used in the middle-end
-export function transformPoint(
-  gen: GLSLGenerator,
-  point: string,
-  transform: { 
-    translate?: [number, number, number],
-    rotate?: [number, number, number]
-  }
-): string {
-  let result = point;
-  
-  if (transform.translate) {
-    const [dx, dy, dz] = transform.translate;
-    result = gen.translate(result, dx, dy, dz);
-  }
-  
-  if (transform.rotate) {
-    const [rx, ry, rz] = transform.rotate;
-    result = gen.rotate(result, rx, ry, rz);
-  }
-  
-  return result;
 }
