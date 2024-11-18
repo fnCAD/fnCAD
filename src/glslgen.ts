@@ -8,7 +8,7 @@ export class GLSLGenerator {
   }
 
   // Save an expression to a new variable and return its name
-  save(expr: string, type: 'float' | 'vec3' = 'float'): string {
+  save(expr: string, type: 'float' | 'vec3'): string {
     const varName = this.freshVar();
     this.statements.push(`${type} ${varName} = ${expr};`);
     return varName;
