@@ -198,15 +198,26 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const transformedY: number[] = [];
         const transformedZ: number[] = [];
         
+        // Compute trig values
         const cx = Math.cos(ax), sx = Math.sin(ax);
         const cy = Math.cos(ay), sy = Math.sin(ay);
         const cz = Math.cos(az), sz = Math.sin(az);
         
         for (const [px, py, pz] of corners) {
-          // Apply rotation matrix
-          const nx = cy*cz*px + (-cy*sz)*py + sy*pz;
-          const ny = (cx*sz + sx*sy*cz)*px + (cx*cz - sx*sy*sz)*py + (-sx*cy)*pz;
-          const nz = (sx*sz - cx*sy*cz)*px + (sx*cz + cx*sy*sz)*py + (cx*cy)*pz;
+          // First rotate around X
+          const x1 = px;
+          const y1 = py * cx - pz * sx;
+          const z1 = py * sx + pz * cx;
+          
+          // Then around Y
+          const x2 = x1 * cy + z1 * sy;
+          const y2 = y1;
+          const z2 = -x1 * sy + z1 * cy;
+          
+          // Finally around Z
+          const nx = x2 * cz - y2 * sz;
+          const ny = x2 * sz + y2 * cz;
+          const nz = z2;
           
           transformedX.push(nx);
           transformedY.push(ny);
@@ -268,22 +279,35 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       }
       if (name === 'rotate' && args.length === 4) {
         const [rx, ry, rz, body] = args;
-        const cx = Math.cos(rx.evaluate(context));
-        const sx = Math.sin(rx.evaluate(context));
-        const cy = Math.cos(ry.evaluate(context));
-        const sy = Math.sin(ry.evaluate(context));
-        const cz = Math.cos(rz.evaluate(context));
-        const sz = Math.sin(rz.evaluate(context));
+        // Get rotation angles
+        const ax = rx.evaluate(context);
+        const ay = ry.evaluate(context);
+        const az = rz.evaluate(context);
         
-        // Apply rotation matrix
+        // Compute trig values
+        const cx = Math.cos(ax), sx = Math.sin(ax);
+        const cy = Math.cos(ay), sy = Math.sin(ay);
+        const cz = Math.cos(az), sz = Math.sin(az);
+        
+        // Apply rotation matrix (Z * Y * X order)
         const x = context.x;
         const y = context.y;
         const z = context.z;
         
-        // Rotation matrix multiplication
-        const nx = cy*cz*x + (-cy*sz)*y + sy*z;
-        const ny = (cx*sz + sx*sy*cz)*x + (cx*cz - sx*sy*sz)*y + (-sx*cy)*z;
-        const nz = (sx*sz - cx*sy*cz)*x + (sx*cz + cx*sy*sz)*y + (cx*cy)*z;
+        // First rotate around X
+        const x1 = x;
+        const y1 = y * cx - z * sx;
+        const z1 = y * sx + z * cx;
+        
+        // Then around Y
+        const x2 = x1 * cy + z1 * sy;
+        const y2 = y1;
+        const z2 = -x1 * sy + z1 * cy;
+        
+        // Finally around Z
+        const nx = x2 * cz - y2 * sz;
+        const ny = x2 * sz + y2 * cz;
+        const nz = z2;
         
         return body.evaluate({...context, x: nx, y: ny, z: nz});
       }
