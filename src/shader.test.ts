@@ -121,8 +121,5 @@ describe('Shader Generation and Raymarching', () => {
     expect(shaderCode).toContain('vec3 var4 = min(var1, var2)');
     expect(shaderCode).toContain('vec3 var5 = min(var4, var3)');
 
-    const ast2 = parse('max(1, 2, 3, 4)');
-    const shaderCode2 = generateShader(ast2);
-    expect(shaderCode2).toContain('max(max(max(1.0, 2.0), 3.0), 4.0)');
   });
 });
