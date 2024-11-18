@@ -191,12 +191,12 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         // Fold multiple arguments into nested min/max calls
         return evalArgs.reduce((acc, arg, i) => {
           if (i === 0) return arg;
-          return context.generator.save(`${name}(${acc}, ${arg})`);
+          return context.generator.save(`${name}(${acc}, ${arg})`, 'float');
         });
       }
       
       // Default case for other functions
-      return context.generator.save(`${name}(${evalArgs.join(', ')})`);
+      return context.generator.save(`${name}(${evalArgs.join(', ')})`, 'float');
     }
   };
 }
