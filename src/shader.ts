@@ -1,6 +1,5 @@
 import { Node } from './ast';
 import { GLSLContext, GLSLGenerator } from './glslgen';
-import { GLSLContext, GLSLGenerator } from './glslgen';
 
 export function generateShader(ast: Node): string {
   return `
@@ -17,9 +16,13 @@ export function generateShader(ast: Node): string {
     }
 
     float scene(vec3 pos) {
-      const context = new GLSLContext(new GLSLGenerator());
-      const context = new GLSLContext(new GLSLGenerator());
-      return ${ast.toGLSL(context)};
+      const generator = new GLSLGenerator();
+      const context = new GLSLContext(generator);
+      const result = ast.toGLSL(context);
+      return `
+        ${generator.generateCode()}
+        return ${result};
+      `;
     }
 
     vec3 calcNormal(vec3 p) {
