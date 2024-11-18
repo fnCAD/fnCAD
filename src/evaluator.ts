@@ -96,48 +96,8 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
   };
 }
 
-export function createTransformNode(transformType: TransformType, args: Node[], body: Node): TransformNode {
-  return {
-    type: 'Transform',
-    transformType,
-    args,
-    body,
-    evaluate: (context) => {
-      // For evaluation, just evaluate the body in the current context
-      // This is fine since we're just computing distances
-      return body.evaluate(context);
-    },
-    evaluateInterval: (context) => {
-      // Same for interval evaluation
-      return body.evaluateInterval(context);
-    },
-    toGLSL: (context) => {
-      // Evaluate all arguments first
-      const evalArgs = args.map(arg => arg.evaluate({}));
-      
-      // Create new context with transformed point
-      let newContext: GLSLContext;
-      if (transformType === 'translate') {
-        newContext = context.translate(evalArgs[0], evalArgs[1], evalArgs[2]);
-      } else { // rotate
-        newContext = context.rotate(evalArgs[0], evalArgs[1], evalArgs[2]);
-      }
-      
-      // Evaluate body in transformed context
-      return body.toGLSL(newContext);
-    }
-  };
-}
 
 export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode | TransformNode {
-  // Check for transform functions first
-  if (name === 'translate' && args.length === 4) {
-    return createTransformNode('translate', args.slice(0, 3), args[3]);
-  }
-  if (name === 'rotate' && args.length === 4) {
-    return createTransformNode('rotate', args.slice(0, 3), args[3]);
-  }
-  
   return {
     type: 'FunctionCall' as const,
     name,
@@ -223,6 +183,24 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       throw new Error(`Unknown function: ${name}`);
     },
     toGLSL: (context: GLSLContext) => {
+      // Handle transforms first
+      if (name === 'translate' && args.length === 4) {
+        const [dx, dy, dz, body] = args;
+        const evalDx = dx.evaluate({});
+        const evalDy = dy.evaluate({});
+        const evalDz = dz.evaluate({});
+        const newContext = context.translate(evalDx, evalDy, evalDz);
+        return body.toGLSL(newContext);
+      }
+      if (name === 'rotate' && args.length === 4) {
+        const [rx, ry, rz, body] = args;
+        const evalRx = rx.evaluate({});
+        const evalRy = ry.evaluate({});
+        const evalRz = rz.evaluate({});
+        const newContext = context.rotate(evalRx, evalRy, evalRz);
+        return body.toGLSL(newContext);
+      }
+
       // Evaluate all arguments first
       const evalArgs = args.map(arg => arg.toGLSL(context));
       

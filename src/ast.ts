@@ -6,10 +6,7 @@ export type NodeType =
   | 'Variable'
   | 'BinaryOp'
   | 'UnaryOp'
-  | 'FunctionCall'
-  | 'Transform';
-
-export type TransformType = 'rotate' | 'translate';
+  | 'FunctionCall';
 
 export type BinaryOperator = '+' | '-' | '*' | '/';
 export type UnaryOperator = '-';
@@ -60,12 +57,4 @@ export interface FunctionCallNode extends Node {
   toGLSL(context: GLSLContext): string;
 }
 
-export interface TransformNode extends Node {
-  type: 'Transform';
-  transformType: TransformType;
-  args: Node[];
-  body: Node;
-  evaluate(context: Record<string, number>): number;
-  toGLSL(context: GLSLContext): string;
-}
 
