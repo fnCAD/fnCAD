@@ -65,29 +65,20 @@
 - [x] UI controls for all stages
 - [x] Performance settings
 
-## 9. Advanced Features
-- [ ] Custom SDF function library
+## 9. Language Redesign
+- [ ] Switch to OpenSCAD-like syntax (see TODO_OPENSCAD.md)
+- [ ] SDF lowering layer for OpenSCAD operations
+- [ ] Preserve direct SDF function support as escape hatch
+
+## 10. Advanced Features
 - [ ] Undo/redo
 - [ ] Project save/load
 - [ ] Multiple viewport angles
 - [ ] Material/color support
 
-## 10. Documentation & Examples
+## 11. Documentation & Examples
 - [ ] User guide
+- [ ] OpenSCAD compatibility guide
 - [ ] SDF function reference
 - [ ] Example gallery
 - [ ] Tutorial content
-
-## 11. SDF Language Features
-- [ ] Named anchors for positioning
-- [ ] Object definitions and reuse
-- [ ] Macro system for code reuse
-- [ ] Variables and constants
-- [ ] Transformations:
-  - [ ] Translation
-  - [ ] Rotation
-  - [ ] Scaling
-  - [ ] Mirror/symmetry
-- [ ] Loops and repetition
-- [ ] Conditional operations
-- [ ] Custom function definitions
