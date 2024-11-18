@@ -151,6 +151,77 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         });
       }
 
+      // Handle transformations
+      if (name === 'translate' && args.length === 4) {
+        const [dx, dy, dz, body] = args;
+        // Evaluate translation amounts
+        const tx = dx.evaluateInterval(context);
+        const ty = dy.evaluateInterval(context);
+        const tz = dz.evaluateInterval(context);
+        // Translate the intervals
+        const newContext = {...context};
+        newContext['x'] = new Interval(
+          context['x'].min - tx.max,
+          context['x'].max - tx.min
+        );
+        newContext['y'] = new Interval(
+          context['y'].min - ty.max,
+          context['y'].max - ty.min
+        );
+        newContext['z'] = new Interval(
+          context['z'].min - tz.max,
+          context['z'].max - tz.min
+        );
+        return body.evaluateInterval(newContext);
+      }
+
+      if (name === 'rotate' && args.length === 4) {
+        const [rx, ry, rz, body] = args;
+        // Get rotation angles
+        const ax = rx.evaluate({});
+        const ay = ry.evaluate({});
+        const az = rz.evaluate({});
+        
+        // Get corners of the interval box
+        const x = context['x'];
+        const y = context['y'];
+        const z = context['z'];
+        const corners = [
+          [x.min, y.min, z.min], [x.max, y.min, z.min],
+          [x.min, y.max, z.min], [x.max, y.max, z.min],
+          [x.min, y.min, z.max], [x.max, y.min, z.max],
+          [x.min, y.max, z.max], [x.max, y.max, z.max]
+        ];
+        
+        // Transform each corner
+        const transformedX: number[] = [];
+        const transformedY: number[] = [];
+        const transformedZ: number[] = [];
+        
+        const cx = Math.cos(ax), sx = Math.sin(ax);
+        const cy = Math.cos(ay), sy = Math.sin(ay);
+        const cz = Math.cos(az), sz = Math.sin(az);
+        
+        for (const [px, py, pz] of corners) {
+          // Apply rotation matrix
+          const nx = cy*cz*px + (-cy*sz)*py + sy*pz;
+          const ny = (cx*sz + sx*sy*cz)*px + (cx*cz - sx*sy*sz)*py + (-sx*cy)*pz;
+          const nz = (sx*sz - cx*sy*cz)*px + (sx*cz + cx*sy*sz)*py + (cx*cy)*pz;
+          
+          transformedX.push(nx);
+          transformedY.push(ny);
+          transformedZ.push(nz);
+        }
+        
+        // Compute bounding box of transformed points
+        const newContext = {...context};
+        newContext['x'] = Interval.boundingBox(transformedX);
+        newContext['y'] = Interval.boundingBox(transformedY);
+        newContext['z'] = Interval.boundingBox(transformedZ);
+        
+        return body.evaluateInterval(newContext);
+      }
+
       throw new Error(`Unknown function: ${name}`);
     },
     evaluate: (context: Record<string, number>) => {

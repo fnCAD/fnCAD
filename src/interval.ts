@@ -122,4 +122,13 @@ export class Interval {
   toString(): string {
     return `[${this.min}, ${this.max}]`;
   }
+
+  // Helper to compute bounding box of transformed points
+  static boundingBox(points: number[]): Interval {
+    if (points.length === 0) throw new Error('Cannot compute bounding box of empty point set');
+    return new Interval(
+      Math.min(...points),
+      Math.max(...points)
+    );
+  }
 }
