@@ -1,32 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { GLSLGenerator } from './glslgen';
+import { GLSLGenerator, GLSLContext } from './glslgen';
 
-describe('GLSLGenerator', () => {
+describe('GLSLContext', () => {
   it('generates translation code', () => {
     const gen = new GLSLGenerator();
-    gen.translate(1, 2, 3);
+    const ctx = new GLSLContext(gen);
+    ctx.translate(1, 2, 3);
     const code = gen.generateCode();
-    expect(code).toContain('vec3 var1 = pos - vec3(1, 2, 3)');
+    expect(code).toBe('vec3 var1 = pos - vec3(1, 2, 3);');
   });
 
   it('generates rotation code', () => {
     const gen = new GLSLGenerator();
-    gen.rotate(Math.PI/2, 0, 0); // 90 degrees around X axis
-    const code = gen.generateCode();
-    expect(code).toContain('mat3');
-    // Should contain rotation matrix values for 90 degree X rotation
-    expect(code).toContain('1, 0, 0'); // First row approximately
-    expect(code).toContain('0, 0, -1'); // Second row approximately 
-    expect(code).toContain('0, 1, 0'); // Third row approximately
+    const ctx = new GLSLContext(gen);
+    ctx.rotate(Math.PI/2, 0, 0); // 90 degrees around X axis
+    const code = gen.generateCode().split('\n');
+    expect(code.length).toBe(1);
+    expect(code[0]).toMatch(/^vec3 var1 = mat3\(/);
+    expect(code[0]).toMatch(/1,\s*0,\s*0/); // First row
+    expect(code[0]).toMatch(/0,\s*0,\s*-1/); // Second row
+    expect(code[0]).toMatch(/0,\s*1,\s*0/); // Third row
   });
 
   it('chains transformations', () => {
     const gen = new GLSLGenerator();
-    gen.translate(1, 0, 0);
-    gen.rotate(0, Math.PI/2, 0);
-    const code = gen.generateCode();
-    expect(code.split('\n').length).toBe(2); // Should have 2 statements
-    expect(code).toContain('var1 = pos - vec3(1, 0, 0)');
-    expect(code).toContain('var2 = mat3');
+    const ctx = new GLSLContext(gen);
+    ctx.translate(1, 0, 0);
+    ctx.rotate(0, Math.PI/2, 0);
+    const code = gen.generateCode().split('\n');
+    expect(code.length).toBe(2);
+    expect(code[0]).toBe('vec3 var1 = pos - vec3(1, 0, 0);');
+    expect(code[1]).toMatch(/^vec3 var2 = mat3\(/);
+  });
+
+  it('supports context branching', () => {
+    const gen = new GLSLGenerator();
+    const ctx1 = new GLSLContext(gen);
+    ctx1.translate(1, 0, 0);
+    const ctx2 = ctx1.withPoint(ctx1.getPoint());
+    ctx2.rotate(0, Math.PI/2, 0);
+    const code = gen.generateCode().split('\n');
+    expect(code.length).toBe(2);
   });
 });
