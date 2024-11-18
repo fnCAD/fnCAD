@@ -79,22 +79,22 @@ describe('Shader Generation and Raymarching', () => {
   it('correctly raymarches stretched sphere from all angles', () => {
     const ast = parse('sqrt(sqr(x) + sqr(y) + sqr(z * 2)) - 1.0');
     
-    // Test from different angles
-    const angles = [
-      new THREE.Vector3(1, 0, 0),   // +X
-      new THREE.Vector3(-1, 0, 0),  // -X
-      new THREE.Vector3(0, 1, 0),   // +Y
-      new THREE.Vector3(0, -1, 0),  // -Y
-      new THREE.Vector3(0, 0, 1),   // +Z (thin side)
-      new THREE.Vector3(0, 0, -1),  // -Z (thin side)
+    // Test from points in a circle around the object
+    const radius = 5; // Distance from origin
+    const testPoints = [
+      new THREE.Vector3(radius, 0, 0),      // +X
+      new THREE.Vector3(-radius, 0, 0),     // -X
+      new THREE.Vector3(0, radius, 0),      // +Y
+      new THREE.Vector3(0, -radius, 0),     // -Y
+      new THREE.Vector3(0, 0, radius),      // +Z
+      new THREE.Vector3(0, 0, -radius),     // -Z
     ];
     
-    // Ray origin far enough to see whole shape
-    const rayOrigin = new THREE.Vector3(0, 0, -5);
-    
-    for (const dir of angles) {
+    for (const point of testPoints) {
+      // Shoot ray inward toward origin
+      const dir = new THREE.Vector3().copy(point).negate().normalize();
       try {
-        const hit = raymarch(ast, rayOrigin, dir.normalize());
+        const hit = raymarch(ast, point, dir);
         expect(hit).not.toBeNull();
       } catch (e) {
         if (e instanceof Error && e.name === 'AssertionError') {
