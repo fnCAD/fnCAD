@@ -100,7 +100,7 @@ describe('Shader Generation and Raymarching', () => {
         if (e instanceof Error && e.name === 'AssertionError') {
           // Re-run with logging on failure
           console.log(`\nFailed raymarching in direction ${dir.toArray()}`);
-          raymarch(ast, rayOrigin, dir.normalize(), (step, point, distance) => {
+          raymarch(ast, point, dir, (step, point, distance) => {
             console.log(`Step ${step}: point ${point.toArray()}, distance ${distance}`);
           });
           throw e; // Re-throw to fail the test
