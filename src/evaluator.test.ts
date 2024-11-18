@@ -62,7 +62,7 @@ describe('Expression Evaluation', () => {
 
   it('handles translate transformation', () => {
     const ast = parse('translate(1, 0, 0, x*x + y*y + z*z - 1)');
-    expect(ast.evaluate({ x: 2, y: 0, z: 0 })).toBe(3); // (2,0,0) -> distance from (1,0,0)
+    expect(ast.evaluate({ x: 2, y: 0, z: 0 })).toBe(0); // At (2,0,0), we're exactly on the surface of the sphere centered at (1,0,0)
   });
 
   it('handles rotate transformation', () => {
