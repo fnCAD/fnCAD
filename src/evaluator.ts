@@ -294,20 +294,20 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const y = context.y;
         const z = context.z;
         
-        // First rotate around X
-        const x1 = x;
-        const y1 = y * cx - z * sx;
-        const z1 = y * sx + z * cx;
+        // First rotate around Z
+        const x1 = x * cz - y * sz;
+        const y1 = x * sz + y * cz;
+        const z1 = z;
         
         // Then around Y
         const x2 = x1 * cy + z1 * sy;
         const y2 = y1;
         const z2 = -x1 * sy + z1 * cy;
         
-        // Finally around Z
-        const nx = x2 * cz - y2 * sz;
-        const ny = x2 * sz + y2 * cz;
-        const nz = z2;
+        // Finally around X
+        const nx = x2;
+        const ny = y2 * cx - z2 * sx;
+        const nz = y2 * sx + z2 * cx;
         
         return body.evaluate({...context, x: nx, y: ny, z: nz});
       }
