@@ -2,8 +2,39 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { parse } from './parser';
 import { generateShader } from './shader';
+import { Node } from './ast';
 
-describe('Shader Generation', () => {
+// Software raymarcher for testing
+function raymarch(sdf: Node, rayOrigin: THREE.Vector3, rayDir: THREE.Vector3): number | null {
+  const MAX_STEPS = 100;
+  const MAX_DIST = 20.0;
+  const EPSILON = 0.001;
+  
+  let t = 0.0;
+  
+  for (let i = 0; i < MAX_STEPS; i++) {
+    const p = new THREE.Vector3().copy(rayDir).multiplyScalar(t).add(rayOrigin);
+    const d = sdf.evaluate({
+      x: p.x,
+      y: p.y,
+      z: p.z
+    });
+    
+    if (d < EPSILON) {
+      return t; // Hit
+    }
+    
+    t += d;
+    
+    if (t > MAX_DIST) {
+      return null; // Miss
+    }
+  }
+  
+  return null; // Max steps exceeded
+}
+
+describe('Shader Generation and Raymarching', () => {
   // Helper to compile and test a shader
   async function testShader(expr: string): Promise<boolean> {
     const ast = parse(expr);
@@ -32,6 +63,28 @@ describe('Shader Generation', () => {
 
   it.skip('generates valid shader for simple expressions', async () => {
     expect(await testShader('x * x + y * y + z * z - 1')).toBe(true);
+  });
+
+  it('correctly raymarches stretched sphere from all angles', () => {
+    const ast = parse('sqrt(sqr(x) + sqr(y) + sqr(z * 2)) - 1.0');
+    
+    // Test from different angles
+    const angles = [
+      new THREE.Vector3(1, 0, 0),   // +X
+      new THREE.Vector3(-1, 0, 0),  // -X
+      new THREE.Vector3(0, 1, 0),   // +Y
+      new THREE.Vector3(0, -1, 0),  // -Y
+      new THREE.Vector3(0, 0, 1),   // +Z (thin side)
+      new THREE.Vector3(0, 0, -1),  // -Z (thin side)
+    ];
+    
+    // Ray origin far enough to see whole shape
+    const rayOrigin = new THREE.Vector3(0, 0, -5);
+    
+    for (const dir of angles) {
+      const hit = raymarch(ast, rayOrigin, dir.normalize());
+      expect(hit).not.toBeNull();
+    }
   });
 
   it('generates correct GLSL for multi-argument min/max', async () => {
