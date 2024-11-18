@@ -2,6 +2,10 @@ import { Node } from './ast';
 import { GLSLContext, GLSLGenerator } from './glslgen';
 
 export function generateShader(ast: Node): string {
+  const generator = new GLSLGenerator();
+  const context = new GLSLContext(generator);
+  const result = ast.toGLSL(context);
+  
   return `
     uniform vec2 resolution;
     uniform mat4 customViewMatrix;
@@ -16,13 +20,8 @@ export function generateShader(ast: Node): string {
     }
 
     float scene(vec3 pos) {
-      const generator = new GLSLGenerator();
-      const context = new GLSLContext(generator);
-      const result = ast.toGLSL(context);
-      return `
-        ${generator.generateCode()}
-        return ${result};
-      `;
+      ${generator.generateCode()}
+      return ${result};
     }
 
     vec3 calcNormal(vec3 p) {
