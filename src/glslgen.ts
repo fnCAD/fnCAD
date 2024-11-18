@@ -41,14 +41,15 @@ export class GLSLContext {
     return this.currentPoint;
   }
 
-  // Core transformation functions
-  translate(dx: number, dy: number, dz: number): void {
-    this.currentPoint = this.generator.save(
+  // Core transformation functions that return new contexts
+  translate(dx: number, dy: number, dz: number): GLSLContext {
+    const newPoint = this.generator.save(
       `${this.currentPoint} - vec3(${dx}, ${dy}, ${dz})`
     );
+    return this.withPoint(newPoint);
   }
 
-  rotate(ax: number, ay: number, az: number): void {
+  rotate(ax: number, ay: number, az: number): GLSLContext {
     const cx = Math.cos(ax), sx = Math.sin(ax);
     const cy = Math.cos(ay), sy = Math.sin(ay);
     const cz = Math.cos(az), sz = Math.sin(az);
@@ -59,6 +60,7 @@ export class GLSLContext {
       ${sx*sz - cx*sy*cz}, ${sx*cz + cx*sy*sz}, ${cx*cy}
     )`;
 
-    this.currentPoint = this.generator.save(`${rotMatrix} * ${this.currentPoint}`);
+    const newPoint = this.generator.save(`${rotMatrix} * ${this.currentPoint}`);
+    return this.withPoint(newPoint);
   }
 }
