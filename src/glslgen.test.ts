@@ -32,11 +32,10 @@ describe('GLSLContext', () => {
       [0, 1, 0]
     ];
     
-    // Compare with epsilon
-    const epsilon = 1e-10;
+    // Compare values with toBeCloseTo
     matrixRows.forEach((row, i) => {
       row.forEach((val, j) => {
-        expect(Math.abs(val - expectedMatrix[i][j])).toBeLessThan(epsilon);
+        expect(val).toBeCloseTo(expectedMatrix[i][j], 10);
       });
     });
     
