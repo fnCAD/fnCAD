@@ -289,25 +289,25 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const cy = Math.cos(ay), sy = Math.sin(ay);
         const cz = Math.cos(az), sz = Math.sin(az);
         
-        // Apply rotation matrix (Z * Y * X order)
+        // Apply rotation matrix (X * Y * Z order)
         const x = context.x;
         const y = context.y;
         const z = context.z;
         
-        // First rotate around Z
-        const x1 = x * cz - y * sz;
-        const y1 = x * sz + y * cz;
-        const z1 = z;
+        // First rotate around X
+        const x1 = x;
+        const y1 = y * cx + z * sx;
+        const z1 = -y * sx + z * cx;
         
         // Then around Y
         const x2 = x1 * cy + z1 * sy;
         const y2 = y1;
         const z2 = -x1 * sy + z1 * cy;
         
-        // Finally around X
-        const nx = x2;
-        const ny = y2 * cx + z2 * sx;
-        const nz = -y2 * sx + z2 * cx;
+        // Finally around Z
+        const nx = x2 * cz - y2 * sz;
+        const ny = x2 * sz + y2 * cz;
+        const nz = z2;
         
         return body.evaluate({...context, x: nx, y: ny, z: nz});
       }
