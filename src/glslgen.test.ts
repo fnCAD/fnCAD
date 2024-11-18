@@ -5,7 +5,7 @@ describe('GLSLContext', () => {
   it('generates translation code', () => {
     const gen = new GLSLGenerator();
     const ctx = new GLSLContext(gen);
-    const result = ctx.translate(1, 2, 3);
+    ctx.translate(1, 2, 3);
     expect(gen.generateCode().split('\n')).toEqual([
       'vec3 var1 = pos - vec3(1, 2, 3);'
     ]);
@@ -14,7 +14,7 @@ describe('GLSLContext', () => {
   it('generates rotation code', () => {
     const gen = new GLSLGenerator();
     const ctx = new GLSLContext(gen);
-    const result = ctx.rotate(Math.PI/2, 0, 0); // 90 degrees around X axis
+    ctx.rotate(Math.PI/2, 0, 0); // 90 degrees around X axis
     const code = gen.generateCode().split('\n');
     // Extract matrix values and compare numerically
     expect(code.length).toBe(5);
@@ -45,7 +45,7 @@ describe('GLSLContext', () => {
   it('chains transformations', () => {
     const gen = new GLSLGenerator();
     const ctx = new GLSLContext(gen);
-    const ctx2 = ctx.translate(1, 0, 0).rotate(0, Math.PI/2, 0);
+    ctx.translate(1, 0, 0).rotate(0, Math.PI/2, 0);
     const code = gen.generateCode().split('\n');
     expect(code[0]).toBe('vec3 var1 = pos - vec3(1, 0, 0);');
     
@@ -77,7 +77,7 @@ describe('GLSLContext', () => {
     const gen = new GLSLGenerator();
     const ctx1 = new GLSLContext(gen);
     const ctx2 = ctx1.translate(1, 0, 0);
-    const ctx3 = ctx2.withPoint(ctx2.getPoint()).rotate(0, Math.PI/2, 0);
+    ctx2.withPoint(ctx2.getPoint()).rotate(0, Math.PI/2, 0);
     const code = gen.generateCode().split('\n');
     expect(code[0]).toBe('vec3 var1 = pos - vec3(1, 0, 0);');
     
