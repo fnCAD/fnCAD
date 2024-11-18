@@ -97,7 +97,7 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
 }
 
 
-export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode | TransformNode {
+export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode {
   return {
     type: 'FunctionCall' as const,
     name,
