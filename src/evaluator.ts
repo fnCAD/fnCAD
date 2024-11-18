@@ -180,6 +180,36 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         return Math.max(...evaluatedArgs);
       }
 
+      // Handle transforms
+      if (name === 'translate' && args.length === 4) {
+        const [dx, dy, dz, body] = args;
+        const x = context.x - dx.evaluate(context);
+        const y = context.y - dy.evaluate(context);
+        const z = context.z - dz.evaluate(context);
+        return body.evaluate({...context, x, y, z});
+      }
+      if (name === 'rotate' && args.length === 4) {
+        const [rx, ry, rz, body] = args;
+        const cx = Math.cos(rx.evaluate(context));
+        const sx = Math.sin(rx.evaluate(context));
+        const cy = Math.cos(ry.evaluate(context));
+        const sy = Math.sin(ry.evaluate(context));
+        const cz = Math.cos(rz.evaluate(context));
+        const sz = Math.sin(rz.evaluate(context));
+        
+        // Apply rotation matrix
+        const x = context.x;
+        const y = context.y;
+        const z = context.z;
+        
+        // Rotation matrix multiplication
+        const nx = cy*cz*x + (-cy*sz)*y + sy*z;
+        const ny = (cx*sz + sx*sy*cz)*x + (cx*cz - sx*sy*sz)*y + (-sx*cy)*z;
+        const nz = (sx*sz - cx*sy*cz)*x + (sx*cz + cx*sy*sz)*y + (cx*cy)*z;
+        
+        return body.evaluate({...context, x: nx, y: ny, z: nz});
+      }
+
       throw new Error(`Unknown function: ${name}`);
     },
     toGLSL: (context: GLSLContext) => {
