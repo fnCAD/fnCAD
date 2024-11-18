@@ -5,7 +5,14 @@ import { generateShader } from './shader';
 import { Node } from './ast';
 
 // Software raymarcher for testing
-function raymarch(sdf: Node, rayOrigin: THREE.Vector3, rayDir: THREE.Vector3): number | null {
+type RaymarchLogger = (step: number, point: THREE.Vector3, distance: number) => void;
+
+function raymarch(
+  sdf: Node, 
+  rayOrigin: THREE.Vector3, 
+  rayDir: THREE.Vector3,
+  logger?: RaymarchLogger
+): number | null {
   const MAX_STEPS = 100;
   const MAX_DIST = 20.0;
   const EPSILON = 0.001;
@@ -19,6 +26,10 @@ function raymarch(sdf: Node, rayOrigin: THREE.Vector3, rayDir: THREE.Vector3): n
       y: p.y,
       z: p.z
     });
+    
+    if (logger) {
+      logger(i, p, d);
+    }
     
     if (d < EPSILON) {
       return t; // Hit
@@ -82,8 +93,20 @@ describe('Shader Generation and Raymarching', () => {
     const rayOrigin = new THREE.Vector3(0, 0, -5);
     
     for (const dir of angles) {
-      const hit = raymarch(ast, rayOrigin, dir.normalize());
-      expect(hit).not.toBeNull();
+      try {
+        const hit = raymarch(ast, rayOrigin, dir.normalize());
+        expect(hit).not.toBeNull();
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AssertionError') {
+          // Re-run with logging on failure
+          console.log(`\nFailed raymarching in direction ${dir.toArray()}`);
+          raymarch(ast, rayOrigin, dir.normalize(), (step, point, distance) => {
+            console.log(`Step ${step}: point ${point.toArray()}, distance ${distance}`);
+          });
+          throw e; // Re-throw to fail the test
+        }
+        throw e; // Re-throw unexpected errors
+      }
     }
   });
 
