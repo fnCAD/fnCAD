@@ -183,10 +183,10 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       // Handle transforms
       if (name === 'translate' && args.length === 4) {
         const [dx, dy, dz, body] = args;
-        const x = context.x - dx.evaluate(context);
-        const y = context.y - dy.evaluate(context);
-        const z = context.z - dz.evaluate(context);
-        return body.evaluate({...context, x, y, z});
+        const newX = context['x'] - dx.evaluate(context);
+        const newY = context['y'] - dy.evaluate(context);
+        const newZ = context['z'] - dz.evaluate(context);
+        return body.evaluate({...context, 'x': newX, 'y': newY, 'z': newZ});
       }
       if (name === 'rotate' && args.length === 4) {
         const [rx, ry, rz, body] = args;
