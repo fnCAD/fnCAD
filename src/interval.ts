@@ -123,12 +123,12 @@ export class Interval {
     return `[${this.min}, ${this.max}]`;
   }
 
-  // Helper to compute bounding box of transformed points
-  static boundingBox(points: {x: number, y: number, z: number}[], axis: 'x' | 'y' | 'z'): Interval {
-    if (points.length === 0) throw new Error('Cannot compute bounding box of empty point set');
+  // Helper to compute bounds of a set of numbers
+  static bound(values: number[]): Interval {
+    if (values.length === 0) throw new Error('Cannot compute bounds of empty set');
     return new Interval(
-      Math.min(...points.map(p => p[axis])),
-      Math.max(...points.map(p => p[axis]))
+      Math.min(...values),
+      Math.max(...values)
     );
   }
 }

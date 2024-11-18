@@ -220,11 +220,11 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           z: transformedZ[i]
         }));
         
-        // Compute bounding box for each axis
+        // Compute bounds for each axis
         const newContext = {...context};
-        newContext['x'] = Interval.boundingBox(transformedPoints, 'x');
-        newContext['y'] = Interval.boundingBox(transformedPoints, 'y');
-        newContext['z'] = Interval.boundingBox(transformedPoints, 'z');
+        newContext['x'] = Interval.bound(transformedPoints.map(p => p.x));
+        newContext['y'] = Interval.bound(transformedPoints.map(p => p.y));
+        newContext['z'] = Interval.bound(transformedPoints.map(p => p.z));
         
         return body.evaluateInterval(newContext);
       }
