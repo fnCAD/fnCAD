@@ -21,7 +21,7 @@ export class GLSLGenerator {
 }
 
 export class GLSLContext {
-  private currentPoint: string;
+  private readonly currentPoint: string;
 
   constructor(
     private generator: GLSLGenerator,
