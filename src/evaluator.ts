@@ -296,8 +296,8 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         
         // First rotate around X
         const x1 = x;
-        const y1 = y * cx + z * sx;
-        const z1 = -y * sx + z * cx;
+        const y1 = y * cx - z * sx;
+        const z1 = y * sx + z * cx;
         
         // Then around Y
         const x2 = x1 * cy + z1 * sy;
