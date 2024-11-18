@@ -59,4 +59,14 @@ describe('Expression Evaluation', () => {
     expect(ast.evaluateInterval({ x: new Interval(1, 3) })).toEqual(new Interval(1, 3));
     expect(ast.evaluateInterval({ x: new Interval(-1, 2) })).toEqual(new Interval(0, 2));
   });
+
+  it('handles translate transformation', () => {
+    const ast = parse('translate(1, 0, 0, x*x + y*y + z*z - 1)');
+    expect(ast.evaluate({ x: 2, y: 0, z: 0 })).toBe(3); // (2,0,0) -> distance from (1,0,0)
+  });
+
+  it('handles rotate transformation', () => {
+    const ast = parse('rotate(0, 3.14159/2, 0, x*x + y*y + z*z - 1)');
+    expect(ast.evaluate({ x: 1, y: 0, z: 0 })).toBeCloseTo(0, 4); // Should be ~0 at radius 1
+  });
 });
