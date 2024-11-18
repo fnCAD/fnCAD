@@ -306,8 +306,8 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         
         // Finally around X
         const nx = x2;
-        const ny = y2 * cx - z2 * sx;
-        const nz = y2 * sx + z2 * cx;
+        const ny = y2 * cx + z2 * sx;
+        const nz = -y2 * sx + z2 * cx;
         
         return body.evaluate({...context, x: nx, y: ny, z: nz});
       }
