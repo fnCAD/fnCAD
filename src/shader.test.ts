@@ -114,7 +114,12 @@ describe('Shader Generation and Raymarching', () => {
     const ast = parse('min(1, 2, 3)');
     const shaderCode = generateShader(ast);
     console.log('Generated shader code:', shaderCode);
-    expect(shaderCode).toContain('min(min(1.0, 2.0), 3.0)');
+    // Check for SSA form variable declarations and min operations
+    expect(shaderCode).toContain('vec3 var1 = vec3(1.0)');
+    expect(shaderCode).toContain('vec3 var2 = vec3(2.0)');
+    expect(shaderCode).toContain('vec3 var3 = vec3(3.0)');
+    expect(shaderCode).toContain('vec3 var4 = min(var1, var2)');
+    expect(shaderCode).toContain('vec3 var5 = min(var4, var3)');
 
     const ast2 = parse('max(1, 2, 3, 4)');
     const shaderCode2 = generateShader(ast2);
