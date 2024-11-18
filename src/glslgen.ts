@@ -24,7 +24,7 @@ export class GLSLContext {
   private readonly currentPoint: string;
 
   constructor(
-    private generator: GLSLGenerator,
+    public readonly generator: GLSLGenerator,
     initialPoint: string = "pos"
   ) {
     this.currentPoint = initialPoint;
