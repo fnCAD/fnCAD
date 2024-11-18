@@ -61,7 +61,7 @@ export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, 
     toGLSL: (context: GLSLContext) => {
       const lval = left.toGLSL(context);
       const rval = right.toGLSL(context);
-      return context.generator.save(`${lval} ${operator} ${rval}`);
+      return context.generator.save(`${lval} ${operator} ${rval}`, 'float');
     },
     evaluateInterval: (context) => {
       const lval = left.evaluateInterval(context);
@@ -87,7 +87,7 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
     },
     toGLSL: (context: GLSLContext) => {
       const val = operand.toGLSL(context);
-      return context.generator.save(`-${val}`);
+      return context.generator.save(`-${val}`, 'float');
     },
     evaluateInterval: (context) => {
       const val = operand.evaluateInterval(context);

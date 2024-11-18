@@ -44,7 +44,7 @@ export class GLSLContext {
   // Core transformation functions that return new contexts
   translate(dx: number, dy: number, dz: number): GLSLContext {
     const newPoint = this.generator.save(
-      `${this.currentPoint} - vec3(${dx}, ${dy}, ${dz})`
+      `${this.currentPoint} - vec3(${dx}, ${dy}, ${dz})`, 'vec3'
     );
     return this.withPoint(newPoint);
   }
@@ -60,7 +60,7 @@ export class GLSLContext {
       ${sx*sz - cx*sy*cz}, ${sx*cz + cx*sy*sz}, ${cx*cy}
     )`;
 
-    const newPoint = this.generator.save(`${rotMatrix} * ${this.currentPoint}`);
+    const newPoint = this.generator.save(`${rotMatrix} * ${this.currentPoint}`, 'vec3');
     return this.withPoint(newPoint);
   }
 }
