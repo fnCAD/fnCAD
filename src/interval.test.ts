@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Interval } from './interval';
+import { parse } from './parser';
 
 describe('Interval', () => {
   it('creates valid intervals', () => {
