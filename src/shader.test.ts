@@ -77,7 +77,7 @@ describe('Shader Generation and Raymarching', () => {
   });
 
   it('correctly raymarches stretched sphere from all angles', () => {
-    const ast = parse('sqrt(sqr(x) + sqr(y) + sqr(z/2)) - 1.0');
+    const ast = parse('sqrt(sqr(x) + sqr(y) + sqr(z*2))/2 - 1.0');
     
     // Test from points in a circle around the object
     const radius = 5; // Distance from origin
