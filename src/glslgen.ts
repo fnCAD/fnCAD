@@ -57,17 +57,17 @@ export class GLSLContext {
     // Generate rotation matrices for X, Y, Z in order
     const rotX = `mat3(
       1.0, 0.0, 0.0,
-      0.0, ${cx}, ${-sx},
-      0.0, ${sx}, ${cx}
+      0.0, ${cx}, ${sx},
+      0.0, ${-sx}, ${cx}
     )`;
     const rotY = `mat3(
-      ${cy}, 0.0, ${sy},
+      ${cy}, 0.0, ${-sy},
       0.0, 1.0, 0.0,
-      ${-sy}, 0.0, ${cy}
+      ${sy}, 0.0, ${cy}
     )`;
     const rotZ = `mat3(
-      ${cz}, ${-sz}, 0.0,
-      ${sz}, ${cz}, 0.0,
+      ${cz}, ${sz}, 0.0,
+      ${-sz}, ${cz}, 0.0,
       0.0, 0.0, 1.0
     )`;
     
