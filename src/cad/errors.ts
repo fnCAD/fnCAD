@@ -4,14 +4,13 @@ export class ParseError extends Error {
     public location: { start: { line: number, column: number }, end: { line: number, column: number } },
     public source?: string
   ) {
+    const lines = this.source.split('\n');
+    const line = lines[this.location.start.line - 1];
     const formattedMessage = source ? [
-      message,
       `at line ${location.start.line}, column ${location.start.column}`,
-      '',
-      source.trim(),
+      line.trim(),
       ' '.repeat(location.start.column - 1) + '^',
-      '',
-      `Source: ${source}`
+      `${location.start.line}:${location.start.column}: ${message}`
     ].join('\n') : `${message} at line ${location.start.line}, column ${location.start.column}`;
 
     super(formattedMessage);
@@ -31,11 +30,9 @@ export class ParseError extends Error {
     return [
       `${this.name}: ${this.message}`,
       `at line ${this.location.start.line}, column ${this.location.start.column}`,
-      '',
-      context,
-      pointer,
-      '',
-      `Source: ${this.source}`
+      line.trim(),
+      ' '.repeat(location.start.column - 1) + '^',
+      `${location.start.line}:${location.start.column}: ${message}`
     ].join('\n');
   }
 
