@@ -3,7 +3,7 @@ import {
   NumberLiteral, BinaryExpression, Parameter,
   Position, SourceLocation
 } from './types';
-import { ParseError } from './errors';
+import { ParseError, parseError } from './errors';
 
 class Parser {
   private current = 0;
