@@ -1,5 +1,5 @@
 import { Node } from './ast';
-import { GLSLContext, GLSLGenerator } from './glslgen';
+import { GLSLContext, GLSLGenerator } from './sdf_expressions/glslgen';
 
 export function generateShader(ast: Node): string {
   const generator = new GLSLGenerator();
