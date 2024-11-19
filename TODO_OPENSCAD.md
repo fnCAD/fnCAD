@@ -1,18 +1,18 @@
 # OpenSCAD-like Syntax Implementation
 
 ## 1. Core Language Features
-- [ ] Basic primitives that lower to SDFs:
-  - [ ] cube
-  - [ ] sphere
+- [x] Basic primitives that lower to SDFs:
+  - [x] cube
+  - [x] sphere
   - [ ] cylinder
   - [ ] polyhedron
-- [ ] Boolean operations:
-  - [ ] union
-  - [ ] difference
+- [x] Boolean operations:
+  - [x] union
+  - [x] difference
   - [ ] intersection
-- [ ] Transformations:
-  - [ ] translate
-  - [ ] rotate
+- [x] Transformations:
+  - [x] translate
+  - [x] rotate
   - [ ] scale
   - [ ] mirror
   - [ ] multmatrix
@@ -21,10 +21,10 @@
 - [ ] First-class functions
 - [ ] Let bindings
 - [ ] Pattern matching
-- [ ] Type system
-- [ ] Modules as proper functions
-- [ ] Named arguments with defaults
-- [ ] Better error messages
+- [x] Type system
+- [x] Modules as proper functions
+- [x] Named arguments with defaults
+- [x] Better error messages
 
 ## 3. Control Flow
 - [ ] for loops with proper iteration
@@ -39,15 +39,15 @@
 - [ ] Custom types
 
 ## 5. SDF Integration
-- [ ] All primitives implemented as clean SDFs
-- [ ] Boolean ops preserve SDF properties
-- [ ] Transformations maintain distance field
-- [ ] Custom SDF function escape hatch
+- [x] All primitives implemented as clean SDFs
+- [x] Boolean ops preserve SDF properties
+- [x] Transformations maintain distance field
+- [x] Custom SDF function escape hatch
 - [ ] Smooth unions and other SDF-specific operations
 
 ## 6. Tooling
-- [ ] Syntax highlighting
-- [ ] Code completion
+- [x] Syntax highlighting (via Monaco)
+- [x] Code completion (via Monaco)
 - [ ] Documentation generation
 - [ ] Import/export system
 - [ ] Package management
@@ -64,3 +64,11 @@
 - [ ] Library system
 - [ ] Meta-programming capabilities
 - [ ] Debug visualization tools
+
+## 9. Infrastructure
+- [x] Clean separation between layers:
+  - [x] SDF layer: Pure mathematical primitives
+  - [x] OpenSCAD layer: CAD operations and modules
+  - [x] Bridge layer: Converts between representations
+- [x] Testing infrastructure
+- [x] Error handling
