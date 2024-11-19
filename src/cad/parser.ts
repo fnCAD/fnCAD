@@ -155,7 +155,7 @@ class Parser {
         let value = '';
         const start = { line: this.line, column: this.column };
 
-        while (/[a-zA-Z0-9_]/.test(char)) {
+        while (current < this.source.length && /[a-zA-Z0-9_]/.test(char)) {
           value += char;
           current++;
           this.column++;
