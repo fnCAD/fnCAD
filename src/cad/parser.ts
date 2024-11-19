@@ -320,16 +320,15 @@ class Parser {
 
       const right = this.parsePrimary();
 
-      left = {
-        kind: 'BinaryExpression',
+      left = new BinaryExpression(
         operator,
         left,
         right,
-        location: {
+        {
           start: left.location.start,
           end: right.location.end
         }
-      };
+      );
     }
 
     return left;
