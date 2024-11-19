@@ -223,11 +223,6 @@ class Parser {
 
     while (this.current < this.tokens.length && this.tokens[this.current].value !== '}') {
       statements.push(this.parseStatement());
-      // Skip optional semicolon if there was no block
-      const hadBlock = this.tokens[this.current - 1].value === '}';
-      if (!hadBlock && this.current < this.tokens.length && this.tokens[this.current].value === ';') {
-        this.current++;
-      }
     }
 
     // Expect closing brace
@@ -251,6 +246,14 @@ class Parser {
     let children: Statement[] | undefined;
     if (this.current < this.tokens.length && this.tokens[this.current].value === '{') {
       children = this.parseBlock();
+    }
+
+    // Expect semicolon if no block
+    if (!children) {
+      if (this.current >= this.tokens.length || this.tokens[this.current].value !== ';') {
+        throw parseError('Expected semicolon', this.tokens[this.current - 1].location, this.source);
+      }
+      this.current++;
     }
 
     return {
