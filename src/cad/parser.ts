@@ -193,16 +193,15 @@ class Parser {
     const parameters = this.parseParameters();
     const body = this.parseBlock();
 
-    return {
-      kind: 'ModuleDeclaration',
+    return new ModuleDeclaration(
       name,
       parameters,
       body,
-      location: {
+      {
         start,
         end: this.previous().location.end
       }
-    };
+    );
   }
 
   private parseParameters(): Parameter[] {
