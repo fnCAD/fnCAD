@@ -5,7 +5,7 @@ import { moduleToSDF } from './builtins';
 describe('OpenSCAD-like Syntax', () => {
   function compileToSDF(input: string): string {
     const ast = parse(input);
-    return moduleToSDF(ast[0]);
+    return moduleToSDF(ast);
   }
 
   it('compiles basic primitives', () => {

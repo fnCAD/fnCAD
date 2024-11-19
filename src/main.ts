@@ -219,7 +219,7 @@ let material = new THREE.ShaderMaterial({
   },
   fragmentShader: (() => {
     const cadAst = parseCAD(editor.getValue());
-    const sdfExpr = moduleToSDF(cadAst[0]);
+    const sdfExpr = moduleToSDF(cadAst);
     const sdfAst = parseSDF(sdfExpr);
     return generateShader(sdfAst);
   })(),
@@ -291,7 +291,7 @@ minRenderSizeSlider.addEventListener('input', () => {
 const initialAst = parseCAD(editor.getValue());
 // NOTE: This large initial size (64k) is intentional and should not be changed!
 // It provides sufficient resolution for complex shapes while maintaining performance
-const initialSdfExpr = moduleToSDF(initialAst[0]);
+const initialSdfExpr = moduleToSDF(initialAst);
 const initialSdfAst = parseSDF(initialSdfExpr);
 currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialSdfAst);
 const power = parseInt(minSizeSlider.value);
@@ -358,7 +358,7 @@ function updateOctree() {
 function updateMaterial() {
   try {
     const editorAst = parseCAD(editor.getValue());
-    const sdfExpr = moduleToSDF(editorAst[0]);
+    const sdfExpr = moduleToSDF(editorAst);
     const sdfAst = parseSDF(sdfExpr);
     const fragmentShader = generateShader(sdfAst);
     material = new THREE.ShaderMaterial({
