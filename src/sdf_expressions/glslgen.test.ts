@@ -29,8 +29,8 @@ describe('GLSLContext', () => {
     // Expected values for 90° X rotation
     const expectedMatrix = [
       [1, 0, 0],
-      [0, 6.123233995736766e-17, 1],
-      [0, -1, 6.123233995736766e-17]
+      [0, 0, 1],
+      [0, -1, 0]
     ];
     
     // Compare values with toBeCloseTo
@@ -98,9 +98,13 @@ describe('GLSLContext', () => {
     ];
     
     const epsilon = 1e-10;
+    console.log('Context branching test matrix rows:', matrixRows);
+    console.log('Expected matrix:', expectedMatrix);
     matrixRows.forEach((row, i) => {
       row.forEach((val, j) => {
-        expect(Math.abs(val - expectedMatrix[i][j])).toBeLessThan(epsilon);
+        const diff = Math.abs(val - expectedMatrix[i][j]);
+        console.log(`Comparing position [${i}][${j}]: actual=${val}, expected=${expectedMatrix[i][j]}, diff=${diff}`);
+        expect(diff).toBeLessThan(epsilon);
       });
     });
     
