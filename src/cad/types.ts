@@ -8,6 +8,11 @@ export interface SourceLocation {
   end: Position;
 }
 
+export interface SourceLocation {
+  start: Position;
+  end: Position;
+}
+
 export interface Node {
   type: string;
   location: SourceLocation;
@@ -34,6 +39,11 @@ export interface ModuleCall extends Node {
 
 export interface Expression extends Node {
   type: 'NumberLiteral' | 'BinaryExpression' | 'Identifier';
+  operator?: '+' | '-' | '*' | '/';
+  value?: number;
+  name?: string;
+  left?: Expression;
+  right?: Expression;
 }
 
 export interface NumberLiteral extends Expression {

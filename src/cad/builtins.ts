@@ -7,10 +7,7 @@ export function moduleToSDF(node: Node): string {
     throw new Error(`Expected ModuleCall node, got ${node.type}`);
   }
 
-  const call = node;
-
-
-  const call = node as any; // TODO: Proper typing
+  const call = node as ModuleCall;
 
   switch (call.name) {
     case 'cube': {
