@@ -1,10 +1,10 @@
-# OpenSCAD Syntax Transition Plan
+# OpenSCAD-Inspired Syntax Transition Plan
 
 ## Rationale
 
-The transition to OpenSCAD-like syntax serves multiple purposes:
+The transition to an OpenSCAD-inspired syntax serves multiple purposes:
 
-1. **Familiarity**: OpenSCAD is the de-facto standard for programmatic CAD. Using its syntax makes our tool immediately accessible to existing users.
+1. **Familiarity**: While not exactly matching OpenSCAD's syntax, our similar approach will feel natural to users familiar with programmatic CAD tools like OpenSCAD.
 
 2. **Separation of Concerns**: The current SDF expression parser conflates two roles:
    - Low-level SDF primitive definitions
@@ -25,9 +25,9 @@ Move to `src/sdf_expressions/` to reflect its role as an implementation detail:
 
 Rationale: This preserves the existing SDF implementation while clearly marking it as internal infrastructure.
 
-### New OpenSCAD Parser
-Create `src/openscad/` for the new public API:
-- `parser.ts` - OpenSCAD syntax parser
+### New CAD Parser
+Create `src/cad/` for the new public API:
+- `parser.ts` - OpenSCAD-inspired syntax parser
 - `ast.ts` - AST with proper CAD semantics
 - `evaluator.ts` - Evaluates to SDF expressions
 - `types.ts` - Type system for modules
@@ -41,8 +41,8 @@ Establish clean separation between layers:
 - OpenSCAD layer: CAD operations and modules
 - Bridge layer: Converts between representations
 
-### Phase 2: Basic OpenSCAD Syntax
-Focus on core operations first:
+### Phase 2: Basic CAD Syntax
+Focus on core operations first (using OpenSCAD-inspired syntax):
 - Primitive shapes (cube, sphere, etc)
 - Boolean operations (union, difference)
 - Basic transformations
