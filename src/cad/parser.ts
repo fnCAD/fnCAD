@@ -342,19 +342,17 @@ class Parser {
     this.current++;
 
     if (token.type === 'number') {
-      return {
-        kind: 'NumberLiteral',
-        value: parseFloat(token.value),
-        location: token.location
-      };
+      return new NumberLiteral(
+        parseFloat(token.value),
+        token.location
+      );
     }
 
     if (token.type === 'identifier') {
-      return {
-        kind: 'Identifier',
-        name: token.value,
-        location: token.location
-      };
+      return new Identifier(
+        token.value,
+        token.location
+      );
     }
 
     throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);

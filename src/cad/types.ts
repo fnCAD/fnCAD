@@ -36,23 +36,37 @@ export interface ModuleCall extends Node {
   children?: Statement[];
 }
 
-export type Expression = NumberLiteral | BinaryExpression | Identifier;
-
-export interface NumberLiteral extends Node {
-  kind: 'NumberLiteral';
-  value: number;
+export abstract class Expression implements Node {
+  constructor(public location: SourceLocation) {}
 }
 
-export interface BinaryExpression extends Node {
-  kind: 'BinaryExpression';
-  operator: '+' | '-' | '*' | '/';
-  left: Expression;
-  right: Expression;
+export class NumberLiteral extends Expression {
+  constructor(
+    public value: number,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
 }
 
-export interface Identifier extends Node {
-  kind: 'Identifier';
-  name: string;
+export class BinaryExpression extends Expression {
+  constructor(
+    public operator: '+' | '-' | '*' | '/',
+    public left: Expression,
+    public right: Expression,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
+export class Identifier extends Expression {
+  constructor(
+    public name: string,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
 }
 
 export type Statement = ModuleDeclaration | ModuleCall;

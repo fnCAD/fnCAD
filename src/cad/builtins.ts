@@ -3,8 +3,8 @@ import { parse as parseSDFExpression } from '../sdf_expressions/parser';
 
 // Convert OpenSCAD-style module calls to SDF expressions
 export function moduleToSDF(node: Node): string {
-  if (node.kind !== 'ModuleCall') {
-    throw new Error(`Expected ModuleCall node, got ${node.kind}`);
+  if (!(node instanceof ModuleCall)) {
+    throw new Error(`Expected ModuleCall node, got ${node.constructor.name}`);
   }
 
   const call = node as ModuleCall;
