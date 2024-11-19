@@ -1,3 +1,12 @@
+/* OpenSCAD-style CAD language parser
+ *
+ * This parser implements a recursive descent parser for an OpenSCAD-like syntax:
+ * - Module declarations: module name(params) { ... }
+ * - Module calls: name(args);
+ * - Expressions: numbers, identifiers, binary ops
+ * - Nested blocks for CSG operations
+ */
+
 import { 
   Node, ModuleDeclaration, ModuleCall, Expression, 
   Parameter, Statement, BinaryExpression, NumberLiteral,
@@ -5,6 +14,10 @@ import {
 } from './types';
 import { parseError } from './errors';
 
+/* Parser class implementing recursive descent parsing.
+ * The parser maintains state about the current position in the token stream
+ * and provides helper methods for consuming tokens and building AST nodes.
+ */
 class Parser {
   private current = 0;
   private line = 1;
@@ -52,6 +65,13 @@ class Parser {
     throw parseError(message, this.peek().location, this.source);
   }
 
+  /* Tokenize the input source into a stream of tokens.
+   * Handles:
+   * - Whitespace and newlines for line/column tracking
+   * - Numbers (including decimals)
+   * - Identifiers and keywords
+   * - Single-character tokens (operators, braces, etc)
+   */
   private tokenize() {
     let current = 0;
     
@@ -154,6 +174,10 @@ class Parser {
     }
   }
 
+  /* Main entry point for parsing.
+   * Returns an array of top-level nodes (usually module declarations and calls).
+   * The nodes are later wrapped in an implicit union() if there are multiple statements.
+   */
   parse(): Node[] {
     const nodes: Node[] = [];
     
