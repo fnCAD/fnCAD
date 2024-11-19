@@ -53,6 +53,13 @@ describe('Expression Evaluation', () => {
     expect(evaluate('abs(-2.5)')).toBe(2.5);
   });
 
+  it('handles expressions starting with unary minus', () => {
+    expect(evaluate('-1')).toBe(-1);
+    expect(evaluate('-x', {x: 2})).toBe(-2);
+    expect(evaluate('-(1 + 2)')).toBe(-3);
+    expect(evaluate('-min(1, 2)')).toBe(-1);
+  });
+
   it('evaluates abs with intervals', () => {
     const ast = parse('abs(x)');
     expect(ast.evaluateInterval({ x: new Interval(-3, -1) })).toEqual(new Interval(1, 3));
