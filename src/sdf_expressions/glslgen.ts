@@ -57,14 +57,17 @@ export class GLSLContext {
     rotMatrix.makeRotationFromEuler(new THREE.Euler(ax, ay, az, 'XYZ'));
     const m = rotMatrix.elements;
 
+    // Format matrix values with consistent precision
+    const formatNum = (n: number) => n.toFixed(8);
+
     // Convert to mat3 for GLSL, taking just the rotation part
     const glslMatrix = `mat3(
-      ${m[0]}, ${m[1]}, ${m[2]},
-      ${m[4]}, ${m[5]}, ${m[6]},
-      ${m[8]}, ${m[9]}, ${m[10]}
+      ${formatNum(m[0])}, ${formatNum(m[1])}, ${formatNum(m[2])},
+      ${formatNum(m[4])}, ${formatNum(m[5])}, ${formatNum(m[6])},
+      ${formatNum(m[8])}, ${formatNum(m[9])}, ${formatNum(m[10])}
     )`;
 
-    const newPoint = this.generator.save(`${rotMatrix} * ${this.currentPoint}`, 'vec3');
+    const newPoint = this.generator.save(`${glslMatrix} * ${this.currentPoint}`, 'vec3');
     return this.withPoint(newPoint);
   }
 }
