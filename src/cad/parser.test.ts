@@ -1,6 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, test } from 'vitest';
 import { parse } from './parser';
 import { moduleToSDF } from './builtins';
+
+describe('CAD Parser', () => {
+  test('handles invalid single character input', () => {
+    expect(() => parse('b')).toThrow();
+  });
+
+  test('handles empty input', () => {
+    expect(() => parse('')).toThrow();
+  });
+
+  test('handles whitespace only input', () => {
+    expect(() => parse('   \n   \t   ')).toThrow();
+  });
+});
 
 describe('OpenSCAD-like Syntax', () => {
   function compileToSDF(input: string): string {
