@@ -4,7 +4,17 @@ export class ParseError extends Error {
     public location: { start: { line: number, column: number }, end: { line: number, column: number } },
     public source?: string
   ) {
-    super(message);
+    const formattedMessage = source ? [
+      message,
+      `at line ${location.start.line}, column ${location.start.column}`,
+      '',
+      source.trim(),
+      ' '.repeat(location.start.column - 1) + '^',
+      '',
+      `Source: ${source}`
+    ].join('\n') : `${message} at line ${location.start.line}, column ${location.start.column}`;
+
+    super(formattedMessage);
     this.name = 'ParseError';
   }
 
