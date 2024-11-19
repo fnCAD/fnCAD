@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 export class GLSLGenerator {
   private varCounter = 0;
   private statements: string[] = [];
