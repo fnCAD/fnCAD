@@ -50,23 +50,16 @@ export class GLSLContext {
   }
 
   rotate(ax: number, ay: number, az: number): GLSLContext {
-    const cx = Math.cos(ax), sx = Math.sin(ax);
-    const cy = Math.cos(ay), sy = Math.sin(ay);
-    const cz = Math.cos(az), sz = Math.sin(az);
+    // Create rotation matrix using THREE.js
+    const rotMatrix = new THREE.Matrix4();
+    rotMatrix.makeRotationFromEuler(new THREE.Euler(ax, ay, az, 'XYZ'));
+    const m = rotMatrix.elements;
 
-    // Pre-compute the combined rotation matrix
-    // Multiply matrices in Z * Y * X order
-    const m = [
-      cy*cz, cx*sz + sx*sy*cz, sx*sz - cx*sy*cz,
-      -cy*sz, cx*cz - sx*sy*sz, sx*cz + cx*sy*sz,
-      sy, -sx*cy, cx*cy
-    ];
-
-    // Generate the matrix with pre-computed values
-    const rotMatrix = `mat3(
+    // Convert to mat3 for GLSL, taking just the rotation part
+    const glslMatrix = `mat3(
       ${m[0]}, ${m[1]}, ${m[2]},
-      ${m[3]}, ${m[4]}, ${m[5]},
-      ${m[6]}, ${m[7]}, ${m[8]}
+      ${m[4]}, ${m[5]}, ${m[6]},
+      ${m[8]}, ${m[9]}, ${m[10]}
     )`;
 
     const newPoint = this.generator.save(`${rotMatrix} * ${this.currentPoint}`, 'vec3');
