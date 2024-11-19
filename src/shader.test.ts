@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { parse } from './sdf_expressions/parser';
+import { parse } from './cad/parser';
+import { moduleToSDF } from './cad/builtins';
+import { parse as parseSDF } from './sdf_expressions/parser';
 import { generateShader } from './shader';
 import { Node } from './sdf_expressions/ast';
 
@@ -77,13 +79,28 @@ describe('Shader Generation and Raymarching', () => {
   });
 
   it('correctly raymarches stretched sphere from all angles', () => {
-    testRaymarchFromAllAngles('sqrt(sqr(x) + sqr(y) + sqr(z*2))/2 - 0.5');
+    const cadCode = `
+      scale(1, 1, 2) {
+        sphere(1);
+      }
+    `;
+    const ast = parse(cadCode);
+    const sdfExpr = moduleToSDF(ast);
+    testRaymarchFromAllAngles(sdfExpr);
   });
 
   it('correctly handles axis-aligned smooth union', () => {
-    // Test smooth union between two boxes with small blend radius
-    const expr = `-log(exp(-33.333333333333336*max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)) + exp(-33.333333333333336*translate(0, 0.7, 0, max(max(abs(x) - 0.25, abs(y) - 0.25), abs(z) - 0.25))))/33.333333333333336`;
-    testRaymarchFromAllAngles(expr);
+    const cadCode = `
+      smooth_union(0.03) {
+        box(1);
+        translate(0, 0.7, 0) {
+          box(0.5);
+        }
+      }
+    `;
+    const ast = parse(cadCode);
+    const sdfExpr = moduleToSDF(ast);
+    testRaymarchFromAllAngles(sdfExpr);
   });
 
   function testRaymarchFromAllAngles(sdfExpr: string) {
