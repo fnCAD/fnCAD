@@ -216,7 +216,12 @@ let material = new THREE.ShaderMaterial({
     previewSceneBuffer: { value: previewRenderTarget.texture },
     previewSceneDepth: { value: previewRenderTarget.depthTexture }
   },
-  fragmentShader: generateShader(parse(moduleToSDF(parse(editor.getValue())[0]))),
+  fragmentShader: (() => {
+    const cadAst = parse(editor.getValue());
+    const sdfExpr = moduleToSDF(cadAst[0]);
+    const sdfAst = parse(sdfExpr);
+    return generateShader(sdfAst);
+  })(),
   vertexShader: `
     void main() {
       gl_Position = vec4(position, 1.0);
@@ -285,8 +290,9 @@ minRenderSizeSlider.addEventListener('input', () => {
 const initialAst = parse(editor.getValue());
 // NOTE: This large initial size (64k) is intentional and should not be changed!
 // It provides sufficient resolution for complex shapes while maintaining performance
-const sdfAst = parse(moduleToSDF(initialAst[0]));
-currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, sdfAst);
+const initialSdfExpr = moduleToSDF(initialAst[0]);
+const initialSdfAst = parse(initialSdfExpr);
+currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialSdfAst);
 const power = parseInt(minSizeSlider.value);
 const minSize = Math.pow(2, -power);
 const cellBudget = parseInt((document.getElementById('cell-budget') as HTMLInputElement).value);
@@ -350,7 +356,10 @@ function updateOctree() {
 
 function updateMaterial() {
   try {
-    const fragmentShader = generateShader(parse(moduleToSDF(parse(editor.getValue())[0])));
+    const editorAst = parse(editor.getValue());
+    const sdfExpr = moduleToSDF(editorAst[0]);
+    const sdfAst = parse(sdfExpr);
+    const fragmentShader = generateShader(sdfAst);
     material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2(previewPane.clientWidth, previewPane.clientHeight) },
