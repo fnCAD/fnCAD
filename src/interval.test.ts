@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Interval } from './interval';
-import { parse } from './cad/parser';
+import { parse as parseSDFExpression } from './sdf_expressions/parser';
 import { moduleToSDF } from './cad/builtins';
 import { parse as parseSDFExpression } from './sdf_expressions/parser';
 
@@ -80,7 +80,7 @@ describe('Interval', () => {
   });
 
   it('handles translate transformation', () => {
-    const ast = parse('translate(1, 0, 0) { sphere(1); }');
+    const ast = parseSDFExpression('translate(1, 0, 0, sqrt(x*x + y*y + z*z) - 1)');
     const x = new Interval(1.9, 2.1); // Around x=2
     const y = new Interval(-0.1, 0.1); // Around y=0
     const z = new Interval(-0.1, 0.1); // Around z=0
@@ -90,7 +90,7 @@ describe('Interval', () => {
   });
 
   it('handles rotate transformation', () => {
-    const ast = parse('rotate(0, 3.14159/2, 0) { sphere(1); }');
+    const ast = parseSDFExpression('rotate(0, 3.14159/2, 0, sqrt(x*x + y*y + z*z) - 1)');
     // Test point at (1,0,0) which should rotate to (0,0,-1)
     const x = new Interval(0.9, 1.1);
     const y = new Interval(-0.1, 0.1);
