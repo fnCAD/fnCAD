@@ -78,6 +78,43 @@ class Parser {
     while (current < this.source.length) {
       let char = this.source[current];
 
+      // Handle C-style comments
+      if (char === '/' && current + 1 < this.source.length) {
+        const nextChar = this.source[current + 1];
+        
+        // Single-line comment
+        if (nextChar === '/') {
+          while (current < this.source.length && this.source[current] !== '\n') {
+            current++;
+            this.column++;
+          }
+          continue;
+        }
+        
+        // Multi-line comment
+        if (nextChar === '*') {
+          current += 2; // Skip /*
+          this.column += 2;
+          
+          while (current + 1 < this.source.length) {
+            if (this.source[current] === '*' && this.source[current + 1] === '/') {
+              current += 2; // Skip */
+              this.column += 2;
+              break;
+            }
+            
+            if (this.source[current] === '\n') {
+              this.line++;
+              this.column = 1;
+            } else {
+              this.column++;
+            }
+            current++;
+          }
+          continue;
+        }
+      }
+
       // Skip whitespace
       if (/\s/.test(char)) {
         if (char === '\n') {
