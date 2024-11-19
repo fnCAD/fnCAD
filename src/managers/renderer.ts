@@ -39,7 +39,7 @@ export class RendererManager {
       this.FOV,
       previewPane.clientWidth / previewPane.clientHeight,
       0.1,
-      1000
+      1000.0
     );
     this.camera.position.set(3, 2, 3);
     this.camera.up.set(0, 1, 0);
@@ -90,8 +90,8 @@ export class RendererManager {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = false;
-    this.controls.minDistance = 1;
-    this.controls.maxDistance = 100;
+    this.controls.minDistance = 0.1;
+    this.controls.maxDistance = 1000.0;
     this.controls.target.set(0, 0, 0);
     this.controls.enablePan = true;
     this.controls.mouseButtons = {
