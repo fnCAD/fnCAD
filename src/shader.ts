@@ -19,6 +19,31 @@ export function generateShader(ast: Node): string {
       return x * x;
     }
 
+    // Smooth minimum blend
+    float smin(float a, float b, float k) {
+      float h = max(k - abs(a - b), 0.0) / k;
+      return min(a, b) - h * h * k * 0.25;
+    }
+
+    // Smooth maximum blend
+    float smax(float a, float b, float k) {
+      float h = max(k - abs(a - b), 0.0) / k;
+      return max(a, b) + h * h * k * 0.25;
+    }
+
+    // Smooth blend operations
+    float smooth_union(float d1, float d2, float k) {
+      return smin(d1, d2, k);
+    }
+
+    float smooth_intersection(float d1, float d2, float k) {
+      return smax(d1, d2, k);
+    }
+
+    float smooth_difference(float d1, float d2, float k) {
+      return smax(d1, -d2, k);
+    }
+
     float scene(vec3 pos) {
       ${generator.generateCode()}
       return ${result};
