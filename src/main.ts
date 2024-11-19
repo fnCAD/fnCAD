@@ -32,12 +32,10 @@ Split(['#editor-pane', '#preview-pane'], {
 const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
   // Store editor instance for later use with shader compilation
   value: `// Scene with two spheres
-min(
-  // Sphere at origin
-  sqrt(sqr(x) + sqr(y) + sqr(z)) - 1.0,
-  // Sphere offset on x-axis
-  sqrt(sqr(x - 2.0) + sqr(y) + sqr(z)) - 0.7
-)`,
+sphere(1.0);
+translate(2, 0, 0) {
+  sphere(0.7);
+}`,
   language: 'typescript',
   theme: 'vs-dark',
   minimap: { enabled: false },
