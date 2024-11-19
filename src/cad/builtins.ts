@@ -201,15 +201,16 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       throw new Error(`Unknown module: ${call.name}`);
   }
 }
-// Smooth blending operations using exponential smoothing
+// Smooth blending operations using log/exp
 export function smooth_union(expr1: string, expr2: string, radius: number): string {
-  return `smin(${expr1}, ${expr2}, ${1/radius})`;
+  const k = 1/radius;
+  return `-log(exp(${-k}*${expr1}) + exp(${-k}*${expr2}))/${k}`;
 }
 
 export function smooth_intersection(expr1: string, expr2: string, radius: number): string {
-  return `smax(${expr1}, ${expr2}, ${1/radius})`;
+  return `-${smooth_union(`-(${expr1})`, `-(${expr2})`, radius)}`;
 }
 
 export function smooth_difference(expr1: string, expr2: string, radius: number): string {
-  return `smax(${expr1}, -(${expr2}), ${1/radius})`;
+  return `-${smooth_union(`-(${expr1})`, `${expr2}`, radius)}`;
 }

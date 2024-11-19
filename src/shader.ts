@@ -19,14 +19,12 @@ export function generateShader(ast: Node): string {
       return x * x;
     }
 
-    // Exponential smooth min/max
-    float smin(float a, float b, float k) {
-      float res = exp(-k*a) + exp(-k*b);
-      return -log(res)/k;
+    float log(float x) {
+      return log(x);
     }
 
-    float smax(float a, float b, float k) {
-      return -smin(-a, -b, k);
+    float exp(float x) {
+      return exp(x);
     }
 
     float scene(vec3 pos) {
