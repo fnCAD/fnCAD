@@ -46,7 +46,7 @@ export function moduleToSDF(node: Node): string {
       if (!call.children?.length) return '0';
       const children = call.children.map(moduleToSDF);
       // Negate all children after the first one
-      const negatedChildren = children.slice(1).map(child => `-${child}`);
+      const negatedChildren = children.slice(1).map(child => `-(${child})`);
       return `max(${children[0]}, ${negatedChildren.join(', ')})`;
     }
 

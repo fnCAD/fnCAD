@@ -223,8 +223,9 @@ class Parser {
 
     while (this.current < this.tokens.length && this.tokens[this.current].value !== '}') {
       statements.push(this.parseStatement());
-      // Skip optional semicolon
-      if (this.current < this.tokens.length && this.tokens[this.current].value === ';') {
+      // Skip optional semicolon if there was no block
+      const hadBlock = this.tokens[this.current - 1].value === '}';
+      if (!hadBlock && this.current < this.tokens.length && this.tokens[this.current].value === ';') {
         this.current++;
       }
     }
