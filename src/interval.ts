@@ -118,6 +118,23 @@ export class Interval {
     return new Interval(min, max);
   }
 
+  log(): Interval {
+    if (this.min <= 0) {
+      throw new Error('Log of interval containing zero or negative numbers');
+    }
+    return new Interval(
+      Math.log(this.min),
+      Math.log(this.max)
+    );
+  }
+
+  exp(): Interval {
+    return new Interval(
+      Math.exp(this.min),
+      Math.exp(this.max)
+    );
+  }
+
   // Utility methods
   toString(): string {
     return `[${this.min}, ${this.max}]`;
