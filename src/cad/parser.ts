@@ -3,6 +3,7 @@ import {
   NumberLiteral, BinaryExpression, Parameter,
   Position, SourceLocation
 } from './types';
+import { ParseError } from './errors';
 
 class Parser {
   private current = 0;
@@ -133,7 +134,7 @@ class Parser {
       return this.parseModuleCall();
     }
 
-    throw new Error(`Unexpected token type: ${token.type} at ${JSON.stringify(token.location)}`);
+    throw new ParseError(`Unexpected token type: ${token.type}`, token.location, this.source);
   }
 
   private parseModuleDeclaration(): ModuleDeclaration {
@@ -144,7 +145,7 @@ class Parser {
     // Get module name
     const nameToken = this.tokens[this.current];
     if (nameToken.type !== 'identifier') {
-      throw new Error(`Expected module name at ${JSON.stringify(nameToken.location)}`);
+      throw new ParseError('Expected module name', nameToken.location, this.source);
     }
     const name = nameToken.value;
     this.current++;
@@ -170,7 +171,7 @@ class Parser {
   private parseParameters(): Parameter[] {
     // Expect opening paren
     if (this.tokens[this.current].value !== '(') {
-      throw new Error(`Expected ( at ${JSON.stringify(this.tokens[this.current].location)}`);
+      throw new ParseError('Expected (', this.tokens[this.current].location, this.source);
     }
     this.current++;
 
@@ -179,7 +180,7 @@ class Parser {
     while (this.current < this.tokens.length && this.tokens[this.current].value !== ')') {
       const nameToken = this.tokens[this.current];
       if (nameToken.type !== 'identifier') {
-        throw new Error(`Expected parameter name at ${JSON.stringify(nameToken.location)}`);
+        throw new ParseError('Expected parameter name', nameToken.location, this.source);
       }
       this.current++;
 
@@ -201,7 +202,7 @@ class Parser {
 
     // Expect closing paren
     if (this.tokens[this.current].value !== ')') {
-      throw new Error(`Expected ) at ${JSON.stringify(this.tokens[this.current].location)}`);
+      throw new ParseError('Expected )', this.tokens[this.current].location, this.source);
     }
     this.current++;
 
@@ -211,7 +212,7 @@ class Parser {
   private parseBlock(): Statement[] {
     // Expect opening brace
     if (this.tokens[this.current].value !== '{') {
-      throw new Error(`Expected { at ${JSON.stringify(this.tokens[this.current].location)}`);
+      throw new ParseError('Expected {', this.tokens[this.current].location, this.source);
     }
     this.current++;
 
@@ -223,7 +224,7 @@ class Parser {
 
     // Expect closing brace
     if (this.tokens[this.current].value !== '}') {
-      throw new Error(`Expected } at ${JSON.stringify(this.tokens[this.current].location)}`);
+      throw new ParseError('Expected }', this.tokens[this.current].location, this.source);
     }
     this.current++;
 
@@ -288,7 +289,7 @@ class Parser {
 
     // Expect closing paren
     if (this.tokens[this.current].value !== ')') {
-      throw new Error(`Expected ) at ${JSON.stringify(this.tokens[this.current].location)}`);
+      throw new ParseError('Expected )', this.tokens[this.current].location, this.source);
     }
     this.current++;
 

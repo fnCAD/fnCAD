@@ -241,7 +241,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         return body.evaluateInterval(newContext);
       }
 
-      throw new Error(`Unknown function: ${name}`);
+      throw new ParseError(`Unknown function: ${name}`, token.location, this.source);
     },
     evaluate: (context: Record<string, number>) => {
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
