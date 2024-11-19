@@ -25,9 +25,13 @@ export default defineConfig({
           'monaco-core': ['monaco-editor/esm/vs/editor/editor.api'],
           'split': ['split.js'],
           'core': [
-            './src/parser.ts',
-            './src/evaluator.ts',
-            './src/ast.ts'
+            './src/sdf_expressions/parser.ts',
+            './src/sdf_expressions/evaluator.ts',
+            './src/sdf_expressions/ast.ts',
+            './src/cad/parser.ts',
+            './src/cad/types.ts',
+            './src/cad/builtins.ts',
+            './src/cad/errors.ts'
           ],
           'rendering': [
             './src/shader.ts',
