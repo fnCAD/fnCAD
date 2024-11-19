@@ -375,7 +375,9 @@ export function parse(source: string): Node {
     return statements[0];
   }
   return {
-    type: 'GroupModule',
+    type: 'ModuleCall',
+    name: 'group',
+    arguments: {},
     children: statements,
     location: {
       start: statements[0]?.location.start || { line: 1, column: 1 },

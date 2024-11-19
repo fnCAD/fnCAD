@@ -53,9 +53,4 @@ export interface Identifier extends Expression {
   name: string;
 }
 
-export type Statement = ModuleDeclaration | ModuleCall | GroupModule;
-
-export interface GroupModule extends Node {
-  type: 'GroupModule';
-  children: Statement[];
-}
+export type Statement = ModuleDeclaration | ModuleCall;
