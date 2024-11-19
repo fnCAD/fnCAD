@@ -1,91 +1,96 @@
 # OpenSCAD Syntax Transition Plan
 
+## Rationale
+
+The transition to OpenSCAD-like syntax serves multiple purposes:
+
+1. **Familiarity**: OpenSCAD is the de-facto standard for programmatic CAD. Using its syntax makes our tool immediately accessible to existing users.
+
+2. **Separation of Concerns**: The current SDF expression parser conflates two roles:
+   - Low-level SDF primitive definitions
+   - High-level CAD operations
+   Moving to OpenSCAD syntax lets us properly separate these concerns.
+
+3. **Type Safety**: OpenSCAD's module system provides natural boundaries for type checking and validation, making the codebase more maintainable.
+
+4. **Future Extensibility**: A proper module system makes it easier to add new features and optimize existing ones without touching core SDF logic.
+
 ## 1. Namespace Reorganization
 
 ### Current SDF Expression Parser
-Move existing parser and evaluator code to a dedicated namespace:
-- Create `src/sdf/` directory for SDF-specific code
-- Move and rename files:
-  - `parser.ts` -> `sdf/expression-parser.ts`
-  - `evaluator.ts` -> `sdf/expression-evaluator.ts`
-  - `ast.ts` -> `sdf/expression-ast.ts`
-  - Move related tests to `sdf/` directory
+Move to `src/sdf/` to reflect its role as an implementation detail:
+- `parser.ts` -> `sdf/expression-parser.ts`
+- `evaluator.ts` -> `sdf/expression-evaluator.ts`
+- `ast.ts` -> `sdf/expression-ast.ts`
+
+Rationale: This preserves the existing SDF implementation while clearly marking it as internal infrastructure.
 
 ### New OpenSCAD Parser
-Create new namespace for OpenSCAD-style syntax:
-- Create `src/openscad/` directory
-- New files:
-  - `openscad/parser.ts` - Main parser
-  - `openscad/ast.ts` - AST definitions
-  - `openscad/evaluator.ts` - Evaluator
-  - `openscad/types.ts` - Type system
-  - `openscad/builtins.ts` - Built-in modules/functions
+Create `src/openscad/` for the new public API:
+- `parser.ts` - OpenSCAD syntax parser
+- `ast.ts` - AST with proper CAD semantics
+- `evaluator.ts` - Evaluates to SDF expressions
+- `types.ts` - Type system for modules
+- `builtins.ts` - Standard library
 
-## 2. Implementation Phases
+## 2. Implementation Strategy
 
 ### Phase 1: Infrastructure
-- [x] Create directory structure
-- [ ] Move existing SDF code
-- [ ] Update imports
-- [ ] Verify tests still pass
-- [ ] Create skeleton for OpenSCAD parser
+Establish clean separation between layers:
+- SDF layer: Pure mathematical primitives
+- OpenSCAD layer: CAD operations and modules
+- Bridge layer: Converts between representations
 
 ### Phase 2: Basic OpenSCAD Syntax
-- [ ] Parser for basic expressions
-- [ ] Module definitions
-- [ ] Basic transformations
-- [ ] Variable bindings
-- [ ] Basic control flow
+Focus on core operations first:
+- Primitive shapes (cube, sphere, etc)
+- Boolean operations (union, difference)
+- Basic transformations
+- Simple modules
 
 ### Phase 3: Type System
-- [ ] Define core types
-- [ ] Type checking
-- [ ] Module interfaces
-- [ ] Error reporting
+Add safety and maintainability:
+- Module interface definitions
+- Parameter validation
+- Proper error messages
+- Design-time checks
 
 ### Phase 4: SDF Integration
-- [ ] Bridge between OpenSCAD AST and SDF expressions
-- [ ] Transformation handling
-- [ ] Module lowering to SDFs
-- [ ] Optimization passes
+Make the layers work together:
+- Efficient lowering to SDFs
+- Preserve SDF properties
+- Optimize common patterns
+- Handle edge cases
 
 ### Phase 5: Advanced Features
-- [ ] Import/export
-- [ ] Standard library
-- [ ] Error recovery
-- [ ] Source maps
-- [ ] IDE integration
+Polish for production use:
+- Import/export
+- Standard library
+- Error recovery
+- IDE support
 
 ## 3. Migration Strategy
 
-1. Keep existing SDF expression parser as implementation detail
-2. Create new OpenSCAD parser as main entry point
-3. Implement OpenSCAD primitives in terms of SDFs
-4. Gradually transition examples and tests
-5. Add compatibility layer if needed
+1. Keep existing SDF parser for internal use
+2. Build OpenSCAD layer on top
+3. Convert examples gradually
+4. Maintain compatibility where needed
 
 ## 4. Testing Strategy
 
-1. Move existing tests to `sdf/` namespace
-2. Create new test suite for OpenSCAD parser
-3. Add integration tests between systems
-4. Test real OpenSCAD examples
-5. Performance benchmarks
+1. Unit tests per layer:
+   - SDF primitives
+   - OpenSCAD operations
+   - Integration between layers
+2. Real-world examples
+3. Performance benchmarks
 
-## 5. Documentation Updates
+## 5. Documentation
 
-1. Update README with new syntax
-2. Document migration path
-3. Create OpenSCAD compatibility guide
-4. Update examples
-5. API documentation
-
-## 6. Timeline
-
-1. Namespace reorganization: 1-2 days
-2. Basic syntax implementation: 1 week
-3. Type system: 1-2 weeks
-4. SDF integration: 1 week
-5. Advanced features: 2+ weeks
-
-Total estimated time: 4-6 weeks
+1. User-facing:
+   - OpenSCAD syntax guide
+   - Migration guide
+   - Examples
+2. Internal:
+   - Architecture docs
+   - API references
