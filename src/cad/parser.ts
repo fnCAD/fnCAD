@@ -62,7 +62,9 @@ class Parser {
     if (this.check(value)) {
       return this.advance();
     }
-    throw parseError(message, this.peek().location, this.source);
+    // If we're at the end, use the last token's location
+    const location = this.isAtEnd() ? this.previous().location : this.peek().location;
+    throw parseError(message, location, this.source);
   }
 
   /* Tokenize the input source into a stream of tokens.
