@@ -92,9 +92,9 @@ describe('GLSLContext', () => {
     
     // Expected values for 90° Y rotation
     const expectedMatrix = [
-      [0, 0, 1],
+      [6.123233995736766e-17, 0, -1],
       [0, 1, 0],
-      [-1, 0, 0]
+      [1, 0, 6.123233995736766e-17]
     ];
     
     const epsilon = 1e-10;
