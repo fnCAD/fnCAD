@@ -134,7 +134,7 @@ class Parser {
       return this.parseModuleCall();
     }
 
-    throw new ParseError(`Unexpected token type: ${token.type}`, token.location, this.source);
+    throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);
   }
 
   private parseModuleDeclaration(): ModuleDeclaration {
