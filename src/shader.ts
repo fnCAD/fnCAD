@@ -19,14 +19,6 @@ export function generateShader(ast: Node): string {
       return x * x;
     }
 
-    float log(float x) {
-      return log(x);
-    }
-
-    float exp(float x) {
-      return exp(x);
-    }
-
     float scene(vec3 pos) {
       ${generator.generateCode()}
       return ${result};
