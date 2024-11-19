@@ -26,10 +26,10 @@ def print_values(d1, d2, k):
     result = -np.log(sum_exp)/k
     print(f"result={result:.6f}")
 
-    # Also log values at (0.5, 0.5)
-    fixed_d1 = sdf_square(0.5, 0.5, square1_pos)
-    fixed_d2 = sdf_square(0.5, 0.5, square2_pos)
-    print(f"\nAt point (0.5, 0.5):")
+    # Also log values at (10, 10)
+    fixed_d1 = sdf_square(10, 10, square1_pos)
+    fixed_d2 = sdf_square(10, 10, square2_pos)
+    print(f"\nAt point (10, 10):")
     print(f"d1={fixed_d1:.6f}, d2={fixed_d2:.6f}")
     fixed_exp1 = np.exp(-k*fixed_d1)
     fixed_exp2 = np.exp(-k*fixed_d2)
