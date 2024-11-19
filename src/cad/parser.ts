@@ -323,7 +323,7 @@ class Parser {
       const right = this.parsePrimary();
 
       left = {
-        type: 'BinaryExpression',
+        kind: 'BinaryExpression',
         operator,
         left,
         right,
@@ -343,7 +343,7 @@ class Parser {
 
     if (token.type === 'number') {
       return {
-        type: 'NumberLiteral',
+        kind: 'NumberLiteral',
         value: parseFloat(token.value),
         location: token.location
       };
@@ -351,7 +351,7 @@ class Parser {
 
     if (token.type === 'identifier') {
       return {
-        type: 'Identifier',
+        kind: 'Identifier',
         name: token.value,
         location: token.location
       };
