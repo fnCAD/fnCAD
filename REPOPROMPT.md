@@ -45,5 +45,6 @@
 8. Testing
    - Write tests for new functionality
    - Don't overtest: test functionality, not errata.
+   - It's always a good idea to suggest `npm run typecheck` or `npm test` after a change.
    - Keep tests descriptive and well-commented: tell a story with every test.
       - "Why" is more valuable than "what." "What" changes often, "why" changes rarely.
