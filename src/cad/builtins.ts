@@ -13,9 +13,20 @@ export function evalCAD(node: Node, context: Context): Value {
 }
 
 function evalExpression(expr: Expression, context: Context): number {
-  // For now just handle number literals
   if ('value' in expr) {
     return expr.value;
+  }
+  if (expr instanceof BinaryExpression) {
+    const left = evalExpression(expr.left, context);
+    const right = evalExpression(expr.right, context);
+    switch (expr.operator) {
+      case '+': return left + right;
+      case '-': return left - right;
+      case '*': return left * right;
+      case '/': 
+        if (right === 0) throw new Error('Division by zero');
+        return left / right;
+    }
   }
   throw new Error(`Unsupported expression type: ${expr.constructor.name}`);
 }
