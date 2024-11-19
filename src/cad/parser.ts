@@ -258,16 +258,15 @@ class Parser {
       this.expect(';', 'Expected semicolon');
     }
 
-    return {
-      kind: 'ModuleCall',
+    return new ModuleCall(
       name,
-      arguments: args,
+      args,
       children,
-      location: {
+      {
         start,
         end: this.previous().location.end
       }
-    };
+    );
   }
 
   private parseArguments(): Record<string, Expression> {
