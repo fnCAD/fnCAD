@@ -50,6 +50,53 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
   };
 
   switch (call.name) {
+    case 'smooth_union': {
+      if (!call.children?.length) {
+        throw new Error('smooth_union requires two child nodes');
+      }
+      const radius = evalArg(0, 0.5);
+      const results = call.children.map(c => evalCAD(c, context));
+      if (results.some(r => typeof r === 'number')) {
+        throw new Error('smooth_union requires SDF children');
+      }
+      const children = results.map(r => (r as SDFExpression).expr);
+      return {
+        type: 'sdf',
+        expr: smooth_union(children[0], children[1], radius)
+      };
+    }
+
+    case 'smooth_intersection': {
+      if (!call.children?.length) {
+        throw new Error('smooth_intersection requires two child nodes');
+      }
+      const radius = evalArg(0, 0.5);
+      const results = call.children.map(c => evalCAD(c, context));
+      if (results.some(r => typeof r === 'number')) {
+        throw new Error('smooth_intersection requires SDF children');
+      }
+      const children = results.map(r => (r as SDFExpression).expr);
+      return {
+        type: 'sdf',
+        expr: smooth_intersection(children[0], children[1], radius)
+      };
+    }
+
+    case 'smooth_difference': {
+      if (!call.children?.length) {
+        throw new Error('smooth_difference requires two child nodes');
+      }
+      const radius = evalArg(0, 0.5);
+      const results = call.children.map(c => evalCAD(c, context));
+      if (results.some(r => typeof r === 'number')) {
+        throw new Error('smooth_difference requires SDF children');
+      }
+      const children = results.map(r => (r as SDFExpression).expr);
+      return {
+        type: 'sdf',
+        expr: smooth_difference(children[0], children[1], radius)
+      };
+    }
     case 'cube': {
       const size = evalArg(0, 1);
       return {
