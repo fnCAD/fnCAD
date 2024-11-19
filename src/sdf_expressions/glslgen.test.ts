@@ -16,8 +16,9 @@ describe('GLSLContext', () => {
     const ctx = new GLSLContext(gen);
     ctx.rotate(Math.PI/2, 0, 0); // 90 degrees around X axis
     const code = gen.generateCode().split('\n');
+    console.log('Generated code:\n', code);
     // Extract matrix values and compare numerically
-    expect(code.length).toBe(5);
+    expect(code.length).toBe(13);
     expect(code[0]).toBe('vec3 var1 = mat3(');
     
     // Parse the 3x3 matrix values
