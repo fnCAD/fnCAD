@@ -70,18 +70,20 @@ export function generateShader(ast: Node): string {
 
       // Raymarching
       float t = 0.0;
-      float tmax = 20.0;
+      float tmax = 1000.0; // Match camera far plane
 
       // Sample preview scene at current position
       vec4 previewSceneData = texture2D(previewSceneBuffer, uv);
 
-      for(int i = 0; i < 100; i++) {
+      const int MAX_STEPS = 256;
+      for(int i = 0; i < MAX_STEPS; i++) {
         vec3 p = ro + rd * t;
 
         float d = scene(p);
 
-        // Hit check
-        if(d < 0.001) {
+        // Hit check with adaptive epsilon based on distance
+        float eps = max(0.0001, 0.0001 * t);
+        if(d < eps) {
           // Calculate normal
           vec3 n = calcNormal(p);
           // Enhanced lighting with ambient
@@ -126,7 +128,8 @@ export function generateShader(ast: Node): string {
           break;
         }
 
-        t += d;
+        // Adaptive step size for better performance
+        t += d * 0.9; // Slightly conservative step for stability
       }
 
       // If no hit but preview scene is visible, show visualization as if unoccluded
