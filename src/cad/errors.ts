@@ -25,4 +25,13 @@ export class ParseError extends Error {
       '   | ' + pointer
     ].join('\n');
   }
+
+  toJSON(): object {
+    return {
+      name: this.name,
+      message: this.message,
+      location: this.location,
+      source: this.source
+    };
+  }
 }
