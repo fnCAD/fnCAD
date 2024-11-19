@@ -135,7 +135,7 @@ describe('Shader Generation and Raymarching', () => {
         throw e; // Re-throw unexpected errors
       }
     }
-  });
+  }
 
   it('generates correct GLSL for multi-argument min/max', async () => {
     const ast = parse('min(1, 2, 3)');
