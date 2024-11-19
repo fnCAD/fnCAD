@@ -12,12 +12,11 @@ export function parseError(
     message,
     `at line ${location.start.line}, column ${location.start.column}`,
     '',
-    prevLine ? prevLine.trim() : null,
-    currentLine.trim(),
+    prevLine || null,
+    currentLine,
     ' '.repeat(location.start.column - 1) + '^',
-    nextLine ? nextLine.trim() : null,
-    '',
-    `Source: ${source}`
+    nextLine || null,
+    ''
   ].filter(line => line !== null).join('\n') : 
   `${message} at line ${location.start.line}, column ${location.start.column}`;
 
