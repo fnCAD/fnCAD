@@ -242,14 +242,11 @@ class Parser {
     // Parse arguments
     const args = this.parseArguments();
 
-    // Parse optional child block
+    // Parse block or expect semicolon
     let children: Statement[] | undefined;
     if (this.current < this.tokens.length && this.tokens[this.current].value === '{') {
       children = this.parseBlock();
-    }
-
-    // Expect semicolon if no block
-    if (!children) {
+    } else {
       if (this.current >= this.tokens.length || this.tokens[this.current].value !== ';') {
         throw parseError('Expected semicolon', this.tokens[this.current - 1].location, this.source);
       }
