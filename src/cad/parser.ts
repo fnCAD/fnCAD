@@ -146,7 +146,10 @@ class Parser {
         continue;
       }
 
-      throw new Error(`Unexpected character: ${char} at line ${this.line}, column ${this.column}`);
+      throw parseError(`Unexpected character: ${char}`, 
+        { start: { line: this.line, column: this.column }, 
+          end: { line: this.line, column: this.column + 1 } }, 
+        this.source);
     }
   }
 
@@ -273,7 +276,7 @@ class Parser {
 
     // Expect opening paren
     if (this.tokens[this.current].value !== '(') {
-      throw new Error(`Expected ( at ${JSON.stringify(this.tokens[this.current].location)}`);
+      throw parseError(`Expected (`, this.tokens[this.current].location, this.source);
     }
     this.current++;
 
@@ -284,7 +287,7 @@ class Parser {
       // Check if we have a named argument
       if (this.tokens[this.current + 1].value === '=') {
         if (nameToken.type !== 'identifier') {
-          throw new Error(`Expected parameter name at ${JSON.stringify(nameToken.location)}`);
+          throw parseError(`Expected parameter name`, nameToken.location, this.source);
         }
         name = nameToken.value;
         this.current += 2; // Skip name and equals
@@ -300,7 +303,7 @@ class Parser {
 
     // Expect closing paren
     if (this.tokens[this.current].value !== ')') {
-      throw new ParseError('Expected )', this.tokens[this.current].location, this.source);
+      throw parseError('Expected )', this.tokens[this.current].location, this.source);
     }
     this.current++;
 
@@ -354,7 +357,7 @@ class Parser {
       };
     }
 
-    throw new Error(`Unexpected token type: ${token.type} at ${JSON.stringify(token.location)}`);
+    throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);
   }
 }
 
