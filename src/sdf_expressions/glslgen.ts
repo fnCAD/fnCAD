@@ -51,6 +51,13 @@ export class GLSLContext {
     return this.withPoint(newPoint);
   }
 
+  scale(sx: number, sy: number, sz: number): GLSLContext {
+    const newPoint = this.generator.save(
+      `${this.currentPoint} / vec3(${sx}, ${sy}, ${sz})`, 'vec3'
+    );
+    return this.withPoint(newPoint);
+  }
+
   rotate(ax: number, ay: number, az: number): GLSLContext {
     // Create rotation matrix using THREE.js
     const rotMatrix = new THREE.Matrix4();

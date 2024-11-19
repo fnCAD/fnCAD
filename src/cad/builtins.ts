@@ -164,23 +164,6 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
-    case 'scale': {
-      const sx = evalArg(0, 1);
-      const sy = evalArg(1, sx);  // Use sx as default for uniform scaling
-      const sz = evalArg(2, sx);  // Use sx as default for uniform scaling
-      if (!call.children?.[0]) {
-        throw new Error('scale requires a child node');
-      }
-      const child = evalCAD(call.children[0], context);
-      if (typeof child === 'number') {
-        throw new Error('scale requires an SDF child');
-      }
-      // Scale the space by dividing coordinates by scale factors
-      return {
-        type: 'sdf',
-        expr: `${child.expr} * min(${sx}, min(${sy}, ${sz}))`
-      };
-    }
 
     case 'union': {
       if (!call.children?.length) {

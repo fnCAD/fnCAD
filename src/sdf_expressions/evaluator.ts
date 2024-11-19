@@ -179,6 +179,22 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         return body.evaluateInterval(newContext);
       }
 
+      if (name === 'scale' && args.length === 4) {
+        const [sx, sy, sz, body] = args;
+        // Get scale factors
+        const scaleX = sx.evaluate({});
+        const scaleY = sy.evaluate({});
+        const scaleZ = sz.evaluate({});
+        
+        // Scale the intervals by dividing by scale factors
+        const newContext = {...context};
+        newContext['x'] = context['x'].divide(Interval.from(scaleX));
+        newContext['y'] = context['y'].divide(Interval.from(scaleY));
+        newContext['z'] = context['z'].divide(Interval.from(scaleZ));
+        
+        return body.evaluateInterval(newContext);
+      }
+
       if (name === 'rotate' && args.length === 4) {
         const [rx, ry, rz, body] = args;
         // Get rotation angles
@@ -334,6 +350,14 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const evalDy = dy.evaluate({});
         const evalDz = dz.evaluate({});
         const newContext = context.translate(evalDx, evalDy, evalDz);
+        return body.toGLSL(newContext);
+      }
+      if (name === 'scale' && args.length === 4) {
+        const [sx, sy, sz, body] = args;
+        const evalSx = sx.evaluate({});
+        const evalSy = sy.evaluate({});
+        const evalSz = sz.evaluate({});
+        const newContext = context.scale(evalSx, evalSy, evalSz);
         return body.toGLSL(newContext);
       }
       if (name === 'rotate' && args.length === 4) {
