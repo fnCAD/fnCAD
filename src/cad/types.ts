@@ -14,12 +14,11 @@ export interface SourceLocation {
 }
 
 export interface Node {
-  type: string;
   location: SourceLocation;
 }
 
 export interface ModuleDeclaration extends Node {
-  type: 'ModuleDeclaration';
+  kind: 'ModuleDeclaration';
   name: string;
   parameters: Parameter[];
   body: Statement[];
@@ -31,7 +30,7 @@ export interface Parameter {
 }
 
 export interface ModuleCall extends Node {
-  type: 'ModuleCall';
+  kind: 'ModuleCall';
   name: string;
   arguments: Record<string, Expression>;
   children?: Statement[];

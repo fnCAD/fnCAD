@@ -194,7 +194,7 @@ class Parser {
     const body = this.parseBlock();
 
     return {
-      type: 'ModuleDeclaration',
+      kind: 'ModuleDeclaration',
       name,
       parameters,
       body,
@@ -260,7 +260,7 @@ class Parser {
     }
 
     return {
-      type: 'ModuleCall',
+      kind: 'ModuleCall',
       name,
       arguments: args,
       children,
