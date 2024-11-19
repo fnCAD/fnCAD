@@ -367,7 +367,19 @@ interface Token {
   location: SourceLocation;
 }
 
-export function parse(source: string): Node[] {
+export function parse(source: string): Node {
   const parser = new Parser(source);
-  return parser.parse();
+  const statements = parser.parse();
+  // Wrap multiple statements in an implicit group
+  if (statements.length === 1) {
+    return statements[0];
+  }
+  return {
+    type: 'GroupModule',
+    children: statements,
+    location: {
+      start: statements[0]?.location.start || { line: 1, column: 1 },
+      end: statements[statements.length - 1]?.location.end || { line: 1, column: 1 }
+    }
+  };
 }

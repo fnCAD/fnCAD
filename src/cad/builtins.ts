@@ -3,8 +3,14 @@ import { parse as parseSDFExpression } from '../sdf_expressions/parser';
 
 // Convert OpenSCAD-style module calls to SDF expressions
 export function moduleToSDF(node: Node): string {
+  if (node.type === 'GroupModule') {
+    if (!node.children?.length) return '0';
+    const children = node.children.map(moduleToSDF);
+    return `min(${children.join(', ')})`;
+  }
+  
   if (node.type !== 'ModuleCall') {
-    throw new Error('Expected ModuleCall node');
+    throw new Error(`Expected ModuleCall or GroupModule node, got ${node.type}`);
   }
 
   const call = node as any; // TODO: Proper typing
