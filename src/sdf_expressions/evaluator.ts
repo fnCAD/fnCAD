@@ -340,6 +340,22 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         return body.evaluate({...context, x: nx, y: ny, z: nz});
       }
 
+      if (name === 'scale' && args.length === 4) {
+        const [sx, sy, sz, body] = args;
+        // Get scale factors
+        const scaleX = sx.evaluate(context);
+        const scaleY = sy.evaluate(context);
+        const scaleZ = sz.evaluate(context);
+        
+        // Scale the point coordinates by dividing by scale factors
+        return body.evaluate({
+          ...context,
+          x: context.x / scaleX,
+          y: context.y / scaleY,
+          z: context.z / scaleZ
+        });
+      }
+
       throw new Error(`Unknown function: ${name}`);
     },
     toGLSL: (context: GLSLContext) => {
