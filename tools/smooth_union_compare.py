@@ -7,9 +7,9 @@ def sdf_square(x, y, center, size=1.0):
     dy = abs(y - center[1]) - size/2
     return np.maximum(dx, dy)
 
-# Create squares with more offset for better visualization
-square1_pos = (-0.7, -0.3)  # Moved left and down
-square2_pos = (0.7, 0.3)    # Moved right and up
+# Create squares with horizontal overlap
+square1_pos = (-0.4, -0.3)  # Left and down
+square2_pos = (0.4, 0.3)    # Right and up
 
 def smooth_union_exp(d1, d2, k):
     return -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
