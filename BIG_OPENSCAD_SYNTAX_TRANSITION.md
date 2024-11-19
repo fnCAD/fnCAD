@@ -18,10 +18,10 @@ The transition to OpenSCAD-like syntax serves multiple purposes:
 ## 1. Namespace Reorganization
 
 ### Current SDF Expression Parser
-Move to `src/sdf/` to reflect its role as an implementation detail:
-- `parser.ts` -> `sdf/expression-parser.ts`
-- `evaluator.ts` -> `sdf/expression-evaluator.ts`
-- `ast.ts` -> `sdf/expression-ast.ts`
+Move to `src/sdf_expressions/` to reflect its role as an implementation detail:
+- `parser.ts` -> `sdf_expressions/parser.ts`
+- `evaluator.ts` -> `sdf_expressions/evaluator.ts`
+- `ast.ts` -> `sdf_expressions/ast.ts`
 
 Rationale: This preserves the existing SDF implementation while clearly marking it as internal infrastructure.
 
