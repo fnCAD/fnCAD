@@ -146,6 +146,5 @@ describe('Shader Generation and Raymarching', () => {
     expect(shaderCode).toContain('float var3 = 3.0');
     expect(shaderCode).toContain('float var4 = min(var1, var2)');
     expect(shaderCode).toContain('float var5 = min(var4, var3)');
-
   });
 });
