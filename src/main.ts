@@ -18,8 +18,9 @@ import { OctreeNode } from './octree'
 import { OctreeRenderSettings, visualizeOctree } from './octreevis'
 import { MeshGenerator } from './meshgen'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { parse } from './cad/parser'
+import { parse as parseCAD } from './cad/parser'
 import { moduleToSDF } from './cad/builtins'
+import { parse as parseSDF } from './sdf_expressions/parser'
 import { generateShader } from './shader'
 
 // Initialize split panes
@@ -217,9 +218,9 @@ let material = new THREE.ShaderMaterial({
     previewSceneDepth: { value: previewRenderTarget.depthTexture }
   },
   fragmentShader: (() => {
-    const cadAst = parse(editor.getValue());
+    const cadAst = parseCAD(editor.getValue());
     const sdfExpr = moduleToSDF(cadAst[0]);
-    const sdfAst = parse(sdfExpr);
+    const sdfAst = parseSDF(sdfExpr);
     return generateShader(sdfAst);
   })(),
   vertexShader: `
@@ -287,11 +288,11 @@ minRenderSizeSlider.addEventListener('input', () => {
 });
 
 // Add initial octree visualization
-const initialAst = parse(editor.getValue());
+const initialAst = parseCAD(editor.getValue());
 // NOTE: This large initial size (64k) is intentional and should not be changed!
 // It provides sufficient resolution for complex shapes while maintaining performance
 const initialSdfExpr = moduleToSDF(initialAst[0]);
-const initialSdfAst = parse(initialSdfExpr);
+const initialSdfAst = parseSDF(initialSdfExpr);
 currentOctree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, initialSdfAst);
 const power = parseInt(minSizeSlider.value);
 const minSize = Math.pow(2, -power);
@@ -308,7 +309,7 @@ function updateOctree() {
     const editorContent = editor.getValue();
     const cadAst = parse(editorContent);
     const sdfExpr = moduleToSDF(cadAst[0]);
-    const ast = parse(sdfExpr);
+    const ast = parseSDF(sdfExpr);
 
     // Update octree visualization
     if (currentOctree) {
@@ -356,9 +357,9 @@ function updateOctree() {
 
 function updateMaterial() {
   try {
-    const editorAst = parse(editor.getValue());
+    const editorAst = parseCAD(editor.getValue());
     const sdfExpr = moduleToSDF(editorAst[0]);
-    const sdfAst = parse(sdfExpr);
+    const sdfAst = parseSDF(sdfExpr);
     const fragmentShader = generateShader(sdfAst);
     material = new THREE.ShaderMaterial({
       uniforms: {
