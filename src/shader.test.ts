@@ -138,7 +138,7 @@ describe('Shader Generation and Raymarching', () => {
   }
 
   it('generates correct GLSL for multi-argument min/max', async () => {
-    const ast = parse('min(1, 2, 3)');
+    const ast = parseSDF('min(1, 2, 3)');
     const shaderCode = generateShader(ast);
     // Check for SSA form variable declarations and min operations
     expect(shaderCode).toContain('float var1 = 1.0');
