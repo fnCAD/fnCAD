@@ -113,6 +113,23 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
+    case 'box': {
+      const size = evalArg(0, 1);
+      return {
+        type: 'sdf',
+        expr: `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`
+      };
+    }
+
+    case 'cylinder': {
+      const radius = evalArg(0, 0.5);
+      const height = evalArg(1, 1);
+      return {
+        type: 'sdf',
+        expr: `max(sqrt(x*x + z*z) - ${radius}, abs(y) - ${height/2})`
+      };
+    }
+
     case 'translate': {
       const dx = evalArg(0);
       const dy = evalArg(1);
