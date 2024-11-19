@@ -30,9 +30,11 @@ export class OctreeManager {
     this.stateManager.setCellCount(totalCells);
 
     // Update visualization
+    const showOctree = this.stateManager.isOctreeVisible();
     this.rendererManager.updateOctreeVisualization(
       octree,
-      renderSettings
+      renderSettings,
+      showOctree
     );
   }
 }

@@ -194,16 +194,19 @@ export class RendererManager {
     return this.FOV;
   }
 
-  updateOctreeVisualization(octree: OctreeNode, settings: OctreeRenderSettings) {
+  updateOctreeVisualization(octree: OctreeNode, settings: OctreeRenderSettings, visible: boolean = true) {
     // Remove existing octree visualization
     this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => 
       !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
     );
 
-    // Create new visualization
-    const octreeGroup = visualizeOctree(octree, settings);
-    if (octreeGroup) {
-      this.previewOverlayScene.add(octreeGroup);
+    // Create new visualization only if visible
+    if (visible) {
+      const octreeGroup = visualizeOctree(octree, settings);
+      if (octreeGroup) {
+        octreeGroup.userData.isOctreeVisualization = true;
+        this.previewOverlayScene.add(octreeGroup);
+      }
     }
   }
 

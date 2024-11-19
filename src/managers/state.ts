@@ -75,6 +75,11 @@ export class StateManager {
     return this.currentOctree;
   }
 
+  isOctreeVisible(): boolean {
+    const checkbox = document.getElementById('show-octree') as HTMLInputElement;
+    return checkbox?.checked ?? false;
+  }
+
   getState() {
     return {
       currentOctree: this.currentOctree,
