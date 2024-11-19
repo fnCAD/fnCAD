@@ -16,7 +16,6 @@ describe('GLSLContext', () => {
     const ctx = new GLSLContext(gen);
     ctx.rotate(Math.PI/2, 0, 0); // 90 degrees around X axis
     const code = gen.generateCode().split('\n');
-    console.log('Generated code:\n', code);
     // Extract matrix values and compare numerically
     expect(code.length).toBe(5);
     expect(code[0]).toBe('vec3 var1 = mat3(');
@@ -59,9 +58,9 @@ describe('GLSLContext', () => {
     
     // Expected values for 90° Y rotation
     const expectedMatrix = [
-      [6.123233995736766e-17, 0, -1],
+      [0, 0, -1],
       [0, 1, 0],
-      [1, 0, 6.123233995736766e-17]
+      [1, 0, 0]
     ];
     
     const epsilon = 1e-10;
@@ -98,12 +97,9 @@ describe('GLSLContext', () => {
     ];
     
     const epsilon = 1e-10;
-    console.log('Context branching test matrix rows:', matrixRows);
-    console.log('Expected matrix:', expectedMatrix);
     matrixRows.forEach((row, i) => {
       row.forEach((val, j) => {
         const diff = Math.abs(val - expectedMatrix[i][j]);
-        console.log(`Comparing position [${i}][${j}]: actual=${val}, expected=${expectedMatrix[i][j]}, diff=${diff}`);
         expect(diff).toBeLessThan(epsilon);
       });
     });
