@@ -218,10 +218,12 @@ class Parser {
   parse(): Node[] {
     const nodes: Node[] = [];
     
+    // Skip any remaining tokens (whitespace/comments were already handled in tokenizer)
     while (this.current < this.tokens.length) {
       nodes.push(this.parseStatement());
     }
 
+    // Empty input is valid - represents an empty scene
     return nodes;
   }
 

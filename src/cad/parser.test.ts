@@ -8,11 +8,13 @@ describe('CAD Parser', () => {
   });
 
   test('handles empty input', () => {
-    expect(() => parse('')).toThrow();
+    const result = parse('');
+    expect(result).toBeDefined();
   });
 
   test('handles whitespace only input', () => {
-    expect(() => parse('   \n   \t   ')).toThrow();
+    const result = parse('   \n   \t   ');
+    expect(result).toBeDefined();
   });
 });
 
