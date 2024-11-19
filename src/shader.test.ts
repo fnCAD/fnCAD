@@ -77,7 +77,17 @@ describe('Shader Generation and Raymarching', () => {
   });
 
   it('correctly raymarches stretched sphere from all angles', () => {
-    const ast = parse('sqrt(sqr(x) + sqr(y) + sqr(z*2))/2 - 0.5');
+    testRaymarchFromAllAngles('sqrt(sqr(x) + sqr(y) + sqr(z*2))/2 - 0.5');
+  });
+
+  it('correctly handles axis-aligned smooth union', () => {
+    // Test smooth union between two boxes with small blend radius
+    const expr = `-log(exp(-33.333333333333336*max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)) + exp(-33.333333333333336*translate(0, 0.7, 0, max(max(abs(x) - 0.25, abs(y) - 0.25), abs(z) - 0.25))))/33.333333333333336`;
+    testRaymarchFromAllAngles(expr);
+  });
+
+  function testRaymarchFromAllAngles(sdfExpr: string) {
+    const ast = parse(sdfExpr);
     
     // Test from points in a circle around the object
     const radius = 5; // Distance from origin
