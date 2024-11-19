@@ -134,6 +134,9 @@ class Parser {
       return this.parseModuleCall();
     }
 
+    if (token.type === 'semicolon') {
+      throw parseError(`Unexpected semicolon`, token.location, this.source);
+    }
     throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);
   }
 
@@ -220,6 +223,10 @@ class Parser {
 
     while (this.current < this.tokens.length && this.tokens[this.current].value !== '}') {
       statements.push(this.parseStatement());
+      // Skip optional semicolon
+      if (this.current < this.tokens.length && this.tokens[this.current].value === ';') {
+        this.current++;
+      }
     }
 
     // Expect closing brace
