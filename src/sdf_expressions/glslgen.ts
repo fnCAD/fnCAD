@@ -54,25 +54,20 @@ export class GLSLContext {
     const cy = Math.cos(ay), sy = Math.sin(ay);
     const cz = Math.cos(az), sz = Math.sin(az);
 
-    // Generate rotation matrices for X, Y, Z in order
-    const rotX = `mat3(
-      1.0, 0.0, 0.0,
-      0.0, ${cx}, ${sx},
-      0.0, ${-sx}, ${cx}
+    // Pre-compute the combined rotation matrix
+    // Multiply matrices in Z * Y * X order
+    const m = [
+      cy*cz, cx*sz + sx*sy*cz, sx*sz - cx*sy*cz,
+      -cy*sz, cx*cz - sx*sy*sz, sx*cz + cx*sy*sz,
+      sy, -sx*cy, cx*cy
+    ];
+
+    // Generate the matrix with pre-computed values
+    const rotMatrix = `mat3(
+      ${m[0]}, ${m[1]}, ${m[2]},
+      ${m[3]}, ${m[4]}, ${m[5]},
+      ${m[6]}, ${m[7]}, ${m[8]}
     )`;
-    const rotY = `mat3(
-      ${cy}, 0.0, ${-sy},
-      0.0, 1.0, 0.0,
-      ${sy}, 0.0, ${cy}
-    )`;
-    const rotZ = `mat3(
-      ${cz}, ${sz}, 0.0,
-      ${-sz}, ${cz}, 0.0,
-      0.0, 0.0, 1.0
-    )`;
-    
-    // Combine matrices in Z * Y * X order
-    const rotMatrix = `(${rotZ} * ${rotY} * ${rotX})`;
 
     const newPoint = this.generator.save(`${rotMatrix} * ${this.currentPoint}`, 'vec3');
     return this.withPoint(newPoint);
