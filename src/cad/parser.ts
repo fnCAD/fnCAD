@@ -1,9 +1,8 @@
 import { 
   Node, ModuleDeclaration, ModuleCall, Expression, 
-  NumberLiteral, BinaryExpression, Parameter,
-  Position, SourceLocation, Statement
+  Parameter, Statement
 } from './types';
-import { ParseError, parseError } from './errors';
+import { parseError } from './errors';
 
 class Parser {
   private current = 0;

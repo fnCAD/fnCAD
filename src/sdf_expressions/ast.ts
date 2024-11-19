@@ -1,5 +1,5 @@
 import { Interval } from '../interval';
-import { GLSLContext } from '../glslgen';
+import { GLSLContext } from './glslgen';
 
 export type NodeType = 
   | 'Number'

@@ -1,4 +1,4 @@
-import { Node } from './ast';
+import { Node } from './sdf_expressions/ast';
 import { Interval } from './interval';
 import * as THREE from 'three';
 

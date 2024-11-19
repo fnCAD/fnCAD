@@ -1,6 +1,6 @@
 import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
 import { Interval } from '../interval';
-import { GLSLContext } from '../glslgen';
+import { GLSLContext } from './glslgen';
 
 export function createNumberNode(value: number): NumberNode {
   return {
@@ -241,7 +241,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         return body.evaluateInterval(newContext);
       }
 
-      throw new ParseError(`Unknown function: ${name}`, token.location, this.source);
+      throw new Error(`Unknown function: ${name}`);
     },
     evaluate: (context: Record<string, number>) => {
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
