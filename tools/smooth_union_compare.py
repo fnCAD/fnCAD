@@ -11,6 +11,21 @@ def sdf_square(x, y, center, size=1.0):
 square1_pos = (-0.4, -0.3)  # Left and down
 square2_pos = (0.4, 0.3)    # Right and up
 
+def print_values(d1, d2, k):
+    """Print intermediate values in smooth union calculation"""
+    print(f"\nFor k={k} (radius={1/k}):")
+    print(f"d1={d1:.6f}, d2={d2:.6f}")
+    
+    # Original exponential
+    exp1 = np.exp(-k*d1)
+    exp2 = np.exp(-k*d2)
+    print(f"exp(-k*d1)={exp1:.6e}")
+    print(f"exp(-k*d2)={exp2:.6e}")
+    sum_exp = exp1 + exp2
+    print(f"sum={sum_exp:.6e}")
+    result = -np.log(sum_exp)/k
+    print(f"result={result:.6f}")
+
 def smooth_union_exp(d1, d2, k):
     return -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
 
@@ -65,6 +80,15 @@ def update_plot(radius):
     # Calculate smooth union
     union = union_methods[current_method](square1, square2, 1/radius)
     
+    # Sample some interesting points
+    mid_x = (square1_pos[0] + square2_pos[0])/2
+    mid_y = (square1_pos[1] + square2_pos[1])/2
+    
+    # Get SDF values at midpoint between squares
+    d1_mid = sdf_square(mid_x, mid_y, square1_pos, 1.0)
+    d2_mid = sdf_square(mid_x, mid_y, square2_pos, 1.0)
+    print_values(d1_mid, d2_mid, 1/radius)
+    
     # Plot the result
     levels = np.linspace(-1, 1, 20)
     contour = ax.contour(X, Y, union, levels=levels, colors='white')
@@ -72,6 +96,9 @@ def update_plot(radius):
     
     # Add filled contour for negative space (the shape)
     ax.contourf(X, Y, union, levels=[-np.inf, 0], colors=['#404040'])
+    
+    # Mark sampled point
+    ax.plot(mid_x, mid_y, 'r+', markersize=10)
     
     # Set plot limits and labels
     ax.set_xlim(-2, 2)
