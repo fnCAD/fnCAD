@@ -9,11 +9,6 @@ export function moduleToSDF(node: Node): string {
 
   const call = node;
 
-  if (call.name === 'group') {
-    if (!call.children?.length) return '0';
-    const children = call.children.map(moduleToSDF);
-    return `min(${children.join(', ')})`;
-  }
 
   const call = node as any; // TODO: Proper typing
 

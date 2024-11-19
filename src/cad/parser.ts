@@ -376,7 +376,7 @@ export function parse(source: string): Node {
   }
   return {
     type: 'ModuleCall',
-    name: 'group',
+    name: 'union',
     arguments: {},
     children: statements,
     location: {
