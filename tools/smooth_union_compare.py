@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, RadioButtons
-import tkinter as tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 def sdf_square(x, y, center, size=1.0):
     dx = abs(x - center[0]) - size/2
@@ -31,15 +29,10 @@ def smooth_union_scaled_exp(d1, d2, k):
     scale = 10.0
     return (-np.log(np.exp(-k*(scale*d1)) + np.exp(-k*(scale*d2))))/(k*scale)
 
-# Create main window
-root = tk.Tk()
-root.title("SDF Smooth Union Comparison")
-
-# Create figure
-fig, ax = plt.subplots(figsize=(8, 8))
-canvas = FigureCanvasTkAgg(fig, master=root)
-canvas.draw()
-canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+# Create figure and subplots
+plt.style.use('dark_background')
+fig, ax = plt.subplots(figsize=(10, 8))
+plt.subplots_adjust(bottom=0.25, right=0.75)  # Make room for controls
 
 # Setup the plot
 x = np.linspace(-2, 2, 200)
@@ -50,7 +43,7 @@ X, Y = np.meshgrid(x, y)
 square1 = sdf_square(X, Y, (-0.5, 0), 1.0)
 square2 = sdf_square(X, Y, (0.5, 0), 1.0)
 
-# Initial union method
+# Initial union method and radius
 union_methods = {
     'Exponential': smooth_union_exp,
     'Polynomial': smooth_union_poly,
@@ -59,15 +52,10 @@ union_methods = {
     'Scaled Exp': smooth_union_scaled_exp
 }
 current_method = 'Exponential'
-
-# Initial radius
 initial_radius = 0.5
 
-def update_plot(radius=None):
-    if radius is None:
-        radius = radius_slider.val
-    
-    # Clear the plot
+# Create the plot
+def update_plot(radius):
     ax.clear()
     
     # Calculate smooth union
@@ -75,61 +63,53 @@ def update_plot(radius=None):
     
     # Plot the result
     levels = np.linspace(-1, 1, 20)
-    contour = ax.contour(X, Y, union, levels=levels)
+    contour = ax.contour(X, Y, union, levels=levels, colors='white')
     ax.clabel(contour, inline=True, fontsize=8)
     
     # Add filled contour for negative space (the shape)
-    ax.contourf(X, Y, union, levels=[-np.inf, 0], colors=['lightgray'])
+    ax.contourf(X, Y, union, levels=[-np.inf, 0], colors=['#404040'])
     
     # Set plot limits and labels
     ax.set_xlim(-2, 2)
     ax.set_ylim(-2, 2)
     ax.set_aspect('equal')
-    ax.grid(True)
+    ax.grid(True, alpha=0.3)
     ax.set_title(f'Smooth Union ({current_method})\nRadius: {radius:.3f}')
     
-    # Redraw canvas
-    canvas.draw()
+    plt.draw()
 
-# Create slider frame
-slider_frame = tk.Frame(root)
-slider_frame.pack(side=tk.BOTTOM, fill=tk.X)
-
-# Create radius slider
-radius_slider = tk.Scale(
-    slider_frame, 
-    from_=0.01, 
-    to=1.0, 
-    resolution=0.01,
-    orient=tk.HORIZONTAL,
-    label="Radius",
-    command=lambda x: update_plot(float(x))
+# Add slider for radius
+ax_radius = plt.axes([0.1, 0.1, 0.65, 0.03])
+radius_slider = Slider(
+    ax=ax_radius,
+    label='Radius',
+    valmin=0.01,
+    valmax=1.0,
+    valinit=initial_radius
 )
-radius_slider.set(initial_radius)
-radius_slider.pack(side=tk.BOTTOM, fill=tk.X)
 
-# Create method selector frame
-method_frame = tk.Frame(root)
-method_frame.pack(side=tk.RIGHT, fill=tk.Y)
+# Add radio buttons for method selection
+ax_radio = plt.axes([0.8, 0.25, 0.15, 0.5])
+radio = RadioButtons(
+    ax_radio, 
+    labels=list(union_methods.keys()),
+    active=list(union_methods.keys()).index(current_method)
+)
 
-# Create method selector
-def method_changed():
+# Update functions
+def update_radius(val):
+    update_plot(radius_slider.val)
+
+def update_method(label):
     global current_method
-    current_method = method_var.get()
-    update_plot()
+    current_method = label
+    update_plot(radius_slider.val)
 
-method_var = tk.StringVar(value=current_method)
-for method in union_methods.keys():
-    tk.Radiobutton(
-        method_frame,
-        text=method,
-        variable=method_var,
-        value=method,
-        command=method_changed
-    ).pack(anchor=tk.W)
+radius_slider.on_changed(update_radius)
+radio.on_clicked(update_method)
 
 # Initial plot
 update_plot(initial_radius)
 
-# Start the GUI
-root.mainloop()
+# Show the plot
+plt.show()
