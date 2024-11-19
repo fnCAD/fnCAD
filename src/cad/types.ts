@@ -13,15 +13,25 @@ export interface SourceLocation {
   end: Position;
 }
 
-export interface Node {
-  location: SourceLocation;
+export abstract class Node {
+  constructor(public location: SourceLocation) {}
 }
 
-export interface ModuleDeclaration extends Node {
-  kind: 'ModuleDeclaration';
-  name: string;
-  parameters: Parameter[];
-  body: Statement[];
+export abstract class Statement extends Node {
+  abstract readonly kind: string;
+}
+
+export class ModuleDeclaration extends Statement {
+  readonly kind = 'ModuleDeclaration';
+  
+  constructor(
+    public name: string,
+    public parameters: Parameter[],
+    public body: Statement[],
+    location: SourceLocation
+  ) {
+    super(location);
+  }
 }
 
 export interface Parameter {
@@ -29,11 +39,17 @@ export interface Parameter {
   defaultValue?: Expression;
 }
 
-export interface ModuleCall extends Node {
-  kind: 'ModuleCall';
-  name: string;
-  arguments: Record<string, Expression>;
-  children?: Statement[];
+export class ModuleCall extends Statement {
+  readonly kind = 'ModuleCall';
+
+  constructor(
+    public name: string,
+    public arguments: Record<string, Expression>,
+    public children: Statement[] | undefined,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
 }
 
 export abstract class Expression implements Node {
@@ -69,4 +85,3 @@ export class Identifier extends Expression {
   }
 }
 
-export type Statement = ModuleDeclaration | ModuleCall;
