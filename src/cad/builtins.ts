@@ -45,7 +45,9 @@ export function moduleToSDF(node: Node): string {
     case 'difference': {
       if (!call.children?.length) return '0';
       const children = call.children.map(moduleToSDF);
-      return `max(${children[0]}, ${children.slice(1).join(', ')})`;
+      // Negate all children after the first one
+      const negatedChildren = children.slice(1).map(child => `-${child}`);
+      return `max(${children[0]}, ${negatedChildren.join(', ')})`;
     }
 
     default:
