@@ -1,5 +1,5 @@
-import { Interval } from './interval';
-import { GLSLContext } from './glslgen';
+import { Interval } from '../interval';
+import { GLSLContext } from '../glslgen';
 
 export type NodeType = 
   | 'Number'
@@ -56,5 +56,3 @@ export interface FunctionCallNode extends Node {
   evaluate(context: Record<string, number>): number;
   toGLSL(context: GLSLContext): string;
 }
-
-

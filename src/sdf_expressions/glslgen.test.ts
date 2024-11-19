@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GLSLGenerator, GLSLContext } from './glslgen';
+import { GLSLGenerator, GLSLContext } from '../glslgen';
 
 describe('GLSLContext', () => {
   it('generates translation code', () => {

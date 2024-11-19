@@ -1,6 +1,6 @@
 import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
-import { Interval } from './interval';
-import { GLSLContext } from './glslgen';
+import { Interval } from '../interval';
+import { GLSLContext } from '../glslgen';
 
 export function createNumberNode(value: number): NumberNode {
   return {

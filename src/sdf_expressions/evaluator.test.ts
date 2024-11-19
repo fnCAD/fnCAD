@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import { Interval } from './interval';
+import { Interval } from '../interval';
 describe('Expression Evaluation', () => {
   function evaluate(expr: string, context: Record<string, number> = {}): number {
     const ast = parse(expr);

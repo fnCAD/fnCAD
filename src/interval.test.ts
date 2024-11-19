@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Interval } from './interval';
-import { parse } from './parser';
+import { parse } from './sdf_expressions/parser';
 
 describe('Interval', () => {
   it('creates valid intervals', () => {

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { parse } from './parser';
+import { parse } from './sdf_expressions/parser';
 import { generateShader } from './shader';
-import { Node } from './ast';
+import { Node } from './sdf_expressions/ast';
 
 // Software raymarcher for testing
 type RaymarchLogger = (step: number, point: THREE.Vector3, distance: number) => void;
