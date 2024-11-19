@@ -16,22 +16,24 @@ export class ParseError extends Error {
     const lines = this.source.split('\n');
     const line = lines[this.location.start.line - 1];
     const pointer = ' '.repeat(this.location.start.column - 1) + '^';
+    const context = line.trim();
     
     return [
       `${this.name}: ${this.message}`,
-      `  --> line ${this.location.start.line}, column ${this.location.start.column}`,
-      '   |',
-      ` ${this.location.start.line} | ${line}`,
-      '   | ' + pointer
+      `at line ${this.location.start.line}, column ${this.location.start.column}`,
+      '',
+      context,
+      pointer,
+      '',
+      `Source: ${this.source}`
     ].join('\n');
   }
 
-  toJSON(): object {
-    return {
-      name: this.name,
-      message: this.message,
-      location: this.location,
-      source: this.source
-    };
+  [Symbol.for('nodejs.util.inspect.custom')](): string {
+    return this.toString();
+  }
+
+  [Symbol.for('vitest.error.customFormatter')](): string {
+    return this.toString();
   }
 }
