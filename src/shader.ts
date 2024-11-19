@@ -19,34 +19,14 @@ export function generateShader(ast: Node): string {
       return x * x;
     }
 
-    // Smooth minimum blend
+    // Exponential smooth min/max
     float smin(float a, float b, float k) {
-      float h = max(k - abs(a - b), 0.0) / k;
-      return min(a, b) - h * h * k * 0.25;
+      float res = exp(-k*a) + exp(-k*b);
+      return -log(res)/k;
     }
 
-    // Polynomial smooth min/max for better shape preservation
-    float smin_poly(float a, float b, float k) {
-      float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-      return mix(b, a, h) - k * h * (1.0 - h);
-    }
-
-    float smax_poly(float a, float b, float k) {
-      float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-      return mix(b, a, h) + k * h * (1.0 - h);
-    }
-
-    // Smooth blend operations using polynomial interpolation
-    float smooth_union(float d1, float d2, float k) {
-      return smin_poly(d1, d2, k);
-    }
-
-    float smooth_intersection(float d1, float d2, float k) {
-      return smax_poly(d1, d2, k);
-    }
-
-    float smooth_difference(float d1, float d2, float k) {
-      return smax_poly(d1, -d2, k);
+    float smax(float a, float b, float k) {
+      return -smin(-a, -b, k);
     }
 
     float scene(vec3 pos) {
