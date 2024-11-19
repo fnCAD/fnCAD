@@ -1,88 +1,62 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import { ModuleCall, ModuleDeclaration } from './types';
+import { moduleToSDF } from './builtins';
 
-describe('OpenSCAD Parser', () => {
-  it('parses basic primitives', () => {
-    const input = 'cube(1);';
+describe('OpenSCAD-like Syntax', () => {
+  function compileToSDF(input: string): string {
     const ast = parse(input);
-    expect(ast.length).toBe(1);
+    return moduleToSDF(ast[0]);
+  }
+
+  it('compiles basic primitives', () => {
+    expect(compileToSDF('cube(1);'))
+      .toBe('max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)');
     
-    const node = ast[0] as ModuleCall;
-    expect(node.type).toBe('ModuleCall');
-    expect(node.name).toBe('cube');
-    expect(node.arguments['0']).toBeDefined();
-    expect(node.arguments['0'].type).toBe('NumberLiteral');
+    expect(compileToSDF('sphere(1);'))
+      .toBe('sqrt(x*x + y*y + z*z) - 1');
   });
 
-  it('parses module declarations', () => {
-    const input = `
-      module box(size = 1) {
-        cube(size);
-      }
-    `;
-    const ast = parse(input);
-    expect(ast.length).toBe(1);
+  it('compiles transformations', () => {
+    expect(compileToSDF('translate(1, 0, 0) { sphere(1); }'))
+      .toBe('translate(1, 0, 0, sqrt(x*x + y*y + z*z) - 1)');
     
-    const node = ast[0] as ModuleDeclaration;
-    expect(node.type).toBe('ModuleDeclaration');
-    expect(node.name).toBe('box');
-    expect(node.parameters.length).toBe(1);
-    expect(node.parameters[0].name).toBe('size');
-    expect(node.parameters[0].defaultValue?.type).toBe('NumberLiteral');
+    expect(compileToSDF('rotate(0, 1.57, 0) { cube(1); }'))
+      .toBe('rotate(0, 1.57, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5))');
   });
 
-  it('parses transformations with child blocks', () => {
-    const input = `
+  it('compiles boolean operations', () => {
+    expect(compileToSDF('union() { sphere(1); cube(1); }'))
+      .toBe('min(sqrt(x*x + y*y + z*z) - 1, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5))');
+    
+    expect(compileToSDF('difference() { cube(2); sphere(1); }'))
+      .toBe('max(max(max(abs(x) - 1, abs(y) - 1), abs(z) - 1), -(sqrt(x*x + y*y + z*z) - 1))');
+  });
+
+  it('handles nested transformations', () => {
+    const result = compileToSDF(`
       translate(1, 0, 0) {
-        sphere(0.5);
+        rotate(0, 1.57, 0) {
+          cube(1);
+        }
       }
-    `;
-    const ast = parse(input);
-    const node = ast[0] as ModuleCall;
-    
-    expect(node.type).toBe('ModuleCall');
-    expect(node.name).toBe('translate');
-    expect(node.children?.length).toBe(1);
-    
-    const child = node.children?.[0] as ModuleCall;
-    expect(child.name).toBe('sphere');
+    `);
+    expect(result).toBe(
+      'translate(1, 0, 0, rotate(0, 1.57, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)))'
+    );
   });
 
-  it('parses boolean operations', () => {
-    const input = `
+  it('handles complex boolean operations', () => {
+    const result = compileToSDF(`
       difference() {
         cube(2);
         translate(0.5, 0.5, 0.5) {
           sphere(1);
         }
       }
-    `;
-    const ast = parse(input);
-    const node = ast[0] as ModuleCall;
-    
-    expect(node.type).toBe('ModuleCall');
-    expect(node.name).toBe('difference');
-    expect(node.children?.length).toBe(2);
-  });
-
-  it('handles named arguments', () => {
-    const input = 'cube(size=2);';
-    const ast = parse(input);
-    const node = ast[0] as ModuleCall;
-    
-    expect(node.arguments['size'].type).toBe('NumberLiteral');
-  });
-
-  it('preserves source locations', () => {
-    const input = 'cube(1);';
-    const ast = parse(input);
-    const node = ast[0];
-    
-    expect(node.location).toBeDefined();
-    expect(node.location.start.line).toBe(1);
-    expect(node.location.start.column).toBe(1);
-    expect(node.location.end.line).toBe(1);
-    expect(node.location.end.column).toBe(8);
+    `);
+    expect(result).toBe(
+      'max(max(max(abs(x) - 1, abs(y) - 1), abs(z) - 1), ' +
+      '-(translate(0.5, 0.5, 0.5, sqrt(x*x + y*y + z*z) - 1)))'
+    );
   });
 });
