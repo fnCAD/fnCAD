@@ -1,4 +1,4 @@
-import { Node } from './types';
+import { Node, ModuleCall } from './types';
 import { parse as parseSDFExpression } from '../sdf_expressions/parser';
 
 // Convert OpenSCAD-style module calls to SDF expressions
@@ -11,7 +11,7 @@ export function moduleToSDF(node: Node): string {
 
   switch (call.name) {
     case 'cube': {
-      const size = call.arguments[0]?.value || 1;
+      const size = call.args[0]?.value || 1;
       return `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`;
     }
 

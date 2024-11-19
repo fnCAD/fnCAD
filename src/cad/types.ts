@@ -39,7 +39,7 @@ export class ModuleCall extends Statement {
 
   constructor(
     public name: string,
-    public arguments: Record<string, Expression>,
+    public args: Record<string, Expression>,
     public children: Statement[] | undefined,
     location: SourceLocation
   ) {
