@@ -17,13 +17,9 @@ export abstract class Node {
   constructor(public location: SourceLocation) {}
 }
 
-export abstract class Statement extends Node {
-  abstract readonly kind: string;
-}
+export abstract class Statement extends Node {}
 
 export class ModuleDeclaration extends Statement {
-  readonly kind = 'ModuleDeclaration';
-  
   constructor(
     public name: string,
     public parameters: Parameter[],
@@ -40,7 +36,6 @@ export interface Parameter {
 }
 
 export class ModuleCall extends Statement {
-  readonly kind = 'ModuleCall';
 
   constructor(
     public name: string,
