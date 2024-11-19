@@ -1,65 +1,121 @@
-import { Node, ModuleCall } from './types';
-import { parse as parseSDFExpression } from '../sdf_expressions/parser';
+import { Node, ModuleCall, Context, Value, SDFExpression } from './types';
+import { Expression } from './types';
 
-// Convert OpenSCAD-style module calls to SDF expressions
-export function moduleToSDF(node: Node): string {
-  if (!(node instanceof ModuleCall)) {
-    throw new Error(`Expected ModuleCall node, got ${node.constructor.name}`);
+// Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
+export function evalCAD(node: Node, context: Context): Value {
+  if (node instanceof ModuleCall) {
+    return evalModuleCall(node, context);
   }
+  if (node instanceof Expression) {
+    return evalExpression(node, context);
+  }
+  throw new Error(`Cannot evaluate node type: ${node.constructor.name}`);
+}
 
-  const call = node as ModuleCall;
+function evalExpression(expr: Expression, context: Context): number {
+  // For now just handle number literals
+  if ('value' in expr) {
+    return expr.value;
+  }
+  throw new Error(`Unsupported expression type: ${expr.constructor.name}`);
+}
+
+function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
+  const evalArg = (idx: number, defaultVal: number = 0): number => {
+    const arg = call.args[idx.toString()];
+    if (!arg) return defaultVal;
+    const val = evalExpression(arg, context);
+    if (typeof val !== 'number') {
+      throw new Error(`Expected number argument, got ${typeof val}`);
+    }
+    return val;
+  };
 
   switch (call.name) {
     case 'cube': {
-      const size = call.args[0]?.value || 1;
-      return `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`;
+      const size = evalArg(0, 1);
+      return {
+        type: 'sdf',
+        expr: `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`
+      };
     }
 
     case 'sphere': {
-      const r = call.arguments[0]?.value || 1;
-      return `sqrt(x*x + y*y + z*z) - ${r}`;
+      const r = evalArg(0, 1);
+      return {
+        type: 'sdf',
+        expr: `sqrt(x*x + y*y + z*z) - ${r}`
+      };
     }
 
     case 'translate': {
-      const dx = call.arguments[0]?.value || 0;
-      const dy = call.arguments[1]?.value || 0;
-      const dz = call.arguments[2]?.value || 0;
-      const child = moduleToSDF(call.children?.[0]);
-      return `translate(${dx}, ${dy}, ${dz}, ${child})`;
+      const dx = evalArg(0);
+      const dy = evalArg(1);
+      const dz = evalArg(2);
+      if (!call.children?.[0]) {
+        throw new Error('translate requires a child node');
+      }
+      const child = evalCAD(call.children[0], context);
+      if (typeof child === 'number') {
+        throw new Error('translate requires an SDF child');
+      }
+      return {
+        type: 'sdf',
+        expr: `translate(${dx}, ${dy}, ${dz}, ${child.expr})`
+      };
     }
 
     case 'rotate': {
-      const rx = call.arguments[0]?.value || 0;
-      const ry = call.arguments[1]?.value || 0;
-      const rz = call.arguments[2]?.value || 0;
-      const child = moduleToSDF(call.children?.[0]);
-      return `rotate(${rx}, ${ry}, ${rz}, ${child})`;
+      const rx = evalArg(0);
+      const ry = evalArg(1);
+      const rz = evalArg(2);
+      if (!call.children?.[0]) {
+        throw new Error('rotate requires a child node');
+      }
+      const child = evalCAD(call.children[0], context);
+      if (typeof child === 'number') {
+        throw new Error('rotate requires an SDF child');
+      }
+      return {
+        type: 'sdf',
+        expr: `rotate(${rx}, ${ry}, ${rz}, ${child.expr})`
+      };
     }
 
     case 'union': {
-      if (!call.children?.length) return '0';
-      const children = call.children.map(moduleToSDF);
-      return `min(${children.join(', ')})`;
+      if (!call.children?.length) {
+        return { type: 'sdf', expr: '0' };
+      }
+      const children = call.children.map(c => {
+        const result = evalCAD(c, context);
+        if (typeof result === 'number') {
+          throw new Error('union requires SDF children');
+        }
+        return result.expr;
+      });
+      return {
+        type: 'sdf',
+        expr: `min(${children.join(', ')})`
+      };
     }
 
     case 'difference': {
-      if (!call.children?.length) return '0';
-      const children = call.children.map(moduleToSDF);
-      // Negate all children after the first one
-      const negatedChildren = children.slice(1).map((child: string) => `-(${child})`);
-      return `max(${children[0]}, ${negatedChildren.join(', ')})`;
+      if (!call.children?.length) {
+        return { type: 'sdf', expr: '0' };
+      }
+      const results = call.children.map(c => evalCAD(c, context));
+      if (results.some(r => typeof r === 'number')) {
+        throw new Error('difference requires SDF children');
+      }
+      const children = results.map(r => (r as SDFExpression).expr);
+      const negatedChildren = children.slice(1).map(c => `-(${c})`);
+      return {
+        type: 'sdf',
+        expr: `max(${children[0]}, ${negatedChildren.join(', ')})`
+      };
     }
 
     default:
       throw new Error(`Unknown module: ${call.name}`);
-  }
-}
-
-// Validate that an SDF expression is well-formed
-export function validateSDF(sdfExpr: string): void {
-  try {
-    parseSDFExpression(sdfExpr);
-  } catch (e) {
-    throw new Error(`Invalid SDF expression: ${(e as Error).message}`);
   }
 }

@@ -309,7 +309,11 @@ function updateOctree() {
   try {
     const editorContent = editor.getValue();
     const cadAst = parse(editorContent);
-    const sdfExpr = moduleToSDF(cadAst[0]);
+    const result = evalCAD(cadAst, new Context());
+    if (typeof result === 'number') {
+      throw new Error('Expected SDF expression at top level');
+    }
+    const sdfExpr = result.expr;
     const ast = parseSDF(sdfExpr);
 
     // Update octree visualization

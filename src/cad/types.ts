@@ -8,9 +8,32 @@ export interface SourceLocation {
   end: Position;
 }
 
-export interface SourceLocation {
-  start: Position;
-  end: Position;
+// Result types for evaluation
+export type Value = number | SDFExpression;
+
+export interface SDFExpression {
+  type: 'sdf';
+  expr: string;
+}
+
+// Evaluation context
+export class Context {
+  constructor(
+    private parent?: Context,
+    private vars: Map<string, Value> = new Map()
+  ) {}
+
+  get(name: string): Value | undefined {
+    return this.vars.get(name) ?? this.parent?.get(name);
+  }
+
+  set(name: string, value: Value) {
+    this.vars.set(name, value);
+  }
+
+  child(): Context {
+    return new Context(this);
+  }
 }
 
 export abstract class Node {
