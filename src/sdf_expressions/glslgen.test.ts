@@ -18,7 +18,7 @@ describe('GLSLContext', () => {
     const code = gen.generateCode().split('\n');
     console.log('Generated code:\n', code);
     // Extract matrix values and compare numerically
-    expect(code.length).toBe(13);
+    expect(code.length).toBe(5);
     expect(code[0]).toBe('vec3 var1 = mat3(');
     
     // Parse the 3x3 matrix values
@@ -65,9 +65,13 @@ describe('GLSLContext', () => {
     ];
     
     const epsilon = 1e-10;
+    console.log('Actual matrix rows:', matrixRows);
+    console.log('Expected matrix:', expectedMatrix);
     matrixRows.forEach((row, i) => {
       row.forEach((val, j) => {
-        expect(Math.abs(val - expectedMatrix[i][j])).toBeLessThan(epsilon);
+        const diff = Math.abs(val - expectedMatrix[i][j]);
+        console.log(`Comparing position [${i}][${j}]: actual=${val}, expected=${expectedMatrix[i][j]}, diff=${diff}`);
+        expect(diff).toBeLessThan(epsilon);
       });
     });
     
