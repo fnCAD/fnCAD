@@ -15,6 +15,43 @@ class Parser {
     this.tokenize();
   }
 
+  private peek(): Token {
+    return this.tokens[this.current];
+  }
+
+  private previous(): Token {
+    return this.tokens[this.current - 1];
+  }
+
+  private advance(): Token {
+    if (!this.isAtEnd()) this.current++;
+    return this.previous();
+  }
+
+  private isAtEnd(): boolean {
+    return this.current >= this.tokens.length;
+  }
+
+  private check(value: string): boolean {
+    if (this.isAtEnd()) return false;
+    return this.peek().value === value;
+  }
+
+  private match(value: string): boolean {
+    if (this.check(value)) {
+      this.advance();
+      return true;
+    }
+    return false;
+  }
+
+  private expect(value: string, message: string): Token {
+    if (this.check(value)) {
+      return this.advance();
+    }
+    throw parseError(message, this.peek().location, this.source);
+  }
+
   private tokenize() {
     let current = 0;
     
@@ -141,22 +178,17 @@ class Parser {
   }
 
   private parseModuleDeclaration(): ModuleDeclaration {
-    // Skip 'module' keyword
-    const start = this.tokens[this.current].location.start;
-    this.current++;
+    const start = this.peek().location.start;
+    this.advance(); // Skip 'module' keyword
 
-    // Get module name
-    const nameToken = this.tokens[this.current];
+    const nameToken = this.peek();
     if (nameToken.type !== 'identifier') {
-      throw new ParseError('Expected module name', nameToken.location, this.source);
+      throw parseError('Expected module name', nameToken.location, this.source);
     }
     const name = nameToken.value;
-    this.current++;
+    this.advance();
 
-    // Parse parameters
     const parameters = this.parseParameters();
-
-    // Parse body
     const body = this.parseBlock();
 
     return {
@@ -166,30 +198,24 @@ class Parser {
       body,
       location: {
         start,
-        end: this.tokens[this.current - 1].location.end
+        end: this.previous().location.end
       }
     };
   }
 
   private parseParameters(): Parameter[] {
-    // Expect opening paren
-    if (this.tokens[this.current].value !== '(') {
-      throw new ParseError('Expected (', this.tokens[this.current].location, this.source);
-    }
-    this.current++;
-
+    this.expect('(', 'Expected (');
     const parameters: Parameter[] = [];
 
-    while (this.current < this.tokens.length && this.tokens[this.current].value !== ')') {
-      const nameToken = this.tokens[this.current];
+    while (!this.isAtEnd() && !this.check(')')) {
+      const nameToken = this.peek();
       if (nameToken.type !== 'identifier') {
-        throw new ParseError('Expected parameter name', nameToken.location, this.source);
+        throw parseError('Expected parameter name', nameToken.location, this.source);
       }
-      this.current++;
+      this.advance();
 
       let defaultValue: Expression | undefined;
-      if (this.tokens[this.current].value === '=') {
-        this.current++;
+      if (this.match('=')) {
         defaultValue = this.parseExpression();
       }
 
@@ -198,59 +224,37 @@ class Parser {
         defaultValue
       });
 
-      if (this.tokens[this.current].value === ',') {
-        this.current++;
-      }
+      this.match(','); // Optional comma
     }
 
-    // Expect closing paren
-    if (this.tokens[this.current].value !== ')') {
-      throw new ParseError('Expected )', this.tokens[this.current].location, this.source);
-    }
-    this.current++;
-
+    this.expect(')', 'Expected )');
     return parameters;
   }
 
   private parseBlock(): Statement[] {
-    // Expect opening brace
-    if (this.tokens[this.current].value !== '{') {
-      throw new ParseError('Expected {', this.tokens[this.current].location, this.source);
-    }
-    this.current++;
-
+    this.expect('{', 'Expected {');
     const statements: Statement[] = [];
 
-    while (this.current < this.tokens.length && this.tokens[this.current].value !== '}') {
+    while (!this.isAtEnd() && !this.check('}')) {
       statements.push(this.parseStatement());
     }
 
-    // Expect closing brace
-    if (this.tokens[this.current].value !== '}') {
-      throw new ParseError('Expected }', this.tokens[this.current].location, this.source);
-    }
-    this.current++;
-
+    this.expect('}', 'Expected }');
     return statements;
   }
 
   private parseModuleCall(): ModuleCall {
-    const start = this.tokens[this.current].location.start;
-    const name = this.tokens[this.current].value;
-    this.current++;
+    const start = this.peek().location.start;
+    const name = this.peek().value;
+    this.advance();
 
-    // Parse arguments
     const args = this.parseArguments();
 
-    // Parse block or expect semicolon
     let children: Statement[] | undefined;
-    if (this.current < this.tokens.length && this.tokens[this.current].value === '{') {
+    if (this.check('{')) {
       children = this.parseBlock();
     } else {
-      if (this.current >= this.tokens.length || this.tokens[this.current].value !== ';') {
-        throw parseError('Expected semicolon', this.tokens[this.current - 1].location, this.source);
-      }
-      this.current++;
+      this.expect(';', 'Expected semicolon');
     }
 
     return {
@@ -260,7 +264,7 @@ class Parser {
       children,
       location: {
         start,
-        end: this.tokens[this.current - 1].location.end
+        end: this.previous().location.end
       }
     };
   }
