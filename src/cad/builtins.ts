@@ -137,3 +137,15 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       throw new Error(`Unknown module: ${call.name}`);
   }
 }
+// Smooth blending operations
+export function smooth_union(expr1: string, expr2: string, radius: number): string {
+  return `smooth_union(${expr1}, ${expr2}, ${radius})`;
+}
+
+export function smooth_intersection(expr1: string, expr2: string, radius: number): string {
+  return `smooth_intersection(${expr1}, ${expr2}, ${radius})`;
+}
+
+export function smooth_difference(expr1: string, expr2: string, radius: number): string {
+  return `smooth_difference(${expr1}, ${expr2}, ${radius})`;
+}
