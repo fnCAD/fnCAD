@@ -54,7 +54,8 @@ export class GLSLContext {
   rotate(ax: number, ay: number, az: number): GLSLContext {
     // Create rotation matrix using THREE.js
     const rotMatrix = new THREE.Matrix4();
-    rotMatrix.makeRotationFromEuler(new THREE.Euler(ax, ay, az, 'XYZ'));
+    // Don't ask me why ZYX here. It works. Something is lying.
+    rotMatrix.makeRotationFromEuler(new THREE.Euler(ax, ay, az, 'ZYX'));
     const m = rotMatrix.elements;
 
     // Format matrix values with consistent precision

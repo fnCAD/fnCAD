@@ -203,6 +203,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const cy = Math.cos(ay), sy = Math.sin(ay);
         const cz = Math.cos(az), sz = Math.sin(az);
         
+        // It says this is XYZ order but in GLSL it has to be ZYX order to match. Why?
         for (const [px, py, pz] of corners) {
           // First rotate around X
           const x1 = px;
@@ -290,6 +291,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const cz = Math.cos(az), sz = Math.sin(az);
         
         // Apply rotation matrix (X * Y * Z order)
+        // Note: again it says that but GLSL is still ZYX?
         const x = context.x;
         const y = context.y;
         const z = context.z;

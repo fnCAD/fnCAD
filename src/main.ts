@@ -18,7 +18,7 @@ import { OctreeNode } from './octree'
 import { OctreeRenderSettings, visualizeOctree } from './octreevis'
 import { MeshGenerator } from './meshgen'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { parse } from './parser'
+import { parse } from './sdf_expressions/parser'
 import { generateShader } from './shader'
 
 // Initialize split panes
