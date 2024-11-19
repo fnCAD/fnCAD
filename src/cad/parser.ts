@@ -1,7 +1,7 @@
 import { 
   Node, ModuleDeclaration, ModuleCall, Expression, 
   NumberLiteral, BinaryExpression, Parameter,
-  Position, SourceLocation
+  Position, SourceLocation, Statement
 } from './types';
 import { ParseError, parseError } from './errors';
 
