@@ -129,6 +129,10 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           return evaluatedArgs[0].sin();
         case 'cos':
           return evaluatedArgs[0].cos();
+        case 'log':
+          return evaluatedArgs[0].log();
+        case 'exp':
+          return evaluatedArgs[0].exp();
       }
 
       // Handle min/max with any number of arguments
@@ -252,6 +256,12 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       }
       if (name === 'abs') {
         return Math.abs(evaluatedArgs[0]);
+      }
+      if (name === 'log') {
+        return Math.log(evaluatedArgs[0]);
+      }
+      if (name === 'exp') {
+        return Math.exp(evaluatedArgs[0]);
       }
       if (name in Math) {
         const fn = Math[name as keyof typeof Math];
