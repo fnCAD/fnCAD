@@ -18,7 +18,8 @@ import { OctreeNode } from './octree'
 import { OctreeRenderSettings, visualizeOctree } from './octreevis'
 import { MeshGenerator } from './meshgen'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { parse } from './sdf_expressions/parser'
+import { parse } from './cad/parser'
+import { moduleToSDF } from './cad/builtins'
 import { generateShader } from './shader'
 
 // Initialize split panes
@@ -32,7 +33,7 @@ Split(['#editor-pane', '#preview-pane'], {
 const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
   // Store editor instance for later use with shader compilation
   value: `// Scene with two spheres
-sphere(1.0);
+sphere(1);
 translate(2, 0, 0) {
   sphere(0.7);
 }`,
@@ -298,7 +299,9 @@ updateOctreeVisualization();
 function updateOctree() {
   try {
     const editorContent = editor.getValue();
-    const ast = parse(editorContent);
+    const cadAst = parse(editorContent);
+    const sdfExpr = moduleToSDF(cadAst[0]);
+    const ast = parse(sdfExpr);
 
     // Update octree visualization
     if (currentOctree) {
