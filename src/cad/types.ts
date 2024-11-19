@@ -37,29 +37,22 @@ export interface ModuleCall extends Node {
   children?: Statement[];
 }
 
-export interface Expression extends Node {
-  type: 'NumberLiteral' | 'BinaryExpression' | 'Identifier';
-  operator?: '+' | '-' | '*' | '/';
-  value?: number;
-  name?: string;
-  left?: Expression;
-  right?: Expression;
-}
+export type Expression = NumberLiteral | BinaryExpression | Identifier;
 
-export interface NumberLiteral extends Expression {
-  type: 'NumberLiteral';
+export interface NumberLiteral extends Node {
+  kind: 'NumberLiteral';
   value: number;
 }
 
-export interface BinaryExpression extends Expression {
-  type: 'BinaryExpression';
+export interface BinaryExpression extends Node {
+  kind: 'BinaryExpression';
   operator: '+' | '-' | '*' | '/';
   left: Expression;
   right: Expression;
 }
 
-export interface Identifier extends Expression {
-  type: 'Identifier';
+export interface Identifier extends Node {
+  kind: 'Identifier';
   name: string;
 }
 
