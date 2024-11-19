@@ -7,6 +7,10 @@ def sdf_square(x, y, center, size=1.0):
     dy = abs(y - center[1]) - size/2
     return np.maximum(dx, dy)
 
+# Create squares with more offset for better visualization
+square1_pos = (-0.7, -0.3)  # Moved left and down
+square2_pos = (0.7, 0.3)    # Moved right and up
+
 def smooth_union_exp(d1, d2, k):
     return -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
 
@@ -39,9 +43,9 @@ x = np.linspace(-2, 2, 200)
 y = np.linspace(-2, 2, 200)
 X, Y = np.meshgrid(x, y)
 
-# Create squares
-square1 = sdf_square(X, Y, (-0.5, 0), 1.0)
-square2 = sdf_square(X, Y, (0.5, 0), 1.0)
+# Create squares using the defined positions
+square1 = sdf_square(X, Y, square1_pos, 1.0)
+square2 = sdf_square(X, Y, square2_pos, 1.0)
 
 # Initial union method and radius
 union_methods = {
