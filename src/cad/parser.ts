@@ -372,14 +372,13 @@ export function parse(source: string): Node {
   if (statements.length === 1) {
     return statements[0];
   }
-  return {
-    type: 'ModuleCall',
-    name: 'union',
-    arguments: {},
-    children: statements,
-    location: {
+  return new ModuleCall(
+    'union',
+    {},
+    statements,
+    {
       start: statements[0]?.location.start || { line: 1, column: 1 },
       end: statements[statements.length - 1]?.location.end || { line: 1, column: 1 }
     }
-  };
+  );
 }
