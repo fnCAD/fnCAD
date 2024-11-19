@@ -1,5 +1,4 @@
-import { Node, ModuleCall, Context, Value, SDFExpression } from './types';
-import { Expression } from './types';
+import { Node, ModuleCall, Context, Value, SDFExpression, Expression, BinaryExpression } from './types';
 
 // Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
 export function evalCAD(node: Node, context: Context): Value {
@@ -13,7 +12,7 @@ export function evalCAD(node: Node, context: Context): Value {
 }
 
 function evalExpression(expr: Expression, context: Context): number {
-  if ('value' in expr) {
+  if ('value' in expr && typeof expr.value === 'number') {
     return expr.value;
   }
   if (expr instanceof BinaryExpression) {
@@ -29,6 +28,14 @@ function evalExpression(expr: Expression, context: Context): number {
     }
   }
   throw new Error(`Unsupported expression type: ${expr.constructor.name}`);
+}
+
+export function moduleToSDF(node: Node): string {
+  const result = evalCAD(node, new Context());
+  if (typeof result === 'number') {
+    throw new Error('Expected SDF expression at top level');
+  }
+  return result.expr;
 }
 
 function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {

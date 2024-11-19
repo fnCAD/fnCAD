@@ -20,7 +20,8 @@ import { MeshGenerator } from './meshgen'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { parse as parseCAD } from './cad/parser';
 import { parse } from './cad/parser';
-import { moduleToSDF } from './cad/builtins'
+import { moduleToSDF, evalCAD } from './cad/builtins'
+import { Context } from './cad/types'
 import { parse as parseSDF } from './sdf_expressions/parser'
 import { generateShader } from './shader'
 
