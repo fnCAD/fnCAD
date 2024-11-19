@@ -164,6 +164,22 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
+    case 'scale': {
+      const sx = evalArg(0, 1);
+      const sy = evalArg(1, 1);
+      const sz = evalArg(2, 1);
+      if (!call.children?.[0]) {
+        throw new Error('scale requires a child node');
+      }
+      const child = evalCAD(call.children[0], context);
+      if (typeof child === 'number') {
+        throw new Error('scale requires an SDF child');
+      }
+      return {
+        type: 'sdf',
+        expr: `scale(${sx}, ${sy}, ${sz}, ${child.expr})`
+      };
+    }
 
     case 'union': {
       if (!call.children?.length) {
