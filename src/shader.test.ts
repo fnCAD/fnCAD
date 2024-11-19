@@ -50,7 +50,7 @@ function raymarch(
 describe('Shader Generation and Raymarching', () => {
   // Helper to compile and test a shader
   async function testShader(expr: string): Promise<boolean> {
-    const ast = parse(expr);
+    const ast = parseSDF(expr);
     const shaderCode = generateShader(ast);
     
     // Create an offscreen renderer
@@ -104,7 +104,7 @@ describe('Shader Generation and Raymarching', () => {
   });
 
   function testRaymarchFromAllAngles(sdfExpr: string) {
-    const ast = parse(sdfExpr);
+    const ast = parseSDF(sdfExpr);
     
     // Test from points in a circle around the object
     const radius = 5; // Distance from origin
