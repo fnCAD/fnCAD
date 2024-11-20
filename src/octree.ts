@@ -50,27 +50,13 @@ export class OctreeNode {
   constructor(
     public center: THREE.Vector3,
     public size: number,
-    private sdf: Node,
+    public state: CellState,
     public parent: OctreeNode | null = null,
     public octant: number = -1
   ) {
     // Validate size
     if (size <= 0) {
       throw new Error(`Invalid octree node size: ${size}`);
-    }
-
-    console.log(`Creating octree node at ${center.toArray()} with size ${size}`);
-    
-    // Compute and cache state during construction
-    const interval = this.evaluate();
-    console.log(`Node interval evaluation: ${interval.min} to ${interval.max}`);
-    if (interval.max < 0) {
-      this.state = CellState.Inside;
-    } else if (interval.min > 0) {
-      this.state = CellState.Outside;
-    } else {
-      // Start as regular boundary, will be updated to BoundarySubdivided if needed
-      this.state = CellState.Boundary;
     }
   }
 
@@ -200,36 +186,6 @@ export class OctreeNode {
     return this.getNeighborAtLevel(vectorToDirection(direction));
   }
 
-  evaluate(): Interval {
-    // Evaluate SDF over the cube bounds
-    const half = this.size / 2;
-    const context: Record<string, Interval> = {
-      x: new Interval(this.center.x - half, this.center.x + half),
-      y: new Interval(this.center.y - half, this.center.y + half),
-      z: new Interval(this.center.z - half, this.center.z + half)
-    };
-    return this.sdf.evaluateInterval(context);
-  }
-
-  evaluatePoint(point: THREE.Vector3): number {
-    const context: Record<string, number> = {
-      x: point.x,
-      y: point.y,
-      z: point.z
-    };
-    return this.sdf.evaluate(context);
-  }
-
-  evaluateGradient(point: THREE.Vector3): THREE.Vector3 {
-    const h = 0.0001; // Small delta for finite differences
-    const dx = (this.evaluatePoint(new THREE.Vector3(point.x + h, point.y, point.z)) -
-               this.evaluatePoint(new THREE.Vector3(point.x - h, point.y, point.z))) / (2 * h);
-    const dy = (this.evaluatePoint(new THREE.Vector3(point.x, point.y + h, point.z)) -
-               this.evaluatePoint(new THREE.Vector3(point.x, point.y - h, point.z))) / (2 * h);
-    const dz = (this.evaluatePoint(new THREE.Vector3(point.x, point.y, point.z + h)) -
-               this.evaluatePoint(new THREE.Vector3(point.x, point.y, point.z - h))) / (2 * h);
-    return new THREE.Vector3(dx, dy, dz).normalize();
-  }
 
   isSurfaceCell(): boolean {
     // Only leaf boundary cells are surface cells
@@ -372,4 +328,31 @@ export class OctreeRenderSettings {
     public showBoundary: boolean = true,
     public minRenderSize: number = 0.1
   ) {}
+}
+export function createOctreeNode(
+  center: THREE.Vector3,
+  size: number,
+  sdf: Node,
+  parent: OctreeNode | null = null,
+  octant: number = -1
+): OctreeNode {
+  // Evaluate SDF over the cube bounds
+  const half = size / 2;
+  const interval = sdf.evaluateInterval({
+    x: new Interval(center.x - half, center.x + half),
+    y: new Interval(center.y - half, center.y + half),
+    z: new Interval(center.z - half, center.z + half)
+  });
+
+  // Determine cell state
+  let state: CellState;
+  if (interval.max < 0) {
+    state = CellState.Inside;
+  } else if (interval.min > 0) {
+    state = CellState.Outside;
+  } else {
+    state = CellState.Boundary;
+  }
+
+  return new OctreeNode(center, size, state, parent, octant);
 }
