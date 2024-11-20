@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OctreeNode } from '../octree';
+import { TaskProgress } from '../workers/task_types';
 import { StateManager } from './state';
 import { OctreeRenderSettings } from '../octreevis';
 import { RendererManager } from './renderer';

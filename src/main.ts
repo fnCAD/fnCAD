@@ -2,7 +2,6 @@ import './style.css'
 import Split from 'split.js'
 import { getRuntimeBasePath } from './utils/runtime-base'
 import { downloadSTL } from './stlexporter'
-import { MeshGenerator } from './meshgen'
 import { StateManager } from './managers/state'
 import { OctreeManager } from './managers/octree'
 import { SettingsManager } from './managers/settings'
@@ -14,7 +13,7 @@ import { basicSetup } from 'codemirror'
 import { oneDark } from '@codemirror/theme-one-dark'
 
 // Set runtime base path for assets
-const BASE_PATH = getRuntimeBasePath();
+getRuntimeBasePath(); // Initialize runtime base path
 
 // Initialize split panes
 Split(['#editor-pane', '#preview-pane'], {

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OctreeNode } from '../octree';
+import { SerializedMesh } from '../types';
+import { TaskProgress } from '../workers/task_types';
 import { OctreeRenderSettings, visualizeOctree } from '../octreevis';
 
 export class RendererManager {
