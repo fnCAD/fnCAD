@@ -1,15 +1,36 @@
 import * as THREE from 'three';
+import { SerializedMesh } from './workers/mesh_types';
 
-export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
-    const geometry = mesh.geometry;
-    const position = geometry.attributes.position;
-    const index = geometry.index;
+export interface STLExportOptions {
+    scale?: number;  // Scale factor for output (default: 1)
+    name?: string;   // Model name for STL header
+}
+
+export function exportToSTL(mesh: SerializedMesh | THREE.Mesh, options: STLExportOptions = {}): ArrayBuffer {
+    const scale = options.scale || 1;
+    const name = options.name || 'Binary STL file exported from fnCAD';
+    // Handle both SerializedMesh and THREE.Mesh
+    let vertices: number[];
+    let indices: number[];
     
-    if (!index) {
-        throw new Error('Geometry must be indexed');
+    if (mesh instanceof THREE.Mesh) {
+        const geometry = mesh.geometry;
+        const position = geometry.attributes.position;
+        const index = geometry.index;
+        
+        if (!index) {
+            throw new Error('Geometry must be indexed');
+        }
+        
+        // Extract raw arrays
+        vertices = Array.from(position.array);
+        indices = Array.from(index.array);
+    } else {
+        vertices = mesh.vertices;
+        indices = mesh.indices;
     }
     
-    const triangleCount = index.count / 3;  // Each triangle uses 3 indices
+    const triangleCount = indices.length / 3;  // Each triangle uses 3 indices
     
     
     // Binary STL format:
@@ -34,7 +55,7 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     
     // Write header (80 bytes)
     const encoder = new TextEncoder();
-    const header = encoder.encode('Binary STL file exported from fnCAD');
+    const header = encoder.encode(name);
     for (let i = 0; i < 80; i++) {
         view.setUint8(i, i < header.length ? header[i] : 0);
     }
@@ -44,14 +65,26 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     
     let offset = 84;  // Start after header and triangle count
     
-    for (let i = 0; i < index.count; i += 3) {
-        const idx1 = index.getX(i);
-        const idx2 = index.getX(i + 1);
-        const idx3 = index.getX(i + 2);
+    for (let i = 0; i < indices.length; i += 3) {
+        const idx1 = indices[i];
+        const idx2 = indices[i + 1];
+        const idx3 = indices[i + 2];
         
-        const v1 = new THREE.Vector3().fromBufferAttribute(position, idx1);
-        const v2 = new THREE.Vector3().fromBufferAttribute(position, idx2);
-        const v3 = new THREE.Vector3().fromBufferAttribute(position, idx3);
+        const v1 = new THREE.Vector3(
+            vertices[idx1 * 3],
+            vertices[idx1 * 3 + 1],
+            vertices[idx1 * 3 + 2]
+        );
+        const v2 = new THREE.Vector3(
+            vertices[idx2 * 3],
+            vertices[idx2 * 3 + 1],
+            vertices[idx2 * 3 + 2]
+        );
+        const v3 = new THREE.Vector3(
+            vertices[idx3 * 3],
+            vertices[idx3 * 3 + 1],
+            vertices[idx3 * 3 + 2]
+        );
         
         // Calculate normal
         const normal = new THREE.Vector3()
@@ -68,17 +101,17 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
         
         // Write vertices with bounds checking, scaling to millimeters
         if (offset + VERTEX_SIZE <= bufferSize) {
-            view.setFloat32(offset, v1.x * 100, true); offset += 4;
-            view.setFloat32(offset, v1.y * 100, true); offset += 4;
-            view.setFloat32(offset, v1.z * 100, true); offset += 4;
+            view.setFloat32(offset, v1.x * scale, true); offset += 4;
+            view.setFloat32(offset, v1.y * scale, true); offset += 4;
+            view.setFloat32(offset, v1.z * scale, true); offset += 4;
             
-            view.setFloat32(offset, v2.x * 100, true); offset += 4;
-            view.setFloat32(offset, v2.y * 100, true); offset += 4;
-            view.setFloat32(offset, v2.z * 100, true); offset += 4;
+            view.setFloat32(offset, v2.x * scale, true); offset += 4;
+            view.setFloat32(offset, v2.y * scale, true); offset += 4;
+            view.setFloat32(offset, v2.z * scale, true); offset += 4;
             
-            view.setFloat32(offset, v3.x * 100, true); offset += 4;
-            view.setFloat32(offset, v3.y * 100, true); offset += 4;
-            view.setFloat32(offset, v3.z * 100, true); offset += 4;
+            view.setFloat32(offset, v3.x * scale, true); offset += 4;
+            view.setFloat32(offset, v3.y * scale, true); offset += 4;
+            view.setFloat32(offset, v3.z * scale, true); offset += 4;
         } else {
             throw new Error(`Buffer overflow at offset ${offset} while writing vertices`);
         }
@@ -90,8 +123,8 @@ export function exportToSTL(mesh: THREE.Mesh): ArrayBuffer {
     return buffer;
 }
 
-export function downloadSTL(mesh: THREE.Mesh, filename: string = 'model.stl'): void {
-    const buffer = exportToSTL(mesh);
+export function downloadSTL(mesh: SerializedMesh | THREE.Mesh, filename: string = 'model.stl'): void {
+    const buffer = exportToSTL(mesh, { scale: 100 }); // Convert to millimeters by default
     const blob = new Blob([buffer], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     
