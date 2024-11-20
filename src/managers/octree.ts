@@ -47,14 +47,27 @@ export class OctreeManager {
       });
 
       if (task.status === 'completed' && task.result) {
+        console.log('Received octree data:', task.result);
         // Reconstruct OctreeNode from serialized data
         const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
           if (!data) {
             throw new Error('Cannot reconstruct null octree data');
           }
           
-          if (!data.center || typeof data.size !== 'number' || typeof data.state !== 'number') {
-            throw new Error('Invalid octree data structure');
+          // Detailed validation with specific error messages
+          if (!data.center) {
+            throw new Error('Invalid octree data: missing center');
+          }
+          if (typeof data.center.x !== 'number' || 
+              typeof data.center.y !== 'number' || 
+              typeof data.center.z !== 'number') {
+            throw new Error('Invalid octree data: center coordinates must be numbers');
+          }
+          if (typeof data.size !== 'number') {
+            throw new Error('Invalid octree data: size must be a number');
+          }
+          if (typeof data.state !== 'number') {
+            throw new Error('Invalid octree data: state must be a number');
           }
 
           const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
