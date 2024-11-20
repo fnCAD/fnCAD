@@ -17,25 +17,15 @@ export default defineConfig({
       output: {
         format: 'es',
         entryFileNames: '[name].js',
-        chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]'
-      }
-    },
-    assetsInclude: ['/monaco-editor/**/*.worker.js'],
-    // Log each asset and its size
-    manifest: true,
-    // Show build time stats
-    sourcemap: true,
-    rollupOptions: {
-      output: {
         // Log chunk info during build
         chunkFileNames: (chunkInfo) => {
           console.log('Creating chunk:', chunkInfo.name);
           return '[name]-[hash].js';
         },
+        assetFileNames: '[name].[ext]',
         manualChunks: {
           'three': ['three'],
-          'editor': ['@codemirror/basic-setup', '@codemirror/lang-javascript'],
+          'editor': ['codemirror', '@codemirror/lang-javascript'],
           'split': ['split.js'],
           'core': [
             './src/sdf_expressions/parser.ts',
@@ -54,7 +44,10 @@ export default defineConfig({
           ]
         }
       }
-    }
+    },
+    assetsInclude: ['/monaco-editor/**/*.worker.js'],
+    manifest: true,
+    sourcemap: true
   },
   server: {
     cors: true,
