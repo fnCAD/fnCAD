@@ -48,7 +48,7 @@ async function processTask(taskId: string, task: WorkerTask) {
   }
 }
 
-import { OctreeNode } from '../octree';
+import { OctreeNode, createOctreeNode } from '../octree';
 import { MeshGenerator } from '../meshgen';
 import { parse as parseSDF } from '../sdf_expressions/parser';
 
