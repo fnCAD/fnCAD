@@ -21,12 +21,12 @@
   - [x] GLSL shader code generator
 - [x] Basic SDF primitives library
 - [x] Combining operations (min/max for union)
-- [ ] Additional combining operations:
-  - [ ] Smooth union
-  - [ ] Intersection
-  - [ ] Difference
-  - [ ] Smooth intersection
-  - [ ] Smooth difference
+- [x] Additional combining operations:
+  - [x] Smooth union
+  - [x] Intersection
+  - [x] Difference
+  - [x] Smooth intersection
+  - [x] Smooth difference
 
 ## 4. Ray Marching Preview ✓
 - [x] Fragment shader for SDF evaluation
