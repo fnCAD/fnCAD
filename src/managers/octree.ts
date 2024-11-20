@@ -16,15 +16,13 @@ export class OctreeManager {
     renderSettings: OctreeRenderSettings
   ) {
     const source = this.stateManager.getEditorContent();
-    const ast = this.stateManager.parseContent();
     
     // Create octree task
     const taskId = this.stateManager.taskQueue.addTask({
       type: 'octree',
       minSize,
       cellBudget,
-      source,
-      sdf: ast
+      source
     });
 
 

@@ -59,9 +59,9 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     // Parse CAD code into SDF expression
     const cadAst = parseCAD(task.source);
     const sdfExpr = moduleToSDF(cadAst);
-    const ast = parseSDF(sdfExpr);
+    const sdf = parseSDF(sdfExpr);
     
-    console.log('Parsed AST:', ast);
+    console.log('Parsed AST:', sdf);
     
     console.log('Starting octree generation with settings:', {
       minSize: task.minSize,
@@ -69,7 +69,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     });
 
     console.log('Creating root octree node at origin with size 65536');
-    const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
+    const octree = createOctreeNode(new THREE.Vector3(0, 0, 0), 65536, sdf);
     
     // Track subdivision progress
     let totalCells = 0;

@@ -13,7 +13,6 @@ export interface OctreeTask {
   minSize: number;
   cellBudget: number;
   source: string;
-  sdf: Node;
 }
 
 export interface MeshTask {
