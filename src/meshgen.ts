@@ -8,7 +8,7 @@ export class MeshGenerator {
     
     constructor(
         private octree: OctreeNode, 
-        private sdf: Node,
+        private sdf: import('./sdf_expressions/ast').Node,
         private optimize: boolean = true
     ) {}
 

@@ -2,6 +2,6 @@
 
 declare global {
   interface Window {
-    _editor: any;
+    _editor: import('@codemirror/view').EditorView;
   }
 }

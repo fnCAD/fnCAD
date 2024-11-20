@@ -28,8 +28,8 @@ export interface WorkerMessage {
   type: 'start' | 'progress' | 'complete' | 'error';
   taskId: string;
   data?: {
-    result?: SerializedMesh;
-    [key: string]: any;
+    result?: SerializedMesh | OctreeNode;
+    cellCount?: number;
   };
   progress?: number;
   error?: string;
