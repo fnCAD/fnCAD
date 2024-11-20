@@ -15,10 +15,19 @@ export class RendererManager {
 
   private readonly FOV = 45;
 
+  private taskInfo: HTMLDivElement;
+  private taskProgress: HTMLDivElement;
   private progressBar: HTMLDivElement;
 
   constructor(private previewPane: HTMLElement) {
+    this.taskInfo = document.querySelector('.task-info')!;
+    this.taskProgress = document.querySelector('.task-progress')!;
     this.progressBar = this.createProgressBar();
+    
+    // Initialize task progress bar
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    this.taskProgress.appendChild(bar);
     // Initialize scenes
     this.scene = new THREE.Scene();
     this.previewOverlayScene = new THREE.Scene();
@@ -101,11 +110,27 @@ export class RendererManager {
   }
 
   updateProgress(progress: TaskProgress) {
+    const bar = this.taskProgress.querySelector('.bar') as HTMLDivElement;
+    
     if (progress.status === 'running') {
-      this.progressBar.style.display = 'block';
-      this.progressBar.style.width = `${progress.progress * 100}%`;
+      this.taskInfo.textContent = `${progress.type === 'octree' ? 'Building Octree' : 'Generating Mesh'}...`;
+      this.taskProgress.style.display = 'block';
+      bar.style.width = `${progress.progress * 100}%`;
+    } else if (progress.status === 'completed') {
+      this.taskInfo.textContent = `${progress.type === 'octree' ? 'Octree' : 'Mesh'} Complete`;
+      setTimeout(() => {
+        this.taskInfo.textContent = '';
+        this.taskProgress.style.display = 'none';
+      }, 2000);
+    } else if (progress.status === 'failed') {
+      this.taskInfo.textContent = `Error: ${progress.error || 'Task failed'}`;
+      this.taskProgress.style.display = 'none';
+      setTimeout(() => {
+        this.taskInfo.textContent = '';
+      }, 5000);
     } else {
-      this.progressBar.style.display = 'none';
+      this.taskInfo.textContent = '';
+      this.taskProgress.style.display = 'none';
     }
   }
 
