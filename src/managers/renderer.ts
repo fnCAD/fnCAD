@@ -270,57 +270,49 @@ export class RendererManager {
     }
   }
 
-  updateMesh(meshData: { geometry: any, material: any, userData?: any } | null) {
-    console.log('Updating mesh in renderer:', meshData ? 'new mesh' : 'removing mesh');
-    
+  updateMesh(meshData: SerializedMesh | null) {
     // Remove existing mesh
     this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => {
       const isMesh = child instanceof THREE.Mesh && child.userData.isSdfMesh;
       if (isMesh) {
-        console.log('Removing existing mesh');
-        if (child.geometry) {
-          child.geometry.dispose();
-        }
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(m => m?.dispose());
-          } else {
-            child.material.dispose();
-          }
+        child.geometry.dispose();
+        if (child.material instanceof THREE.Material) {
+          child.material.dispose();
         }
       }
       return !isMesh;
     });
 
-    // Add new mesh if provided
     if (meshData) {
-      console.log('Adding new mesh to scene');
-      
-      // Reconstruct mesh from serialized data
       const geometry = new THREE.BufferGeometry();
-      const attributes = meshData.geometry.data.attributes;
       
-      // Set position attribute
+      // Set vertices
       geometry.setAttribute('position', 
-        new THREE.Float32BufferAttribute(attributes.position.array, 3));
+        new THREE.Float32BufferAttribute(meshData.vertices, 3));
       
-      // Set index if present
-      if (meshData.geometry.data.index) {
-        geometry.setIndex(
-          new THREE.Uint32BufferAttribute(meshData.geometry.data.index.array, 1)
-        );
-      }
+      // Set indices
+      geometry.setIndex(meshData.indices);
       
-      // Compute normals if not present
-      if (!attributes.normal) {
+      // Set normals or compute them
+      if (meshData.normals) {
+        geometry.setAttribute('normal',
+          new THREE.Float32BufferAttribute(meshData.normals, 3));
+      } else {
         geometry.computeVertexNormals();
       }
       
-      const material = new THREE.MeshPhongMaterial(meshData.material);
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.userData = meshData.userData || {};
-      mesh.userData.isSdfMesh = true;
+      const material = new THREE.MeshPhongMaterial({
+        color: 0xffd700,
+        side: THREE.DoubleSide,
+        flatShading: true,
+        emissive: 0x222222,
+        shininess: 30,
+        transparent: true,
+        opacity: 0.8
+      });
       
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.userData.isSdfMesh = true;
       this.previewOverlayScene.add(mesh);
     }
   }

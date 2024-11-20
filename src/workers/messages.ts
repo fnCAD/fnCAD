@@ -27,7 +27,10 @@ export type WorkerTask = OctreeTask | MeshTask;
 export interface WorkerMessage {
   type: 'start' | 'progress' | 'complete' | 'error';
   taskId: string;
-  data?: any;
+  data?: {
+    result?: SerializedMesh;
+    [key: string]: any;
+  };
   progress?: number;
   error?: string;
 }
