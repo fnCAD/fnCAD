@@ -45,6 +45,19 @@ export class StateManager {
       
       if (progress.status === 'completed' && progress.result) {
         console.log('Task completed with result:', progress.type);
+        
+        // Handle completed tasks based on type
+        switch (progress.type) {
+          case 'octree':
+            console.log('Setting octree result');
+            this.setCurrentOctree(progress.result);
+            this.setCellCount(progress.result.getCellCount());
+            break;
+          case 'mesh':
+            console.log('Setting mesh result');
+            this.setCurrentMesh(progress.result);
+            break;
+        }
       }
     }
   }
