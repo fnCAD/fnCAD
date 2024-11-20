@@ -60,30 +60,9 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       const ast = parseSDF(sdfExpr);
       
       console.log('Creating root octree node at origin with size 65536');
-          evaluate: function(context: Record<string, number>): number {
-            if (this.type === 'Number') {
-              return this.value;
-            } else if (this.type === 'Variable') {
-              return context[this.name];
-            } else if (this.type === 'BinaryOp') {
-              const left = this.left.evaluate(context);
-              const right = this.right.evaluate(context);
-              switch (this.operator) {
-                case '+': return left + right;
-                case '-': return left - right;
-                case '*': return left * right;
-                case '/': return left / right;
-                default: throw new Error(`Unknown operator ${this.operator}`);
-              }
-            } else if (this.type === 'UnaryOp') {
-              const operand = this.operand.evaluate(context);
-              switch (this.operator) {
-                case '-': return -operand;
-                default: throw new Error(`Unknown operator ${this.operator}`);
-              }
-            }
-            throw new Error(`Unknown node type ${this.type}`);
-          },
+      
+      // Create root octree node
+      const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
           evaluateInterval: function(context: Record<string, Interval>): Interval {
             if (this.type === 'Number') {
               return new Interval(this.value, this.value);
