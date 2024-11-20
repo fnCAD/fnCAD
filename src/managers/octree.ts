@@ -47,7 +47,6 @@ export class OctreeManager {
       });
 
       if (task.status === 'completed' && task.result) {
-        console.log('Received octree data:', task.result);
         // Reconstruct OctreeNode from serialized data
         const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
           if (!data) {
