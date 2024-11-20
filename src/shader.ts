@@ -20,15 +20,16 @@ export function generateShader(ast: Node): string {
     }
 
     float smooth_union(float d1, float d2, float r) {
-      // For points far from both shapes (> 10*radius), just use regular min
-      float minDist = min(d1, d2);
-      if (minDist > r * 10.0) {
-        return minDist;
+      // If distances are very different (> 10*radius apart), just use min
+      float diff = abs(d1 - d2);
+      if (diff > r * 10.0) {
+        return min(d1, d2);
       }
 
       // Otherwise compute the smooth union
       // First shift distances to avoid overflow
       float k = 1.0/r;
+      float minDist = min(d1, d2);
       float d1_shifted = d1 - minDist;
       float d2_shifted = d2 - minDist;
       return -log(exp(-k * d1_shifted) + exp(-k * d2_shifted))/k + minDist;
