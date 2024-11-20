@@ -50,15 +50,15 @@ export class OctreeNode {
   constructor(
     public center: THREE.Vector3,
     public size: number,
-    _state: CellState,
+    state: CellState,
     public parent: OctreeNode | null = null,
     public octant: number = -1
   ) {
     // Validate size
-    // Validate size
     if (size <= 0) {
       throw new Error(`Invalid octree node size: ${size}`);
     }
+    this.state = state;
   }
 
   private getNeighborOctant(octant: number, direction: Direction): number {

@@ -89,7 +89,10 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     // Ensure we send a proper OctreeNode instance with all required data
     const serializeNode = (node: OctreeNode): any => {
       // Ensure state is explicitly included and typed
-      const state = typeof node.state === 'number' ? node.state : 0; // Default to Outside if undefined
+      if (typeof node.state !== 'number') {
+        throw new Error(`Invalid octree state: ${node.state}`);
+      }
+      const state = node.state;
       return {
         center: {
           x: node.center.x,
