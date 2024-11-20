@@ -58,18 +58,23 @@ export class OctreeManager {
 
           const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
           
-          const node = new OctreeNode(
+          // Create node with proper prototype chain
+          const node = Object.assign(new OctreeNode(
             center,
             data.size,
             data.state,
             parent,
             data.octant
-          );
+          ), {
+            // Restore any additional properties from serialized data
+            children: new Array(8).fill(null)
+          });
           
           if (!Array.isArray(data.children)) {
             throw new Error('Invalid children array in octree data');
           }
 
+          // Recursively reconstruct children
           node.children = data.children.map((child: any) => 
             child ? reconstructOctree(child, node) : null
           );
