@@ -31,7 +31,7 @@ function vectorToDirection(direction: THREE.Vector3): Direction {
 
 export class OctreeNode {
   children: (OctreeNode | null)[] = new Array(8).fill(null);
-  state: CellState;
+  state!: CellState;
 
   dup(): OctreeNode {
     const copy = new OctreeNode(
@@ -50,7 +50,7 @@ export class OctreeNode {
   constructor(
     public center: THREE.Vector3,
     public size: number,
-    public state: CellState,
+    state: CellState,
     public parent: OctreeNode | null = null,
     public octant: number = -1
   ) {
@@ -208,7 +208,6 @@ export class OctreeNode {
     renderSettings?: OctreeRenderSettings,
     onProgress?: (cells: number) => void
   ): number {
-    const startBudget = cellBudget;
     let totalCells = 1;
     const newSize = this.size / 2;
 

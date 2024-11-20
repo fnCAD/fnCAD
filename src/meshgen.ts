@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SerializedMesh } from './workers/mesh_types';
 import { OctreeNode, Direction, CellState } from './octree';
 
 export class MeshGenerator {

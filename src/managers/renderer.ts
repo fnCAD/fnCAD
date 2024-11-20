@@ -233,8 +233,8 @@ export class RendererManager {
     
     // Check for shader compilation errors
     const gl = this.renderer.getContext();
-    const program = this.material.program;
-    if (program?.fragmentShader) {
+    const program = (this.material as any).program;
+    if (program && program.fragmentShader) {
       const status = gl.getShaderParameter(program.fragmentShader, gl.COMPILE_STATUS);
       if (!status) {
         const error = gl.getShaderInfoLog(program.fragmentShader);
@@ -252,7 +252,6 @@ export class RendererManager {
   updateOctreeVisualization(octree: OctreeNode, settings: OctreeRenderSettings, visible: boolean = true) {
 
     // Remove existing octree visualization
-    const previousCount = this.previewOverlayScene.children.length;
     this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => 
       !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
     );
@@ -278,7 +277,11 @@ export class RendererManager {
     
     if (existingMesh) {
       existingMesh.geometry.dispose();
-      existingMesh.material.dispose();
+      if (Array.isArray(existingMesh.material)) {
+        existingMesh.material.forEach(m => m.dispose());
+      } else {
+        existingMesh.material.dispose();
+      }
       this.previewOverlayScene.remove(existingMesh);
     }
 

@@ -3,10 +3,11 @@ import Split from 'split.js'
 import { getRuntimeBasePath } from './utils/runtime-base'
 import { downloadSTL } from './stlexporter'
 import { StateManager } from './managers/state'
+import { TaskProgress } from './workers/task_types'
 import { OctreeManager } from './managers/octree'
 import { SettingsManager } from './managers/settings'
 import { RendererManager } from './managers/renderer'
-import { EditorView } from '@codemirror/view'
+import { EditorView, ViewUpdate } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { javascript } from '@codemirror/lang-javascript'
 import { basicSetup } from 'codemirror'
@@ -44,7 +45,7 @@ translate(2, 0, 0) {
     extensions: [
       basicSetup,
       javascript(),
-      EditorView.updateListener.of(update => {
+      EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
           stateManager.updateEditorContent(update.state.doc.toString());
           updateOctree();

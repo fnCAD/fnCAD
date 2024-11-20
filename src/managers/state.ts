@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { Material } from 'three';
 import { OctreeNode } from '../octree';
 import { Node as SdfNode } from '../sdf_expressions/ast';
 import { TaskQueue } from '../workers/tasks';
