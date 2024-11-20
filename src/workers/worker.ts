@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WorkerMessage, WorkerTask, TaskProgress } from './messages';
+import { Interval } from '../interval';
 
 // Store active tasks
 const activeTasks = new Map<string, TaskProgress>();
