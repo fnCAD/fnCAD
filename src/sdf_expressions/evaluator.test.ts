@@ -67,13 +67,6 @@ describe('Expression Evaluation', () => {
     const intContext = new GLSLContext(intGen);
     const intVarName = intAst.toGLSL(intContext);
     expect(intGen.generateCode()).toMatch(/float var\d+ = 42\.0;/);
-
-    // Test negative integers
-    const negAst = parse('-5');
-    const negGen = new GLSLGenerator();
-    const negContext = new GLSLContext(negGen);
-    const negVarName = negAst.toGLSL(negContext);
-    expect(negGen.generateCode()).toMatch(/float var\d+ = -5\.0;/);
   });
 
   it('handles expressions starting with unary minus', () => {
