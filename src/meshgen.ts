@@ -141,7 +141,7 @@ export class MeshGenerator {
                 }
                 
                 // Evaluate SDF at vertex position
-                const distance = sdf.evaluate({
+                const distance = this.sdf.evaluate({
                     x: vertex.x,
                     y: vertex.y,
                     z: vertex.z
@@ -150,12 +150,12 @@ export class MeshGenerator {
                 // Calculate gradient using finite differences
                 const h = 0.0001; // Small offset for gradient calculation
                 const gradient = new THREE.Vector3(
-                    (sdf.evaluate({x: vertex.x + h, y: vertex.y, z: vertex.z}) - 
-                     sdf.evaluate({x: vertex.x - h, y: vertex.y, z: vertex.z})) / (2 * h),
-                    (sdf.evaluate({x: vertex.x, y: vertex.y + h, z: vertex.z}) - 
-                     sdf.evaluate({x: vertex.x, y: vertex.y - h, z: vertex.z})) / (2 * h),
-                    (sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z + h}) - 
-                     sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z - h})) / (2 * h)
+                    (this.sdf.evaluate({x: vertex.x + h, y: vertex.y, z: vertex.z}) - 
+                     this.sdf.evaluate({x: vertex.x - h, y: vertex.y, z: vertex.z})) / (2 * h),
+                    (this.sdf.evaluate({x: vertex.x, y: vertex.y + h, z: vertex.z}) - 
+                     this.sdf.evaluate({x: vertex.x, y: vertex.y - h, z: vertex.z})) / (2 * h),
+                    (this.sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z + h}) - 
+                     this.sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z - h})) / (2 * h)
                 );
                 gradient.normalize();
                 
