@@ -63,35 +63,6 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       
       // Create root octree node
       const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
-          evaluateInterval: function(context: Record<string, Interval>): Interval {
-            if (this.type === 'Number') {
-              return new Interval(this.value, this.value);
-            } else if (this.type === 'Variable') {
-              return context[this.name];
-            } else if (this.type === 'BinaryOp') {
-              const left = this.left.evaluateInterval(context);
-              const right = this.right.evaluateInterval(context);
-              switch (this.operator) {
-                case '+': return left.add(right);
-                case '-': return left.sub(right);
-                case '*': return left.mul(right);
-                case '/': return left.div(right);
-                default: throw new Error(`Unknown operator ${this.operator}`);
-              }
-            } else if (this.type === 'UnaryOp') {
-              const operand = this.operand.evaluateInterval(context);
-              switch (this.operator) {
-                case '-': return operand.neg();
-                default: throw new Error(`Unknown operator ${this.operator}`);
-              }
-            }
-            throw new Error(`Unknown node type ${this.type}`);
-          }
-        };
-        console.log('Reconstructed node:', node);
-        return node;
-      }
-      return value;
     });
     
     console.log('Parsed AST:', ast);
