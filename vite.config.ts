@@ -18,6 +18,15 @@ export default defineConfig({
         }
       }
     },
+    rollupOptions: {
+      output: {
+        format: 'amd',
+        amd: {
+          autoId: true,
+          define: 'define'
+        }
+      }
+    },
     // Log each asset and its size
     manifest: true,
     // Show build time stats
