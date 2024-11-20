@@ -85,6 +85,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     
     // Subdivide with progress tracking
     await octree.subdivide(
+      sdf,
       task.minSize, 
       task.cellBudget,
       undefined, // renderSettings not needed in worker
