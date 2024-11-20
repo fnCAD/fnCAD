@@ -54,8 +54,19 @@ export class OctreeNode {
     public parent: OctreeNode | null = null,
     public octant: number = -1
   ) {
+    // Validate size
+    if (size <= 0) {
+      throw new Error(`Invalid octree node size: ${size}`);
+    }
+    if (size > 1000) {
+      throw new Error(`Octree node size too large: ${size}`);
+    }
+
+    console.log(`Creating octree node at ${center.toArray()} with size ${size}`);
+    
     // Compute and cache state during construction
     const interval = this.evaluate();
+    console.log(`Node interval evaluation: ${interval.min} to ${interval.max}`);
     if (interval.max < 0) {
       this.state = CellState.Inside;
     } else if (interval.min > 0) {

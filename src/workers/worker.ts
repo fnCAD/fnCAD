@@ -51,22 +51,31 @@ import { parse as parseSDF } from '../sdf_expressions/parser';
 
 async function processOctreeTask(taskId: string, task: OctreeTask) {
   try {
+    console.log('Received SDF expression:', task.sdfExpression);
+    
     // Parse SDF expression back into AST with methods
     const ast = JSON.parse(task.sdfExpression, (key, value) => {
       if (value && typeof value === 'object' && value.type) {
+        console.log('Reconstructing node:', value);
         // Reconstruct node with evaluate and evaluateInterval methods
-        return {
+        const node = {
           ...value,
           evaluate: function(context: Record<string, number>): number {
+            console.log('Evaluating node:', this, 'with context:', context);
             return this.value;
           },
           evaluateInterval: function(context: Record<string, Interval>): Interval {
+            console.log('Evaluating interval:', this, 'with context:', context);
             return new Interval(this.value, this.value);
           }
         };
+        console.log('Reconstructed node:', node);
+        return node;
       }
       return value;
     });
+    
+    console.log('Parsed AST:', ast);
     
     console.log('Starting octree generation with settings:', {
       minSize: task.minSize,
