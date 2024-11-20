@@ -220,10 +220,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 }
 // Smooth blending operations using exponential smoothing with distance threshold
 export function smooth_union(expr1: string, expr2: string, radius: number): string {
-  const k = 1/radius;
-  return `(min(${expr1}, ${expr2}) > ${radius}*2.0 ? ` +
-         `min(${expr1}, ${expr2}) : ` +
-         `-log(exp(-${k}*${expr1}) + exp(-${k}*${expr2})) * ${radius})`;
+  return `smooth_union(${expr1}, ${expr2}, ${radius})`;
 }
 
 export function smooth_intersection(expr1: string, expr2: string, radius: number): string {
