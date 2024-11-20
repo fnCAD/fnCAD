@@ -61,12 +61,52 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
         const node = {
           ...value,
           evaluate: function(context: Record<string, number>): number {
-            console.log('Evaluating node:', this, 'with context:', context);
-            return this.value;
+            if (this.type === 'Number') {
+              return this.value;
+            } else if (this.type === 'Variable') {
+              return context[this.name];
+            } else if (this.type === 'BinaryOp') {
+              const left = this.left.evaluate(context);
+              const right = this.right.evaluate(context);
+              switch (this.operator) {
+                case '+': return left + right;
+                case '-': return left - right;
+                case '*': return left * right;
+                case '/': return left / right;
+                default: throw new Error(`Unknown operator ${this.operator}`);
+              }
+            } else if (this.type === 'UnaryOp') {
+              const operand = this.operand.evaluate(context);
+              switch (this.operator) {
+                case '-': return -operand;
+                default: throw new Error(`Unknown operator ${this.operator}`);
+              }
+            }
+            throw new Error(`Unknown node type ${this.type}`);
           },
           evaluateInterval: function(context: Record<string, Interval>): Interval {
-            console.log('Evaluating interval:', this, 'with context:', context);
-            return new Interval(this.value, this.value);
+            if (this.type === 'Number') {
+              return new Interval(this.value, this.value);
+            } else if (this.type === 'Variable') {
+              return context[this.name];
+            } else if (this.type === 'BinaryOp') {
+              const left = this.left.evaluateInterval(context);
+              const right = this.right.evaluateInterval(context);
+              switch (this.operator) {
+                case '+': return left.add(right);
+                case '-': return left.sub(right);
+                case '*': return left.mul(right);
+                case '/': return left.div(right);
+                default: throw new Error(`Unknown operator ${this.operator}`);
+              }
+            } else if (this.type === 'UnaryOp') {
+              const operand = this.operand.evaluateInterval(context);
+              switch (this.operator) {
+                case '-': return operand.neg();
+                default: throw new Error(`Unknown operator ${this.operator}`);
+              }
+            }
+            throw new Error(`Unknown node type ${this.type}`);
           }
         };
         console.log('Reconstructed node:', node);
