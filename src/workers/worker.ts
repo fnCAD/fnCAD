@@ -141,14 +141,17 @@ async function processMeshTask(taskId: string, task: MeshTask) {
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
     
+    console.log('Starting mesh generation with optimization:', task.optimize);
     const meshGen = new MeshGenerator(octree, sdf, task.optimize);
     
     // Add progress tracking to mesh generation
     meshGen.onProgress = (progress: number) => {
+      console.log(`Mesh generation progress: ${(progress * 100).toFixed(1)}%`);
       updateProgress(taskId, progress);
     };
     
     const serializedMesh = meshGen.generate();
+    console.log('Mesh generation complete');
     sendComplete(taskId, { result: serializedMesh });
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');

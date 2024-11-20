@@ -19,18 +19,25 @@ export class MeshGenerator {
     }
 
     generate(): SerializedMesh {
+        console.log('Starting mesh generation');
+        
         // Phase 1: Collect surface cells (0-40%)
         this.reportProgress(0);
+        console.log('Collecting surface cells...');
         this.collectSurfaceCells(this.octree);
+        console.log(`Collected ${this.vertices.length} vertices`);
         this.reportProgress(0.4);
 
         // Phase 2: Optimize if enabled (40-80%)
         if (this.optimize) {
+            console.log('Starting vertex optimization');
             this.optimizeVertices(true);
+            console.log('Vertex optimization complete');
             this.reportProgress(0.8);
         }
 
         // Phase 3: Create final mesh data (80-100%)
+        console.log('Creating final mesh data');
         const positions = new Float32Array(this.vertices.length * 3);
         this.vertices.forEach((vertex, i) => {
             positions[i * 3] = vertex.x;
