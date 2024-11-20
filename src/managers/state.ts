@@ -53,14 +53,22 @@ export class StateManager {
         // Handle completed tasks based on type
         switch (progress.type) {
           case 'octree':
+            console.log('Handling octree task completion');
+            console.log('Result:', progress.result);
+            if (!progress.result) {
+              console.error('No octree result received');
+              return;
+            }
             console.log('Setting octree result');
             this.setCurrentOctree(progress.result);
+            console.log('Setting cell count');
             this.setCellCount(progress.result.getCellCount());
-            // Update renderer with octree visualization
+            console.log('Updating octree visualization');
             this.rendererManager.updateOctreeVisualization(
               progress.result,
               true // Show the octree by default when complete
             );
+            console.log('Octree task handling complete');
             break;
           case 'mesh':
             console.log('Setting mesh result');
