@@ -24,21 +24,20 @@ export class MeshGenerator {
         this.collectSurfaceCells(this.octree);
         this.reportProgress(0.4);
 
-        // Phase 2: Create initial mesh data (40-60%)
+        // Phase 2: Optimize if enabled (40-80%)
+        if (this.optimize) {
+            this.optimizeVertices(true);
+            this.reportProgress(0.8);
+        }
+
+        // Phase 3: Create final mesh data (80-100%)
         const positions = new Float32Array(this.vertices.length * 3);
         this.vertices.forEach((vertex, i) => {
             positions[i * 3] = vertex.x;
             positions[i * 3 + 1] = vertex.y;
             positions[i * 3 + 2] = vertex.z;
         });
-
-        // Phase 3: Optimize if enabled (60-100%)
-        if (this.optimize) {
-            this.optimizeVertices(true);
-            this.reportProgress(1.0);
-        } else {
-            this.reportProgress(1.0);
-        }
+        this.reportProgress(1.0);
 
         return {
             vertices: Array.from(positions),
