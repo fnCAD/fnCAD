@@ -87,15 +87,27 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     
     
     // Ensure we send a proper OctreeNode instance with all required data
-    const serializeNode = (node: OctreeNode): any => ({
-      center: node.center,
-      size: node.size,
-      state: node.state,
-      children: node.children.map(child => child ? serializeNode(child) : null),
-      octant: node.octant
-    });
+    const serializeNode = (node: OctreeNode): any => {
+      // Ensure state is explicitly included and typed
+      const state = typeof node.state === 'number' ? node.state : 0; // Default to Outside if undefined
+      return {
+        center: {
+          x: node.center.x,
+          y: node.center.y,
+          z: node.center.z
+        },
+        size: node.size,
+        state: state,
+        children: node.children.map(child => child ? serializeNode(child) : null),
+        octant: node.octant
+      };
+    };
 
     const serializedOctree = serializeNode(octree);
+    
+    // Debug logging
+    console.log('Serialized octree state:', serializedOctree.state);
+    console.log('Original octree state:', octree.state);
 
     const result = { 
       result: serializedOctree,
