@@ -60,7 +60,7 @@
 
 ## 8. Export and UI Polish
 - [x] STL export
-- [ ] Progress indicators
+- [x] Progress indicators
 - [x] Error handling
 - [x] UI controls for all stages
 - [x] Performance settings
