@@ -67,17 +67,15 @@ export class StateManager {
             }
             
             // Reconstruct OctreeNode from serialized data
-            const reconstructOctree = (data: any): OctreeNode => {
-              const node = new OctreeNode(
-                new THREE.Vector3(data.center.x, data.center.y, data.center.z),
-                data.size,
-                data.state,
-                null,
-                data.octant
-              );
+            const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
+              const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
+              const node = new OctreeNode(center, data.size, data.state, parent, data.octant);
+              
+              // Recursively reconstruct children with proper parent references
               node.children = data.children.map((child: any) => 
-                child ? reconstructOctree(child) : null
+                child ? reconstructOctree(child, node) : null
               );
+              
               return node;
             };
 
