@@ -54,12 +54,14 @@ export class StateManager {
   }
 
   setCurrentMesh(mesh: THREE.Mesh | null) {
-    if (this.currentMesh) {
+    if (this.currentMesh && this.currentMesh.geometry) {
       this.currentMesh.geometry.dispose();
-      if (this.currentMesh.material instanceof Material) {
-        this.currentMesh.material.dispose();
-      } else {
-        this.currentMesh.material.forEach(m => m.dispose());
+      if (this.currentMesh.material) {
+        if (this.currentMesh.material instanceof Material) {
+          this.currentMesh.material.dispose();
+        } else if (Array.isArray(this.currentMesh.material)) {
+          this.currentMesh.material.forEach(m => m?.dispose());
+        }
       }
     }
     this.currentMesh = mesh;
