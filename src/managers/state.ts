@@ -59,10 +59,15 @@ export class StateManager {
               console.error('No octree result received');
               return;
             }
-            console.log('Setting octree result');
+            console.log('Setting octree result:', progress.result);
+            if (!progress.result || typeof progress.result.getCellCount !== 'function') {
+              console.error('Invalid octree result:', progress.result);
+              return;
+            }
             this.setCurrentOctree(progress.result);
-            console.log('Setting cell count');
-            this.setCellCount(progress.result.getCellCount());
+            const cellCount = progress.result.getCellCount();
+            console.log('Setting cell count:', cellCount);
+            this.setCellCount(cellCount);
             console.log('Updating octree visualization');
             this.rendererManager.updateOctreeVisualization(
               progress.result,
