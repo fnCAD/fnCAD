@@ -2,13 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def smooth_union_exp(d1: np.ndarray, d2: np.ndarray, k: float) -> np.ndarray:
-    # For points far from both shapes (> 2*radius), just use regular min
-    minDist = np.minimum(d1, d2)
-    mask = minDist > 2.0/k  # Points where optimization applies
+    # If distances are very different (> 2*radius apart), just use min
+    diff = np.abs(d1 - d2)
+    mask = diff > 2.0/k
     
-    # Calculate both versions
-    smooth = -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
-    simple = np.minimum(d1, d2)
+    # For points where we'll blend:
+    # 1. Subtract the min to bring closer to origin
+    # 2. Do the smooth blend
+    # 3. Add the min back
+    minDist = np.minimum(d1, d2)
+    d1_shifted = d1 - minDist
+    d2_shifted = d2 - minDist
+    
+    smooth = -np.log(np.exp(-k*d1_shifted) + np.exp(-k*d2_shifted))/k + minDist
+    simple = minDist
     
     # Use mask to select between them
     result = np.where(mask, simple, smooth)
