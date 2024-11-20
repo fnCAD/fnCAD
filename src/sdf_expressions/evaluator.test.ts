@@ -56,16 +56,24 @@ describe('Expression Evaluation', () => {
 
   it('correctly formats numbers for GLSL', () => {
     const ast = parse('0.01');
-    const context = new GLSLContext(new GLSLGenerator());
-    expect(ast.toGLSL(context)).toMatch(/var\d+ = 0\.01/);
+    const gen = new GLSLGenerator();
+    const context = new GLSLContext(gen);
+    const varName = ast.toGLSL(context);
+    expect(gen.generateCode()).toMatch(/float var\d+ = 0\.01;/);
 
     // Test integer values get decimal point
     const intAst = parse('42');
-    expect(intAst.toGLSL(context)).toMatch(/var\d+ = 42\.0/);
+    const intGen = new GLSLGenerator();
+    const intContext = new GLSLContext(intGen);
+    const intVarName = intAst.toGLSL(intContext);
+    expect(intGen.generateCode()).toMatch(/float var\d+ = 42\.0;/);
 
     // Test negative integers
     const negAst = parse('-5');
-    expect(negAst.toGLSL(context)).toMatch(/var\d+ = -5\.0/);
+    const negGen = new GLSLGenerator();
+    const negContext = new GLSLContext(negGen);
+    const negVarName = negAst.toGLSL(negContext);
+    expect(negGen.generateCode()).toMatch(/float var\d+ = -5\.0;/);
   });
 
   it('handles expressions starting with unary minus', () => {
