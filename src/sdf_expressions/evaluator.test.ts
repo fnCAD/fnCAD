@@ -58,14 +58,14 @@ describe('Expression Evaluation', () => {
     const ast = parse('0.01');
     const gen = new GLSLGenerator();
     const context = new GLSLContext(gen);
-    const varName = ast.toGLSL(context);
+    ast.toGLSL(context);
     expect(gen.generateCode()).toMatch(/float var\d+ = 0\.01;/);
 
     // Test integer values get decimal point
     const intAst = parse('42');
     const intGen = new GLSLGenerator();
     const intContext = new GLSLContext(intGen);
-    const intVarName = intAst.toGLSL(intContext);
+    intAst.toGLSL(intContext);
     expect(intGen.generateCode()).toMatch(/float var\d+ = 42\.0;/);
   });
 

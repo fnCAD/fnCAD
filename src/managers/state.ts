@@ -51,7 +51,7 @@ export class StateManager {
     this.currentOctree = octree;
   }
 
-  setCurrentMesh(mesh: THREE.Mesh | null) {
+  setCurrentMesh(mesh: SerializedMesh | THREE.Mesh | null) {
     if (this.currentMesh) {
       if (this.currentMesh.geometry) {
         this.currentMesh.geometry.dispose();
