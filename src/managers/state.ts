@@ -59,11 +59,8 @@ export class StateManager {
       }
 
       if (this.currentMesh.material) {
-        if (this.currentMesh.material instanceof Material) {
-          this.currentMesh.material.dispose();
-        } else if (Array.isArray(this.currentMesh.material)) {
-          this.currentMesh.material.forEach(m => m?.dispose?.());
-        }
+        // We know it's a PhongMaterial from RendererManager
+        (this.currentMesh.material as THREE.Material).dispose();
       }
     }
 

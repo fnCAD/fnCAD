@@ -231,8 +231,8 @@ export class RendererManager {
     
     // Check for shader compilation errors
     const gl = this.renderer.getContext();
-    const program = (this.material as any).program;
-    if (program) {
+    const program = this.material.program;
+    if (program?.fragmentShader) {
       const status = gl.getShaderParameter(program.fragmentShader, gl.COMPILE_STATUS);
       if (!status) {
         const error = gl.getShaderInfoLog(program.fragmentShader);
@@ -269,16 +269,16 @@ export class RendererManager {
 
   updateMesh(meshData: SerializedMesh | null) {
     // Remove existing mesh
-    this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => {
-      const isMesh = child instanceof THREE.Mesh && child.userData.isSdfMesh;
-      if (isMesh) {
-        child.geometry.dispose();
-        if (child.material instanceof THREE.Material) {
-          child.material.dispose();
-        }
-      }
-      return !isMesh;
-    });
+    // Remove existing SDF mesh
+    const existingMesh = this.previewOverlayScene.children.find(
+      child => child instanceof THREE.Mesh && child.userData.isSdfMesh
+    ) as THREE.Mesh | undefined;
+    
+    if (existingMesh) {
+      existingMesh.geometry.dispose();
+      existingMesh.material.dispose();
+      this.previewOverlayScene.remove(existingMesh);
+    }
 
     if (meshData) {
       const geometry = new THREE.BufferGeometry();
