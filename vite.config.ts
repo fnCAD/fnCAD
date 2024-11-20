@@ -35,7 +35,7 @@ export default defineConfig({
         },
         manualChunks: {
           'three': ['three'],
-          'monaco-core': ['monaco-editor/esm/vs/editor/editor.api'],
+          'editor': ['@codemirror/basic-setup', '@codemirror/lang-javascript'],
           'split': ['split.js'],
           'core': [
             './src/sdf_expressions/parser.ts',
