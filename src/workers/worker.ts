@@ -73,7 +73,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       cellBudget: task.cellBudget
     });
 
-    // Create root octree node
+    console.log('Creating root octree node at origin with size 65536');
     const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     
     // Track subdivision progress
@@ -82,6 +82,9 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       totalCells = cells;
       const progress = Math.min(totalCells / task.cellBudget, 0.99);
       console.log(`Octree subdivision progress: ${(progress * 100).toFixed(1)}% (${totalCells} cells)`);
+      if (cells % 1000 === 0) {
+        console.log(`Cell states: Inside=${octree.countInside()}, Outside=${octree.countOutside()}, Boundary=${octree.countBoundary()}`);
+      }
       updateProgress(taskId, progress);
     };
     

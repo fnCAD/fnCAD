@@ -313,6 +313,33 @@ export class OctreeNode {
     }
     return count;
   }
+
+  countInside(): number {
+    if (this.state === CellState.Inside) return 1;
+    let count = 0;
+    for (const child of this.children) {
+      if (child) count += child.countInside();
+    }
+    return count;
+  }
+
+  countOutside(): number {
+    if (this.state === CellState.Outside) return 1;
+    let count = 0;
+    for (const child of this.children) {
+      if (child) count += child.countOutside();
+    }
+    return count;
+  }
+
+  countBoundary(): number {
+    if (this.state === CellState.Boundary || this.state === CellState.BoundarySubdivided) return 1;
+    let count = 0;
+    for (const child of this.children) {
+      if (child) count += child.countBoundary();
+    }
+    return count;
+  }
 }
 export class OctreeRenderSettings {
   constructor(
