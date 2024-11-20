@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { WorkerMessage, WorkerTask, TaskProgress } from './messages';
 
 // Store active tasks
