@@ -20,19 +20,14 @@ export function generateShader(ast: Node): string {
     }
 
     float smooth_union(float d1, float d2, float r) {
-      // If distances are very different (> 10*radius apart), just use min
-      float diff = abs(d1 - d2);
-      if (diff > r * 10.0) {
+      // If outside the central region, just use min.
+      float x = abs(d1 - d2) / r;
+      if (x > 10.0) {
         return min(d1, d2);
       }
-
       // Otherwise compute the smooth union
-      // First shift distances to avoid overflow
-      float k = 1.0/r;
-      float minDist = min(d1, d2);
-      float d1_shifted = d1 - minDist;
-      float d2_shifted = d2 - minDist;
-      return -log(exp(-k * d1_shifted) + exp(-k * d2_shifted))/k + minDist;
+      float offset = -r * log(1.0 + exp(-x));
+      return min(d1, d2) + offset;
     }
 
     float scene(vec3 pos) {
