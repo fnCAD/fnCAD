@@ -248,7 +248,6 @@ export class OctreeNode {
     
     // Create 8 children with equal portion of remaining budget
     console.log(`Subdividing cell at ${this.center.toArray()} with size ${this.size}`);
-    let totalChildCells = 0;
     
     for (let i = 0; i < 8; i++) {
       const [x, y, z] = offsets[i];
@@ -268,7 +267,7 @@ export class OctreeNode {
       
       console.log(`Processing child ${i} at ${childCenter.toArray()} with state ${CellState[child.state]}`);
       const cellsCreated = child.subdivide(sdf, minSize, cellBudget, settings);
-      totalChildCells += cellsCreated;
+      totalCells += cellsCreated;
       cellBudget -= cellsCreated;
       
       if (cellBudget <= 0) {
@@ -277,7 +276,7 @@ export class OctreeNode {
       }
     }
     
-    console.log(`Created ${totalChildCells} cells in children of ${this.center.toArray()}`);
+    console.log(`Created ${totalCells} cells in children of ${this.center.toArray()}`);
 
     // Report progress if callback provided
     if (onProgress) {
