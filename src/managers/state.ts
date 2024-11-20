@@ -43,8 +43,9 @@ export class StateManager {
     // Only handle progress if this is the active task
     if (progress.taskId === this.activeTaskId) {
       console.log('Task matches active task ID:', this.activeTaskId);
-      console.log('Updating renderer with progress');
+      console.log('Updating renderer with progress:', progress);
       this.rendererManager.updateProgress(progress);
+      console.log('Renderer progress updated');
       
       if (progress.status === 'completed' && progress.result) {
         console.log('Task completed with result:', progress.type);

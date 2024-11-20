@@ -111,11 +111,14 @@ export class RendererManager {
 
   updateProgress(progress: TaskProgress) {
     const bar = this.taskProgress.querySelector('.bar') as HTMLDivElement;
+    console.log('Updating renderer progress:', progress);
     
     if (progress.status === 'running') {
       this.taskInfo.textContent = `${progress.type === 'octree' ? 'Building Octree' : 'Generating Mesh'}...`;
       this.taskProgress.style.display = 'block';
-      bar.style.width = `${progress.progress * 100}%`;
+      const width = `${Math.round(progress.progress * 100)}%`;
+      console.log('Setting progress bar width:', width);
+      bar.style.width = width;
     } else if (progress.status === 'completed') {
       this.taskInfo.textContent = `${progress.type === 'octree' ? 'Octree' : 'Mesh'} Complete`;
       setTimeout(() => {
