@@ -25,8 +25,11 @@ export class TaskQueue {
         task.progress = message.progress || 0;
         break;
       case 'complete':
+        console.log('Received complete message:', message);
         task.status = 'completed';
         task.progress = 1;
+        task.result = message.data?.result;
+        console.log('Updated task with result:', task);
         break;
       case 'error':
         task.status = 'failed';

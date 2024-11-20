@@ -37,7 +37,8 @@ export class StateManager {
       taskId: progress.taskId,
       type: progress.type,
       status: progress.status,
-      progress: progress.progress
+      progress: progress.progress,
+      result: progress.result ? 'present' : 'missing'
     });
 
     // Only handle progress if this is the active task
