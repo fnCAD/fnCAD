@@ -278,9 +278,9 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
         const [d1, d2, r] = evaluatedArgs;
         
-        // For points far from both shapes (> 2*radius), just use regular min
+        // For points far from both shapes (> 10*radius), just use regular min
         const minDist = Math.min(d1, d2);
-        if (minDist > r * 2.0) {
+        if (minDist > r * 10.0) {
           return Math.min(d1, d2);
         }
 

@@ -20,8 +20,8 @@ export function generateShader(ast: Node): string {
     }
 
     float smooth_union(float d1, float d2, float r) {
-      // For points far from the intersection (> 2*radius), just use regular min
-      if (max(d1, d2) > r * 2.0) {
+      // For points far from the intersection (> 10*radius), just use regular min
+      if (max(d1, d2) > r * 10.0) {
         return min(d1, d2);
       }
 

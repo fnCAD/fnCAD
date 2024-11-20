@@ -74,9 +74,9 @@ export class Interval {
 
   // Special SDF operations
   smooth_union(other: Interval, radius: number): Interval {
-    // For points far from both shapes (> 2*radius), just use regular min
+    // For points far from both shapes (> 10*radius), just use regular min
     const minDist = Math.min(this.min, other.min);
-    if (minDist > radius * 2.0) {
+    if (minDist > radius * 10.0) {
       return new Interval(
         Math.min(this.min, other.min),
         Math.min(this.max, other.max)
