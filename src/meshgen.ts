@@ -131,8 +131,30 @@ export class MeshGenerator {
             
             for (let i = 0; i < this.vertices.length; i++) {
                 const vertex = this.vertices[i];
-                const distance = this.octree.evaluatePoint(vertex);
-                const gradient = this.octree.evaluateGradient(vertex);
+                // Get the SDF from the octree's root node
+                const sdf = this.octree.sdf;
+                if (!sdf) {
+                    throw new Error('No SDF available for mesh optimization');
+                }
+                
+                // Evaluate SDF at vertex position
+                const distance = sdf.evaluate({
+                    x: vertex.x,
+                    y: vertex.y,
+                    z: vertex.z
+                });
+
+                // Calculate gradient using finite differences
+                const h = 0.0001; // Small offset for gradient calculation
+                const gradient = new THREE.Vector3(
+                    (sdf.evaluate({x: vertex.x + h, y: vertex.y, z: vertex.z}) - 
+                     sdf.evaluate({x: vertex.x - h, y: vertex.y, z: vertex.z})) / (2 * h),
+                    (sdf.evaluate({x: vertex.x, y: vertex.y + h, z: vertex.z}) - 
+                     sdf.evaluate({x: vertex.x, y: vertex.y - h, z: vertex.z})) / (2 * h),
+                    (sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z + h}) - 
+                     sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z - h})) / (2 * h)
+                );
+                gradient.normalize();
                 
                 // Move vertex along gradient to surface
                 const move = -distance;
