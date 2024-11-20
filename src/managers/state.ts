@@ -32,8 +32,20 @@ export class StateManager {
   }
 
   private handleTaskProgress(progress: TaskProgress) {
+    console.log('Received task progress:', {
+      taskId: progress.taskId,
+      type: progress.type,
+      status: progress.status,
+      progress: progress.progress
+    });
+
     if (progress.taskId === this.activeTaskId) {
+      console.log('Updating renderer with progress');
       this.rendererManager.updateProgress(progress);
+      
+      if (progress.status === 'completed' && progress.result) {
+        console.log('Task completed with result:', progress.type);
+      }
     }
   }
 

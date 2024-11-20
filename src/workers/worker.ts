@@ -81,12 +81,15 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     );
     
     console.log(`Octree generation complete with ${totalCells} cells`);
-    console.log('Sending octree result back to main thread');
+    console.log('Preparing to send octree result back to main thread');
     
-    sendComplete(taskId, { 
+    const result = { 
       result: octree,
       cellCount: totalCells
-    });
+    };
+    console.log('Sending octree result via postMessage');
+    sendComplete(taskId, result);
+    console.log('Octree result sent');
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');
   }
