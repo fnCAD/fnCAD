@@ -234,8 +234,8 @@ export class OctreeNode {
     // Decrement budget for this cell
     cellBudget--;
 
-    // Create 8 children
-    const half = newSize;
+    // Create 8 children with new size
+    const half = this.size/2;
     const offsets = [
       [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
       [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
