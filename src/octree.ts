@@ -236,8 +236,14 @@ export class OctreeNode {
     return this.state === CellState.Outside;
   }
 
-  subdivide(minSize: number = 0.1, cellBudget: number = 100000, renderSettings?: OctreeRenderSettings): number {
+  subdivide(
+    minSize: number = 0.1, 
+    cellBudget: number = 100000, 
+    renderSettings?: OctreeRenderSettings,
+    onProgress?: (cells: number) => void
+  ): number {
     const startBudget = cellBudget;
+    let totalCells = 1;
     const newSize = this.size / 2;
 
     // Create default settings if none provided
@@ -289,11 +295,24 @@ export class OctreeNode {
       cellBudget -= cellsCreated;
     }
 
-    // Return number of cells created (difference between start and end budget)
-    return startBudget - cellBudget;
+    // Report progress if callback provided
+    if (onProgress) {
+      onProgress(totalCells);
+    }
+
+    // Return number of cells created
+    return totalCells;
   }
 
-
+  getCellCount(): number {
+    let count = 1; // Count this node
+    for (const child of this.children) {
+      if (child) {
+        count += child.getCellCount();
+      }
+    }
+    return count;
+  }
 }
 export class OctreeRenderSettings {
   constructor(

@@ -10,31 +10,58 @@ export class OctreeManager {
     private rendererManager: RendererManager
   ) {}
 
-  updateOctree(
+  async updateOctree(
     minSize: number,
     cellBudget: number,
     renderSettings: OctreeRenderSettings
   ) {
     const ast = this.stateManager.parseContent();
     
-    // Create new octree
-    // NOTE: This large initial size (64k) is intentional and should not be changed!
-    // It provides sufficient resolution for complex shapes while maintaining performance
-    const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
-    
-    // Subdivide with current settings
-    const totalCells = octree.subdivide(minSize, cellBudget, renderSettings);
-    
-    // Update state
-    this.stateManager.setCurrentOctree(octree);
-    this.stateManager.setCellCount(totalCells);
+    // Create octree task
+    const taskId = this.stateManager.taskQueue.addTask({
+      type: 'octree',
+      minSize,
+      cellBudget,
+      sdfExpression: JSON.stringify(ast)
+    });
 
-    // Update visualization
-    const showOctree = this.stateManager.isOctreeVisible();
-    this.rendererManager.updateOctreeVisualization(
-      octree,
-      renderSettings,
-      showOctree
-    );
+    // Store active task
+    this.stateManager.setActiveTaskId(taskId);
+
+    try {
+      // Wait for task completion
+      const task = await new Promise<TaskProgress>((resolve, reject) => {
+        const unsubscribe = this.stateManager.taskQueue.onProgress((progress) => {
+          if (progress.taskId === taskId && 
+             (progress.status === 'completed' || progress.status === 'failed')) {
+            unsubscribe();
+            if (progress.status === 'failed') {
+              reject(new Error(progress.error));
+            } else {
+              resolve(progress);
+            }
+          }
+        });
+      });
+
+      if (task.status === 'completed' && task.result) {
+        const octree = task.result as OctreeNode;
+        
+        // Update state
+        this.stateManager.setCurrentOctree(octree);
+        this.stateManager.setCellCount(octree.getCellCount());
+
+        // Update visualization
+        const showOctree = this.stateManager.isOctreeVisible();
+        this.rendererManager.updateOctreeVisualization(
+          octree,
+          renderSettings,
+          showOctree
+        );
+      }
+    } catch (error) {
+      console.error('Octree generation failed:', error);
+      throw error;
+    }
   }
 }

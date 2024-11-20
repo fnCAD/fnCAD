@@ -49,32 +49,32 @@ import { parse as parseSDF } from '../sdf_expressions/parser';
 
 async function processOctreeTask(taskId: string, task: OctreeTask) {
   try {
-    // Parse SDF expression
-    const ast = parseSDF(task.sdfExpression);
+    // Parse SDF expression from JSON string
+    const ast = parseSDF(JSON.parse(task.sdfExpression));
     
     // Create root octree node
     const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
     
-    // Subdivide with progress reporting
+    // Track subdivision progress
     let totalCells = 0;
-    const subdivideWithProgress = (node: OctreeNode, depth: number) => {
-      totalCells++;
+    const onProgress = (cells: number) => {
+      totalCells = cells;
       updateProgress(taskId, Math.min(totalCells / task.cellBudget, 0.99));
-      
-      if (totalCells >= task.cellBudget) {
-        throw new Error('Cell budget exhausted');
-      }
-      
-      // Continue subdivision
-      const newSize = node.size / 2;
-      if (newSize >= task.minSize && node.state === CellState.Boundary) {
-        node.subdivide(task.minSize, task.cellBudget - totalCells);
-      }
     };
     
-    octree.subdivide(task.minSize, task.cellBudget);
+    // Subdivide with progress tracking
+    await octree.subdivide(
+      task.minSize, 
+      task.cellBudget,
+      undefined, // renderSettings not needed in worker
+      onProgress
+    );
     
-    sendComplete(taskId, { result: octree });
+    // Send completed octree back
+    sendComplete(taskId, { 
+      result: octree,
+      cellCount: totalCells
+    });
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');
   }
