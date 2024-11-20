@@ -54,21 +54,12 @@ import { parse as parseSDF } from '../sdf_expressions/parser';
 
 async function processOctreeTask(taskId: string, task: OctreeTask) {
   try {
-    console.log('Received source code:', task.source);
-    
     // Parse CAD code into SDF expression
     const cadAst = parseCAD(task.source);
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
     
-    console.log('Parsed AST:', sdf);
-    
-    console.log('Starting octree generation with settings:', {
-      minSize: task.minSize,
-      cellBudget: task.cellBudget
-    });
-
-    console.log('Creating root octree node at origin with size 65536');
+    console.log('Starting octree task with budget:', task.cellBudget);
     const octree = createOctreeNode(new THREE.Vector3(0, 0, 0), 65536, sdf);
     
     // Track subdivision progress
@@ -76,10 +67,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     const onProgress = (cells: number) => {
       totalCells = cells;
       const progress = Math.min(totalCells / task.cellBudget, 0.99);
-      console.log(`Octree subdivision progress: ${(progress * 100).toFixed(1)}% (${totalCells} cells)`);
-      if (cells % 1000 === 0) {
-        console.log(`Cell states: Inside=${octree.countInside()}, Outside=${octree.countOutside()}, Boundary=${octree.countBoundary()}`);
-      }
+      console.log(`Octree progress: ${(progress * 100).toFixed(1)}% (${totalCells} cells)`);
       updateProgress(taskId, progress);
     };
     
@@ -92,7 +80,9 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       onProgress
     );
     
-    // Send completed octree back
+    console.log(`Octree generation complete with ${totalCells} cells`);
+    console.log('Sending octree result back to main thread');
+    
     sendComplete(taskId, { 
       result: octree,
       cellCount: totalCells
