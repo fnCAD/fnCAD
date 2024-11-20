@@ -257,7 +257,7 @@ export class OctreeNode {
         this.center.y + y * half/2,
         this.center.z + z * half/2
       );
-      const childNode = createOctreeNode(childCenter, newSize, sdf);
+      const childNode = createOctreeNode(childCenter, newSize, sdf, this);
       childNode.parent = this;
       childNode.octant = i;
       this.children[i] = childNode;
