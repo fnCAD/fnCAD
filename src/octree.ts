@@ -157,7 +157,7 @@ export class OctreeNode {
         const virtualCenter = new THREE.Vector3()
           .copy(this.center)
           .addScaledVector(directionVector, this.size);
-        return new OctreeNode(virtualCenter, this.size, this.sdf);
+        return new OctreeNode(virtualCenter, this.size, CellState.Outside);
       }
       
       // Get the mirror octant in the neighbor
