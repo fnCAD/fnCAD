@@ -54,19 +54,47 @@ export class StateManager {
   }
 
   setCurrentMesh(mesh: THREE.Mesh | null) {
+    console.log('setCurrentMesh called with:', mesh ? 'new mesh' : 'null');
+    
     if (this.currentMesh) {
-      if (this.currentMesh.geometry && typeof this.currentMesh.geometry.dispose === 'function') {
-        this.currentMesh.geometry.dispose();
+      console.log('Disposing current mesh:', {
+        hasGeometry: !!this.currentMesh.geometry,
+        geometryType: this.currentMesh.geometry?.type,
+        disposeFunction: typeof this.currentMesh.geometry?.dispose,
+        hasMaterial: !!this.currentMesh.material,
+        materialType: this.currentMesh.material instanceof Material ? 'Material' : 
+                     Array.isArray(this.currentMesh.material) ? 'MaterialArray' : 'Unknown'
+      });
+
+      if (this.currentMesh.geometry) {
+        if (typeof this.currentMesh.geometry.dispose === 'function') {
+          console.log('Disposing geometry');
+          this.currentMesh.geometry.dispose();
+        } else {
+          console.warn('Geometry dispose is not a function!', this.currentMesh.geometry);
+        }
       }
+
       if (this.currentMesh.material) {
         if (this.currentMesh.material instanceof Material) {
+          console.log('Disposing single material');
           this.currentMesh.material.dispose();
         } else if (Array.isArray(this.currentMesh.material)) {
-          this.currentMesh.material.forEach(m => m?.dispose?.());
+          console.log('Disposing material array of length:', this.currentMesh.material.length);
+          this.currentMesh.material.forEach((m, i) => {
+            if (m) {
+              console.log(`Disposing material ${i}`);
+              m.dispose?.();
+            }
+          });
+        } else {
+          console.warn('Unknown material type:', this.currentMesh.material);
         }
       }
     }
+
     this.currentMesh = mesh;
+    console.log('Updating renderer with new mesh');
     this.rendererManager.updateMesh(mesh);
   }
 
