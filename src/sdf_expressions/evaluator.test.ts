@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
 import { Interval } from '../interval';
+import { GLSLContext, GLSLGenerator } from './glslgen';
 describe('Expression Evaluation', () => {
   function evaluate(expr: string, context: Record<string, number> = {}): number {
     const ast = parse(expr);
@@ -53,10 +54,18 @@ describe('Expression Evaluation', () => {
     expect(evaluate('abs(-2.5)')).toBe(2.5);
   });
 
-  it('correctly formats small numbers', () => {
+  it('correctly formats numbers for GLSL', () => {
     const ast = parse('0.01');
     const context = new GLSLContext(new GLSLGenerator());
     expect(ast.toGLSL(context)).toMatch(/var\d+ = 0\.01/);
+
+    // Test integer values get decimal point
+    const intAst = parse('42');
+    expect(intAst.toGLSL(context)).toMatch(/var\d+ = 42\.0/);
+
+    // Test negative integers
+    const negAst = parse('-5');
+    expect(negAst.toGLSL(context)).toMatch(/var\d+ = -5\.0/);
   });
 
   it('handles expressions starting with unary minus', () => {

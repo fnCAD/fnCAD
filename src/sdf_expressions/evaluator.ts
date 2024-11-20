@@ -8,9 +8,9 @@ export function createNumberNode(value: number): NumberNode {
     value,
     evaluate: () => value,
     toGLSL: (context: GLSLContext) => {
-      // Use exponential notation for very small numbers to preserve precision
-      const formatted = Math.abs(value) < 0.0001 ? value.toExponential() : value.toString();
-      return context.generator.save(`${formatted}`, 'float');
+      // Format number with at least one decimal place
+      const glslNumber = Number.isInteger(value) ? `${value}.0` : value.toString();
+      return context.generator.save(glslNumber, 'float');
     },
     evaluateInterval: () => Interval.from(value)
   };
