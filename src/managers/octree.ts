@@ -46,7 +46,38 @@ export class OctreeManager {
       });
 
       if (task.status === 'completed' && task.result) {
-        const octree = task.result as OctreeNode;
+        // Reconstruct OctreeNode from serialized data
+        const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
+          if (!data) {
+            throw new Error('Cannot reconstruct null octree data');
+          }
+          
+          if (!data.center || typeof data.size !== 'number' || typeof data.state !== 'number') {
+            throw new Error('Invalid octree data structure');
+          }
+
+          const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
+          
+          const node = new OctreeNode(
+            center,
+            data.size,
+            data.state,
+            parent,
+            data.octant
+          );
+          
+          if (!Array.isArray(data.children)) {
+            throw new Error('Invalid children array in octree data');
+          }
+
+          node.children = data.children.map((child: any) => 
+            child ? reconstructOctree(child, node) : null
+          );
+          
+          return node;
+        };
+
+        const octree = reconstructOctree(task.result);
         
         // Update state
         this.stateManager.setCurrentOctree(octree);

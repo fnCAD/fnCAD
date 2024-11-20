@@ -33,93 +33,9 @@ export class StateManager {
   }
 
   private handleTaskProgress(progress: TaskProgress) {
-    console.log('Received task progress:', {
-      taskId: progress.taskId,
-      type: progress.type,
-      status: progress.status,
-      progress: progress.progress,
-      result: progress.result ? 'present' : 'missing'
-    });
-
-    // Only handle progress if this is the active task
+    // Only handle UI progress updates
     if (progress.taskId === this.activeTaskId) {
-      console.log('Task matches active task ID:', this.activeTaskId);
-      console.log('Updating renderer with progress:', progress);
       this.rendererManager.updateProgress(progress);
-      console.log('Renderer progress updated');
-      
-      if (progress.status === 'completed' && progress.result) {
-        console.log('Task completed with result:', progress.type);
-        
-        // Handle completed tasks based on type
-        switch (progress.type) {
-          case 'octree':
-            console.log('Handling octree task completion');
-            console.log('Result:', progress.result);
-            if (!progress.result) {
-              console.error('No octree result received');
-              return;
-            }
-            console.log('Received octree result:', progress.result);
-            if (!progress.result) {
-              console.error('No octree result received');
-              return;
-            }
-            
-            // Reconstruct OctreeNode from serialized data
-            const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
-              if (!data) {
-                throw new Error('Cannot reconstruct null octree data');
-              }
-              
-              if (!data.center || typeof data.size !== 'number' || typeof data.state !== 'number') {
-                throw new Error('Invalid octree data structure');
-              }
-
-              const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
-              
-              // Create node with all required properties
-              const node = new OctreeNode(
-                center,
-                data.size,
-                data.state,
-                parent,
-                data.octant
-              );
-              
-              // Ensure children array exists
-              if (!Array.isArray(data.children)) {
-                throw new Error('Invalid children array in octree data');
-              }
-
-              // Recursively reconstruct children with proper parent references
-              node.children = data.children.map((child: any) => 
-                child ? reconstructOctree(child, node) : null
-              );
-              
-              return node;
-            };
-
-            const octree = reconstructOctree(progress.result);
-            console.log('Reconstructed octree:', octree);
-            this.setCurrentOctree(octree);
-            const cellCount = octree.getCellCount();
-            console.log('Setting cell count:', cellCount);
-            this.setCellCount(cellCount);
-            console.log('Updating octree visualization');
-            this.rendererManager.updateOctreeVisualization(
-              progress.result,
-              true // Show the octree by default when complete
-            );
-            console.log('Octree task handling complete');
-            break;
-          case 'mesh':
-            console.log('Setting mesh result');
-            this.setCurrentMesh(progress.result);
-            // Mesh update is handled in setCurrentMesh
-            break;
-        }
-      }
     }
   }
 
