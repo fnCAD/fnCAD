@@ -113,27 +113,33 @@ export class RendererManager {
     const bar = this.taskProgress.querySelector('.bar') as HTMLDivElement;
     console.log('Updating renderer progress:', progress);
     
+    // Always ensure progress elements are in the DOM
+    this.taskProgress.style.display = 'block';
+    
     if (progress.status === 'running') {
-      this.taskInfo.textContent = `${progress.type === 'octree' ? 'Building Octree' : 'Generating Mesh'}...`;
-      this.taskProgress.style.display = 'block';
-      const width = `${Math.round(progress.progress * 100)}%`;
-      console.log('Setting progress bar width:', width);
-      bar.style.width = width;
+      const taskType = progress.type === 'octree' ? 'Building Octree' : 'Generating Mesh';
+      const percent = Math.round(progress.progress * 100);
+      this.taskInfo.textContent = `${taskType}: ${percent}%`;
+      bar.style.width = `${percent}%`;
     } else if (progress.status === 'completed') {
-      this.taskInfo.textContent = `${progress.type === 'octree' ? 'Octree' : 'Mesh'} Complete`;
+      const taskType = progress.type === 'octree' ? 'Octree' : 'Mesh';
+      this.taskInfo.textContent = `${taskType} Complete ✓`;
+      bar.style.width = '100%';
       setTimeout(() => {
         this.taskInfo.textContent = '';
         this.taskProgress.style.display = 'none';
-      }, 2000);
+        bar.style.width = '0';
+      }, 3000);
     } else if (progress.status === 'failed') {
-      this.taskInfo.textContent = `Error: ${progress.error || 'Task failed'}`;
-      this.taskProgress.style.display = 'none';
+      this.taskInfo.textContent = `Error: ${progress.error || 'Task failed'} ✗`;
+      bar.style.width = '100%';
+      bar.style.background = '#ff4444';
       setTimeout(() => {
         this.taskInfo.textContent = '';
+        this.taskProgress.style.display = 'none';
+        bar.style.width = '0';
+        bar.style.background = ''; // Reset to default gradient
       }, 5000);
-    } else {
-      this.taskInfo.textContent = '';
-      this.taskProgress.style.display = 'none';
     }
   }
 
