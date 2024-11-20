@@ -50,8 +50,22 @@ import { parse as parseSDF } from '../sdf_expressions/parser';
 
 async function processOctreeTask(taskId: string, task: OctreeTask) {
   try {
-    // Parse SDF expression back into AST
-    const ast = JSON.parse(task.sdfExpression);
+    // Parse SDF expression back into AST with methods
+    const ast = JSON.parse(task.sdfExpression, (key, value) => {
+      if (value && typeof value === 'object' && value.type) {
+        // Reconstruct node with evaluate and evaluateInterval methods
+        return {
+          ...value,
+          evaluate: function(context: Record<string, number>): number {
+            return this.value;
+          },
+          evaluateInterval: function(context: Record<string, Interval>): Interval {
+            return new Interval(this.value, this.value);
+          }
+        };
+      }
+      return value;
+    });
     
     // Create root octree node
     const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
