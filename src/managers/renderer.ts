@@ -270,8 +270,8 @@ export class RendererManager {
     }
   }
 
-  updateMesh(mesh: THREE.Mesh | null) {
-    console.log('Updating mesh in renderer:', mesh ? 'new mesh' : 'removing mesh');
+  updateMesh(meshData: THREE.Mesh | { geometry: any, material: any, userData?: any } | null) {
+    console.log('Updating mesh in renderer:', meshData ? 'new mesh' : 'removing mesh');
     
     // Remove existing mesh
     this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => {
@@ -283,10 +283,24 @@ export class RendererManager {
     });
 
     // Add new mesh if provided
-    if (mesh) {
+    if (meshData) {
       console.log('Adding new mesh to scene');
-      // Ensure userData exists
-      mesh.userData = mesh.userData || {};
+      let mesh: THREE.Mesh;
+      
+      if (meshData instanceof THREE.Mesh) {
+        mesh = meshData;
+      } else {
+        // Reconstruct mesh from serialized data
+        const geometry = new THREE.BufferGeometry();
+        geometry.fromJSON(meshData.geometry);
+        
+        const material = new THREE.MeshPhongMaterial();
+        material.fromJSON(meshData.material);
+        
+        mesh = new THREE.Mesh(geometry, material);
+        mesh.userData = meshData.userData || {};
+      }
+      
       mesh.userData.isSdfMesh = true;
       this.previewOverlayScene.add(mesh);
     }
