@@ -271,13 +271,20 @@ export class RendererManager {
   }
 
   updateMesh(mesh: THREE.Mesh | null) {
+    console.log('Updating mesh in renderer:', mesh ? 'new mesh' : 'removing mesh');
+    
     // Remove existing mesh
-    this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => 
-      !(child instanceof THREE.Mesh && child.userData.isSdfMesh)
-    );
+    this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => {
+      const isMesh = child instanceof THREE.Mesh && child.userData.isSdfMesh;
+      if (isMesh) {
+        console.log('Removing existing mesh');
+      }
+      return !isMesh;
+    });
 
     // Add new mesh if provided
     if (mesh) {
+      console.log('Adding new mesh to scene');
       mesh.userData.isSdfMesh = true;
       this.previewOverlayScene.add(mesh);
     }

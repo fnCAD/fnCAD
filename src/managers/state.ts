@@ -56,10 +56,16 @@ export class StateManager {
             console.log('Setting octree result');
             this.setCurrentOctree(progress.result);
             this.setCellCount(progress.result.getCellCount());
+            // Update renderer with octree visualization
+            this.rendererManager.updateOctreeVisualization(
+              progress.result,
+              true // Show the octree by default when complete
+            );
             break;
           case 'mesh':
             console.log('Setting mesh result');
             this.setCurrentMesh(progress.result);
+            // Mesh update is handled in setCurrentMesh
             break;
         }
       }
