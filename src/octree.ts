@@ -251,11 +251,13 @@ export class OctreeNode {
 
     // If we're not a boundary cell, stop subdividing
     if (this.state !== CellState.Boundary) {
+      console.log(`Stopping subdivision: cell at ${this.center.toArray()} is not boundary (state: ${CellState[this.state]})`);
       return 1;
     }
 
     // If we've reached minimum size, stay as boundary cell
     if (newSize < minSize) {
+      console.log(`Stopping subdivision: reached minimum size ${newSize} at ${this.center.toArray()}`);
       return 1;
     }
 
@@ -280,6 +282,9 @@ export class OctreeNode {
     }
     
     // Create 8 children with equal portion of remaining budget
+    console.log(`Subdividing cell at ${this.center.toArray()} with size ${this.size}`);
+    let totalChildCells = 0;
+    
     for (let i = 0; i < 8; i++) {
       const [x, y, z] = offsets[i];
       const childCenter = new THREE.Vector3(
@@ -288,12 +293,23 @@ export class OctreeNode {
         this.center.z + z * half/2
       );
       this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
+      
       // Try to subdivide child with current budget
       const child = this.children[i];
       if (!child) continue;
+      
+      console.log(`Processing child ${i} at ${childCenter.toArray()} with state ${CellState[child.state]}`);
       const cellsCreated = child.subdivide(minSize, cellBudget, settings);
+      totalChildCells += cellsCreated;
       cellBudget -= cellsCreated;
+      
+      if (cellBudget <= 0) {
+        console.log('Cell budget exhausted during subdivision');
+        break;
+      }
     }
+    
+    console.log(`Created ${totalChildCells} cells in children of ${this.center.toArray()}`);
 
     // Report progress if callback provided
     if (onProgress) {
