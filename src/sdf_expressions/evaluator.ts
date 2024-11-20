@@ -416,12 +416,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
         const [d1, d2, r] = evalArgs;
         // Implementation matches the one in GLSL
-        return context.generator.save(
-          `(min(${d1}, ${d2}) > ${r}*2.0 ? ` +
-          `min(${d1}, ${d2}) : ` + 
-          `-log(exp(-1.0/${r}*${d1}) + exp(-1.0/${r}*${d2})) * ${r})`,
-          'float'
-        );
+        return context.generator.save(`smooth_union(${d1}, ${d2}, ${r})`, 'float');
       }
       
       if (name === 'min' || name === 'max') {

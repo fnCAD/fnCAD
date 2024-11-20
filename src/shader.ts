@@ -19,6 +19,17 @@ export function generateShader(ast: Node): string {
       return x * x;
     }
 
+    float smooth_union(float d1, float d2, float r) {
+      // For points far from the intersection (> 2*radius), just use regular min
+      if (max(d1, d2) > r * 2.0) {
+        return min(d1, d2);
+      }
+
+      // Otherwise compute the smooth union
+      float k = 1.0/r;
+      return -log(exp(-k * d1) + exp(-k * d2)) * r;
+    }
+
     float scene(vec3 pos) {
       ${generator.generateCode()}
       return ${result};
