@@ -15,8 +15,10 @@ const BASE_PATH = getRuntimeBasePath();
 // Configure Monaco's base path for worker loading
 (window as any).MonacoEnvironment = {
   getWorkerUrl: function(_moduleId: string, label: string) {
-    const workerPath = new URL(`/node_modules/monaco-editor/esm/vs/language/${label}/language.worker`, import.meta.url).href;
-    return workerPath;
+    if (label === 'typescript' || label === 'javascript') {
+      return new URL('./node_modules/monaco-editor/esm/vs/language/typescript/ts.worker', import.meta.url).href;
+    }
+    return new URL('./node_modules/monaco-editor/esm/vs/editor/editor.worker', import.meta.url).href;
   }
 };
 
