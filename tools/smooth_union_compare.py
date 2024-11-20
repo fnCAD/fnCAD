@@ -41,6 +41,10 @@ def print_values(d1, d2, k):
     print(f"result={fixed_result:.6f}")
 
 def smooth_union_exp(d1, d2, k):
+    # For points far from both shapes (> 2*radius), just use regular min
+    minDist = min(d1, d2)
+    if minDist > 1.0/k * 2.0:
+        return min(d1, d2)
     return -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
 
 def smooth_union_poly(d1, d2, k):
