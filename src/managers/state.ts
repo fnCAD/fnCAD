@@ -68,6 +68,14 @@ export class StateManager {
             
             // Reconstruct OctreeNode from serialized data
             const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
+              if (!data) {
+                throw new Error('Cannot reconstruct null octree data');
+              }
+              
+              if (!data.center || typeof data.size !== 'number' || typeof data.state !== 'number') {
+                throw new Error('Invalid octree data structure');
+              }
+
               const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
               
               // Create node with all required properties
@@ -79,16 +87,15 @@ export class StateManager {
                 data.octant
               );
               
+              // Ensure children array exists
+              if (!Array.isArray(data.children)) {
+                throw new Error('Invalid children array in octree data');
+              }
+
               // Recursively reconstruct children with proper parent references
               node.children = data.children.map((child: any) => 
                 child ? reconstructOctree(child, node) : null
               );
-              
-              // Ensure prototype methods are available
-              if (typeof node.getCellCount !== 'function') {
-                console.error('Reconstructed node is missing getCellCount method!', node);
-                throw new Error('Invalid octree reconstruction: missing required methods');
-              }
               
               return node;
             };
