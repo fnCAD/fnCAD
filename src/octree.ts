@@ -217,13 +217,11 @@ export class OctreeNode {
 
     // If we're not a boundary cell, stop subdividing
     if (this.state !== CellState.Boundary) {
-      console.log(`Stopping subdivision: cell at ${this.center.toArray()} is not boundary (state: ${CellState[this.state]})`);
       return 1;
     }
 
     // If we've reached minimum size, stay as boundary cell
     if (newSize < minSize) {
-      console.log(`Stopping subdivision: reached minimum size ${newSize} at ${this.center.toArray()}`);
       return 1;
     }
 
