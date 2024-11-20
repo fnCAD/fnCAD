@@ -18,16 +18,17 @@ Current mesh generation has issues with non-axis-aligned sharp boundaries:
      ```
    - Track faces exceeding threshold in priority queue
 
-### Phase 2: Selective Subdivision
+### Phase 2: Edge-Based Subdivision
 1. While queue not empty and under subdivision limit:
    - Pop worst face
-   - Create new vertex at face centroid
+   - Split each edge at midpoint
    - Update face indices:
-     - Replace one face with three
+     - Replace one face with four triangles
      - Maintain consistent winding order
    - Handle neighbor faces:
-     - If neighbor also marked for subdivision, coordinate
-     - Otherwise may need temporary transition triangles
+     - If neighbor is in queue, split shared edge
+     - If not in queue, split only the shared edge
+       creating two triangles in neighbor
 
 ### Phase 3: Re-optimization
 1. For each new vertex:
@@ -37,9 +38,10 @@ Current mesh generation has issues with non-axis-aligned sharp boundaries:
 
 ### Implementation Steps
 
-1. Add face quality tracking to MeshGenerator:
+1. Add face and edge tracking to MeshGenerator:
    - Add FaceQuality struct with metrics
-   - Modify optimization loop to evaluate centroids
+   - Add EdgeMap to track shared edges
+   - Modify optimization loop to evaluate edge midpoints
    - Create priority queue for bad faces
 
 2. Implement subdivision logic:
