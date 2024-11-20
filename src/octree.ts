@@ -58,9 +58,6 @@ export class OctreeNode {
     if (size <= 0) {
       throw new Error(`Invalid octree node size: ${size}`);
     }
-    if (size > 1000) {
-      throw new Error(`Octree node size too large: ${size}`);
-    }
 
     console.log(`Creating octree node at ${center.toArray()} with size ${size}`);
     
