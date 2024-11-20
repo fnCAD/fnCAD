@@ -2,12 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def smooth_union_exp(d1: np.ndarray, d2: np.ndarray, k: float) -> np.ndarray:
-    # For points far from both shapes (> 2*radius), just use regular min
-    minDist = np.minimum(d1, d2)
-    mask = minDist > 1.0/k * 2.0
-    result = -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
-    result[mask] = np.minimum(d1, d2)[mask]
-    return result
+    # Always use exponential smoothing for visualization consistency
+    return -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
 
 def naive_smooth_union(d1: np.ndarray, d2: np.ndarray, k: float) -> np.ndarray:
     return -np.log(np.exp(-k*d1) + np.exp(-k*d2))/k
