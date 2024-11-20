@@ -50,13 +50,10 @@ export class OctreeNode {
   constructor(
     public center: THREE.Vector3,
     public size: number,
-    private sdfSource: string,
+    private sdf: Node,
     public parent: OctreeNode | null = null,
     public octant: number = -1
   ) {
-    // Parse SDF expression from source
-    const ast = parseSDF(sdfSource);
-    this.sdf = ast;
     // Validate size
     if (size <= 0) {
       throw new Error(`Invalid octree node size: ${size}`);
