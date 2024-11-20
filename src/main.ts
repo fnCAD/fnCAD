@@ -59,17 +59,11 @@ translate(2, 0, 0) {
   parent: document.getElementById('editor-pane')!
 });
 
-// Add change listener
-editor.onDidChangeModelContent(() => {
-  stateManager.updateEditorContent(editor.getValue());
-  updateOctree();
-});
-
 // Store editor instance for later use
 window._editor = editor;
 
 // Initial state update
-stateManager.updateEditorContent(editor.getValue());
+stateManager.updateEditorContent(editor.state.doc.toString());
 updateOctree();
 
 // Function to update octree based on current settings
