@@ -278,6 +278,16 @@ export class RendererManager {
       const isMesh = child instanceof THREE.Mesh && child.userData.isSdfMesh;
       if (isMesh) {
         console.log('Removing existing mesh');
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => m?.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
       }
       return !isMesh;
     });
