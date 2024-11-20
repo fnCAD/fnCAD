@@ -87,7 +87,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       result: octree,
       cellCount: totalCells
     };
-    console.log('Sending octree result via postMessage');
+    console.log('Sending octree result via postMessage:', result);
     sendComplete(taskId, result);
     console.log('Octree result sent');
   } catch (err) {
