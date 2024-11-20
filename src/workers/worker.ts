@@ -53,17 +53,10 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
   try {
     console.log('Received source code:', task.source);
     
-    try {
-      // Parse CAD code into SDF expression
-      const cadAst = parseCAD(task.source);
-      const sdfExpr = moduleToSDF(cadAst);
-      const ast = parseSDF(sdfExpr);
-      
-      console.log('Creating root octree node at origin with size 65536');
-      
-      // Create root octree node
-      const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
-    });
+    // Parse CAD code into SDF expression
+    const cadAst = parseCAD(task.source);
+    const sdfExpr = moduleToSDF(cadAst);
+    const ast = parseSDF(sdfExpr);
     
     console.log('Parsed AST:', ast);
     
