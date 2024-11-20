@@ -33,6 +33,14 @@ async function processTask(taskId: string, task: WorkerTask) {
     status: 'running'
   };
   activeTasks.set(taskId, progress);
+  
+  // Send initial progress update
+  self.postMessage({
+    type: 'progress',
+    taskId,
+    progress: 0,
+    status: 'running'
+  });
 
   try {
     switch (task.type) {

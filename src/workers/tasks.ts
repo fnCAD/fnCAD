@@ -28,6 +28,7 @@ export class TaskQueue {
     switch (message.type) {
       case 'progress':
         task.progress = message.progress || 0;
+        task.status = message.status || task.status;
         break;
       case 'complete':
         console.log('Received complete message:', message);
