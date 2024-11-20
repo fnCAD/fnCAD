@@ -293,13 +293,8 @@ export class RendererManager {
       // Set indices
       geometry.setIndex(meshData.indices);
       
-      // Set normals or compute them
-      if (meshData.normals) {
-        geometry.setAttribute('normal',
-          new THREE.Float32BufferAttribute(meshData.normals, 3));
-      } else {
-        geometry.computeVertexNormals();
-      }
+      // Always compute normals
+      geometry.computeVertexNormals();
       
       const material = new THREE.MeshPhongMaterial({
         color: 0xffd700,
