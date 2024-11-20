@@ -69,7 +69,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     });
 
     console.log('Creating root octree node at origin with size 65536');
-    const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, ast);
+    const octree = new OctreeNode(new THREE.Vector3(0, 0, 0), 65536, sdfExpr);
     
     // Track subdivision progress
     let totalCells = 0;
