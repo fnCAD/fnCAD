@@ -78,20 +78,41 @@ function updateOctree() {
 
 // Add mesh generation handler
 const generateMeshButton = document.getElementById('generate-mesh') as HTMLButtonElement;
-generateMeshButton.addEventListener('click', () => {
+generateMeshButton.addEventListener('click', async () => {
   const state = stateManager.getState();
   if (!state.currentOctree) {
     console.warn('No octree available for mesh generation');
     return;
   }
 
-  const meshGen = new MeshGenerator(
-    state.currentOctree, 
-    settingsManager.isMeshOptimizationEnabled()
-  );
-  const mesh = meshGen.generate();
-  stateManager.setCurrentMesh(mesh);
-  rendererManager.updateMesh(mesh);
+  const taskId = stateManager.taskQueue.addTask({
+    type: 'mesh',
+    optimize: settingsManager.isMeshOptimizationEnabled(),
+    octree: state.currentOctree
+  });
+
+  try {
+    const task = await new Promise<TaskProgress>((resolve, reject) => {
+      const unsubscribe = stateManager.taskQueue.onProgress((progress) => {
+        if (progress.taskId === taskId) {
+          if (progress.status === 'completed') {
+            unsubscribe();
+            resolve(progress);
+          } else if (progress.status === 'failed') {
+            unsubscribe();
+            reject(new Error(progress.error));
+          }
+        }
+      });
+    });
+
+    if (task.result) {
+      stateManager.setCurrentMesh(task.result);
+      rendererManager.updateMesh(task.result);
+    }
+  } catch (error) {
+    console.error('Mesh generation failed:', error);
+  }
 });
 
 // Add STL export handler

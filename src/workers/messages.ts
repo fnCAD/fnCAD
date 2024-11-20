@@ -18,7 +18,7 @@ export interface OctreeTask {
 export interface MeshTask {
   type: 'mesh';
   optimize: boolean;
-  octreeData: any; // Will be serialized OctreeNode
+  octree: OctreeNode;
 }
 
 export type WorkerTask = OctreeTask | MeshTask;

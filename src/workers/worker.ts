@@ -82,18 +82,22 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
 
 async function processMeshTask(taskId: string, task: MeshTask) {
   try {
-    const octree = task.octreeData;
-    const meshGen = new MeshGenerator(octree, task.optimize);
+    const meshGen = new MeshGenerator(task.octree, task.optimize);
     
     // Add progress tracking to mesh generation
-    let progress = 0;
-    meshGen.onProgress = (p: number) => {
-      progress = p;
+    meshGen.onProgress = (progress: number) => {
       updateProgress(taskId, progress);
     };
     
     const mesh = meshGen.generate();
-    sendComplete(taskId, { result: mesh });
+    
+    // Transfer the mesh data back to main thread
+    const serializedMesh = {
+      geometry: mesh.geometry.toJSON(),
+      material: mesh.material.toJSON()
+    };
+    
+    sendComplete(taskId, { result: serializedMesh });
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');
   }
