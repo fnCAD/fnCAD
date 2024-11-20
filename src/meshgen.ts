@@ -4,12 +4,34 @@ import { OctreeNode, Direction, CellState } from './octree';
 export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
     private faces: number[] = [];
+    onProgress?: (progress: number) => void;
     
     constructor(private octree: OctreeNode, private optimize: boolean = true) {}
 
+    private reportProgress(progress: number) {
+        if (this.onProgress) {
+            this.onProgress(Math.min(1, Math.max(0, progress)));
+        }
+    }
+
     generate(): THREE.Mesh {
+        // Phase 1: Collect surface cells (0-40%)
+        this.reportProgress(0);
         this.collectSurfaceCells(this.octree);
+        this.reportProgress(0.4);
+
+        // Phase 2: Create initial mesh (40-60%)
         const mesh = this.createMesh();
+        this.reportProgress(0.6);
+
+        // Phase 3: Optimize if enabled (60-100%)
+        if (this.optimize) {
+            this.optimizeVertices(true);
+            this.reportProgress(1.0);
+        } else {
+            this.reportProgress(1.0);
+        }
+
         return mesh;
     }
 
@@ -104,6 +126,8 @@ export class MeshGenerator {
         
         for (let iter = 0; iter < maxIterations; iter++) {
             let maxMove = 0;
+            // Report progress within optimization phase (60-100%)
+            this.reportProgress(0.6 + (iter / maxIterations) * 0.4);
             
             for (let i = 0; i < this.vertices.length; i++) {
                 const vertex = this.vertices[i];
