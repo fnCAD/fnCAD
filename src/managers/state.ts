@@ -12,7 +12,7 @@ import { generateShader } from '../shader';
 
 export class StateManager {
   private currentOctree: OctreeNode | null = null;
-  private currentMesh: THREE.Mesh | null = null;
+  private currentMesh: THREE.Mesh | SerializedMesh | null = null;
   private editorContent: string = '';
   private cellCount: number = 0;
   private currentShader: string | null = null;
