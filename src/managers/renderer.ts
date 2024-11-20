@@ -285,6 +285,8 @@ export class RendererManager {
     // Add new mesh if provided
     if (mesh) {
       console.log('Adding new mesh to scene');
+      // Ensure userData exists
+      mesh.userData = mesh.userData || {};
       mesh.userData.isSdfMesh = true;
       this.previewOverlayScene.add(mesh);
     }

@@ -153,7 +153,8 @@ async function processMeshTask(taskId: string, task: MeshTask) {
     // Transfer the mesh data back to main thread
     const serializedMesh = {
       geometry: mesh.geometry.toJSON(),
-      material: mesh.material.toJSON()
+      material: mesh.material.toJSON(),
+      userData: { isSdfMesh: true }
     };
     
     sendComplete(taskId, { result: serializedMesh });
