@@ -17,11 +17,9 @@ export class TaskQueue {
   }
 
   private handleWorkerMessage(message: WorkerMessage) {
-    console.log('[TaskQueue] Received worker message:', message);
     
     const task = this.tasks.get(message.taskId);
     if (!task) {
-      console.warn('[TaskQueue] No task found for message:', message);
       return;
     }
 
@@ -31,11 +29,9 @@ export class TaskQueue {
         task.status = message.status || task.status;
         break;
       case 'complete':
-        console.log('Received complete message:', message);
         task.status = 'completed';
         task.progress = 1;
         task.result = message.data?.result;
-        console.log('Updated task with result:', task);
         break;
       case 'error':
         task.status = 'failed';

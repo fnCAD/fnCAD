@@ -21,7 +21,6 @@ export class StateManager {
   private activeTaskId: string | null = null;
 
   setActiveTaskId(taskId: string | null) {
-    console.log('Setting active task ID:', taskId);
     this.activeTaskId = taskId;
   }
 
@@ -33,20 +32,9 @@ export class StateManager {
   }
 
   private handleTaskProgress(progress: TaskProgress) {
-    console.log('[StateManager] Received task progress:', {
-      taskId: progress.taskId,
-      activeTaskId: this.activeTaskId,
-      type: progress.type,
-      progress: progress.progress,
-      status: progress.status
-    });
-    
     // Only handle UI progress updates
     if (progress.taskId === this.activeTaskId) {
-      console.log('[StateManager] Forwarding progress to renderer');
       this.rendererManager.updateProgress(progress);
-    } else {
-      console.log('[StateManager] Ignoring progress for non-active task');
     }
   }
 
@@ -65,47 +53,21 @@ export class StateManager {
   }
 
   setCurrentMesh(mesh: THREE.Mesh | null) {
-    console.log('setCurrentMesh called with:', mesh ? 'new mesh' : 'null');
-    
     if (this.currentMesh) {
-      console.log('Disposing current mesh:', {
-        hasGeometry: !!this.currentMesh.geometry,
-        geometryType: this.currentMesh.geometry?.type,
-        disposeFunction: typeof this.currentMesh.geometry?.dispose,
-        hasMaterial: !!this.currentMesh.material,
-        materialType: this.currentMesh.material instanceof Material ? 'Material' : 
-                     Array.isArray(this.currentMesh.material) ? 'MaterialArray' : 'Unknown'
-      });
-
       if (this.currentMesh.geometry) {
-        if (typeof this.currentMesh.geometry.dispose === 'function') {
-          console.log('Disposing geometry');
-          this.currentMesh.geometry.dispose();
-        } else {
-          console.warn('Geometry dispose is not a function!', this.currentMesh.geometry);
-        }
+        this.currentMesh.geometry.dispose();
       }
 
       if (this.currentMesh.material) {
         if (this.currentMesh.material instanceof Material) {
-          console.log('Disposing single material');
           this.currentMesh.material.dispose();
         } else if (Array.isArray(this.currentMesh.material)) {
-          console.log('Disposing material array of length:', this.currentMesh.material.length);
-          this.currentMesh.material.forEach((m, i) => {
-            if (m) {
-              console.log(`Disposing material ${i}`);
-              m.dispose?.();
-            }
-          });
-        } else {
-          console.warn('Unknown material type:', this.currentMesh.material);
+          this.currentMesh.material.forEach(m => m?.dispose?.());
         }
       }
     }
 
     this.currentMesh = mesh;
-    console.log('Updating renderer with new mesh');
     this.rendererManager.updateMesh(mesh);
   }
 

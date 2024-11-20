@@ -111,12 +111,6 @@ export class RendererManager {
 
   updateProgress(progress: TaskProgress) {
     const bar = this.taskProgress.querySelector('.bar') as HTMLDivElement;
-    console.log('[Renderer] Updating progress:', {
-      taskId: progress.taskId,
-      type: progress.type,
-      progress: progress.progress,
-      status: progress.status
-    });
     
     // Always ensure progress elements are in the DOM
     this.taskProgress.style.display = 'block';
@@ -254,19 +248,12 @@ export class RendererManager {
   }
 
   updateOctreeVisualization(octree: OctreeNode, settings: OctreeRenderSettings, visible: boolean = true) {
-    console.log('Updating octree visualization:', {
-      octreePresent: !!octree,
-      settings,
-      visible,
-      currentChildren: this.previewOverlayScene.children.length
-    });
 
     // Remove existing octree visualization
     const previousCount = this.previewOverlayScene.children.length;
     this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => 
       !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
     );
-    console.log(`Removed ${previousCount - this.previewOverlayScene.children.length} octree objects`);
 
     // Create new visualization only if visible
     if (visible) {
@@ -274,7 +261,6 @@ export class RendererManager {
       if (octreeGroup) {
         octreeGroup.userData.isOctreeVisualization = true;
         this.previewOverlayScene.add(octreeGroup);
-        console.log('Added new octree visualization with', octreeGroup.children.length, 'children');
       } else {
         console.warn('visualizeOctree returned null');
       }
