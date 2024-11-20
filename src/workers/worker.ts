@@ -108,7 +108,35 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
 
 async function processMeshTask(taskId: string, task: MeshTask) {
   try {
-    const meshGen = new MeshGenerator(task.octree, task.optimize);
+    // Reconstruct OctreeNode with proper prototype chain
+    const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
+      if (!data) {
+        throw new Error('Cannot reconstruct null octree data');
+      }
+      
+      const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
+      
+      const node = Object.assign(new OctreeNode(
+        center,
+        data.size,
+        data.state,
+        parent,
+        data.octant
+      ), {
+        children: new Array(8).fill(null)
+      });
+      
+      if (Array.isArray(data.children)) {
+        node.children = data.children.map((child: any) => 
+          child ? reconstructOctree(child, node) : null
+        );
+      }
+      
+      return node;
+    };
+
+    const octree = reconstructOctree(task.octree);
+    const meshGen = new MeshGenerator(octree, task.optimize);
     
     // Add progress tracking to mesh generation
     meshGen.onProgress = (progress: number) => {
