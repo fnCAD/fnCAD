@@ -67,7 +67,6 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
     
-    console.log('Starting octree task with budget:', task.cellBudget);
     const octree = createOctreeNode(new THREE.Vector3(0, 0, 0), 65536, sdf);
     
     // Track subdivision progress
@@ -75,7 +74,6 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     const onProgress = (cells: number) => {
       totalCells = cells;
       const progress = Math.min(totalCells / task.cellBudget, 0.99);
-      console.log(`Octree progress: ${(progress * 100).toFixed(1)}% (${totalCells} cells)`);
       updateProgress(taskId, progress);
     };
     
@@ -88,8 +86,6 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       onProgress
     );
     
-    console.log(`Octree generation complete with ${totalCells} cells`);
-    console.log('Preparing to send octree result back to main thread');
     
     // Ensure we send a proper OctreeNode instance with all required data
     const serializeNode = (node: OctreeNode): any => ({
@@ -106,9 +102,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       result: serializedOctree,
       cellCount: totalCells
     };
-    console.log('Sending octree result via postMessage:', result);
     sendComplete(taskId, result);
-    console.log('Octree result sent');
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');
   }
@@ -149,17 +143,14 @@ async function processMeshTask(taskId: string, task: MeshTask) {
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
     
-    console.log('Starting mesh generation with optimization:', task.optimize);
     const meshGen = new MeshGenerator(octree, sdf, task.optimize);
     
     // Add progress tracking to mesh generation
     meshGen.onProgress = (progress: number) => {
-      console.log(`Mesh generation progress: ${(progress * 100).toFixed(1)}%`);
       updateProgress(taskId, progress);
     };
     
     const serializedMesh = meshGen.generate();
-    console.log('Mesh generation complete');
     sendComplete(taskId, { result: serializedMesh });
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');
@@ -170,14 +161,12 @@ function updateProgress(taskId: string, progress: number) {
   const task = activeTasks.get(taskId);
   if (task) {
     task.progress = progress;
-    console.log(`[Worker] Sending progress update for task ${taskId}:`, progress);
     self.postMessage({
       type: 'progress',
       taskId,
       progress
     });
   } else {
-    console.warn(`[Worker] No task found for ID ${taskId} when updating progress`);
   }
 }
 
