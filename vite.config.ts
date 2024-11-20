@@ -21,6 +21,7 @@ export default defineConfig({
         assetFileNames: '[name].[ext]'
       }
     },
+    assetsInclude: ['/monaco-editor/**/*.worker.js'],
     // Log each asset and its size
     manifest: true,
     // Show build time stats

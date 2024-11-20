@@ -16,9 +16,9 @@ const BASE_PATH = getRuntimeBasePath();
 (window as any).MonacoEnvironment = {
   getWorkerUrl: function(_moduleId: string, label: string) {
     if (label === 'typescript' || label === 'javascript') {
-      return new URL('./node_modules/monaco-editor/esm/vs/language/typescript/ts.worker', import.meta.url).href;
+      return '/node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js';
     }
-    return new URL('./node_modules/monaco-editor/esm/vs/editor/editor.worker', import.meta.url).href;
+    return '/node_modules/monaco-editor/esm/vs/editor/editor.worker.js';
   }
 };
 
