@@ -33,9 +33,20 @@ export class StateManager {
   }
 
   private handleTaskProgress(progress: TaskProgress) {
+    console.log('[StateManager] Received task progress:', {
+      taskId: progress.taskId,
+      activeTaskId: this.activeTaskId,
+      type: progress.type,
+      progress: progress.progress,
+      status: progress.status
+    });
+    
     // Only handle UI progress updates
     if (progress.taskId === this.activeTaskId) {
+      console.log('[StateManager] Forwarding progress to renderer');
       this.rendererManager.updateProgress(progress);
+    } else {
+      console.log('[StateManager] Ignoring progress for non-active task');
     }
   }
 

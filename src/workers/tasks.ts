@@ -17,8 +17,13 @@ export class TaskQueue {
   }
 
   private handleWorkerMessage(message: WorkerMessage) {
+    console.log('[TaskQueue] Received worker message:', message);
+    
     const task = this.tasks.get(message.taskId);
-    if (!task) return;
+    if (!task) {
+      console.warn('[TaskQueue] No task found for message:', message);
+      return;
+    }
 
     switch (message.type) {
       case 'progress':

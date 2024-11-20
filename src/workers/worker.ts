@@ -162,11 +162,14 @@ function updateProgress(taskId: string, progress: number) {
   const task = activeTasks.get(taskId);
   if (task) {
     task.progress = progress;
+    console.log(`[Worker] Sending progress update for task ${taskId}:`, progress);
     self.postMessage({
       type: 'progress',
       taskId,
       progress
     });
+  } else {
+    console.warn(`[Worker] No task found for ID ${taskId} when updating progress`);
   }
 }
 

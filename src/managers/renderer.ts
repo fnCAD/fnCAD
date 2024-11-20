@@ -111,7 +111,12 @@ export class RendererManager {
 
   updateProgress(progress: TaskProgress) {
     const bar = this.taskProgress.querySelector('.bar') as HTMLDivElement;
-    console.log('Updating renderer progress:', progress);
+    console.log('[Renderer] Updating progress:', {
+      taskId: progress.taskId,
+      type: progress.type,
+      progress: progress.progress,
+      status: progress.status
+    });
     
     // Always ensure progress elements are in the DOM
     this.taskProgress.style.display = 'block';
