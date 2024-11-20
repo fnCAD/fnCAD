@@ -98,6 +98,9 @@ generateMeshButton.addEventListener('click', async () => {
     octree: state.currentOctree,
     source: stateManager.getEditorContent()
   });
+  
+  // Set this as the active task
+  stateManager.setActiveTaskId(taskId);
 
   try {
     const task = await new Promise<TaskProgress>((resolve, reject) => {
