@@ -18,15 +18,19 @@ export class MeshGenerator {
         }
     }
 
-    generate(): THREE.Mesh {
+    generate(): SerializedMesh {
         // Phase 1: Collect surface cells (0-40%)
         this.reportProgress(0);
         this.collectSurfaceCells(this.octree);
         this.reportProgress(0.4);
 
-        // Phase 2: Create initial mesh (40-60%)
-        const mesh = this.createMesh();
-        this.reportProgress(0.6);
+        // Phase 2: Create initial mesh data (40-60%)
+        const positions = new Float32Array(this.vertices.length * 3);
+        this.vertices.forEach((vertex, i) => {
+            positions[i * 3] = vertex.x;
+            positions[i * 3 + 1] = vertex.y;
+            positions[i * 3 + 2] = vertex.z;
+        });
 
         // Phase 3: Optimize if enabled (60-100%)
         if (this.optimize) {
@@ -36,7 +40,10 @@ export class MeshGenerator {
             this.reportProgress(1.0);
         }
 
-        return mesh;
+        return {
+            vertices: Array.from(positions),
+            indices: Array.from(this.faces)
+        };
     }
 
     private collectSurfaceCells(node: OctreeNode) {
@@ -173,42 +180,4 @@ export class MeshGenerator {
         }
     }
 
-    private createMesh(): THREE.Mesh {
-        // Optimize vertex positions if enabled
-        this.optimizeVertices(this.optimize);
-
-        const geometry = new THREE.BufferGeometry();
-        
-        // Convert vertices to flat array
-        const positions = new Float32Array(this.vertices.length * 3);
-        this.vertices.forEach((vertex, i) => {
-            positions[i * 3] = vertex.x;
-            positions[i * 3 + 1] = vertex.y;
-            positions[i * 3 + 2] = vertex.z;
-        });
-
-
-        // Set attributes
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setIndex(this.faces);
-        
-        // Compute normals
-        geometry.computeVertexNormals();
-
-        // Create mesh with basic material
-        const material = new THREE.MeshPhongMaterial({
-            color: 0xffd700,
-            side: THREE.DoubleSide,
-            flatShading: true,
-            emissive: 0x222222,
-            shininess: 30,
-            transparent: true,
-            opacity: 0.8,
-            depthWrite: true,
-            depthTest: true
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
-        return mesh;
-    }
 }

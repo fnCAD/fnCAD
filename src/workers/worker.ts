@@ -148,15 +148,7 @@ async function processMeshTask(taskId: string, task: MeshTask) {
       updateProgress(taskId, progress);
     };
     
-    const mesh = meshGen.generate();
-    
-    // Transfer the mesh data back to main thread
-    const serializedMesh = {
-      geometry: mesh.geometry.toJSON(),
-      material: mesh.material.toJSON(),
-      userData: { isSdfMesh: true }
-    };
-    
+    const serializedMesh = meshGen.generate();
     sendComplete(taskId, { result: serializedMesh });
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');
