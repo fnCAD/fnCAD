@@ -60,12 +60,30 @@ export class StateManager {
               console.error('No octree result received');
               return;
             }
-            console.log('Setting octree result:', progress.result);
-            if (!progress.result || typeof progress.result.getCellCount !== 'function') {
-              console.error('Invalid octree result:', progress.result);
+            console.log('Received octree result:', progress.result);
+            if (!progress.result) {
+              console.error('No octree result received');
               return;
             }
-            this.setCurrentOctree(progress.result);
+            
+            // Reconstruct OctreeNode from serialized data
+            const reconstructOctree = (data: any): OctreeNode => {
+              const node = new OctreeNode(
+                new THREE.Vector3(data.center.x, data.center.y, data.center.z),
+                data.size,
+                data.state,
+                null,
+                data.octant
+              );
+              node.children = data.children.map((child: any) => 
+                child ? reconstructOctree(child) : null
+              );
+              return node;
+            };
+
+            const octree = reconstructOctree(progress.result);
+            console.log('Reconstructed octree:', octree);
+            this.setCurrentOctree(octree);
             const cellCount = progress.result.getCellCount();
             console.log('Setting cell count:', cellCount);
             this.setCellCount(cellCount);
