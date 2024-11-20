@@ -270,7 +270,7 @@ export class RendererManager {
     }
   }
 
-  updateMesh(meshData: THREE.Mesh | { geometry: any, material: any, userData?: any } | null) {
+  updateMesh(meshData: { geometry: any, material: any, userData?: any } | null) {
     console.log('Updating mesh in renderer:', meshData ? 'new mesh' : 'removing mesh');
     
     // Remove existing mesh
@@ -285,23 +285,32 @@ export class RendererManager {
     // Add new mesh if provided
     if (meshData) {
       console.log('Adding new mesh to scene');
-      let mesh: THREE.Mesh;
       
-      if (meshData instanceof THREE.Mesh) {
-        mesh = meshData;
-      } else {
-        // Reconstruct mesh from serialized data
-        const geometry = new THREE.BufferGeometry();
-        geometry.fromJSON(meshData.geometry);
-        
-        const material = new THREE.MeshPhongMaterial();
-        material.fromJSON(meshData.material);
-        
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.userData = meshData.userData || {};
+      // Reconstruct mesh from serialized data
+      const geometry = new THREE.BufferGeometry();
+      const attributes = meshData.geometry.data.attributes;
+      
+      // Set position attribute
+      geometry.setAttribute('position', 
+        new THREE.Float32BufferAttribute(attributes.position.array, 3));
+      
+      // Set index if present
+      if (meshData.geometry.data.index) {
+        geometry.setIndex(
+          new THREE.Uint32BufferAttribute(meshData.geometry.data.index.array, 1)
+        );
       }
       
+      // Compute normals if not present
+      if (!attributes.normal) {
+        geometry.computeVertexNormals();
+      }
+      
+      const material = new THREE.MeshPhongMaterial(meshData.material);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.userData = meshData.userData || {};
       mesh.userData.isSdfMesh = true;
+      
       this.previewOverlayScene.add(mesh);
     }
   }
