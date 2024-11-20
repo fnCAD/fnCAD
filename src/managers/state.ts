@@ -21,6 +21,7 @@ export class StateManager {
   private activeTaskId: string | null = null;
 
   setActiveTaskId(taskId: string | null) {
+    console.log('Setting active task ID:', taskId);
     this.activeTaskId = taskId;
   }
 
@@ -39,7 +40,9 @@ export class StateManager {
       progress: progress.progress
     });
 
+    // Only handle progress if this is the active task
     if (progress.taskId === this.activeTaskId) {
+      console.log('Task matches active task ID:', this.activeTaskId);
       console.log('Updating renderer with progress');
       this.rendererManager.updateProgress(progress);
       

@@ -24,6 +24,9 @@ export class OctreeManager {
       cellBudget,
       source
     });
+    
+    // Set this as the active task
+    this.stateManager.setActiveTaskId(taskId);
 
 
     try {
