@@ -53,19 +53,34 @@ export class StateManager {
   }
 
   setCurrentMesh(mesh: SerializedMesh | THREE.Mesh | null) {
-    if (this.currentMesh) {
-      if (this.currentMesh.geometry) {
-        this.currentMesh.geometry.dispose();
-      }
-
-      if (this.currentMesh.material) {
-        // We know it's a PhongMaterial from RendererManager
-        (this.currentMesh.material as THREE.Material).dispose();
+    if (this.currentMesh instanceof THREE.Mesh) {
+      this.currentMesh.geometry.dispose();
+      if (Array.isArray(this.currentMesh.material)) {
+        this.currentMesh.material.forEach(m => m.dispose());
+      } else {
+        this.currentMesh.material.dispose();
       }
     }
 
     this.currentMesh = mesh;
-    this.rendererManager.updateMesh(mesh);
+    // Convert THREE.Mesh to SerializedMesh before passing to renderer
+    if (mesh instanceof THREE.Mesh) {
+      const geometry = mesh.geometry;
+      const position = geometry.attributes.position;
+      const index = geometry.index;
+      
+      if (!index) {
+        throw new Error('Geometry must be indexed');
+      }
+      
+      const serialized: SerializedMesh = {
+        vertices: Array.from(position.array),
+        indices: Array.from(index.array)
+      };
+      this.rendererManager.updateMesh(serialized);
+    } else {
+      this.rendererManager.updateMesh(mesh);
+    }
   }
 
   setCellCount(count: number) {

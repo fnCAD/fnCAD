@@ -7,8 +7,7 @@ import { TaskProgress } from './workers/task_types'
 import { OctreeManager } from './managers/octree'
 import { SettingsManager } from './managers/settings'
 import { RendererManager } from './managers/renderer'
-import { EditorView, ViewUpdate } from '@codemirror/view'
-import type { EditorView as EditorViewType } from '@codemirror/view'
+import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { javascript } from '@codemirror/lang-javascript'
 import { basicSetup } from 'codemirror'
@@ -36,7 +35,7 @@ const settingsManager = new SettingsManager(previewPane, () => {
 const octreeManager = new OctreeManager(stateManager, rendererManager);
 
 // Initialize CodeMirror editor
-const editor: EditorViewType = new EditorView({
+const editor = new EditorView({
   state: EditorState.create({
     doc: `// Scene with two spheres
 sphere(1);
@@ -46,7 +45,7 @@ translate(2, 0, 0) {
     extensions: [
       basicSetup,
       javascript(),
-      EditorView.updateListener.of((update: ViewUpdate) => {
+      EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           stateManager.updateEditorContent(update.state.doc.toString());
           updateOctree();
