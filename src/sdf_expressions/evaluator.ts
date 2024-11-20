@@ -105,6 +105,13 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
     evaluateInterval: (context: Record<string, Interval>) => {
       const evaluatedArgs = args.map(arg => arg.evaluateInterval(context));
       
+      // Handle special SDF operations
+      if (name === 'smooth_union') {
+        if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
+        const [d1, d2, r] = evaluatedArgs;
+        return d1.smooth_union(d2, r.min); // Use min value from radius interval
+      }
+
       // Handle built-in math functions
       switch (name) {
         case 'sqrt':
@@ -266,6 +273,22 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
     evaluate: (context: Record<string, number>) => {
       const evaluatedArgs = args.map(arg => arg.evaluate(context));
       
+      // Handle special SDF operations
+      if (name === 'smooth_union') {
+        if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
+        const [d1, d2, r] = evaluatedArgs;
+        
+        // For points far from both shapes (> 2*radius), just use regular min
+        const minDist = Math.min(d1, d2);
+        if (minDist > r * 2.0) {
+          return Math.min(d1, d2);
+        }
+
+        // Otherwise compute the smooth union
+        const k = 1.0/r;
+        return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
+      }
+
       // Handle built-in math functions
       if (name === 'sqr') {
         return evaluatedArgs[0] * evaluatedArgs[0];
@@ -388,7 +411,19 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       // Evaluate all arguments first
       const evalArgs = args.map(arg => arg.toGLSL(context));
       
-      // Handle min/max with any number of arguments
+      // Handle special functions
+      if (name === 'smooth_union') {
+        if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
+        const [d1, d2, r] = evalArgs;
+        // Implementation matches the one in GLSL
+        return context.generator.save(
+          `(min(${d1}, ${d2}) > ${r}*2.0 ? ` +
+          `min(${d1}, ${d2}) : ` + 
+          `-log(exp(-1.0/${r}*${d1}) + exp(-1.0/${r}*${d2})) * ${r})`,
+          'float'
+        );
+      }
+      
       if (name === 'min' || name === 'max') {
         if (args.length === 1) return evalArgs[0];
         // Fold multiple arguments into nested min/max calls

@@ -72,6 +72,30 @@ export class Interval {
     return new Interval(-this.max, -this.min);
   }
 
+  // Special SDF operations
+  smooth_union(other: Interval, radius: number): Interval {
+    // For points far from both shapes (> 2*radius), just use regular min
+    const minDist = Math.min(this.min, other.min);
+    if (minDist > radius * 2.0) {
+      return new Interval(
+        Math.min(this.min, other.min),
+        Math.min(this.max, other.max)
+      );
+    }
+
+    // Otherwise compute the smooth union
+    const k = 1.0/radius;
+    const e1min = Math.exp(-k * this.min);
+    const e1max = Math.exp(-k * this.max);
+    const e2min = Math.exp(-k * other.min);
+    const e2max = Math.exp(-k * other.max);
+
+    return new Interval(
+      -Math.log(Math.max(e1min, e1max) + Math.max(e2min, e2max)) / k,
+      -Math.log(Math.min(e1min, e1max) + Math.min(e2min, e2max)) / k
+    );
+  }
+
   // Math functions
   sqrt(): Interval {
     // Clamp negative values to 0 for SDF operations
