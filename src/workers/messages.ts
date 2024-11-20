@@ -19,6 +19,7 @@ export interface MeshTask {
   type: 'mesh';
   optimize: boolean;
   octree: OctreeNode;
+  source: string;  // Source code to parse SDF from
 }
 
 export type WorkerTask = OctreeTask | MeshTask;

@@ -136,7 +136,12 @@ async function processMeshTask(taskId: string, task: MeshTask) {
     };
 
     const octree = reconstructOctree(task.octree);
-    const meshGen = new MeshGenerator(octree, task.optimize);
+    // Parse SDF from source
+    const cadAst = parseCAD(task.source);
+    const sdfExpr = moduleToSDF(cadAst);
+    const sdf = parseSDF(sdfExpr);
+    
+    const meshGen = new MeshGenerator(octree, sdf, task.optimize);
     
     // Add progress tracking to mesh generation
     meshGen.onProgress = (progress: number) => {

@@ -6,7 +6,11 @@ export class MeshGenerator {
     private faces: number[] = [];
     onProgress?: (progress: number) => void;
     
-    constructor(private octree: OctreeNode, private optimize: boolean = true) {}
+    constructor(
+        private octree: OctreeNode, 
+        private sdf: Node,
+        private optimize: boolean = true
+    ) {}
 
     private reportProgress(progress: number) {
         if (this.onProgress) {
@@ -131,9 +135,8 @@ export class MeshGenerator {
             
             for (let i = 0; i < this.vertices.length; i++) {
                 const vertex = this.vertices[i];
-                // Get the SDF from the octree's root node
-                const sdf = this.octree.sdf;
-                if (!sdf) {
+                // Get the SDF from the constructor
+                if (!this.sdf) {
                     throw new Error('No SDF available for mesh optimization');
                 }
                 
