@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def smooth_union_exp(d1: np.ndarray, d2: np.ndarray, k: float) -> np.ndarray:
-    # If distances are very different (> 2*radius apart), just use min
+    # If distances are very different (> 10*radius apart), just use min
     diff = np.abs(d1 - d2)
-    mask = diff > 2.0/k
+    mask = diff > 10.0/k
     
     # For points where we'll blend:
     # 1. Subtract the min to bring closer to origin
