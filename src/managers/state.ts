@@ -69,12 +69,26 @@ export class StateManager {
             // Reconstruct OctreeNode from serialized data
             const reconstructOctree = (data: any, parent: OctreeNode | null = null): OctreeNode => {
               const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
-              const node = new OctreeNode(center, data.size, data.state, parent, data.octant);
+              
+              // Create node with all required properties
+              const node = new OctreeNode(
+                center,
+                data.size,
+                data.state,
+                parent,
+                data.octant
+              );
               
               // Recursively reconstruct children with proper parent references
               node.children = data.children.map((child: any) => 
                 child ? reconstructOctree(child, node) : null
               );
+              
+              // Ensure prototype methods are available
+              if (typeof node.getCellCount !== 'function') {
+                console.error('Reconstructed node is missing getCellCount method!', node);
+                throw new Error('Invalid octree reconstruction: missing required methods');
+              }
               
               return node;
             };

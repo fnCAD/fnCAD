@@ -83,20 +83,16 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     console.log(`Octree generation complete with ${totalCells} cells`);
     console.log('Preparing to send octree result back to main thread');
     
-    // Ensure we send a proper OctreeNode instance
-    const serializedOctree = {
-      center: octree.center,
-      size: octree.size,
-      state: octree.state,
-      children: octree.children.map(child => child ? {
-        center: child.center,
-        size: child.size,
-        state: child.state,
-        children: child.children,
-        octant: child.octant
-      } : null),
-      octant: octree.octant
-    };
+    // Ensure we send a proper OctreeNode instance with all required data
+    const serializeNode = (node: OctreeNode): any => ({
+      center: node.center,
+      size: node.size,
+      state: node.state,
+      children: node.children.map(child => child ? serializeNode(child) : null),
+      octant: node.octant
+    });
+
+    const serializedOctree = serializeNode(octree);
 
     const result = { 
       result: serializedOctree,
