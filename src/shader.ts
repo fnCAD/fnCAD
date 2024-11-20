@@ -27,8 +27,11 @@ export function generateShader(ast: Node): string {
       }
 
       // Otherwise compute the smooth union
+      // First shift distances to avoid overflow
       float k = 1.0/r;
-      return -log(exp(-k * d1) + exp(-k * d2)) * r;
+      float d1_shifted = d1 - minDist;
+      float d2_shifted = d2 - minDist;
+      return -log(exp(-k * d1_shifted) + exp(-k * d2_shifted))/k + minDist;
     }
 
     float scene(vec3 pos) {
