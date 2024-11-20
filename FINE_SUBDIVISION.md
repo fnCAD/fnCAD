@@ -18,17 +18,25 @@ Current mesh generation has issues with non-axis-aligned sharp boundaries:
      ```
    - Track faces exceeding threshold in priority queue
 
-### Phase 2: Edge-Based Subdivision
+### Phase 2: Edge-Based Subdivision with Vertex Sharing
 1. While queue not empty and under subdivision limit:
    - Pop worst face
-   - Split each edge at midpoint
+   - For each edge:
+     - If edge already has pending split vertex, use it
+     - Otherwise create new split vertex at midpoint
+     - Record this vertex as pending for any adjacent faces
    - Update face indices:
-     - Replace one face with four triangles
+     - Replace one face with four triangles using split vertices
      - Maintain consistent winding order
    - Handle neighbor faces:
-     - If neighbor is in queue, split shared edge
-     - If not in queue, split only the shared edge
-       creating two triangles in neighbor
+     - If neighbor is in queue, it will use our split vertices later
+     - If not in queue, mark it for single split using our vertex
+
+2. After main subdivision loop:
+   - Process all faces with pending split vertices:
+     - Split each such face once using the pending vertex
+     - Creates two triangles in the neighbor
+     - Maintains mesh consistency without excessive subdivision
 
 ### Phase 3: Re-optimization
 1. For each new vertex:
