@@ -1,3 +1,6 @@
+import { OctreeNode } from '../octree';
+import { SerializedMesh, OctreeTask, MeshTask } from '../types';
+
 export type TaskType = 'octree' | 'mesh';
 
 export interface TaskProgress {
@@ -6,20 +9,7 @@ export interface TaskProgress {
   progress: number;
   status: 'queued' | 'running' | 'completed' | 'failed';
   error?: string;
-}
-
-export interface OctreeTask {
-  type: 'octree';
-  minSize: number;
-  cellBudget: number;
-  source: string;
-}
-
-export interface MeshTask {
-  type: 'mesh';
-  optimize: boolean;
-  octree: OctreeNode;
-  source: string;  // Source code to parse SDF from
+  result?: SerializedMesh | OctreeNode;
 }
 
 export type WorkerTask = OctreeTask | MeshTask;
@@ -32,5 +22,6 @@ export interface WorkerMessage {
     cellCount?: number;
   };
   progress?: number;
+  status?: 'queued' | 'running' | 'completed' | 'failed';
   error?: string;
 }
