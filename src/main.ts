@@ -11,6 +11,7 @@ import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { javascript } from '@codemirror/lang-javascript'
 import { basicSetup } from 'codemirror'
+import { oneDark } from '@codemirror/theme-one-dark'
 
 // Set runtime base path for assets
 const BASE_PATH = getRuntimeBasePath();
@@ -50,9 +51,12 @@ translate(2, 0, 0) {
           updateOctree();
         }
       }),
+      oneDark,
       EditorView.theme({
         '&': {height: '100%'},
-        '.cm-scroller': {overflow: 'auto'}
+        '.cm-scroller': {overflow: 'auto'},
+        '.cm-gutters': {backgroundColor: 'transparent'},
+        '.cm-lineNumbers': {color: '#666'}
       })
     ]
   }),
