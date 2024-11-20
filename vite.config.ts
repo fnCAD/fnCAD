@@ -11,7 +11,12 @@ export default defineConfig({
     target: 'esnext',
     worker: {
       format: 'es',
-      plugins: []
+      plugins: [],
+      rollupOptions: {
+        output: {
+          format: 'amd'
+        }
+      }
     },
     // Log each asset and its size
     manifest: true,
