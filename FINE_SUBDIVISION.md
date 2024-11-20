@@ -30,13 +30,10 @@ Current mesh generation has issues with non-axis-aligned sharp boundaries:
      - Maintain consistent winding order
    - Handle neighbor faces:
      - If neighbor is in queue, it will use our split vertices later
-     - If not in queue, mark it for single split using our vertex
-
-2. After main subdivision loop:
-   - Process all faces with pending split vertices:
-     - Split each such face once using the pending vertex
+     - If not in queue, immediately split it using our vertex
      - Creates two triangles in the neighbor
-     - Maintains mesh consistency without excessive subdivision
+     - These new triangles may end up in queue after optimization
+     - This maintains mesh consistency while allowing further refinement if needed
 
 ### Phase 3: Re-optimization
 1. For each new vertex:
