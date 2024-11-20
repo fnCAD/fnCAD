@@ -37,7 +37,7 @@ export class OctreeNode {
     const copy = new OctreeNode(
       this.center.clone(),
       this.size,
-      this.sdf,
+      this.state,
       this.parent,
       this.octant
     );
@@ -54,6 +54,7 @@ export class OctreeNode {
     public parent: OctreeNode | null = null,
     public octant: number = -1
   ) {
+    // Validate size
     // Validate size
     if (size <= 0) {
       throw new Error(`Invalid octree node size: ${size}`);
@@ -334,7 +335,7 @@ export function createOctreeNode(
   parent: OctreeNode | null = null,
   octant: number = -1
 ): OctreeNode {
-  // Evaluate SDF over the cube bounds
+  // Evaluate SDF over the cube bounds to determine initial state
   const half = size / 2;
   const interval = sdf.evaluateInterval({
     x: new Interval(center.x - half, center.x + half),
