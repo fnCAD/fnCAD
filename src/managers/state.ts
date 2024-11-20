@@ -75,7 +75,6 @@ export class StateManager {
   }
 
   setCurrentShader(shader: string | null) {
-    console.log('Setting new shader:', shader);
     this.currentShader = shader;
     if (shader) {
       this.rendererManager.updateShader(shader);
@@ -83,9 +82,7 @@ export class StateManager {
   }
 
   updateShader(ast: SdfNode) {
-    console.log('Generating new shader from AST:', ast);
     const fragmentShader = generateShader(ast);
-    console.log('Generated shader code:', fragmentShader);
     this.setCurrentShader(fragmentShader);
   }
 
