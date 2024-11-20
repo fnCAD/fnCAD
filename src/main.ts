@@ -1,26 +1,17 @@
 import './style.css'
 import Split from 'split.js'
 import { getRuntimeBasePath } from './utils/runtime-base'
-import * as monaco from 'monaco-editor'
 import { downloadSTL } from './stlexporter'
 import { MeshGenerator } from './meshgen'
 import { StateManager } from './managers/state'
 import { OctreeManager } from './managers/octree'
 import { SettingsManager } from './managers/settings'
 import { RendererManager } from './managers/renderer'
+import { EditorState, EditorView, basicSetup } from '@codemirror/basic-setup'
+import { javascript } from '@codemirror/lang-javascript'
 
 // Set runtime base path for assets
 const BASE_PATH = getRuntimeBasePath();
-
-// Configure Monaco's base path for worker loading
-(window as any).MonacoEnvironment = {
-  getWorkerUrl: function(_moduleId: string, label: string) {
-    if (label === 'typescript' || label === 'javascript') {
-      return '/node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js';
-    }
-    return '/node_modules/monaco-editor/esm/vs/editor/editor.worker.js';
-  }
-};
 
 // Initialize split panes
 Split(['#editor-pane', '#preview-pane'], {
@@ -40,17 +31,30 @@ const settingsManager = new SettingsManager(previewPane, () => {
 });
 const octreeManager = new OctreeManager(stateManager, rendererManager);
 
-// Initialize Monaco editor
-const editor = monaco.editor.create(document.getElementById('editor-pane')!, {
-  value: `// Scene with two spheres
+// Initialize CodeMirror editor
+const editor = new EditorView({
+  state: EditorState.create({
+    doc: `// Scene with two spheres
 sphere(1);
 translate(2, 0, 0) {
   sphere(0.7);
 }`,
-  language: 'typescript',
-  theme: 'vs-dark',
-  minimap: { enabled: false },
-  automaticLayout: true,
+    extensions: [
+      basicSetup,
+      javascript(),
+      EditorView.updateListener.of(update => {
+        if (update.docChanged) {
+          stateManager.updateEditorContent(update.state.doc.toString());
+          updateOctree();
+        }
+      }),
+      EditorView.theme({
+        '&': {height: '100%'},
+        '.cm-scroller': {overflow: 'auto'}
+      })
+    ]
+  }),
+  parent: document.getElementById('editor-pane')!
 });
 
 // Add change listener
