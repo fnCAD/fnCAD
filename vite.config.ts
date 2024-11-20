@@ -11,20 +11,14 @@ export default defineConfig({
     target: 'esnext',
     worker: {
       format: 'es',
-      plugins: [],
-      rollupOptions: {
-        output: {
-          format: 'amd'
-        }
-      }
+      plugins: []
     },
     rollupOptions: {
       output: {
-        format: 'amd',
-        amd: {
-          autoId: true,
-          define: 'define'
-        }
+        format: 'es',
+        entryFileNames: '[name].js',
+        chunkFileNames: '[name].js',
+        assetFileNames: '[name].[ext]'
       }
     },
     // Log each asset and its size
