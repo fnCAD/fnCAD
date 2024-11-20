@@ -17,8 +17,12 @@ export class StateManager {
   private cellCount: number = 0;
   private currentShader: string | null = null;
 
-  private taskQueue: TaskQueue;
+  taskQueue: TaskQueue;
   private activeTaskId: string | null = null;
+
+  setActiveTaskId(taskId: string | null) {
+    this.activeTaskId = taskId;
+  }
 
   constructor(
     private rendererManager: RendererManager

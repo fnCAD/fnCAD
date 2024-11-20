@@ -25,8 +25,6 @@ export class OctreeManager {
       sdfExpression: JSON.stringify(ast)
     });
 
-    // Store active task
-    this.stateManager.setActiveTaskId(taskId);
 
     try {
       // Wait for task completion
