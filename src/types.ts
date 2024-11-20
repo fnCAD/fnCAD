@@ -1,5 +1,4 @@
 import { OctreeNode } from './octree';
-import { Node as SDFNode } from './sdf_expressions/ast';
 
 export interface SerializedMesh {
   vertices: number[];  // Flat array of vertex positions [x,y,z, x,y,z, ...]

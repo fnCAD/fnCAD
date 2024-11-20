@@ -7,7 +7,7 @@ import { TaskProgress } from './workers/task_types'
 import { OctreeManager } from './managers/octree'
 import { SettingsManager } from './managers/settings'
 import { RendererManager } from './managers/renderer'
-import { EditorView, ViewUpdate } from '@codemirror/view'
+import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { javascript } from '@codemirror/lang-javascript'
 import { basicSetup } from 'codemirror'
@@ -45,7 +45,7 @@ translate(2, 0, 0) {
     extensions: [
       basicSetup,
       javascript(),
-      EditorView.updateListener.of((update: ViewUpdate) => {
+      EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           stateManager.updateEditorContent(update.state.doc.toString());
           updateOctree();
@@ -118,8 +118,10 @@ generateMeshButton.addEventListener('click', async () => {
     });
 
     if (task.result) {
-      stateManager.setCurrentMesh(task.result);
-      rendererManager.updateMesh(task.result);
+      if (task.result && 'vertices' in task.result) {
+        stateManager.setCurrentMesh(task.result);
+        rendererManager.updateMesh(task.result);
+      }
     }
   } catch (error) {
     console.error('Mesh generation failed:', error);

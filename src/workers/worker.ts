@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { WorkerMessage, WorkerTask, TaskProgress } from './messages';
-import { Interval } from '../interval';
 import { parse as parseCAD } from '../cad/parser';
 import { moduleToSDF } from '../cad/builtins';
 import { parse as parseSDF } from '../sdf_expressions/parser';

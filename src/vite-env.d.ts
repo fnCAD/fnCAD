@@ -2,7 +2,7 @@
 
 declare global {
   interface Window {
-    _editor: import('@codemirror/view').EditorView;
+    _editor?: import('@codemirror/view').EditorView;
   }
 }
 

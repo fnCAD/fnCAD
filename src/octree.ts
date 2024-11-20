@@ -50,7 +50,7 @@ export class OctreeNode {
   constructor(
     public center: THREE.Vector3,
     public size: number,
-    state: CellState,
+    initialState: CellState,
     public parent: OctreeNode | null = null,
     public octant: number = -1
   ) {
