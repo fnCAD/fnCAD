@@ -85,6 +85,15 @@ body {
   position: relative;
 }
 
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: #646cff;
+  transition: width 0.3s ease;
+}
+
 #settings-panel {
   position: absolute;
   top: 10px;

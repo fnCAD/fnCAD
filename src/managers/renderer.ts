@@ -15,7 +15,10 @@ export class RendererManager {
 
   private readonly FOV = 45;
 
+  private progressBar: HTMLDivElement;
+
   constructor(private previewPane: HTMLElement) {
+    this.progressBar = this.createProgressBar();
     // Initialize scenes
     this.scene = new THREE.Scene();
     this.previewOverlayScene = new THREE.Scene();
@@ -27,6 +30,10 @@ export class RendererManager {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(1, 2, 3);
     this.previewOverlayScene.add(directionalLight);
+
+    // Create progress bar
+    this.progressBar = this.createProgressBar();
+    previewPane.appendChild(this.progressBar);
 
     // Initialize renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -84,6 +91,22 @@ export class RendererManager {
 
     // Handle window resize
     window.addEventListener('resize', this.handleResize.bind(this));
+  }
+
+  private createProgressBar(): HTMLDivElement {
+    const bar = document.createElement('div');
+    bar.className = 'progress-bar';
+    bar.style.display = 'none';
+    return bar;
+  }
+
+  updateProgress(progress: TaskProgress) {
+    if (progress.status === 'running') {
+      this.progressBar.style.display = 'block';
+      this.progressBar.style.width = `${progress.progress * 100}%`;
+    } else {
+      this.progressBar.style.display = 'none';
+    }
   }
 
   private setupControls() {

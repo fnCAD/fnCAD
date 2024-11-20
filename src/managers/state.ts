@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { Material } from 'three';
 import { OctreeNode } from '../octree';
 import { Node as SdfNode } from '../sdf_expressions/ast';
+import { TaskQueue } from '../workers/tasks';
+import { TaskProgress } from '../workers/messages';
 import { RendererManager } from './renderer';
 import { parse as parseCAD } from '../cad/parser';
 import { moduleToSDF } from '../cad/builtins';
@@ -15,9 +17,21 @@ export class StateManager {
   private cellCount: number = 0;
   private currentShader: string | null = null;
 
+  private taskQueue: TaskQueue;
+  private activeTaskId: string | null = null;
+
   constructor(
     private rendererManager: RendererManager
-  ) {}
+  ) {
+    this.taskQueue = new TaskQueue();
+    this.taskQueue.onProgress(this.handleTaskProgress.bind(this));
+  }
+
+  private handleTaskProgress(progress: TaskProgress) {
+    if (progress.taskId === this.activeTaskId) {
+      this.rendererManager.updateProgress(progress);
+    }
+  }
 
   updateEditorContent(content: string) {
     if (content !== this.editorContent) {

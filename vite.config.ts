@@ -1,14 +1,18 @@
 import { defineConfig } from 'vite'
 import { copyFileSync } from 'fs'
+import { resolve } from 'path'
 
 export default defineConfig({
   logLevel: 'info',
   clearScreen: false,
   build: {
-    // Show detailed build progress
     reportCompressedSize: true,
     minify: 'esbuild',
     target: 'esnext',
+    worker: {
+      format: 'es',
+      plugins: []
+    },
     // Log each asset and its size
     manifest: true,
     // Show build time stats
