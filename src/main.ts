@@ -7,8 +7,9 @@ import { StateManager } from './managers/state'
 import { OctreeManager } from './managers/octree'
 import { SettingsManager } from './managers/settings'
 import { RendererManager } from './managers/renderer'
-import { EditorState, EditorView, basicSetup } from '@codemirror/basic-setup'
+import { EditorState, EditorView } from '@codemirror/view'
 import { javascript } from '@codemirror/lang-javascript'
+import { basicSetup } from 'codemirror'
 
 // Set runtime base path for assets
 const BASE_PATH = getRuntimeBasePath();
