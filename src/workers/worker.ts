@@ -108,11 +108,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
 
     const serializedOctree = serializeNode(octree);
     
-    // Debug logging
-    console.log('Serialized octree state:', serializedOctree.state);
-    console.log('Original octree state:', octree.state);
-
-    const result = { 
+    const result = {
       result: serializedOctree,
       cellCount: totalCells
     };
