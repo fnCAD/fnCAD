@@ -38,6 +38,9 @@ def main():
     # Create figure with two subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
+    # Create figure with three subplots
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5))
+    
     # Plot naive version
     im1 = ax1.imshow(naive, extent=[-2, 2, -2, 2], origin='lower', cmap='viridis')
     ax1.set_title('Naive Smooth Union')
@@ -48,13 +51,20 @@ def main():
     ax2.set_title('Optimized Smooth Union')
     plt.colorbar(im2, ax=ax2)
     
-    # Add contour lines to both plots
+    # Plot difference
+    difference = np.abs(optimized - naive)
+    im3 = ax3.imshow(difference, extent=[-2, 2, -2, 2], origin='lower', cmap='magma')
+    ax3.set_title('Absolute Difference')
+    plt.colorbar(im3, ax=ax3)
+    
+    # Add contour lines to all plots
     levels = np.linspace(-2, 2, 20)
     ax1.contour(X, Y, naive, levels=levels, colors='white', alpha=0.3)
     ax2.contour(X, Y, optimized, levels=levels, colors='white', alpha=0.3)
+    ax3.contour(X, Y, difference, levels=np.linspace(0, difference.max(), 20), colors='white', alpha=0.3)
     
     # Labels and grid
-    for ax in [ax1, ax2]:
+    for ax in [ax1, ax2, ax3]:
         ax.set_xlabel('d1')
         ax.set_ylabel('d2')
         ax.grid(True, alpha=0.3)
