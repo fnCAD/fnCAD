@@ -84,7 +84,7 @@ export class StateManager {
             const octree = reconstructOctree(progress.result);
             console.log('Reconstructed octree:', octree);
             this.setCurrentOctree(octree);
-            const cellCount = progress.result.getCellCount();
+            const cellCount = octree.getCellCount();
             console.log('Setting cell count:', cellCount);
             this.setCellCount(cellCount);
             console.log('Updating octree visualization');
