@@ -201,6 +201,7 @@ export class OctreeNode {
   }
 
   subdivide(
+    sdf: Node,
     minSize: number = 0.1, 
     cellBudget: number = 100000, 
     renderSettings?: OctreeRenderSettings,
@@ -256,14 +257,17 @@ export class OctreeNode {
         this.center.y + y * half/2,
         this.center.z + z * half/2
       );
-      this.children[i] = new OctreeNode(childCenter, newSize, this.sdf, this, i);
+      const childNode = createOctreeNode(childCenter, newSize, sdf);
+      childNode.parent = this;
+      childNode.octant = i;
+      this.children[i] = childNode;
       
       // Try to subdivide child with current budget
       const child = this.children[i];
       if (!child) continue;
       
       console.log(`Processing child ${i} at ${childCenter.toArray()} with state ${CellState[child.state]}`);
-      const cellsCreated = child.subdivide(minSize, cellBudget, settings);
+      const cellsCreated = child.subdivide(sdf, minSize, cellBudget, settings);
       totalChildCells += cellsCreated;
       cellBudget -= cellsCreated;
       
