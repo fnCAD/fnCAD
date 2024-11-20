@@ -53,6 +53,12 @@ describe('Expression Evaluation', () => {
     expect(evaluate('abs(-2.5)')).toBe(2.5);
   });
 
+  it('correctly formats small numbers', () => {
+    const ast = parse('0.01');
+    const context = new GLSLContext(new GLSLGenerator());
+    expect(ast.toGLSL(context)).toMatch(/var\d+ = 0\.01/);
+  });
+
   it('handles expressions starting with unary minus', () => {
     expect(evaluate('-1')).toBe(-1);
     expect(evaluate('-x', {x: 2})).toBe(-2);
