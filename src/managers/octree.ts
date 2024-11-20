@@ -15,14 +15,14 @@ export class OctreeManager {
     cellBudget: number,
     renderSettings: OctreeRenderSettings
   ) {
-    const ast = this.stateManager.parseContent();
+    const source = this.stateManager.getEditorContent();
     
     // Create octree task
     const taskId = this.stateManager.taskQueue.addTask({
       type: 'octree',
       minSize,
       cellBudget,
-      sdfExpression: JSON.stringify(ast)
+      source
     });
 
 

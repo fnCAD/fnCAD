@@ -12,7 +12,7 @@ export interface OctreeTask {
   type: 'octree';
   minSize: number;
   cellBudget: number;
-  sdfExpression: string;
+  source: string;
 }
 
 export interface MeshTask {

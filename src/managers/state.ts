@@ -43,6 +43,10 @@ export class StateManager {
     }
   }
 
+  getEditorContent(): string {
+    return this.editorContent;
+  }
+
   setCurrentOctree(octree: OctreeNode | null) {
     this.currentOctree = octree;
   }
