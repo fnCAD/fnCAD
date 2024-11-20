@@ -5,9 +5,3 @@ declare global {
     _editor?: import('@codemirror/view').EditorView;
   }
 }
-
-declare module '@codemirror/view' {
-  interface EditorView {
-    _editor?: EditorView;
-  }
-}
