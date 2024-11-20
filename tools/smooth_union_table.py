@@ -57,11 +57,10 @@ def main():
     ax3.set_title('Absolute Difference')
     plt.colorbar(im3, ax=ax3)
     
-    # Add contour lines to all plots
+    # Add contour lines to naive and optimized plots only
     levels = np.linspace(-2, 2, 20)
     ax1.contour(X, Y, naive, levels=levels, colors='white', alpha=0.3)
     ax2.contour(X, Y, optimized, levels=levels, colors='white', alpha=0.3)
-    ax3.contour(X, Y, difference, levels=np.linspace(0, difference.max(), 20), colors='white', alpha=0.3)
     
     # Labels and grid
     for ax in [ax1, ax2, ax3]:
