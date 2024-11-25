@@ -2,6 +2,31 @@ import * as THREE from 'three';
 import { SerializedMesh } from './workers/mesh_types';
 import { OctreeNode, Direction, CellState } from './octree';
 
+/**
+ * Generates a triangle mesh from an octree representation of an SDF boundary.
+ * 
+ * IMPORTANT MESH GENERATION INVARIANT:
+ * The octree subdivision algorithm ensures that all boundary cells (CellState.Boundary)
+ * are at the same scale/level. This is because:
+ * 
+ * 1. The subdivision process continues until either:
+ *    - The minimum size is reached
+ *    - The cell budget is exhausted
+ *    - The cell is fully inside/outside
+ * 
+ * 2. For any given SDF, a cell can only be classified as boundary if:
+ *    - It contains the zero isosurface (interval spans zero)
+ *    - It hasn't reached the minimum size
+ *    - There's remaining cell budget
+ * 
+ * 3. Since boundary detection uses interval arithmetic, any cell containing
+ *    the surface will be marked for subdivision until these limits are hit.
+ * 
+ * This invariant guarantees that adjacent boundary cells are always the same size,
+ * which in turn ensures that the generated mesh is manifold when using the
+ * simple "two triangles per face" extraction method. Without this guarantee,
+ * we could get T-junctions or gaps where cells of different sizes meet.
+ */
 export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
     private faces: number[] = [];
