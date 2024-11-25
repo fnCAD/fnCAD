@@ -31,6 +31,14 @@ import { OctreeNode, Direction, CellState } from './octree';
  * subdivision entirely, rather than allowing partial subdivision that could
  * violate this invariant. This ensures we never generate invalid meshes,
  * even when resource limits are hit.
+ * 
+ * SCALABILITY:
+ * This approach scales well in practice because:
+ * 1. Boundary cells naturally scale with surface area rather than volume
+ * 2. Physical 3D printing constraints already limit the meaningful object size
+ * 3. The separate mesh refinement step (see FINE_SUBDIVISION.md) can adaptively
+ *    improve surface detail where needed, since triangle meshes are easier to
+ *    manipulate locally than octrees
  */
 export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
