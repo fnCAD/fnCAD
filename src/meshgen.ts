@@ -26,6 +26,11 @@ import { OctreeNode, Direction, CellState } from './octree';
  * which in turn ensures that the generated mesh is manifold when using the
  * simple "two triangles per face" extraction method. Without this guarantee,
  * we could get T-junctions or gaps where cells of different sizes meet.
+ * 
+ * Note: Cell budget exhaustion is treated as an error condition that halts
+ * subdivision entirely, rather than allowing partial subdivision that could
+ * violate this invariant. This ensures we never generate invalid meshes,
+ * even when resource limits are hit.
  */
 export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
