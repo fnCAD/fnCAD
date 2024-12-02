@@ -226,9 +226,15 @@ export class RendererManager {
   }
 
   updateShader(fragmentShader: string, visible: boolean = true) {
-    this.quad.visible = visible;
+    // When invisible, modify the scene() function to return inf
+    const modifiedShader = visible ? fragmentShader : 
+      fragmentShader.replace(
+        /float scene\(vec3 pos\) {([^}]*)}/s,
+        'float scene(vec3 pos) {\n  return 1.0e10;\n}'
+      );
+    
     // Update shader code
-    this.material.fragmentShader = fragmentShader;
+    this.material.fragmentShader = modifiedShader;
     this.material.needsUpdate = true;
     
     // Force recompilation
