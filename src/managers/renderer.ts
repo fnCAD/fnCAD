@@ -300,22 +300,34 @@ export class RendererManager {
       // Always compute normals
       geometry.computeVertexNormals();
       
-      // Create geometry with colors if provided
-      if (meshData.colors) {
-        geometry.setAttribute('color', 
-          new THREE.Float32BufferAttribute(meshData.colors, 3));
-      }
-
       const material = new THREE.MeshPhongMaterial({
-        color: meshData.colors ? 0xffffff : 0xffd700, // White if using vertex colors
+        color: 0xffd700,
         side: THREE.DoubleSide,
         flatShading: true,
         emissive: 0x222222,
         shininess: 30,
         transparent: true,
         opacity: 0.8,
-        vertexColors: meshData.colors ? true : false
+        vertexColors: false
       });
+
+      // Add face colors if provided
+      if (meshData.faceColors) {
+        // Convert face colors to vertex colors by duplicating for each vertex of triangle
+        const vertexColors = new Float32Array(meshData.vertices.length);
+        for (let i = 0; i < meshData.indices.length; i += 3) {
+          const faceIdx = Math.floor(i / 3);
+          for (let j = 0; j < 3; j++) {
+            const vertexIdx = meshData.indices[i + j];
+            vertexColors[vertexIdx * 3] = meshData.faceColors[faceIdx * 3];
+            vertexColors[vertexIdx * 3 + 1] = meshData.faceColors[faceIdx * 3 + 1];
+            vertexColors[vertexIdx * 3 + 2] = meshData.faceColors[faceIdx * 3 + 2];
+          }
+        }
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(vertexColors, 3));
+        material.vertexColors = true;
+        material.color.set(0xffffff);
+      }
       
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isSdfMesh = true;

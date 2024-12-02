@@ -93,28 +93,15 @@ export class MeshGenerator {
             positions[i * 3 + 2] = vertex.z;
         });
 
-        // Set vertex colors based on face qualities
-        if (this.showQuality) {
-            const vertexQualityMap = new Map<number, number[]>();
-            
-            // Collect all qualities for each vertex
-            this.faceQualities.forEach(face => {
-                face.indices.forEach(idx => {
-                    if (!vertexQualityMap.has(idx)) {
-                        vertexQualityMap.set(idx, []);
-                    }
-                    vertexQualityMap.get(idx)!.push(face.quality);
-                });
-            });
-
-            // Average qualities and set colors
-            for (let i = 0; i < this.vertices.length; i++) {
-                const qualities = vertexQualityMap.get(i) || [0];
-                const avgQuality = qualities.reduce((a, b) => a + b, 0) / qualities.length;
-                const color = this.getQualityColor(avgQuality);
-                colors[i * 3] = color.r;
-                colors[i * 3 + 1] = color.g;
-                colors[i * 3 + 2] = color.b;
+        // Set face colors based on qualities
+        const faceColors = this.showQuality ? new Float32Array(this.faces.length) : undefined;
+        if (this.showQuality && faceColors) {
+            for (let i = 0; i < this.faceQualities.length; i++) {
+                const quality = this.faceQualities[i].quality;
+                const color = this.getQualityColor(quality);
+                faceColors[i * 3] = color.r;
+                faceColors[i * 3 + 1] = color.g;
+                faceColors[i * 3 + 2] = color.b;
             }
         }
 
@@ -123,7 +110,7 @@ export class MeshGenerator {
         return {
             vertices: Array.from(positions),
             indices: Array.from(this.faces),
-            colors: this.showQuality ? Array.from(colors) : undefined
+            faceColors: this.showQuality ? Array.from(faceColors!) : undefined
         };
     }
 
@@ -155,15 +142,6 @@ export class MeshGenerator {
                 z: centroid.z
             });
 
-            // Calculate interpolated SDF value
-            const interpolatedSDF = vertices.reduce((sum, v) => {
-                return sum + this.sdf.evaluate({
-                    x: v.x,
-                    y: v.y,
-                    z: v.z
-                });
-            }, 0) / 3;
-
             // Calculate edge lengths
             const edges = [
                 vertices[1].clone().sub(vertices[0]),
@@ -172,8 +150,9 @@ export class MeshGenerator {
             ];
             const maxEdgeLength = Math.max(...edges.map(e => e.length()));
 
-            // Calculate quality metric
-            const quality = Math.abs(actualSDF - interpolatedSDF) / maxEdgeLength;
+            // Calculate quality metric - just use absolute SDF value at centroid
+            // normalized by max edge length
+            const quality = Math.abs(actualSDF) / maxEdgeLength;
 
             this.faceQualities.push({
                 indices,
