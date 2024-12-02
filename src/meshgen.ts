@@ -40,15 +40,10 @@ import { OctreeNode, Direction, CellState } from './octree';
  *    improve surface detail where needed, since triangle meshes are easier to
  *    manipulate locally than octrees
  */
-interface FaceQuality {
-    indices: number[];
-    quality: number;
-}
-
 export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
     private faces: number[] = [];
-    private faceQualities: FaceQuality[] = [];
+    private faceQualities: number[] = [];
     onProgress?: (progress: number) => void;
     
     constructor(
@@ -97,8 +92,7 @@ export class MeshGenerator {
         const faceColors = this.showQuality ? new Float32Array(this.faces.length) : undefined;
         if (this.showQuality && faceColors) {
             for (let i = 0; i < this.faceQualities.length; i++) {
-                const quality = this.faceQualities[i].quality;
-                const color = this.getQualityColor(quality);
+                const color = this.getQualityColor(this.faceQualities[i]);
                 faceColors[i * 3] = color.r;
                 faceColors[i * 3 + 1] = color.g;
                 faceColors[i * 3 + 2] = color.b;
@@ -154,10 +148,7 @@ export class MeshGenerator {
             // normalized by max edge length
             const quality = Math.abs(actualSDF) / maxEdgeLength;
 
-            this.faceQualities.push({
-                indices,
-                quality
-            });
+            this.faceQualities.push(quality);
         }
     }
 
