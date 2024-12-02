@@ -69,6 +69,32 @@ Current mesh generation has issues with non-axis-aligned sharp boundaries:
    - Highlight problem areas
    - Display quality metrics
 
+## MVP Implementation Plan
+
+### Phase 0: Visualization Setup
+1. Add raymarched object display toggle to UI:
+   - Add checkbox to show/hide raymarched SDF
+   - Implement alpha blending for raymarched result
+   - Allow adjusting raymarched object opacity
+
+2. Face Quality Visualization:
+   - Implement badness metric calculation
+   - Add color coding for faces exceeding subdivision threshold
+   - Add debug visualization toggle
+   - Add threshold adjustment slider
+
+3. Testing Setup:
+   - Create test cases with known sharp features
+   - Document expected subdivision patterns
+   - Add screenshots for regression testing
+
+### Next Steps
+After visualization is working:
+1. Implement basic face subdivision without neighbor handling
+2. Add vertex optimization for subdivided faces
+3. Implement neighbor face handling
+4. Add full mesh consistency checks
+
 ## Success Metrics
 - Reduced maximum SDF error across faces
 - More uniform triangle sizes along edges
