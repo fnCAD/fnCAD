@@ -31,8 +31,6 @@ const settingsManager = new SettingsManager(previewPane, () => {
   updateOctree();
 });
 const rendererManager = new RendererManager(previewPane, settingsManager);
-  updateOctree();
-});
 const stateManager = new StateManager(rendererManager, settingsManager);
 const octreeManager = new OctreeManager(stateManager, rendererManager);
 
