@@ -1,93 +1,78 @@
-# Fine Subdivision Implementation Plan
+# Edge-Based Mesh Refinement Plan
 
 ## Problem
-Current mesh generation has issues with non-axis-aligned sharp boundaries:
-- Edges crossing octree quads at angles create poor triangulation
-- Vertices are optimized at corners but not along edges
-- Results in uneven mesh quality across faces
+Current mesh generation has issues with sharp features and curved surfaces:
+- Initial triangulation follows octree faces, missing diagonal features
+- Vertex optimization alone can't capture sharp edges well
+- Need better adaptation to surface curvature
 
-## Solution: Adaptive Face Subdivision
+## Solution: Edge-Based Adaptive Refinement
 
-### Phase 1: Error Detection
-1. During first optimization pass:
-   - For each face, evaluate SDF at face centroid
-   - Compare with linear interpolation from vertices
-   - Calculate "badness metric":
+### Core Insight
+Instead of face-based subdivision, we use edges as the primary refinement primitive:
+- Edges are the natural unit in half-edge mesh representation
+- Edge midpoint SDF evaluation directly measures geometric error
+- Splitting edges maintains mesh consistency naturally
+- Avoids complex face subdivision patterns
+
+### Phase 1: Edge Quality Analysis
+1. For each edge in the mesh:
+   - Compute midpoint position
+   - Evaluate SDF at midpoint
+   - Calculate edge error metric:
      ```
-     badness = abs(actual_sdf - interpolated_sdf) / max_edge_length
+     error = sdf / edge_length
      ```
-   - Track faces exceeding threshold in priority queue
+   - Track edges exceeding threshold in priority queue
 
-### Phase 2: Edge-Based Subdivision with Vertex Sharing
+### Phase 2: Edge-Based Refinement
 1. While queue not empty and under subdivision limit:
-   - Pop worst face
-   - For each edge:
-     - If edge already has pending split vertex, use it
-     - Otherwise create new split vertex at midpoint
-     - Record this vertex as pending for any adjacent faces
-   - Update face indices:
-     - Replace one face with four triangles using split vertices
-     - Maintain consistent winding order
-   - Handle neighbor faces:
-     - If neighbor is in queue, it will use our split vertices later
-     - If not in queue, immediately split it using our vertex
-     - Creates two triangles in the neighbor
-     - These new triangles may end up in queue after optimization
-     - This maintains mesh consistency while allowing further refinement if needed
-
-### Phase 3: Re-optimization
-1. For each new vertex:
-   - Initialize position at face centroid
-   - Optimize using existing SDF gradient method
-   - Update connected face normals
-
-### Prep ✓
-
-1. Add raymarched object display toggle to UI: ✓
-   - Add checkbox to show/hide raymarched SDF
-
-2. Face Quality Visualization: ✓
-   - Implement badness metric calculation
-   - Add color coding for faces exceeding subdivision threshold
-   - Add threshold adjustment slider
+   - Pop worst edge
+   - Create new vertex at midpoint
+   - Split both adjacent faces:
+     - Each triangle becomes two triangles
+     - New triangles share the split edge vertex
+     - Maintains half-edge connectivity
+   - Optimize new vertex position using SDF gradient
+   - Evaluate new edges for potential splitting
 
 ### Implementation Steps
 
-1. Add face and edge tracking to MeshGenerator:
-   - Add FaceQuality struct with metrics
-   - Add EdgeMap to track shared edges
-   - Modify optimization loop to evaluate edge midpoints
-   - Create priority queue for bad faces
+1. Add edge quality tracking:
+   - Add EdgeQuality struct with error metrics
+   - Implement edge midpoint evaluation
+   - Create priority queue for bad edges
 
-2. Implement subdivision logic:
-   - Add methods to split individual faces
-   - Handle vertex/index buffer updates
-   - Manage neighbor relationships
+2. Implement edge splitting:
+   - Add methods to split individual edges
+   - Update half-edge connectivity
+   - Maintain consistent winding order
+   - Handle vertex buffer updates
 
 3. Update optimization:
-   - Extend vertex optimization to handle new points
-   - Add subdivision count limits
+   - Extend vertex optimization for new points
+   - Add subdivision count/depth limits
    - Track mesh changes for visualization
 
 4. Add configuration options:
-   - Maximum subdivisions
-   - Quality threshold
-   - Edge length limits
+   - Maximum subdivisions per edge
+   - Error threshold
+   - Minimum edge length
 
 5. Update visualization:
-   - Show subdivision progress
-   - Highlight problem areas
-   - Display quality metrics
+   - Show edge quality heat map
+   - Highlight edges marked for splitting
+   - Display refinement progress
 
-### Next Steps
-After visualization is working:
-1. Implement basic face subdivision without neighbor handling
-2. Add vertex optimization for subdivided faces
-3. Implement neighbor face handling
-4. Add full mesh consistency checks
+### Benefits
+- Natural fit with half-edge data structure
+- Simpler implementation than face subdivision
+- Better handling of sharp features
+- More uniform refinement based on actual geometry
+- Maintains mesh consistency automatically
 
 ## Success Metrics
-- Reduced maximum SDF error across faces
-- More uniform triangle sizes along edges
+- Reduced maximum SDF error along edges
 - Better approximation of sharp features
-- Controlled increase in triangle count
+- Controlled and localized refinement
+- Manifold mesh preservation

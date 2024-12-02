@@ -66,6 +66,8 @@ export class MeshGenerator {
         this.collectSurfaceCells(this.octree);
         this.reportProgress(0.4);
 
+        // TODO check for half-edge mesh manifoldness here
+
         // Phase 2: Optimize if enabled (40-80%)
         if (this.optimize) {
             this.optimizeVertices(true);
@@ -178,42 +180,39 @@ export class MeshGenerator {
         });
     }
 
-    private addCellVertices(node: OctreeNode) {
-        // Get existing vertices or create new ones
-        const startIndex = this.vertices.length;
-        
-        // Add vertices for this cell
+    private addCellVertices(node: OctreeNode, mesh: HalfEdgeMesh) {
         const half = node.size / 2;
         const corners = [
             [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
         ];
         
-        corners.forEach(([x, y, z]) => {
-            this.vertices.push(new THREE.Vector3(
+        // Add vertices and store their indices
+        const vertexIndices = corners.map(([x, y, z]) => 
+            mesh.addVertex(new THREE.Vector3(
                 node.center.x + x * half,
                 node.center.y + y * half,
                 node.center.z + z * half
-            ));
-        });
+            ))
+        );
 
-        // Define faces and their normal directions
+        // Define faces with their normal directions
         const faces = [
             // Front (negative Z)
-            { indices: [0, 1, 2, 2, 1, 3], normal: new THREE.Vector3(0, 0, -1) },
+            { vertices: [0, 1, 2, 2, 1, 3], normal: new THREE.Vector3(0, 0, -1) },
             // Back (positive Z)
-            { indices: [4, 6, 5, 5, 6, 7], normal: new THREE.Vector3(0, 0, 1) },
+            { vertices: [4, 6, 5, 5, 6, 7], normal: new THREE.Vector3(0, 0, 1) },
             // Left (negative X)
-            { indices: [0, 2, 4, 4, 2, 6], normal: new THREE.Vector3(-1, 0, 0) },
+            { vertices: [0, 2, 4, 4, 2, 6], normal: new THREE.Vector3(-1, 0, 0) },
             // Right (positive X)
-            { indices: [1, 5, 3, 3, 5, 7], normal: new THREE.Vector3(1, 0, 0) },
+            { vertices: [1, 5, 3, 3, 5, 7], normal: new THREE.Vector3(1, 0, 0) },
             // Top (positive Y)
-            { indices: [2, 3, 6, 6, 3, 7], normal: new THREE.Vector3(0, 1, 0) },
+            { vertices: [2, 3, 6, 6, 3, 7], normal: new THREE.Vector3(0, 1, 0) },
             // Bottom (negative Y)
-            { indices: [0, 4, 1, 1, 4, 5], normal: new THREE.Vector3(0, -1, 0) }
+            { vertices: [0, 4, 1, 1, 4, 5], normal: new THREE.Vector3(0, -1, 0) }
         ];
 
-        // Check each face's neighboring cell before adding it
+        // Add faces checking neighbors
         faces.forEach(face => {
             // Convert face normal to Direction enum
             let direction: Direction;
@@ -227,14 +226,22 @@ export class MeshGenerator {
             // Get neighbor using enum-based method
             const neighbor = node.getNeighborAtLevel(direction);
             if (!neighbor) {
-                throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}, face normal ${face.normal.toArray()}`);
+                throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}`);
             } else {
                 // Add face if the neighbor is outside or at a coarser level
                 if (neighbor.isFullyOutside() || 
                     (neighbor.state === CellState.Outside && neighbor.size > node.size)) {
-                    face.indices.forEach(idx => {
-                        this.faces.push(startIndex + idx);
-                    });
+                    // Add two triangles for this quad face
+                    mesh.addFace(
+                        vertexIndices[face.vertices[0]],
+                        vertexIndices[face.vertices[1]],
+                        vertexIndices[face.vertices[2]]
+                    );
+                    mesh.addFace(
+                        vertexIndices[face.vertices[3]],
+                        vertexIndices[face.vertices[4]],
+                        vertexIndices[face.vertices[5]]
+                    );
                 }
             }
         });
