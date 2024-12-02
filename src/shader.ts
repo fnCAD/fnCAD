@@ -120,13 +120,13 @@ export function generateShader(ast: Node): string {
           float rayDepth = rayNDC.z * 0.5 + 0.5;
           
           // Mix in preview scene if visible and closer
-          if(previewSceneData.a > 0.5) {
+          if(previewSceneData.a > 0.0) {
             vec3 previewSceneColor = previewSceneData.rgb;
 
             // Compare depths in [0,1] space
             // Smaller depth values are closer to camera
             if (previewSceneDepth < rayDepth) {
-              gl_FragColor = vec4(previewSceneColor, 1.0);
+              gl_FragColor = vec4(previewSceneColor, previewSceneData.a);
               return;
             }
           }
