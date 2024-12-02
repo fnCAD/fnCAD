@@ -28,7 +28,7 @@ const previewPane = document.getElementById('preview-pane')!;
 
 // Initialize managers
 const rendererManager = new RendererManager(previewPane);
-const stateManager = new StateManager(rendererManager);
+const stateManager = new StateManager(rendererManager, settingsManager);
 const settingsManager = new SettingsManager(previewPane, () => {
   updateOctree();
 });

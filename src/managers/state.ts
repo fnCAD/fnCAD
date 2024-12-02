@@ -25,7 +25,8 @@ export class StateManager {
   }
 
   constructor(
-    private rendererManager: RendererManager
+    private rendererManager: RendererManager,
+    private settingsManager: SettingsManager
   ) {
     this.taskQueue = new TaskQueue();
     this.taskQueue.onProgress(this.handleTaskProgress.bind(this));
@@ -106,7 +107,7 @@ export class StateManager {
 
   updateShader(ast: SdfNode) {
     const fragmentShader = generateShader(ast);
-    const isVisible = this.rendererManager.isRaymarchedVisible();
+    const isVisible = this.settingsManager.isRaymarchedVisible();
     
     // When invisible, modify the scene() function to return inf
     const modifiedShader = isVisible ? fragmentShader : 
