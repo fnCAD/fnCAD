@@ -332,7 +332,7 @@ export class RendererManager {
         emissive: 0x222222,
         shininess: 30,
         transparent: true,
-        opacity: settingsManager.getMeshOpacity()
+        opacity: this.settingsManager.getMeshOpacity()
       });
       
       const mesh = new THREE.Mesh(geometry, material);
