@@ -149,7 +149,13 @@ async function processMeshTask(taskId: string, task: MeshTask) {
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
     
-    const meshGen = new MeshGenerator(octree, sdf, task.optimize);
+    const meshGen = new MeshGenerator(
+      octree, 
+      sdf, 
+      task.optimize,
+      task.showQuality,
+      task.qualityThreshold
+    );
     
     // Add progress tracking to mesh generation
     meshGen.onProgress = (progress: number) => {

@@ -17,4 +17,6 @@ export interface MeshTask {
   optimize: boolean;
   octree: OctreeNode;
   source: string;  // Source code to parse SDF from
+  showQuality: boolean;
+  qualityThreshold: number;
 }

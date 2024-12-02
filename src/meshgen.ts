@@ -40,15 +40,23 @@ import { OctreeNode, Direction, CellState } from './octree';
  *    improve surface detail where needed, since triangle meshes are easier to
  *    manipulate locally than octrees
  */
+interface FaceQuality {
+    indices: number[];
+    quality: number;
+}
+
 export class MeshGenerator {
     private vertices: THREE.Vector3[] = [];
     private faces: number[] = [];
+    private faceQualities: FaceQuality[] = [];
     onProgress?: (progress: number) => void;
     
     constructor(
         private octree: OctreeNode, 
         private sdf: import('./sdf_expressions/ast').Node,
-        private optimize: boolean = true
+        private optimize: boolean = true,
+        private showQuality: boolean = false,
+        private qualityThreshold: number = 0.1
     ) {}
 
     private reportProgress(progress: number) {
@@ -58,7 +66,6 @@ export class MeshGenerator {
     }
 
     generate(): SerializedMesh {
-        
         // Phase 1: Collect surface cells (0-40%)
         this.reportProgress(0);
         this.collectSurfaceCells(this.octree);
@@ -70,19 +77,116 @@ export class MeshGenerator {
             this.reportProgress(0.8);
         }
 
-        // Phase 3: Create final mesh data (80-100%)
+        // Phase 3: Calculate face qualities (80-90%)
+        if (this.showQuality) {
+            this.calculateFaceQualities();
+        }
+        this.reportProgress(0.9);
+
+        // Phase 4: Create final mesh data (90-100%)
         const positions = new Float32Array(this.vertices.length * 3);
+        const colors = new Float32Array(this.vertices.length * 3);
+        
         this.vertices.forEach((vertex, i) => {
             positions[i * 3] = vertex.x;
             positions[i * 3 + 1] = vertex.y;
             positions[i * 3 + 2] = vertex.z;
         });
+
+        // Set vertex colors based on face qualities
+        if (this.showQuality) {
+            const vertexQualityMap = new Map<number, number[]>();
+            
+            // Collect all qualities for each vertex
+            this.faceQualities.forEach(face => {
+                face.indices.forEach(idx => {
+                    if (!vertexQualityMap.has(idx)) {
+                        vertexQualityMap.set(idx, []);
+                    }
+                    vertexQualityMap.get(idx)!.push(face.quality);
+                });
+            });
+
+            // Average qualities and set colors
+            for (let i = 0; i < this.vertices.length; i++) {
+                const qualities = vertexQualityMap.get(i) || [0];
+                const avgQuality = qualities.reduce((a, b) => a + b, 0) / qualities.length;
+                const color = this.getQualityColor(avgQuality);
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+            }
+        }
+
         this.reportProgress(1.0);
 
         return {
             vertices: Array.from(positions),
-            indices: Array.from(this.faces)
+            indices: Array.from(this.faces),
+            colors: this.showQuality ? Array.from(colors) : undefined
         };
+    }
+
+    private calculateFaceQualities() {
+        this.faceQualities = [];
+        
+        // Process each face
+        for (let i = 0; i < this.faces.length; i += 3) {
+            const indices = [
+                this.faces[i],
+                this.faces[i + 1],
+                this.faces[i + 2]
+            ];
+            
+            // Get vertices
+            const vertices = indices.map(idx => this.vertices[idx]);
+            
+            // Calculate face centroid
+            const centroid = new THREE.Vector3()
+                .add(vertices[0])
+                .add(vertices[1])
+                .add(vertices[2])
+                .multiplyScalar(1/3);
+            
+            // Evaluate SDF at centroid
+            const actualSDF = this.sdf.evaluate({
+                x: centroid.x,
+                y: centroid.y,
+                z: centroid.z
+            });
+
+            // Calculate interpolated SDF value
+            const interpolatedSDF = vertices.reduce((sum, v) => {
+                return sum + this.sdf.evaluate({
+                    x: v.x,
+                    y: v.y,
+                    z: v.z
+                });
+            }, 0) / 3;
+
+            // Calculate edge lengths
+            const edges = [
+                vertices[1].clone().sub(vertices[0]),
+                vertices[2].clone().sub(vertices[1]),
+                vertices[0].clone().sub(vertices[2])
+            ];
+            const maxEdgeLength = Math.max(...edges.map(e => e.length()));
+
+            // Calculate quality metric
+            const quality = Math.abs(actualSDF - interpolatedSDF) / maxEdgeLength;
+
+            this.faceQualities.push({
+                indices,
+                quality
+            });
+        }
+    }
+
+    private getQualityColor(quality: number): THREE.Color {
+        // Red for poor quality (> threshold)
+        // Green for good quality (< threshold)
+        const t = Math.min(quality / this.qualityThreshold, 1);
+        return new THREE.Color(t, 1 - t, 0);
     }
 
     private collectSurfaceCells(node: OctreeNode) {

@@ -300,14 +300,21 @@ export class RendererManager {
       // Always compute normals
       geometry.computeVertexNormals();
       
+      // Create geometry with colors if provided
+      if (meshData.colors) {
+        geometry.setAttribute('color', 
+          new THREE.Float32BufferAttribute(meshData.colors, 3));
+      }
+
       const material = new THREE.MeshPhongMaterial({
-        color: 0xffd700,
+        color: meshData.colors ? 0xffffff : 0xffd700, // White if using vertex colors
         side: THREE.DoubleSide,
         flatShading: true,
         emissive: 0x222222,
         shininess: 30,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.8,
+        vertexColors: meshData.colors ? true : false
       });
       
       const mesh = new THREE.Mesh(geometry, material);

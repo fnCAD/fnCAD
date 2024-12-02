@@ -95,6 +95,8 @@ generateMeshButton.addEventListener('click', async () => {
   const taskId = stateManager.taskQueue.addTask({
     type: 'mesh',
     optimize: settingsManager.isMeshOptimizationEnabled(),
+    showQuality: settingsManager.isQualityVisualizationEnabled(),
+    qualityThreshold: settingsManager.getQualityThreshold(),
     octree: state.currentOctree,
     source: stateManager.getEditorContent()
   });
