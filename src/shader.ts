@@ -144,8 +144,8 @@ export function generateShader(ast: Node): string {
       }
 
       // If no hit but preview scene is visible, show visualization as if unoccluded
-      if(previewSceneData.a > 0.5) {
-        gl_FragColor = vec4(mix(background, previewSceneData.rgb, 0.5), 1.0);
+      if(previewSceneData.a > 0.0) {
+        gl_FragColor = vec4(mix(background, previewSceneData.rgb, 1.0), 1.0);
         return;
       }
 
