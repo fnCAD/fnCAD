@@ -153,12 +153,6 @@ export class SettingsManager {
     [this.showQualityCheckbox].forEach(checkbox => {
       checkbox.addEventListener('change', this.onSettingsChange);
     });
-      const power = parseInt(this.minRenderSizeSlider.value);
-      const value = Math.pow(2, power);
-      const display = this.minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
-      display.textContent = value === 1 ? '1' : `1/${value}`;
-      this.onSettingsChange();
-    });
   }
 
   getRenderSettings(): OctreeRenderSettings {
