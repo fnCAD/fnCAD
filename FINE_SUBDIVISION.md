@@ -41,12 +41,12 @@ Current mesh generation has issues with non-axis-aligned sharp boundaries:
    - Optimize using existing SDF gradient method
    - Update connected face normals
 
-### Prep
+### Prep ✓
 
-1. Add raymarched object display toggle to UI:
+1. Add raymarched object display toggle to UI: ✓
    - Add checkbox to show/hide raymarched SDF
 
-2. Face Quality Visualization:
+2. Face Quality Visualization: ✓
    - Implement badness metric calculation
    - Add color coding for faces exceeding subdivision threshold
    - Add threshold adjustment slider
