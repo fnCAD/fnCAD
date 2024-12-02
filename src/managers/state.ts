@@ -107,7 +107,15 @@ export class StateManager {
   updateShader(ast: SdfNode) {
     const fragmentShader = generateShader(ast);
     const isVisible = this.rendererManager.isRaymarchedVisible();
-    this.setCurrentShader(fragmentShader, isVisible);
+    
+    // When invisible, modify the scene() function to return inf
+    const modifiedShader = isVisible ? fragmentShader : 
+      fragmentShader.replace(
+        /float scene\(vec3 pos\) {([^}]*)}/s,
+        'float scene(vec3 pos) {\n  return 1.0e10;\n}'
+      );
+    
+    this.setCurrentShader(modifiedShader);
   }
 
   getCurrentOctree(): OctreeNode | null {
