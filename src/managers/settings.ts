@@ -2,6 +2,7 @@ import { OctreeRenderSettings } from '../octreevis';
 
 export class SettingsManager {
   private settingsPanel!: HTMLElement;
+  private showRaymarchedCheckbox!: HTMLInputElement;
   private showOctreeCheckbox!: HTMLInputElement;
   private showOutsideCheckbox!: HTMLInputElement;
   private showInsideCheckbox!: HTMLInputElement;
@@ -9,6 +10,8 @@ export class SettingsManager {
   private minSizeSlider!: HTMLInputElement;
   private cellBudgetSlider!: HTMLInputElement;
   private minRenderSizeSlider!: HTMLInputElement;
+  private showQualityCheckbox!: HTMLInputElement;
+  private qualityThresholdSlider!: HTMLInputElement;
   private optimizeMeshCheckbox!: HTMLInputElement;
 
   constructor(
@@ -25,6 +28,10 @@ export class SettingsManager {
     this.settingsPanel.innerHTML = `
       <h3>Settings</h3>
       <div class="settings-content">
+        <div class="setting-row">
+          <input type="checkbox" id="show-raymarched" checked>
+          <label for="show-raymarched">Show Raymarched Object</label>
+        </div>
         <div class="setting-row">
           <input type="checkbox" id="show-octree" checked>
           <label for="show-octree">Show Octree Grid</label>
@@ -61,6 +68,15 @@ export class SettingsManager {
             <input type="range" id="min-render-size" min="0" max="6" step="1" value="0">
             <span class="value-display">1</span>
           </div>
+          <div class="setting-row">
+            <input type="checkbox" id="show-quality" checked>
+            <label for="show-quality">Show Face Quality</label>
+          </div>
+          <div class="setting-row">
+            <label for="quality-threshold">Quality Threshold:</label>
+            <input type="range" id="quality-threshold" min="0" max="1" step="0.01" value="0.1">
+            <span class="value-display">0.1</span>
+          </div>
         </div>
         <div class="setting-row">
           <input type="checkbox" id="optimize-mesh" checked>
@@ -74,6 +90,7 @@ export class SettingsManager {
     this.previewPane.appendChild(this.settingsPanel);
 
     // Get references to inputs
+    this.showRaymarchedCheckbox = document.getElementById('show-raymarched') as HTMLInputElement;
     this.showOctreeCheckbox = document.getElementById('show-octree') as HTMLInputElement;
     this.showOutsideCheckbox = document.getElementById('show-outside') as HTMLInputElement;
     this.showInsideCheckbox = document.getElementById('show-inside') as HTMLInputElement;
@@ -81,6 +98,8 @@ export class SettingsManager {
     this.minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
     this.cellBudgetSlider = document.getElementById('cell-budget') as HTMLInputElement;
     this.minRenderSizeSlider = document.getElementById('min-render-size') as HTMLInputElement;
+    this.showQualityCheckbox = document.getElementById('show-quality') as HTMLInputElement;
+    this.qualityThresholdSlider = document.getElementById('quality-threshold') as HTMLInputElement;
     this.optimizeMeshCheckbox = document.getElementById('optimize-mesh') as HTMLInputElement;
 
     // Add settings panel collapse behavior
@@ -92,6 +111,7 @@ export class SettingsManager {
 
   private setupEventListeners() {
     [
+      this.showRaymarchedCheckbox,
       this.showOctreeCheckbox,
       this.showOutsideCheckbox,
       this.showInsideCheckbox,
@@ -116,6 +136,23 @@ export class SettingsManager {
     });
 
     this.minRenderSizeSlider.addEventListener('input', () => {
+      const power = parseInt(this.minRenderSizeSlider.value);
+      const value = Math.pow(2, power);
+      const display = this.minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
+      display.textContent = value === 1 ? '1' : `1/${value}`;
+      this.onSettingsChange();
+    });
+
+    this.qualityThresholdSlider.addEventListener('input', () => {
+      const value = parseFloat(this.qualityThresholdSlider.value);
+      const display = this.qualityThresholdSlider.nextElementSibling as HTMLSpanElement;
+      display.textContent = value.toFixed(2);
+      this.onSettingsChange();
+    });
+
+    [this.showQualityCheckbox].forEach(checkbox => {
+      checkbox.addEventListener('change', this.onSettingsChange);
+    });
       const power = parseInt(this.minRenderSizeSlider.value);
       const value = Math.pow(2, power);
       const display = this.minRenderSizeSlider.nextElementSibling as HTMLSpanElement;
@@ -147,7 +184,19 @@ export class SettingsManager {
     return this.showOctreeCheckbox.checked;
   }
 
+  isRaymarchedVisible(): boolean {
+    return this.showRaymarchedCheckbox.checked;
+  }
+
   isMeshOptimizationEnabled(): boolean {
     return this.optimizeMeshCheckbox.checked;
+  }
+
+  isQualityVisualizationEnabled(): boolean {
+    return this.showQualityCheckbox.checked;
+  }
+
+  getQualityThreshold(): number {
+    return parseFloat(this.qualityThresholdSlider.value);
   }
 }

@@ -97,16 +97,17 @@ export class StateManager {
     return parseSDF(sdfExpr);
   }
 
-  setCurrentShader(shader: string | null) {
+  setCurrentShader(shader: string | null, visible: boolean = true) {
     this.currentShader = shader;
     if (shader) {
-      this.rendererManager.updateShader(shader);
+      this.rendererManager.updateShader(shader, visible);
     }
   }
 
   updateShader(ast: SdfNode) {
     const fragmentShader = generateShader(ast);
-    this.setCurrentShader(fragmentShader);
+    const isVisible = this.rendererManager.isRaymarchedVisible();
+    this.setCurrentShader(fragmentShader, isVisible);
   }
 
   getCurrentOctree(): OctreeNode | null {

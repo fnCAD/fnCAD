@@ -217,13 +217,16 @@ export class RendererManager {
     this.renderer.clear();
     this.renderer.render(this.previewOverlayScene, this.camera);
     
-    // Render main scene (raymarching quad) with preview texture
-    this.renderer.setRenderTarget(null);
-    this.renderer.clear();
-    this.renderer.render(this.scene, this.camera);
+    // Only render raymarching if enabled
+    if (this.quad.visible) {
+      this.renderer.setRenderTarget(null);
+      this.renderer.clear();
+      this.renderer.render(this.scene, this.camera);
+    }
   }
 
-  updateShader(fragmentShader: string) {
+  updateShader(fragmentShader: string, visible: boolean = true) {
+    this.quad.visible = visible;
     // Update shader code
     this.material.fragmentShader = fragmentShader;
     this.material.needsUpdate = true;
