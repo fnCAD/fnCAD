@@ -288,46 +288,49 @@ export class RendererManager {
     }
 
     if (meshData) {
+      // Create non-indexed geometry
       const geometry = new THREE.BufferGeometry();
+      const positions: number[] = [];
+      const colors: number[] = [];
       
-      // Set vertices
-      geometry.setAttribute('position', 
-        new THREE.Float32BufferAttribute(meshData.vertices, 3));
+      // For each triangle
+      for (let i = 0; i < meshData.indices.length; i += 3) {
+        // Get the three vertices of this triangle
+        for (let j = 0; j < 3; j++) {
+          const vertexIndex = meshData.indices[i + j];
+          // Add vertex position
+          positions.push(
+            meshData.vertices[vertexIndex * 3],
+            meshData.vertices[vertexIndex * 3 + 1],
+            meshData.vertices[vertexIndex * 3 + 2]
+          );
+          // Add color if available, otherwise use default gold color
+          if (meshData.faceColors) {
+            const faceIndex = Math.floor(i / 3);
+            colors.push(
+              meshData.faceColors[faceIndex * 3],
+              meshData.faceColors[faceIndex * 3 + 1],
+              meshData.faceColors[faceIndex * 3 + 2]
+            );
+          } else {
+            colors.push(1.0, 0.843, 0.0); // Gold color (0xffd700)
+          }
+        }
+      }
       
-      // Set indices
-      geometry.setIndex(meshData.indices);
-      
-      // Always compute normals
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
       geometry.computeVertexNormals();
       
       const material = new THREE.MeshPhongMaterial({
-        color: 0xffd700,
+        vertexColors: true,
         side: THREE.DoubleSide,
         flatShading: true,
         emissive: 0x222222,
         shininess: 30,
         transparent: true,
-        opacity: 0.8,
-        vertexColors: false
+        opacity: 0.8
       });
-
-      // Add face colors if provided
-      if (meshData.faceColors) {
-        // Convert face colors to vertex colors by duplicating for each vertex of triangle
-        const vertexColors = new Float32Array(meshData.vertices.length);
-        for (let i = 0; i < meshData.indices.length; i += 3) {
-          const faceIdx = Math.floor(i / 3);
-          for (let j = 0; j < 3; j++) {
-            const vertexIdx = meshData.indices[i + j];
-            vertexColors[vertexIdx * 3] = meshData.faceColors[faceIdx * 3];
-            vertexColors[vertexIdx * 3 + 1] = meshData.faceColors[faceIdx * 3 + 1];
-            vertexColors[vertexIdx * 3 + 2] = meshData.faceColors[faceIdx * 3 + 2];
-          }
-        }
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(vertexColors, 3));
-        material.vertexColors = true;
-        material.color.set(0xffffff);
-      }
       
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isSdfMesh = true;
