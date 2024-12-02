@@ -21,7 +21,10 @@ export class RendererManager {
   private taskProgress: HTMLDivElement;
   private progressBar: HTMLDivElement;
 
-  constructor(private previewPane: HTMLElement) {
+  constructor(
+    private previewPane: HTMLElement,
+    private settingsManager: SettingsManager
+  ) {
     this.taskInfo = document.querySelector('.task-info')!;
     this.taskProgress = document.querySelector('.task-progress')!;
     this.progressBar = this.createProgressBar();
@@ -329,7 +332,7 @@ export class RendererManager {
         emissive: 0x222222,
         shininess: 30,
         transparent: true,
-        opacity: 0.8
+        opacity: settingsManager.getMeshOpacity()
       });
       
       const mesh = new THREE.Mesh(geometry, material);

@@ -27,8 +27,10 @@ Split(['#editor-pane', '#preview-pane'], {
 const previewPane = document.getElementById('preview-pane')!;
 
 // Initialize managers
-const rendererManager = new RendererManager(previewPane);
 const settingsManager = new SettingsManager(previewPane, () => {
+  updateOctree();
+});
+const rendererManager = new RendererManager(previewPane, settingsManager);
   updateOctree();
 });
 const stateManager = new StateManager(rendererManager, settingsManager);
