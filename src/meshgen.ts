@@ -4,34 +4,35 @@ import { OctreeNode, Direction, CellState } from './octree';
 
 /**
  * Generates a triangle mesh from an octree representation of an SDF boundary.
- * 
+ * Uses a half-edge mesh data structure for robust topology handling.
+ *
  * IMPORTANT MESH GENERATION INVARIANT:
  * The octree subdivision algorithm ensures that all boundary cells (CellState.Boundary)
  * are at the same scale/level. This is because:
- * 
+ *
  * 1. The subdivision process continues until either:
  *    - The minimum size is reached
  *    - The cell budget is exhausted
  *    - The cell is fully inside/outside
- * 
+ *
  * 2. For any given SDF, a cell can only be classified as boundary if:
  *    - It contains the zero isosurface (interval spans zero)
  *    - It hasn't reached the minimum size
  *    - There's remaining cell budget
- * 
+ *
  * 3. Since boundary detection uses interval arithmetic, any cell containing
  *    the surface will be marked for subdivision until these limits are hit.
- * 
+ *
  * This invariant guarantees that adjacent boundary cells are always the same size,
  * which in turn ensures that the generated mesh is manifold when using the
  * simple "two triangles per face" extraction method. Without this guarantee,
  * we could get T-junctions or gaps where cells of different sizes meet.
- * 
+ *
  * Note: Cell budget exhaustion is treated as an error condition that halts
  * subdivision entirely, rather than allowing partial subdivision that could
  * violate this invariant. This ensures we never generate invalid meshes,
  * even when resource limits are hit.
- * 
+ *
  * SCALABILITY:
  * This approach scales well in practice because:
  * 1. Boundary cells naturally scale with surface area rather than volume
@@ -41,17 +42,11 @@ import { OctreeNode, Direction, CellState } from './octree';
  *    manipulate locally than octrees
  */
 export class MeshGenerator {
-    private vertices: THREE.Vector3[] = [];
-    private faces: number[] = [];
-    private faceQualities: number[] = [];
     onProgress?: (progress: number) => void;
-    
+
     constructor(
-        private octree: OctreeNode, 
-        private sdf: import('./sdf_expressions/ast').Node,
-        private optimize: boolean = true,
-        private showQuality: boolean = false,
-        private qualityThreshold: number = 0.1
+        private octree: OctreeNode,
+        private sdf: import('./sdf_expressions/ast').Node
     ) {}
 
     private reportProgress(progress: number) {
@@ -61,113 +56,34 @@ export class MeshGenerator {
     }
 
     generate(): SerializedMesh {
-        // Phase 1: Collect surface cells (0-40%)
-        this.reportProgress(0);
-        this.collectSurfaceCells(this.octree);
-        this.reportProgress(0.4);
-
-        // TODO check for half-edge mesh manifoldness here
-
-        // Phase 2: Optimize if enabled (40-80%)
-        if (this.optimize) {
-            this.optimizeVertices(true);
-            this.reportProgress(0.8);
-        }
-
-        // Phase 3: Calculate face qualities (80-90%)
-        if (this.showQuality) {
-            this.calculateFaceQualities();
-        }
-        this.reportProgress(0.9);
-
-        // Phase 4: Create final mesh data (90-100%)
-        const positions = new Float32Array(this.vertices.length * 3);
-        const colors = new Float32Array(this.vertices.length * 3);
+        // Create half-edge mesh
+        const mesh = new HalfEdgeMesh();
         
-        this.vertices.forEach((vertex, i) => {
-            positions[i * 3] = vertex.x;
-            positions[i * 3 + 1] = vertex.y;
-            positions[i * 3 + 2] = vertex.z;
-        });
+        // Phase 1: Extract surface mesh from octree (0-50%)
+        this.reportProgress(0);
+        this.extractMeshFromOctree(this.octree, mesh);
+        this.reportProgress(0.5);
 
-        // Set face colors based on qualities
-        const faceColors = this.showQuality ? new Float32Array(this.faces.length) : undefined;
-        if (this.showQuality && faceColors) {
-            for (let i = 0; i < this.faceQualities.length; i++) {
-                const color = this.getQualityColor(this.faceQualities[i]);
-                faceColors[i * 3] = color.r;
-                faceColors[i * 3 + 1] = color.g;
-                faceColors[i * 3 + 2] = color.b;
-            }
+        // Phase 2: Verify mesh is manifold (50-60%)
+        if (!mesh.isManifold()) {
+            throw new Error('Generated mesh is not manifold');
         }
+        this.reportProgress(0.6);
 
+        // Phase 3: Convert to serialized format (60-100%)
+        const serialized = mesh.toSerializedMesh();
         this.reportProgress(1.0);
 
-        return {
-            vertices: Array.from(positions),
-            indices: Array.from(this.faces),
-            faceColors: this.showQuality ? Array.from(faceColors!) : undefined
-        };
+        return serialized;
     }
 
-    private calculateFaceQualities() {
-        this.faceQualities = [];
-        
-        // Process each face
-        for (let i = 0; i < this.faces.length; i += 3) {
-            const indices = [
-                this.faces[i],
-                this.faces[i + 1],
-                this.faces[i + 2]
-            ];
-            
-            // Get vertices
-            const vertices = indices.map(idx => this.vertices[idx]);
-            
-            // Calculate face centroid
-            const centroid = new THREE.Vector3()
-                .add(vertices[0])
-                .add(vertices[1])
-                .add(vertices[2])
-                .multiplyScalar(1/3);
-            
-            // Evaluate SDF at centroid
-            const actualSDF = this.sdf.evaluate({
-                x: centroid.x,
-                y: centroid.y,
-                z: centroid.z
-            });
-
-            // Calculate edge lengths
-            const edges = [
-                vertices[1].clone().sub(vertices[0]),
-                vertices[2].clone().sub(vertices[1]),
-                vertices[0].clone().sub(vertices[2])
-            ];
-            const maxEdgeLength = Math.max(...edges.map(e => e.length()));
-
-            // Calculate quality metric - just use absolute SDF value at centroid
-            // normalized by max edge length
-            const quality = Math.abs(actualSDF) / maxEdgeLength;
-
-            this.faceQualities.push(quality);
-        }
-    }
-
-    private getQualityColor(quality: number): THREE.Color {
-        // Red for poor quality (> threshold)
-        // Green for good quality (< threshold)
-        const t = Math.min(quality / this.qualityThreshold, 1);
-        return new THREE.Color(t, 1 - t, 0);
-    }
-
-    private collectSurfaceCells(node: OctreeNode) {
-        // Check if this is a boundary cell (either leaf or subdivided)
+    private extractMeshFromOctree(node: OctreeNode, mesh: HalfEdgeMesh) {
+        // Check if this is a boundary cell
         if (node.state === CellState.Boundary || node.state === CellState.BoundarySubdivided) {
-            // Add vertices for leaf nodes or nodes at minimum size
+            // Only process leaf nodes
             const isLeaf = node.children.every(child => child === null);
             if (isLeaf || node.state === CellState.Boundary) {
-                this.addCellVertices(node);
+                this.addCellFaces(node, mesh);
                 return;
             }
         }
@@ -175,12 +91,12 @@ export class MeshGenerator {
         // Recurse into children for subdivided nodes
         node.children.forEach(child => {
             if (child) {
-                this.collectSurfaceCells(child);
+                this.extractMeshFromOctree(child, mesh);
             }
         });
     }
 
-    private addCellVertices(node: OctreeNode, mesh: HalfEdgeMesh) {
+    private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh) {
         const half = node.size / 2;
         const corners = [
             [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
@@ -246,58 +162,4 @@ export class MeshGenerator {
             }
         });
     }
-
-    private optimizeVertices(optimize: boolean = true) {
-        if (!optimize) {
-            return;
-        }
-
-        const maxIterations = 10;
-        const epsilon = 0.0001;
-        
-        for (let iter = 0; iter < maxIterations; iter++) {
-            let maxMove = 0;
-            // Report progress within optimization phase (60-100%)
-            this.reportProgress(0.6 + (iter / maxIterations) * 0.4);
-            
-            for (let i = 0; i < this.vertices.length; i++) {
-                const vertex = this.vertices[i];
-                // Get the SDF from the constructor
-                if (!this.sdf) {
-                    throw new Error('No SDF available for mesh optimization');
-                }
-                
-                // Evaluate SDF at vertex position
-                const distance = this.sdf.evaluate({
-                    x: vertex.x,
-                    y: vertex.y,
-                    z: vertex.z
-                });
-
-                // Calculate gradient using finite differences
-                const h = 0.0001; // Small offset for gradient calculation
-                const gradient = new THREE.Vector3(
-                    (this.sdf.evaluate({x: vertex.x + h, y: vertex.y, z: vertex.z}) - 
-                     this.sdf.evaluate({x: vertex.x - h, y: vertex.y, z: vertex.z})) / (2 * h),
-                    (this.sdf.evaluate({x: vertex.x, y: vertex.y + h, z: vertex.z}) - 
-                     this.sdf.evaluate({x: vertex.x, y: vertex.y - h, z: vertex.z})) / (2 * h),
-                    (this.sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z + h}) - 
-                     this.sdf.evaluate({x: vertex.x, y: vertex.y, z: vertex.z - h})) / (2 * h)
-                );
-                gradient.normalize();
-                
-                // Move vertex along gradient to surface
-                const move = -distance;
-                vertex.addScaledVector(gradient, move);
-                
-                maxMove = Math.max(maxMove, Math.abs(move));
-            }
-            
-            // Stop if vertices barely moved
-            if (maxMove < epsilon) {
-                break;
-            }
-        }
-    }
-
 }
