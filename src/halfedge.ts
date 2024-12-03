@@ -166,37 +166,29 @@ export class HalfEdgeMesh {
         return this.edgeMap.size === 0;
     }
 
-    // Convert to SerializedMesh format
     /**
      * Performs fine subdivision of the mesh using edge-based refinement.
      * 
-     * Algorithm steps:
+     * Algorithm steps (note, edited; may not match function signature)
      * 
-     * 1. INITIALIZATION
-     * - Create priority queue for edges based on refinement criteria
-     * - For each edge:
-     *   a. Calculate midpoint position
-     *   b. Evaluate SDF at midpoint
-     *   c. Compute error metric = |SDF(midpoint)| / edge_length
-     *   d. If error > threshold, add to queue
+     * 1. PREP
+     * - Optimize every vertex to minimize |SDF| using gradient.
+     * - Create priority queue for edges based on error.
+     * - For each halfedge where index < pairIndex (so we only consider each pair once):
+     *   - Calculate midpoint position using pair
+     *   - Evaluate SDF at midpoint
+     *   - Compute error metric = |SDF(midpoint)| / edge_length
+     *   - If error > threshold, add to queue
      * 
      * 2. REFINEMENT LOOP
-     * - While queue not empty and under subdivision limit:
-     *   a. Pop edge with highest error
-     *   b. Skip if edge was already processed
-     *   c. Split edge using existing splitEdge()
-     *   d. Optimize new vertex position using SDF gradient
-     *   e. Evaluate new edges created by split
-     *   f. Add any bad new edges to queue
-     * 
-     * 3. VERTEX OPTIMIZATION
-     * - For each vertex created during refinement:
-     *   a. Calculate SDF gradient at current position
-     *   b. Move vertex along gradient to reduce error
-     *   c. Limit movement to maintain mesh quality
-     * 
-     * 4. CLEANUP
-     * - Remove any temporary data structures
+     * - While queue not empty, under subdivision limit:
+     *   - Pop edge with highest error
+     *   - Split edge using splitEdge()
+     *   - Optimize new vertex position as above
+     *   - Reconsider new edges created by split as above. Probably put that in a helper.
+     *   - Note that this may re-queue an existing edge; that's fine because its vertexes may have changed.
+     *
+     * 3. CLEANUP
      * - Verify mesh is still manifold
      * - Return refinement statistics
      * 
@@ -223,6 +215,7 @@ export class HalfEdgeMesh {
         throw new Error("Edge refinement not yet implemented");
     }
 
+    // Convert to SerializedMesh format
     toSerializedMesh(): SerializedMesh {
         const vertices: number[] = [];
         const indices: number[] = [];
