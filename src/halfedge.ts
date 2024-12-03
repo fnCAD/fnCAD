@@ -167,6 +167,62 @@ export class HalfEdgeMesh {
     }
 
     // Convert to SerializedMesh format
+    /**
+     * Performs fine subdivision of the mesh using edge-based refinement.
+     * 
+     * Algorithm steps:
+     * 
+     * 1. INITIALIZATION
+     * - Create priority queue for edges based on refinement criteria
+     * - For each edge:
+     *   a. Calculate midpoint position
+     *   b. Evaluate SDF at midpoint
+     *   c. Compute error metric = |SDF(midpoint)| / edge_length
+     *   d. If error > threshold, add to queue
+     * 
+     * 2. REFINEMENT LOOP
+     * - While queue not empty and under subdivision limit:
+     *   a. Pop edge with highest error
+     *   b. Skip if edge was already processed
+     *   c. Split edge using existing splitEdge()
+     *   d. Optimize new vertex position using SDF gradient
+     *   e. Evaluate new edges created by split
+     *   f. Add any bad new edges to queue
+     * 
+     * 3. VERTEX OPTIMIZATION
+     * - For each vertex created during refinement:
+     *   a. Calculate SDF gradient at current position
+     *   b. Move vertex along gradient to reduce error
+     *   c. Limit movement to maintain mesh quality
+     * 
+     * 4. CLEANUP
+     * - Remove any temporary data structures
+     * - Verify mesh is still manifold
+     * - Return refinement statistics
+     * 
+     * @param sdf The signed distance function to use for refinement
+     * @param options Configuration options including:
+     *   - errorThreshold: Maximum acceptable edge error
+     *   - maxSubdivisions: Limit on number of edge splits
+     *   - minEdgeLength: Minimum allowed edge length
+     * @returns Statistics about the refinement process
+     */
+    refineEdges(
+        sdf: (point: THREE.Vector3) => number,
+        options: {
+            errorThreshold?: number,
+            maxSubdivisions?: number,
+            minEdgeLength?: number
+        } = {}
+    ): {
+        edgesSplit: number,
+        finalMaxError: number,
+        refinementSteps: number
+    } {
+        // TODO: Implement refinement algorithm
+        throw new Error("Edge refinement not yet implemented");
+    }
+
     toSerializedMesh(): SerializedMesh {
         const vertices: number[] = [];
         const indices: number[] = [];
