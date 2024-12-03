@@ -23,7 +23,7 @@ export class RendererManager {
 
   constructor(
     private previewPane: HTMLElement,
-    private settingsManager: SettingsManager
+    private settingsManager: import('./settings').SettingsManager
   ) {
     this.taskInfo = document.querySelector('.task-info')!;
     this.taskProgress = document.querySelector('.task-progress')!;
@@ -307,17 +307,8 @@ export class RendererManager {
             meshData.vertices[vertexIndex * 3 + 1],
             meshData.vertices[vertexIndex * 3 + 2]
           );
-          // Add color if available, otherwise use default gold color
-          if (meshData.faceColors) {
-            const faceIndex = Math.floor(i / 3);
-            colors.push(
-              meshData.faceColors[faceIndex * 3],
-              meshData.faceColors[faceIndex * 3 + 1],
-              meshData.faceColors[faceIndex * 3 + 2]
-            );
-          } else {
-            colors.push(1.0, 0.843, 0.0); // Gold color (0xffd700)
-          }
+          // Add color if available, otherwise use default
+          colors.push(1.0, 1.0, 1.0);
         }
       }
       

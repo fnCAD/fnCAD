@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MaxHeap } from '@datastructures-js/heap';
 import { SerializedMesh } from './workers/mesh_types';
 
 export interface Vertex {
@@ -112,9 +113,10 @@ export class HalfEdgeMesh {
         // Rewrite BC edge that belongs to the new triangle
         BC.nextIndex = indCX;
 
+        // Note: we're picking the second outside edge (i > pair). The others aren't paired yet.
         return {
             tailToSplit: indAX,
-            splitToOutside: indXC,
+            splitToOutside: indCX,
             splitToHead: indXB
         };
     }
@@ -123,7 +125,7 @@ export class HalfEdgeMesh {
      * Splits an edge by inserting a new vertex at its midpoint.
      * Returns indices of all six edges involved in the split.
      */
-    splitEdge(heIndex: number): number[] {
+    splitEdge(heIndex: number, midpoint: THREE.Vector3): number[] {
         const edge = this.halfEdges[heIndex];
         if (edge.pairIndex === -1) {
             throw new Error('Cannot split unpaired edge');
@@ -131,11 +133,6 @@ export class HalfEdgeMesh {
         const pairIndex = edge.pairIndex; // Store this before splitting
 
         // Create new vertex at midpoint
-        // Get vertices for midpoint calculation
-        const pair = this.halfEdges[edge.pairIndex];
-        const v1 = this.vertices[pair.vertexIndex].position;
-        const v2 = this.vertices[edge.vertexIndex].position;
-        const midpoint = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
         const newVertexIndex = this.addVertex(midpoint);
 
         // Split both half-edges. Note that bx/xb and ax/xa are the same edges
@@ -158,7 +155,13 @@ export class HalfEdgeMesh {
         this.halfEdges[backwardBX].pairIndex = forwardXB;
 
         // Return unique edges involved in the split (paired edges are already linked)
-        return [forwardAX, forwardXB, first.splitToOutside, second.splitToOutside];
+        // Pick each edge to be larger than its pair for heap uniqueness.
+        return [
+            Math.max(forwardAX, backwardXA),
+            Math.max(forwardXB, backwardBX),
+            first.splitToOutside,
+            second.splitToOutside,
+        ];
     }
 
     // Check if mesh is manifold (each edge has exactly one pair)
@@ -166,11 +169,59 @@ export class HalfEdgeMesh {
         return this.edgeMap.size === 0;
     }
 
+    private optimizeVertex(vertex: Vertex, sdf: (point: THREE.Vector3) => number): number {
+        const maxIterations = 10;
+        const epsilon = 0.0001;
+        let maxMove = 0;
+
+        for (let iter = 0; iter < maxIterations; iter++) {
+            // Evaluate SDF at vertex position
+            const distance = sdf(vertex.position);
+
+            // Calculate gradient using finite differences
+            const h = 0.0001; // Small offset for gradient calculation
+            const pos = vertex.position;
+            const gradient = new THREE.Vector3(
+                (sdf(new THREE.Vector3(pos.x + h, pos.y, pos.z)) - 
+                 sdf(new THREE.Vector3(pos.x - h, pos.y, pos.z))) / (2 * h),
+                (sdf(new THREE.Vector3(pos.x, pos.y + h, pos.z)) - 
+                 sdf(new THREE.Vector3(pos.x, pos.y - h, pos.z))) / (2 * h),
+                (sdf(new THREE.Vector3(pos.x, pos.y, pos.z + h)) - 
+                 sdf(new THREE.Vector3(pos.x, pos.y, pos.z - h))) / (2 * h)
+            );
+            gradient.normalize();
+            
+            // Move vertex along gradient to surface
+            const move = -distance;
+            vertex.position.addScaledVector(gradient, move);
+            
+            maxMove = Math.max(maxMove, Math.abs(move));
+            
+            // Stop if vertex barely moved
+            if (Math.abs(move) < epsilon) {
+                break;
+            }
+        }
+
+        return maxMove;
+    }
+
+    protected optimizeVertices(sdf: (point: THREE.Vector3) => number): number {
+        let maxMove = 0;
+        
+        for (const vertex of this.vertices) {
+            const move = this.optimizeVertex(vertex, sdf);
+            maxMove = Math.max(maxMove, move);
+        }
+
+        return maxMove;
+    }
+
     /**
      * Performs fine subdivision of the mesh using edge-based refinement.
-     * 
+     *
      * Algorithm steps (note, edited; may not match function signature)
-     * 
+     *
      * 1. PREP
      * - Optimize every vertex to minimize |SDF| using gradient.
      * - Create priority queue for edges based on error.
@@ -179,7 +230,7 @@ export class HalfEdgeMesh {
      *   - Evaluate SDF at midpoint
      *   - Compute error metric = |SDF(midpoint)| / edge_length
      *   - If error > threshold, add to queue
-     * 
+     *
      * 2. REFINEMENT LOOP
      * - While queue not empty, under subdivision limit:
      *   - Pop edge with highest error
@@ -191,7 +242,7 @@ export class HalfEdgeMesh {
      * 3. CLEANUP
      * - Verify mesh is still manifold
      * - Return refinement statistics
-     * 
+     *
      * @param sdf The signed distance function to use for refinement
      * @param options Configuration options including:
      *   - errorThreshold: Maximum acceptable edge error
@@ -202,18 +253,111 @@ export class HalfEdgeMesh {
     refineEdges(
         sdf: (point: THREE.Vector3) => number,
         options: {
-            errorThreshold?: number,
-            maxSubdivisions?: number,
-            minEdgeLength?: number
-        } = {}
-    ): {
-        edgesSplit: number,
-        finalMaxError: number,
-        refinementSteps: number
-    } {
-        // TODO: Implement refinement algorithm
-        throw new Error("Edge refinement not yet implemented");
+            errorThreshold: number,
+            maxSubdivisions: number,
+            minEdgeLength: number
+        }
+    ): number {
+        console.log('Starting edge refinement with options:', options);
+        const { errorThreshold, maxSubdivisions, minEdgeLength } = options;
+
+        // Priority queue for edges to split
+        type EdgeQuality = {
+            index: number;
+            error: number;
+            midpoint: THREE.Vector3;
+        };
+
+        // Initial vertex optimization
+        this.optimizeVertices(sdf);
+
+        // Helper to evaluate edge quality
+        const evaluateEdge = (heIndex: number): EdgeQuality | null => {
+            const edge = this.halfEdges[heIndex];
+            const pair = this.halfEdges[edge.pairIndex];
+
+            // Get edge vertices
+            const v1 = this.vertices[pair.vertexIndex].position;
+            const v2 = this.vertices[edge.vertexIndex].position;
+
+            // Calculate midpoint
+            const midpoint = new THREE.Vector3()
+                .addVectors(v1, v2)
+                .multiplyScalar(0.5);
+
+            const length = v1.distanceTo(v2);
+            if (length < minEdgeLength) {
+                return null;
+            }
+
+            // Evaluate SDF at midpoint
+            const error = Math.abs(sdf(midpoint));
+
+            return {
+                index: heIndex,
+                error,
+                midpoint
+            };
+        };
+
+        // Create max heap (comparing by error)
+        const heap = new MaxHeap<EdgeQuality>((edge: EdgeQuality) => edge.error);
+
+        // Initialize queue with all edges
+        for (let i = 0; i < this.halfEdges.length; i++) {
+            const edge = this.halfEdges[i];
+            // We'll see it again at pairIndex.
+            if (edge.pairIndex > i) continue;
+
+            const quality = evaluateEdge(i);
+            if (quality && quality.error > errorThreshold) {
+                heap.insert(quality);
+            }
+        }
+
+        let edgesSplit = 0;
+
+        // Main refinement loop
+        while (!heap.isEmpty() && edgesSplit < maxSubdivisions) {
+            const worst = heap.extractRoot()!;
+            const reeval = evaluateEdge(worst.index);
+
+            if (!reeval || reeval.error < worst.error) {
+                continue; // we'll see it again
+            }
+
+            // Split the edge
+            const newEdges = this.splitEdge(worst.index, worst.midpoint);
+            edgesSplit++;
+
+            // Only optimize the new vertex (last vertex added)
+            const newVertex = this.vertices[this.vertices.length - 1];
+
+            this.optimizeVertex(newVertex, sdf);
+            
+            // console.log(`optimized edge ${worst.index} error ${worst.error} moved by ${moveAmount}`);
+            // Evaluate new edges for potential refinement
+            for (const newEdge of newEdges) {
+                const quality = evaluateEdge(newEdge);
+                if (quality && quality.error > errorThreshold) {
+                    // console.log(`reinsert new edge ${newEdge} with ${quality.error}`);
+                    heap.insert(quality);
+                } else {
+                    // console.log(`DON'T reinsert edge ${newEdge} with ${quality?.error}`);
+                }
+            }
+        }
+
+        console.log(`Split ${edgesSplit} edges.`);
+        return edgesSplit;
     }
+
+    // Test-only method to access protected members
+    static testing = {
+      optimizeVertices: (mesh: HalfEdgeMesh, sdf: (point: THREE.Vector3) => number) => {
+        return mesh.optimizeVertices(sdf);
+      }
+    };
 
     // Convert to SerializedMesh format
     toSerializedMesh(): SerializedMesh {
@@ -240,8 +384,8 @@ export class HalfEdgeMesh {
             // Mark these edges as processed - except edge1 because we won't revisit it anyways.
             // Note that edge2 and edge3 are always larger than i, because otherwise we'd have
             // already hit this face.
-            processedEdges.add(edge2);
-            processedEdges.add(edge3);
+            processedEdges.add(edge1.nextIndex);
+            processedEdges.add(edge2.nextIndex);
         }
         
         return { vertices, indices };

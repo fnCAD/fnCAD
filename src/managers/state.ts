@@ -26,7 +26,7 @@ export class StateManager {
 
   constructor(
     private rendererManager: RendererManager,
-    private settingsManager: SettingsManager
+    private settingsManager: import('./settings').SettingsManager
   ) {
     this.taskQueue = new TaskQueue();
     this.taskQueue.onProgress(this.handleTaskProgress.bind(this));
@@ -98,10 +98,10 @@ export class StateManager {
     return parseSDF(sdfExpr);
   }
 
-  setCurrentShader(shader: string | null, visible: boolean = true) {
+  setCurrentShader(shader: string | null) {
     this.currentShader = shader;
     if (shader) {
-      this.rendererManager.updateShader(shader, visible);
+      this.rendererManager.updateShader(shader);
     }
   }
 

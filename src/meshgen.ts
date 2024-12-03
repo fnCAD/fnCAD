@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { SerializedMesh } from './workers/mesh_types';
+import { HalfEdgeMesh } from './halfedge';
 import { OctreeNode, Direction, CellState } from './octree';
 
 /**
- * Generates a triangle mesh from an octree representation of an SDF boundary.
- * Uses a half-edge mesh data structure for robust topology handling.
- *
+ * Generates a triangle mesh from an octree representation of an SDF 
+ * boundary. Uses a half-edge mesh data structure for robust topology handling.
  * IMPORTANT MESH GENERATION INVARIANT:
  * The octree subdivision algorithm ensures that all boundary cells (CellState.Boundary)
  * are at the same scale/level. This is because:
@@ -46,7 +46,8 @@ export class MeshGenerator {
 
     constructor(
         private octree: OctreeNode,
-        private sdf: import('./sdf_expressions/ast').Node
+        private sdf: import('./sdf_expressions/ast').Node,
+        private optimize: boolean = false
     ) {}
 
     private reportProgress(progress: number) {
@@ -55,7 +56,7 @@ export class MeshGenerator {
         }
     }
 
-    generate(): SerializedMesh {
+    generate(minSize: number): SerializedMesh {
         // Create half-edge mesh
         const mesh = new HalfEdgeMesh();
         
@@ -64,7 +65,21 @@ export class MeshGenerator {
         this.extractMeshFromOctree(this.octree, mesh);
         this.reportProgress(0.5);
 
-        // Phase 2: Verify mesh is manifold (50-60%)
+        // Phase 2: Optimize vertices if enabled (50-55%)
+        if (this.optimize) {
+            mesh.refineEdges((pos) => this.sdf.evaluate({
+                x: pos.x,
+                y: pos.y,
+                z: pos.z
+            }), {
+                errorThreshold: minSize / 100.0,
+                maxSubdivisions: mesh.halfEdges.length,
+                minEdgeLength: minSize / 100.0
+            });
+            this.reportProgress(0.55);
+        }
+
+        // Phase 3: Verify mesh is manifold (55-60%)
         if (!mesh.isManifold()) {
             throw new Error('Generated mesh is not manifold');
         }
@@ -96,6 +111,23 @@ export class MeshGenerator {
         });
     }
 
+    // Cache to reuse vertices at shared corners
+    private vertexCache = new Map<string, number>();
+
+    private getVertexIndex(pos: THREE.Vector3, mesh: HalfEdgeMesh): number {
+        // Use position as cache key with some precision limit
+        const key = `${pos.x.toFixed(6)},${pos.y.toFixed(6)},${pos.z.toFixed(6)}`;
+        
+        const cached = this.vertexCache.get(key);
+        if (cached !== undefined) {
+            return cached;
+        }
+
+        const index = mesh.addVertex(pos);
+        this.vertexCache.set(key, index);
+        return index;
+    }
+
     private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh) {
         const half = node.size / 2;
         const corners = [
@@ -103,14 +135,15 @@ export class MeshGenerator {
             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
         ];
         
-        // Add vertices and store their indices
-        const vertexIndices = corners.map(([x, y, z]) => 
-            mesh.addVertex(new THREE.Vector3(
+        // Add vertices with caching
+        const vertexIndices = corners.map(([x, y, z]) => {
+            const pos = new THREE.Vector3(
                 node.center.x + x * half,
                 node.center.y + y * half,
                 node.center.z + z * half
-            ))
-        );
+            );
+            return this.getVertexIndex(pos, mesh);
+        });
 
         // Define faces with their normal directions
         const faces = [

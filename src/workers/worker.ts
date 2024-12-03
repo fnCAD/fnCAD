@@ -150,11 +150,9 @@ async function processMeshTask(taskId: string, task: MeshTask) {
     const sdf = parseSDF(sdfExpr);
     
     const meshGen = new MeshGenerator(
-      octree, 
-      sdf, 
-      task.optimize,
-      task.showQuality,
-      task.qualityThreshold
+      octree,
+      sdf,
+      task.optimize
     );
     
     // Add progress tracking to mesh generation
@@ -162,7 +160,7 @@ async function processMeshTask(taskId: string, task: MeshTask) {
       updateProgress(taskId, progress);
     };
     
-    const serializedMesh = meshGen.generate();
+    const serializedMesh = meshGen.generate(task.minSize);
     sendComplete(taskId, { result: serializedMesh });
   } catch (err) {
     sendError(taskId, err instanceof Error ? err.message : 'Unknown error');

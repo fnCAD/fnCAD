@@ -15,6 +15,7 @@
     "@codemirror/state": "^6.4.1",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.34.3",
+    "@datastructures-js/heap": "^4.3.3",
     "codemirror": "^6.0.1",
     "split.js": "^1.6.5",
     "three": "^0.159.0"

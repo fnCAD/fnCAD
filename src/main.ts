@@ -98,6 +98,7 @@ generateMeshButton.addEventListener('click', async () => {
     showQuality: settingsManager.isQualityVisualizationEnabled(),
     qualityThreshold: settingsManager.getQualityThreshold(),
     octree: state.currentOctree,
+    minSize: settingsManager.getMinSize(),
     source: stateManager.getEditorContent()
   });
   
