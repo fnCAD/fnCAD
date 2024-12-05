@@ -99,113 +99,144 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
 }
 
 
+function enforceArgumentLength(name: string, args: Node[], expected: number) {
+  if (args.length !== expected) {
+    throw new Error(`${name} requires exactly ${expected} argument(s), got ${args.length}`);
+  }
+}
+
 export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode {
-  return {
-    type: 'FunctionCall' as const,
-    name,
-    args,
-    evaluateInterval: (context: Record<string, Interval>) => {
-      const evaluatedArgs = args.map(arg => arg.evaluateInterval(context));
-      
-      // Handle special SDF operations
-      if (name === 'smooth_union') {
-        if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
-        const [d1, d2, r] = evaluatedArgs;
-        return d1.smooth_union(d2, r.min); // Use min value from radius interval
+  if (name === 'sin') {
+    enforceArgumentLength(name, args, 1);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        return args[0].evaluateInterval(context).sin();
+      },
+      evaluate: (context: Record<string, number>) => {
+        return Math.sin(args[0].evaluate(context));
+      },
+      toGLSL: (context: GLSLContext) => {
+        return context.generator.save(`sin(${args[0].toGLSL(context)})`, 'float');
       }
+    };
+  }
 
-      // Handle built-in math functions
-      switch (name) {
-        case 'sqrt':
-          return evaluatedArgs[0].sqrt();
-        case 'sqr':
-          return evaluatedArgs[0].multiply(evaluatedArgs[0]);
-        case 'abs':
-          if (evaluatedArgs[0].max < 0) {
-            // Entirely negative interval
-            return new Interval(-evaluatedArgs[0].max, -evaluatedArgs[0].min);
-          } else if (evaluatedArgs[0].min > 0) {
-            // Entirely positive interval
-            return evaluatedArgs[0];
-          } else {
-            // Interval contains zero
-            return new Interval(
-              0,
-              Math.max(-evaluatedArgs[0].min, evaluatedArgs[0].max)
-            );
-          }
-        case 'sin':
-          return evaluatedArgs[0].sin();
-        case 'cos':
-          return evaluatedArgs[0].cos();
-        case 'log':
-          return evaluatedArgs[0].log();
-        case 'exp':
-          return evaluatedArgs[0].exp();
+  if (name === 'cos') {
+    enforceArgumentLength(name, args, 1);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        return args[0].evaluateInterval(context).cos();
+      },
+      evaluate: (context: Record<string, number>) => {
+        return Math.cos(args[0].evaluate(context));
+      },
+      toGLSL: (context: GLSLContext) => {
+        return context.generator.save(`cos(${args[0].toGLSL(context)})`, 'float');
       }
+    };
+  }
 
-      // Handle min/max with any number of arguments
-      if (name === 'min') {
-        if (evaluatedArgs.length === 1) return evaluatedArgs[0];
-        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
-          return new Interval(
-            Math.min(acc.min, interval.min),
-            Math.min(acc.max, interval.max)
-          );
+  if (name === 'sqrt') {
+    enforceArgumentLength(name, args, 1);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        return args[0].evaluateInterval(context).sqrt();
+      },
+      evaluate: (context: Record<string, number>) => {
+        return Math.sqrt(args[0].evaluate(context));
+      },
+      toGLSL: (context: GLSLContext) => {
+        return context.generator.save(`sqrt(${args[0].toGLSL(context)})`, 'float');
+      }
+    };
+  }
+
+  if (name === 'sqr') {
+    enforceArgumentLength(name, args, 1);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        const x = args[0].evaluateInterval(context);
+        return x.multiply(x);
+      },
+      evaluate: (context: Record<string, number>) => {
+        const x = args[0].evaluate(context);
+        return x * x;
+      },
+      toGLSL: (context: GLSLContext) => {
+        const x = args[0].toGLSL(context);
+        return context.generator.save(`(${x} * ${x})`, 'float');
+      }
+    };
+  }
+
+  if (name === 'log') {
+    enforceArgumentLength(name, args, 1);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        return args[0].evaluateInterval(context).log();
+      },
+      evaluate: (context: Record<string, number>) => {
+        return Math.log(args[0].evaluate(context));
+      },
+      toGLSL: (context: GLSLContext) => {
+        return context.generator.save(`log(${args[0].toGLSL(context)})`, 'float');
+      }
+    };
+  }
+
+  if (name === 'min') {
+    if (args.length < 1) throw new Error('min requires at least 1 argument');
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        const intervals = args.map(arg => arg.evaluateInterval(context));
+        if (intervals.length === 1) return intervals[0];
+        return intervals.reduce((acc, interval) => new Interval(
+          Math.min(acc.min, interval.min),
+          Math.min(acc.max, interval.max)
+        ));
+      },
+      evaluate: (context: Record<string, number>) => {
+        const values = args.map(arg => arg.evaluate(context));
+        if (values.length === 1) return values[0];
+        return Math.min(...values);
+      },
+      toGLSL: (context: GLSLContext) => {
+        const evalArgs = args.map(arg => arg.toGLSL(context));
+        if (evalArgs.length === 1) return evalArgs[0];
+        return evalArgs.reduce((acc, arg, i) => {
+          if (i === 0) return arg;
+          return context.generator.save(`min(${acc}, ${arg})`, 'float');
         });
       }
-      if (name === 'max') {
-        if (evaluatedArgs.length === 1) return evaluatedArgs[0];
-        return evaluatedArgs.reduce((acc: Interval, interval: Interval) => {
-          return new Interval(
-            Math.max(acc.min, interval.min),
-            Math.max(acc.max, interval.max)
-          );
-        });
-      }
+    };
+  }
 
-      // Handle transformations
-      if (name === 'translate' && args.length === 4) {
-        const [dx, dy, dz, body] = args;
-        // Evaluate translation amounts
-        const tx = dx.evaluateInterval(context);
-        const ty = dy.evaluateInterval(context);
-        const tz = dz.evaluateInterval(context);
-        // Translate the intervals
-        const newContext = {...context};
-        newContext['x'] = new Interval(
-          context['x'].min - tx.max,
-          context['x'].max - tx.min
-        );
-        newContext['y'] = new Interval(
-          context['y'].min - ty.max,
-          context['y'].max - ty.min
-        );
-        newContext['z'] = new Interval(
-          context['z'].min - tz.max,
-          context['z'].max - tz.min
-        );
-        return body.evaluateInterval(newContext);
-      }
-
-      if (name === 'scale' && args.length === 4) {
-        const [sx, sy, sz, body] = args;
-        // Get scale factors
-        const scaleX = sx.evaluate({});
-        const scaleY = sy.evaluate({});
-        const scaleZ = sz.evaluate({});
-        
-        // Scale the intervals by dividing by scale factors
-        const newContext = {...context};
-        newContext['x'] = context['x'].divide(Interval.from(scaleX));
-        newContext['y'] = context['y'].divide(Interval.from(scaleY));
-        newContext['z'] = context['z'].divide(Interval.from(scaleZ));
-        
-        return body.evaluateInterval(newContext);
-      }
-
-      if (name === 'rotate' && args.length === 4) {
-        const [rx, ry, rz, body] = args;
+  if (name === 'rotate') {
+    enforceArgumentLength(name, args, 4);
+    const [rx, ry, rz, body] = args;
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
         // Get rotation angles
         const ax = rx.evaluate({});
         const ay = ry.evaluate({});
@@ -222,15 +253,15 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           [x.min, y.max, z.max], [x.max, y.max, z.max]
         ];
         
-        // Transform each corner
-        const transformedX: number[] = [];
-        const transformedY: number[] = [];
-        const transformedZ: number[] = [];
-        
         // Compute trig values
         const cx = Math.cos(ax), sx = Math.sin(ax);
         const cy = Math.cos(ay), sy = Math.sin(ay);
         const cz = Math.cos(az), sz = Math.sin(az);
+        
+        // Transform each corner
+        const transformedX: number[] = [];
+        const transformedY: number[] = [];
+        const transformedZ: number[] = [];
         
         // It says this is XYZ order but in GLSL it has to be ZYX order to match. Why?
         for (const [px, py, pz] of corners) {
@@ -254,84 +285,15 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           transformedZ.push(nz);
         }
         
-        // Convert transformed points to array of {x,y,z} objects
-        const transformedPoints = transformedX.map((x, i) => ({
-          x: x,
-          y: transformedY[i],
-          z: transformedZ[i]
-        }));
-        
         // Compute bounds for each axis
         const newContext = {...context};
-        newContext['x'] = Interval.bound(transformedPoints.map(p => p.x));
-        newContext['y'] = Interval.bound(transformedPoints.map(p => p.y));
-        newContext['z'] = Interval.bound(transformedPoints.map(p => p.z));
+        newContext['x'] = Interval.bound(transformedX);
+        newContext['y'] = Interval.bound(transformedY);
+        newContext['z'] = Interval.bound(transformedZ);
         
         return body.evaluateInterval(newContext);
-      }
-
-      throw new Error(`Unknown function: ${name}`);
-    },
-    evaluate: (context: Record<string, number>) => {
-      const evaluatedArgs = args.map(arg => arg.evaluate(context));
-      
-      // Handle special SDF operations
-      if (name === 'smooth_union') {
-        if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
-        const [d1, d2, r] = evaluatedArgs;
-        
-        // For points far from both shapes (> 10*radius), just use regular min
-        const minDist = Math.min(d1, d2);
-        if (minDist > r * 10.0) {
-          return Math.min(d1, d2);
-        }
-
-        // Otherwise compute the smooth union
-        const k = 1.0/r;
-        return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
-      }
-
-      // Handle built-in math functions
-      if (name === 'sqr') {
-        return evaluatedArgs[0] * evaluatedArgs[0];
-      }
-      if (name === 'abs') {
-        return Math.abs(evaluatedArgs[0]);
-      }
-      if (name === 'log') {
-        return Math.log(evaluatedArgs[0]);
-      }
-      if (name === 'exp') {
-        return Math.exp(evaluatedArgs[0]);
-      }
-      if (name in Math) {
-        const fn = Math[name as keyof typeof Math];
-        if (typeof fn === 'function') {
-          return fn.apply(Math, evaluatedArgs);
-        }
-      }
-
-      // Handle min/max with any number of arguments
-      if (name === 'min') {
-        if (evaluatedArgs.length === 1) return evaluatedArgs[0];
-        return Math.min(...evaluatedArgs);
-      }
-      if (name === 'max') {
-        if (evaluatedArgs.length === 1) return evaluatedArgs[0];
-        return Math.max(...evaluatedArgs);
-      }
-
-      // Handle transforms
-      if (name === 'translate' && args.length === 4) {
-        const [dx, dy, dz, body] = args;
-        const newX = context['x'] - dx.evaluate(context);
-        const newY = context['y'] - dy.evaluate(context);
-        const newZ = context['z'] - dz.evaluate(context);
-        return body.evaluate({...context, 'x': newX, 'y': newY, 'z': newZ});
-      }
-      if (name === 'rotate' && args.length === 4) {
-        const [rx, ry, rz, body] = args;
-        // Get rotation angles
+      },
+      evaluate: (context: Record<string, number>) => {
         const ax = rx.evaluate(context);
         const ay = ry.evaluate(context);
         const az = rz.evaluate(context);
@@ -341,8 +303,6 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const cy = Math.cos(ay), sy = Math.sin(ay);
         const cz = Math.cos(az), sz = Math.sin(az);
         
-        // Apply rotation matrix (X * Y * Z order)
-        // Note: again it says that but GLSL is still ZYX?
         const x = context.x;
         const y = context.y;
         const z = context.z;
@@ -363,75 +323,211 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
         const nz = z2;
         
         return body.evaluate({...context, x: nx, y: ny, z: nz});
-      }
-
-      if (name === 'scale' && args.length === 4) {
-        const [sx, sy, sz, body] = args;
-        // Get scale factors
-        const scaleX = sx.evaluate(context);
-        const scaleY = sy.evaluate(context);
-        const scaleZ = sz.evaluate(context);
-        
-        // Scale the point coordinates by dividing by scale factors
-        return body.evaluate({
-          ...context,
-          x: context.x / scaleX,
-          y: context.y / scaleY,
-          z: context.z / scaleZ
-        });
-      }
-
-      throw new Error(`Unknown function: ${name}`);
-    },
-    toGLSL: (context: GLSLContext) => {
-      // Handle transforms first
-      if (name === 'translate' && args.length === 4) {
-        const [dx, dy, dz, body] = args;
-        const evalDx = dx.evaluate({});
-        const evalDy = dy.evaluate({});
-        const evalDz = dz.evaluate({});
-        const newContext = context.translate(evalDx, evalDy, evalDz);
-        return body.toGLSL(newContext);
-      }
-      if (name === 'scale' && args.length === 4) {
-        const [sx, sy, sz, body] = args;
-        const evalSx = sx.evaluate({});
-        const evalSy = sy.evaluate({});
-        const evalSz = sz.evaluate({});
-        const newContext = context.scale(evalSx, evalSy, evalSz);
-        return body.toGLSL(newContext);
-      }
-      if (name === 'rotate' && args.length === 4) {
-        const [rx, ry, rz, body] = args;
+      },
+      toGLSL: (context: GLSLContext) => {
         const evalRx = rx.evaluate({});
         const evalRy = ry.evaluate({});
         const evalRz = rz.evaluate({});
         const newContext = context.rotate(evalRx, evalRy, evalRz);
         return body.toGLSL(newContext);
       }
+    };
+  }
 
-      // Evaluate all arguments first
-      const evalArgs = args.map(arg => arg.toGLSL(context));
-      
-      // Handle special functions
-      if (name === 'smooth_union') {
-        if (args.length !== 3) throw new Error('smooth_union requires exactly 3 arguments');
-        const [d1, d2, r] = evalArgs;
-        // Implementation matches the one in GLSL
-        return context.generator.save(`smooth_union(${d1}, ${d2}, ${r})`, 'float');
+  if (name === 'scale') {
+    enforceArgumentLength(name, args, 4);
+    const [sx, sy, sz, body] = args;
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        // Get scale factors
+        const scaleX = sx.evaluate({});
+        const scaleY = sy.evaluate({});
+        const scaleZ = sz.evaluate({});
+        
+        // Scale the intervals by dividing by scale factors
+        const newContext = {...context};
+        newContext['x'] = context['x'].divide(Interval.from(scaleX));
+        newContext['y'] = context['y'].divide(Interval.from(scaleY));
+        newContext['z'] = context['z'].divide(Interval.from(scaleZ));
+        
+        return body.evaluateInterval(newContext);
+      },
+      evaluate: (context: Record<string, number>) => {
+        const scaleX = sx.evaluate(context);
+        const scaleY = sy.evaluate(context);
+        const scaleZ = sz.evaluate(context);
+        
+        return body.evaluate({
+          ...context,
+          x: context.x / scaleX,
+          y: context.y / scaleY,
+          z: context.z / scaleZ
+        });
+      },
+      toGLSL: (context: GLSLContext) => {
+        const evalSx = sx.evaluate({});
+        const evalSy = sy.evaluate({});
+        const evalSz = sz.evaluate({});
+        const newContext = context.scale(evalSx, evalSy, evalSz);
+        return body.toGLSL(newContext);
       }
-      
-      if (name === 'min' || name === 'max') {
-        if (args.length === 1) return evalArgs[0];
-        // Fold multiple arguments into nested min/max calls
+    };
+  }
+
+  if (name === 'translate') {
+    enforceArgumentLength(name, args, 4);
+    const [dx, dy, dz, body] = args;
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        // Evaluate translation amounts
+        const tx = dx.evaluateInterval(context);
+        const ty = dy.evaluateInterval(context);
+        const tz = dz.evaluateInterval(context);
+        // Translate the intervals
+        const newContext = {...context};
+        newContext['x'] = new Interval(
+          context['x'].min - tx.max,
+          context['x'].max - tx.min
+        );
+        newContext['y'] = new Interval(
+          context['y'].min - ty.max,
+          context['y'].max - ty.min
+        );
+        newContext['z'] = new Interval(
+          context['z'].min - tz.max,
+          context['z'].max - tz.min
+        );
+        return body.evaluateInterval(newContext);
+      },
+      evaluate: (context: Record<string, number>) => {
+        const newX = context['x'] - dx.evaluate(context);
+        const newY = context['y'] - dy.evaluate(context);
+        const newZ = context['z'] - dz.evaluate(context);
+        return body.evaluate({...context, 'x': newX, 'y': newY, 'z': newZ});
+      },
+      toGLSL: (context: GLSLContext) => {
+        const evalDx = dx.evaluate({});
+        const evalDy = dy.evaluate({});
+        const evalDz = dz.evaluate({});
+        const newContext = context.translate(evalDx, evalDy, evalDz);
+        return body.toGLSL(newContext);
+      }
+    };
+  }
+
+  if (name === 'max') {
+    if (args.length < 1) throw new Error('max requires at least 1 argument');
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        const intervals = args.map(arg => arg.evaluateInterval(context));
+        if (intervals.length === 1) return intervals[0];
+        return intervals.reduce((acc, interval) => new Interval(
+          Math.max(acc.min, interval.min),
+          Math.max(acc.max, interval.max)
+        ));
+      },
+      evaluate: (context: Record<string, number>) => {
+        const values = args.map(arg => arg.evaluate(context));
+        if (values.length === 1) return values[0];
+        return Math.max(...values);
+      },
+      toGLSL: (context: GLSLContext) => {
+        const evalArgs = args.map(arg => arg.toGLSL(context));
+        if (evalArgs.length === 1) return evalArgs[0];
         return evalArgs.reduce((acc, arg, i) => {
           if (i === 0) return arg;
-          return context.generator.save(`${name}(${acc}, ${arg})`, 'float');
+          return context.generator.save(`max(${acc}, ${arg})`, 'float');
         });
       }
-      
-      // Default case for other functions
-      return context.generator.save(`${name}(${evalArgs.join(', ')})`, 'float');
-    }
-  };
+    };
+  }
+
+  if (name === 'smooth_union') {
+    enforceArgumentLength(name, args, 3);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        const [d1, d2, _r] = args.map(arg => arg.evaluateInterval(context));
+        // For interval arithmetic, we use a conservative approximation
+        // that encompasses both the smooth and regular union
+        return new Interval(
+          Math.min(d1.min, d2.min),
+          Math.min(d1.max, d2.max)
+        );
+      },
+      evaluate: (context: Record<string, number>) => {
+        const [d1, d2, r] = args.map(arg => arg.evaluate(context));
+        
+        // For points far from both shapes (> 10*radius), just use regular min
+        const minDist = Math.min(d1, d2);
+        if (minDist > r * 10.0) {
+          return Math.min(d1, d2);
+        }
+
+        // Otherwise compute the smooth union
+        const k = 1.0/r;
+        return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
+      },
+      toGLSL: (context: GLSLContext) => {
+        const evalArgs = args.map(arg => arg.toGLSL(context));
+        return context.generator.save(`smooth_union(${evalArgs.join(', ')})`, 'float');
+      }
+    };
+  }
+
+  if (name === 'exp') {
+    enforceArgumentLength(name, args, 1);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        return args[0].evaluateInterval(context).exp();
+      },
+      evaluate: (context: Record<string, number>) => {
+        return Math.exp(args[0].evaluate(context));
+      },
+      toGLSL: (context: GLSLContext) => {
+        return context.generator.save(`exp(${args[0].toGLSL(context)})`, 'float');
+      }
+    };
+  }
+
+  if (name === 'abs') {
+    enforceArgumentLength(name, args, 1);
+    return {
+      type: 'FunctionCall' as const,
+      name,
+      args,
+      evaluateInterval: (context: Record<string, Interval>) => {
+        const x = args[0].evaluateInterval(context);
+        if (x.max < 0) {
+          return new Interval(-x.max, -x.min);
+        } else if (x.min > 0) {
+          return x;
+        } else {
+          return new Interval(0, Math.max(-x.min, x.max));
+        }
+      },
+      evaluate: (context: Record<string, number>) => {
+        return Math.abs(args[0].evaluate(context));
+      },
+      toGLSL: (context: GLSLContext) => {
+        return context.generator.save(`abs(${args[0].toGLSL(context)})`, 'float');
+      }
+    };
+  }
+
+  throw new Error(`Unknown function: ${name}`);
 }

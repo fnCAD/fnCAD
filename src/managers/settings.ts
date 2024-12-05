@@ -10,8 +10,7 @@ export class SettingsManager {
   private minSizeSlider!: HTMLInputElement;
   private cellBudgetSlider!: HTMLInputElement;
   private minRenderSizeSlider!: HTMLInputElement;
-  private showQualityCheckbox!: HTMLInputElement;
-  private qualityThresholdSlider!: HTMLInputElement;
+  private showMeshCheckbox!: HTMLInputElement;
   private optimizeMeshCheckbox!: HTMLInputElement;
   private meshOpacitySlider!: HTMLInputElement;
 
