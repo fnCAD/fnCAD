@@ -52,8 +52,8 @@ export class SettingsManager {
           <h4>Octree Computation</h4>
           <div class="setting-row">
             <label for="min-size">Min Cell Size:</label>
-            <input type="range" id="min-size" min="0" max="6" step="1" value="4">
-            <span class="value-display">1</span>
+            <input type="range" id="min-size" min="0" max="8" step="1" value="4">
+            <span class="value-display">1/16</span>
           </div>
           <div class="setting-row">
             <label for="cell-budget">Cell Budget:</label>
@@ -66,7 +66,7 @@ export class SettingsManager {
           <div class="setting-row">
             <label for="min-render-size">Min Render Size:</label>
             <input type="range" id="min-render-size" min="0" max="6" step="1" value="3">
-            <span class="value-display">1</span>
+            <span class="value-display">1/8</span>
           </div>
         </div>
         <div class="setting-group">
