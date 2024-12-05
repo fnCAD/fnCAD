@@ -146,6 +146,19 @@ export class SettingsManager {
       display.textContent = value.toFixed(1);
       this.onSettingsChange();
     });
+
+    // Add listeners for checkboxes
+    [
+      this.showRaymarchedCheckbox,
+      this.showOctreeCheckbox,
+      this.showOutsideCheckbox,
+      this.showInsideCheckbox,
+      this.showBoundaryCheckbox,
+      this.showMeshCheckbox,
+      this.optimizeMeshCheckbox
+    ].forEach(checkbox => {
+      checkbox.addEventListener('change', this.onSettingsChange);
+    });
   }
 
   getRenderSettings(): OctreeRenderSettings {
