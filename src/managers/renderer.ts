@@ -275,7 +275,6 @@ export class RendererManager {
 
   updateMesh(meshData: SerializedMesh | null) {
     // Remove existing mesh
-    // Remove existing SDF mesh
     const existingMesh = this.previewOverlayScene.children.find(
       child => child instanceof THREE.Mesh && child.userData.isSdfMesh
     ) as THREE.Mesh | undefined;
@@ -290,7 +289,7 @@ export class RendererManager {
       this.previewOverlayScene.remove(existingMesh);
     }
 
-    if (meshData) {
+    if (meshData && this.settingsManager.showMeshCheckbox.checked) {
       // Create non-indexed geometry
       const geometry = new THREE.BufferGeometry();
       const positions: number[] = [];
