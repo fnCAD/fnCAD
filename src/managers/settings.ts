@@ -111,8 +111,6 @@ export class SettingsManager {
   }
 
   private setupEventListeners() {
-    [
-
     this.minSizeSlider.addEventListener('input', () => {
       const power = parseInt(this.minSizeSlider.value);
       const value = Math.pow(2, power);
