@@ -193,6 +193,10 @@ export class SettingsManager {
     return this.showRaymarchedCheckbox.checked;
   }
 
+  isMeshVisible(): boolean {
+    return this.showMeshCheckbox.checked;
+  }
+
   isMeshOptimizationEnabled(): boolean {
     return this.optimizeMeshCheckbox.checked;
   }

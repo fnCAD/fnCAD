@@ -289,7 +289,7 @@ export class RendererManager {
       this.previewOverlayScene.remove(existingMesh);
     }
 
-    if (meshData && this.settingsManager.showMeshCheckbox.checked) {
+    if (meshData && this.settingsManager.isMeshVisible()) {
       // Create non-indexed geometry
       const geometry = new THREE.BufferGeometry();
       const positions: number[] = [];
