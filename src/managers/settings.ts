@@ -112,14 +112,6 @@ export class SettingsManager {
 
   private setupEventListeners() {
     [
-      this.showRaymarchedCheckbox,
-      this.showOctreeCheckbox,
-      this.showOutsideCheckbox,
-      this.showInsideCheckbox,
-      this.showBoundaryCheckbox
-    ].forEach(checkbox => {
-      checkbox.addEventListener('change', this.onSettingsChange);
-    });
 
     this.minSizeSlider.addEventListener('input', () => {
       const power = parseInt(this.minSizeSlider.value);
