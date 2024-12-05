@@ -77,7 +77,7 @@ export class SettingsManager {
             <label for="show-mesh">Show Mesh</label>
           </div>
           <div class="setting-row">
-            <input type="checkbox" id="optimize-mesh">
+            <input type="checkbox" id="optimize-mesh" checked>
             <label for="optimize-mesh">Optimize Mesh</label>
           </div>
           <div class="setting-row">
