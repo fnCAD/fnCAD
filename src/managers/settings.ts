@@ -144,16 +144,6 @@ export class SettingsManager {
       this.onSettingsChange();
     });
 
-    this.qualityThresholdSlider.addEventListener('input', () => {
-      const value = parseFloat(this.qualityThresholdSlider.value);
-      const display = this.qualityThresholdSlider.nextElementSibling as HTMLSpanElement;
-      display.textContent = value.toFixed(2);
-      this.onSettingsChange();
-    });
-
-    [this.showQualityCheckbox].forEach(checkbox => {
-      checkbox.addEventListener('change', this.onSettingsChange);
-    });
 
     this.meshOpacitySlider.addEventListener('input', () => {
       const value = parseFloat(this.meshOpacitySlider.value);
