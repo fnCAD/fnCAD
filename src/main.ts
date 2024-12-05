@@ -84,8 +84,7 @@ function updateOctree() {
 
 
 // Add mesh generation handler
-const generateMeshButton = document.getElementById('generate-mesh') as HTMLButtonElement;
-generateMeshButton.addEventListener('click', async () => {
+document.getElementById('show-mesh')?.addEventListener('change', async () => {
   const state = stateManager.getState();
   if (!state.currentOctree) {
     console.warn('No octree available for mesh generation');
