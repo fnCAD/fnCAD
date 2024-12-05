@@ -18,6 +18,4 @@ export interface MeshTask {
   octree: OctreeNode;
   minSize: number;
   source: string;  // Source code to parse SDF from
-  showQuality: boolean;
-  qualityThreshold: number;
 }
