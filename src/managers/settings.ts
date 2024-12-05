@@ -77,6 +77,10 @@ export class SettingsManager {
             <label for="show-mesh">Show Mesh</label>
           </div>
           <div class="setting-row">
+            <input type="checkbox" id="optimize-mesh">
+            <label for="optimize-mesh">Optimize Mesh</label>
+          </div>
+          <div class="setting-row">
             <label for="mesh-opacity">Mesh Opacity:</label>
             <input type="range" id="mesh-opacity" min="0" max="1" step="0.1" value="0.8">
             <span class="value-display">0.8</span>
@@ -96,6 +100,7 @@ export class SettingsManager {
     this.cellBudgetSlider = document.getElementById('cell-budget') as HTMLInputElement;
     this.minRenderSizeSlider = document.getElementById('min-render-size') as HTMLInputElement;
     this.showMeshCheckbox = document.getElementById('show-mesh') as HTMLInputElement;
+    this.optimizeMeshCheckbox = document.getElementById('optimize-mesh') as HTMLInputElement;
     this.meshOpacitySlider = document.getElementById('mesh-opacity') as HTMLInputElement;
 
     // Set initial checkbox states
