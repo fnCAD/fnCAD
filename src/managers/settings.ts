@@ -121,6 +121,12 @@ export class SettingsManager {
       const value = Math.pow(2, power);
       const display = this.minSizeSlider.nextElementSibling as HTMLSpanElement;
       display.textContent = value === 1 ? '1' : `1/${value}`;
+      
+      // If mesh is visible, trigger mesh regeneration
+      if (this.showMeshCheckbox.checked) {
+        document.getElementById('show-mesh')?.dispatchEvent(new Event('change'));
+      }
+      
       this.onSettingsChange();
     });
 
