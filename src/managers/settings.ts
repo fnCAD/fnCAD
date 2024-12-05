@@ -69,29 +69,17 @@ export class SettingsManager {
             <input type="range" id="min-render-size" min="0" max="6" step="1" value="0">
             <span class="value-display">1</span>
           </div>
-          <div class="setting-row">
-            <input type="checkbox" id="show-quality" checked>
-            <label for="show-quality">Show Face Quality</label>
-          </div>
-          <div class="setting-row">
-            <label for="quality-threshold">Quality Threshold:</label>
-            <input type="range" id="quality-threshold" min="0" max="1" step="0.01" value="0.1">
-            <span class="value-display">0.1</span>
-          </div>
-        </div>
-        <div class="setting-row">
-          <input type="checkbox" id="optimize-mesh" checked>
-          <label for="optimize-mesh">Optimize Mesh</label>
         </div>
         <div class="setting-group">
           <h4>Mesh Display</h4>
           <div class="setting-row">
+            <input type="checkbox" id="show-mesh">
+            <label for="show-mesh">Show Mesh</label>
+          </div>
+          <div class="setting-row">
             <label for="mesh-opacity">Mesh Opacity:</label>
             <input type="range" id="mesh-opacity" min="0" max="1" step="0.1" value="0.8">
             <span class="value-display">0.8</span>
-          </div>
-          <div class="setting-row">
-            <button id="generate-mesh">Generate Mesh</button>
           </div>
         </div>
       </div>
@@ -107,10 +95,13 @@ export class SettingsManager {
     this.minSizeSlider = document.getElementById('min-size') as HTMLInputElement;
     this.cellBudgetSlider = document.getElementById('cell-budget') as HTMLInputElement;
     this.minRenderSizeSlider = document.getElementById('min-render-size') as HTMLInputElement;
-    this.showQualityCheckbox = document.getElementById('show-quality') as HTMLInputElement;
-    this.qualityThresholdSlider = document.getElementById('quality-threshold') as HTMLInputElement;
-    this.optimizeMeshCheckbox = document.getElementById('optimize-mesh') as HTMLInputElement;
+    this.showMeshCheckbox = document.getElementById('show-mesh') as HTMLInputElement;
     this.meshOpacitySlider = document.getElementById('mesh-opacity') as HTMLInputElement;
+
+    // Set initial checkbox states
+    this.showRaymarchedCheckbox.checked = true;
+    this.showOctreeCheckbox.checked = false;
+    this.showMeshCheckbox.checked = false;
 
     // Add settings panel collapse behavior
     const settingsHeader = this.settingsPanel.querySelector('h3')!;
@@ -201,14 +192,6 @@ export class SettingsManager {
 
   isMeshOptimizationEnabled(): boolean {
     return this.optimizeMeshCheckbox.checked;
-  }
-
-  isQualityVisualizationEnabled(): boolean {
-    return this.showQualityCheckbox.checked;
-  }
-
-  getQualityThreshold(): number {
-    return parseFloat(this.qualityThresholdSlider.value);
   }
 
   getMeshOpacity(): number {
