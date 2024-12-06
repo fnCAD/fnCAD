@@ -67,9 +67,9 @@ function updateHelpPopup(view: EditorView) {
   parser.parse();
   const locations = parser.getLocations();
   
-  // Show help for any call we're inside of
+  // Show help for any call where we're in the parameter list
   for (const call of locations) {
-    if (pos >= call.fullRange.start.offset && pos <= call.fullRange.end.offset) {
+    if (pos >= call.paramRange.start.offset && pos <= call.paramRange.end.offset) {
       // Get documentation
       const doc = getModuleDoc(call.moduleName);
       
