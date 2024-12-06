@@ -369,7 +369,10 @@ export class Parser {
       name,
       args,
       children,
-      this.currentCall?.fullRange || nameToken.location
+      {
+        start: nameToken.location.start,
+        end: this.previous().location.end
+      }
     );
   }
 
