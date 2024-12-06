@@ -258,6 +258,35 @@ body {
 }
 
 .parameter-help {
+  position: fixed;
+  background: #1e1e1e;
+  border: 1px solid #646cff;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.9em;
+  color: #ddd;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 300px;
+  box-shadow: 0 2px 8px rgba(100,108,255,0.3);
+  display: none; /* Hidden by default */
+}
+
+.cm-active-call {
+  background-color: rgba(100,108,255,0.1);
+}
+
+.parameter-help .current {
+  color: #646cff;
+  font-weight: bold;
+}
+
+.parameter-help .optional {
+  color: #888;
+  font-style: italic;
+}
+
+.parameter-help {
   position: absolute;
   background: #1e1e1e;
   border: 1px solid #444;
@@ -269,6 +298,12 @@ body {
   z-index: 1000;
   max-width: 300px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  line-height: 1.4;
+}
+
+.parameter-help strong {
+  color: #fff;
+  font-weight: 600;
 }
 
 .parameter-help .current {
@@ -279,6 +314,13 @@ body {
 .parameter-help .optional {
   color: #888;
   font-style: italic;
+}
+
+.parameter-help small {
+  display: block;
+  color: #888;
+  margin-top: 4px;
+  font-size: 0.9em;
 }
 
 button {

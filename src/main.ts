@@ -10,6 +10,8 @@ import { RendererManager } from './managers/renderer'
 import { EditorView, ViewUpdate, Decoration, DecorationSet, WidgetType } from '@codemirror/view'
 import { EditorState, StateEffect, StateField } from '@codemirror/state'
 import { javascript } from '@codemirror/lang-javascript'
+import { Parser } from './cad/parser'
+import { getModuleDoc } from './cad/docs'
 import { basicSetup } from 'codemirror'
 import { oneDark } from '@codemirror/theme-one-dark'
 
@@ -21,6 +23,88 @@ interface ErrorDecoration {
 }
 
 export const errorDecorationFacet = StateEffect.define<ErrorDecoration[]>();
+
+// Create help popup element
+const helpPopup = document.createElement('div');
+helpPopup.className = 'parameter-help';
+document.body.appendChild(helpPopup);
+
+// Function to update help popup
+function updateHelpPopup(view: EditorView) {
+  const pos = view.state.selection.main.head;
+  if (!pos) {
+    helpPopup.style.display = 'none';
+    return;
+  }
+
+  // Find module call at current position
+  const parser = new Parser(view.state.doc.toString());
+  parser.parse();
+  const locations = parser.getLocations();
+  
+  // Show help for any call we're inside of
+  for (const call of locations) {
+    if (pos >= call.fullRange.start.offset && pos <= call.fullRange.end.offset) {
+      // Get documentation
+      const doc = getModuleDoc(call.moduleName);
+      
+      // Find current parameter
+      let currentParamIndex = -1;
+      for (let i = 0; i < call.parameters.length; i++) {
+        const param = call.parameters[i];
+        if (pos >= param.range.start.offset && pos <= param.range.end.offset) {
+          currentParamIndex = i;
+          break;
+        }
+      }
+
+      // Build help content
+      let content = `<strong>${call.moduleName}</strong>(`;
+      if (doc) {
+        content += doc.parameters.map((p, i) => {
+          const className = i === currentParamIndex ? 'current' : '';
+          const defaultText = p.defaultValue ? ` = ${p.defaultValue}` : '';
+          return `<span class="${className}">${p.name}${defaultText}</span>`;
+        }).join(', ');
+        content += ')<br/>';
+        content += `<small>${doc.description}</small>`;
+        
+        if (currentParamIndex >= 0 && currentParamIndex < doc.parameters.length) {
+          content += `<br/><small>${doc.parameters[currentParamIndex].description}</small>`;
+        }
+      } else {
+        content += call.parameters.map((p, i) => {
+          const className = i === currentParamIndex ? 'current' : '';
+          return `<span class="${className}">${p.name || 'arg'}</span>`;
+        }).join(', ') + ')';
+      }
+      
+      helpPopup.innerHTML = content;
+      
+      // Position relative to cursor
+      const coords = view.coordsAtPos(pos);
+      if (coords) {
+        helpPopup.style.display = 'block';
+        helpPopup.style.top = `${coords.top - helpPopup.offsetHeight - 10}px`;
+        helpPopup.style.left = `${coords.left}px`;
+        
+        // Add mark decoration to highlight the call
+        view.dispatch({
+          effects: StateEffect.appendConfig.of([
+            EditorView.decorations.of(Decoration.set([
+              Decoration.mark({
+                class: "cm-active-call"
+              }).range(call.fullRange.start.offset, call.fullRange.end.offset)
+            ]))
+          ])
+        });
+        return;
+      }
+    }
+  }
+  
+  helpPopup.style.display = 'none';
+}
 
 const errorDecorationField = StateField.define<DecorationSet>({
   create() {
@@ -140,6 +224,11 @@ smooth_difference(0.03) {
       }),
       oneDark,
       errorDecorationField,
+      EditorView.updateListener.of((update: ViewUpdate) => {
+        if (update.docChanged || update.selectionSet) {
+          updateHelpPopup(update.view);
+        }
+      }),
       EditorView.theme({
         '&': {height: '100%'},
         '.cm-scroller': {overflow: 'auto'},

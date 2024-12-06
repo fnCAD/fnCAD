@@ -18,7 +18,7 @@ import { parseError } from './errors';
  * The parser maintains state about the current position in the token stream
  * and provides helper methods for consuming tokens and building AST nodes.
  */
-class Parser {
+export class Parser {
   private current = 0;
   private line = 1;
   private column = 1;
