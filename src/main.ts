@@ -23,6 +23,31 @@ interface ErrorDecoration {
 }
 
 export const errorDecorationFacet = StateEffect.define<ErrorDecoration[]>();
+export const callHighlightEffect = StateEffect.define<{from: number, to: number} | null>();
+
+const callHighlightField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    decorations = decorations.map(tr.changes);
+    for (const effect of tr.effects) {
+      if (effect.is(callHighlightEffect)) {
+        if (effect.value === null) {
+          decorations = Decoration.none;
+        } else {
+          decorations = Decoration.set([
+            Decoration.mark({
+              class: "cm-active-call"
+            }).range(effect.value.from, effect.value.to)
+          ]);
+        }
+      }
+    }
+    return decorations;
+  },
+  provide: f => EditorView.decorations.from(f)
+});
 
 // Create help popup element
 const helpPopup = document.createElement('div');
@@ -124,15 +149,12 @@ function updateHelpPopup(view: EditorView) {
       helpPopup.style.left = `${lineRect.left + window.scrollX}px`;
       helpPopup.classList.add('visible');
       
-      // Add mark decoration to highlight the call
+      // Update call highlighting
       view.dispatch({
-        effects: StateEffect.appendConfig.of([
-          EditorView.decorations.of(Decoration.set([
-            Decoration.mark({
-              class: "cm-active-call"
-            }).range(call.fullRange.start.offset, call.fullRange.end.offset)
-          ]))
-        ])
+        effects: callHighlightEffect.of({
+          from: call.fullRange.start.offset,
+          to: call.fullRange.end.offset
+        })
       });
       return;
     }
@@ -141,11 +163,9 @@ function updateHelpPopup(view: EditorView) {
   helpPopup.style.display = 'none';
   helpPopup.classList.remove('visible');
       
-  // Clear any existing call highlighting
+  // Clear call highlighting
   view.dispatch({
-    effects: StateEffect.appendConfig.of([
-      EditorView.decorations.of(Decoration.none)
-    ])
+    effects: callHighlightEffect.of(null)
   });
 }
 
@@ -267,6 +287,7 @@ smooth_difference(0.03) {
       }),
       oneDark,
       errorDecorationField,
+      callHighlightField,
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged || update.selectionSet) {
           updateHelpPopup(update.view);
