@@ -402,11 +402,7 @@ export class Parser {
       if (this.currentCall) {
         const paramRange = {
           start: name ? startToken.location.start : valueStartPos,
-          end: name ? valueEndPos : { 
-            line: valueEndPos.line,
-            column: valueEndPos.column + 1,
-            offset: valueEndPos.offset + 1
-          }
+          end: valueEndPos
         };
         
         this.currentCall.parameters.push({
