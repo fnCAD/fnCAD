@@ -33,6 +33,25 @@ describe('CAD Parser', () => {
     const param3 = calls[0].parameters[2];
     expect(param3.range.start.offset).toBeLessThan(param3.range.end.offset);
   });
+
+  test('tracks parameter ranges on long parameters', () => {
+    const parser = new Parser('foo(1.0000, 2.0000);');
+    parser.parse();
+    const calls = parser.getLocations();
+    
+    expect(calls).toHaveLength(1);
+    expect(calls[0].parameters).toHaveLength(2);
+    
+    // Check first parameter range
+    const param1 = calls[0].parameters[0];
+    expect(param1.range.start.offset).toBe(4);  // After 'foo('
+    expect(param1.range.end.offset).toBe(4 + 6);   // Length of '1.0000'
+    
+    // Check second parameter range
+    const param2 = calls[0].parameters[1];
+    expect(param2.range.start.offset).toBe(12); // After ', '
+    expect(param2.range.end.offset).toBe(12 + 6);   // Length of '2.0000'
+  });
 });
 
 describe('OpenSCAD-like Syntax', () => {
