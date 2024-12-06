@@ -257,6 +257,30 @@ body {
   z-index: 100;
 }
 
+.parameter-help {
+  position: absolute;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.9em;
+  color: #ddd;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 300px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.parameter-help .current {
+  color: #646cff;
+  font-weight: bold;
+}
+
+.parameter-help .optional {
+  color: #888;
+  font-style: italic;
+}
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;

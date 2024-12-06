@@ -1,11 +1,26 @@
 export interface Position {
   line: number;
   column: number;
+  offset: number;  // Absolute document position
 }
 
 export interface SourceLocation {
   start: Position;
   end: Position;
+}
+
+export interface ModuleCallLocation {
+  moduleName: string;
+  nameRange: SourceLocation;
+  fullRange: SourceLocation;
+  parameters: ParameterLocation[];
+  complete: boolean;
+}
+
+export interface ParameterLocation {
+  name?: string;
+  range: SourceLocation;
+  nameRange?: SourceLocation;
 }
 
 // Result types for evaluation
