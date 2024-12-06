@@ -1,5 +1,11 @@
 # Parameter Help Implementation Plan
 
+Files affected:
+- src/cad/parser.ts - Add location tracking during parsing
+- src/cad/types.ts - Add ModuleCallLocation interface
+- src/main.ts - Add parameter help widget and decoration handling
+- src/style.css - Add styles for parameter help popup
+
 ## 1. Location Tracking During Parsing
 
 ### Add Location Tracking to AST
