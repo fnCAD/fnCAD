@@ -120,7 +120,6 @@ function updateHelpPopup(view: EditorView) {
       const editorRect = view.dom.getBoundingClientRect();
       
       helpPopup.style.display = 'block';
-      const popupHeight = helpPopup.offsetHeight;
       helpPopup.style.top = `${lineRect.bottom - editorRect.top}px`;
       helpPopup.style.left = `${lineRect.left - editorRect.left}px`;
       helpPopup.classList.add('visible');
