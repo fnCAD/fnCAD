@@ -3,12 +3,14 @@ import { OctreeNode } from '../octree';
 import { SerializedMesh } from '../workers/mesh_types';
 import { Node as SdfNode } from '../sdf_expressions/ast';
 import { TaskQueue } from '../workers/tasks';
+import { errorDecorationFacet } from '../main';
 import { TaskProgress } from '../workers/messages';
 import { RendererManager } from './renderer';
 import { parse as parseCAD } from '../cad/parser';
 import { moduleToSDF } from '../cad/builtins';
 import { parse as parseSDF } from '../sdf_expressions/parser';
 import { generateShader } from '../shader';
+import { ParseError } from '../cad/errors';
 
 export class StateManager {
   private currentOctree: OctreeNode | null = null;
@@ -93,9 +95,41 @@ export class StateManager {
   }
 
   parseContent(): SdfNode {
-    const cadAst = parseCAD(this.editorContent);
-    const sdfExpr = moduleToSDF(cadAst);
-    return parseSDF(sdfExpr);
+    try {
+      const cadAst = parseCAD(this.editorContent);
+      const sdfExpr = moduleToSDF(cadAst);
+      const sdfNode = parseSDF(sdfExpr);
+      
+      // Clear any existing error decorations
+      if (window._editor) {
+        window._editor.dispatch({
+          effects: [errorDecorationFacet.of([])]
+        });
+      }
+      
+      return sdfNode;
+    } catch (err) {
+      // Only handle ParseError instances
+      if (err instanceof ParseError) {
+        if (window._editor) {
+          try {
+            const from = window._editor.state.doc.line(err.location.start.line).from + err.location.start.column - 1;
+            const to = window._editor.state.doc.line(err.location.end.line).from + err.location.end.column - 1;
+            
+            window._editor.dispatch({
+              effects: [errorDecorationFacet.of([{
+                from,
+                to,
+                error: err.message
+              }])]
+            });
+          } catch (e) {
+            console.error('Error while setting error decoration:', e);
+          }
+        }
+      }
+      throw err;
+    }
   }
 
   setCurrentShader(shader: string | null) {

@@ -1,4 +1,5 @@
-import { Node, ModuleCall, Context, Value, SDFExpression, Expression, BinaryExpression } from './types';
+import { Node, ModuleCall, Context, Value, Identifier, SDFExpression, Expression, BinaryExpression } from './types';
+import { parseError } from './errors';
 
 // Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
 export function evalCAD(node: Node, context: Context): Value {
@@ -14,6 +15,16 @@ export function evalCAD(node: Node, context: Context): Value {
 function evalExpression(expr: Expression, context: Context): number {
   if ('value' in expr && typeof expr.value === 'number') {
     return expr.value;
+  }
+  if (expr instanceof Identifier) {
+    const value = context.get(expr.name);
+    if (value === undefined) {
+      throw parseError(`Undefined variable: ${expr.name}`, expr.location);
+    }
+    if (typeof value !== 'number') {
+      throw parseError(`Variable ${expr.name} is not a number`, expr.location);
+    }
+    return value;
   }
   if (expr instanceof BinaryExpression) {
     const left = evalExpression(expr.left, context);
@@ -44,7 +55,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     if (!arg) return defaultVal;
     const val = evalExpression(arg, context);
     if (typeof val !== 'number') {
-      throw new Error(`Expected number argument, got ${typeof val}`);
+      throw parseError(`Expected number argument, got ${typeof val}`, arg.location);
     }
     return val;
   };
@@ -52,12 +63,12 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
   switch (call.name) {
     case 'smooth_union': {
       if (!call.children?.length) {
-        throw new Error('smooth_union requires at least one child node');
+        throw parseError('smooth_union requires at least one child node', call.location);
       }
       const radius = evalArg(0, 0.5);
       const results = call.children.map(c => evalCAD(c, context));
       if (results.some(r => typeof r === 'number')) {
-        throw new Error('smooth_union requires SDF children');
+        throw parseError('smooth_union requires SDF children', call.location);
       }
       const children = results.map(r => (r as SDFExpression).expr);
       
@@ -70,12 +81,12 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'smooth_intersection': {
       if (!call.children?.length) {
-        throw new Error('smooth_intersection requires at least one child node');
+        throw parseError('smooth_intersection requires at least one child node', call.location);
       }
       const radius = evalArg(0, 0.5);
       const results = call.children.map(c => evalCAD(c, context));
       if (results.some(r => typeof r === 'number')) {
-        throw new Error('smooth_intersection requires SDF children');
+        throw parseError('smooth_intersection requires SDF children', call.location);
       }
       const children = results.map(r => (r as SDFExpression).expr);
       
@@ -88,12 +99,12 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'smooth_difference': {
       if (!call.children?.length) {
-        throw new Error('smooth_difference requires at least one child node');
+        throw parseError('smooth_difference requires at least one child node', call.location);
       }
       const radius = evalArg(0, 0.5);
       const results = call.children.map(c => evalCAD(c, context));
       if (results.some(r => typeof r === 'number')) {
-        throw new Error('smooth_difference requires SDF children');
+        throw parseError('smooth_difference requires SDF children', call.location);
       }
       const children = results.map(r => (r as SDFExpression).expr);
       
@@ -141,11 +152,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const dy = evalArg(1);
       const dz = evalArg(2);
       if (!call.children?.[0]) {
-        throw new Error('translate requires a child node');
+        throw parseError('translate requires a child node', call.location);
       }
       const child = evalCAD(call.children[0], context);
       if (typeof child === 'number') {
-        throw new Error('translate requires an SDF child');
+        throw parseError('translate requires an SDF child', call.location);
       }
       return {
         type: 'sdf',
@@ -158,11 +169,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const ry = evalArg(1);
       const rz = evalArg(2);
       if (!call.children?.[0]) {
-        throw new Error('rotate requires a child node');
+        throw parseError('rotate requires a child node', call.location);
       }
       const child = evalCAD(call.children[0], context);
       if (typeof child === 'number') {
-        throw new Error('rotate requires an SDF child');
+        throw parseError('rotate requires an SDF child', call.location);
       }
       return {
         type: 'sdf',
@@ -175,11 +186,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const sy = evalArg(1, 1);
       const sz = evalArg(2, 1);
       if (!call.children?.[0]) {
-        throw new Error('scale requires a child node');
+        throw parseError('scale requires a child node', call.location);
       }
       const child = evalCAD(call.children[0], context);
       if (typeof child === 'number') {
-        throw new Error('scale requires an SDF child');
+        throw parseError('scale requires an SDF child', call.location);
       }
       return {
         type: 'sdf',
@@ -194,7 +205,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const children = call.children.map(c => {
         const result = evalCAD(c, context);
         if (typeof result === 'number') {
-          throw new Error('union requires SDF children');
+          throw parseError('union requires SDF children', call.location);
         }
         return result.expr;
       });
@@ -210,7 +221,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       const results = call.children.map(c => evalCAD(c, context));
       if (results.some(r => typeof r === 'number')) {
-        throw new Error('difference requires SDF children');
+        throw parseError('difference requires SDF children', call.location);
       }
       const children = results.map(r => (r as SDFExpression).expr);
       const negatedChildren = children.slice(1).map(c => `-(${c})`);
@@ -221,7 +232,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     default:
-      throw new Error(`Unknown module: ${call.name}`);
+      throw parseError(`Unknown module: ${call.name}`, call.location);
   }
 }
 // Smooth blending operations using exponential smoothing with distance threshold

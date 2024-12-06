@@ -242,6 +242,20 @@ body {
   color: #888;
 }
 
+.cm-line [data-error] {
+  border-bottom: 1px wavy #ff4444;
+  position: relative;
+}
+
+.error-message {
+  position: absolute;
+  color: #ff4444;
+  font-size: 0.9em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+}
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;

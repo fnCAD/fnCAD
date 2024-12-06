@@ -7,11 +7,92 @@ import { TaskProgress } from './workers/task_types'
 import { OctreeManager } from './managers/octree'
 import { SettingsManager } from './managers/settings'
 import { RendererManager } from './managers/renderer'
-import { EditorView, ViewUpdate } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
+import { EditorView, ViewUpdate, Decoration, DecorationSet, WidgetType } from '@codemirror/view'
+import { EditorState, StateEffect, StateField } from '@codemirror/state'
 import { javascript } from '@codemirror/lang-javascript'
 import { basicSetup } from 'codemirror'
 import { oneDark } from '@codemirror/theme-one-dark'
+
+// Error decoration setup
+interface ErrorDecoration {
+  from: number;
+  to: number;
+  error: string;
+}
+
+export const errorDecorationFacet = StateEffect.define<ErrorDecoration[]>();
+
+const errorDecorationField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    decorations = decorations.map(tr.changes);
+    
+    // Log current decorations before applying effects
+    // Log current decorations in a more readable format
+    for (const effect of tr.effects) {
+      if (effect.is(errorDecorationFacet)) {
+        
+        // Log the decorations we're about to create
+        const newDecorations = effect.value.flatMap(error => [
+          Decoration.mark({
+            attributes: {
+              "data-error": "true",
+              title: error.error
+            }
+          }).range(error.from, error.to),
+          Decoration.widget({
+            widget: new class extends WidgetType {
+              toDOM() {
+                const span = document.createElement('span');
+                span.className = 'error-message';
+                span.textContent = "⚠️ " + error.error.split('at line')[0].trim();
+                // Position after the text content at error location
+                requestAnimationFrame(() => {
+                  // Get the line containing the error
+                  const errorLine = window._editor?.state.doc.lineAt(error.from);
+                  if (!errorLine) return;
+                  
+                  // Create measuring element
+                  const measureSpan = document.createElement('span');
+                  measureSpan.style.visibility = 'hidden';
+                  measureSpan.style.position = 'absolute';
+                  measureSpan.style.whiteSpace = 'pre';
+                  // Get font from any cm-line element
+                  const anyLine = document.querySelector('.cm-line');
+                  if (!anyLine) return;
+                  measureSpan.style.font = window.getComputedStyle(anyLine).font;
+                  measureSpan.textContent = errorLine.text;
+                  document.body.appendChild(measureSpan);
+
+                  const textWidth = measureSpan.getBoundingClientRect().width;
+                  document.body.removeChild(measureSpan);
+
+                  // Position relative to line start + text width
+                  const editor = document.querySelector('.cm-editor');
+                  if (editor) {
+                    const editorLeft = editor.getBoundingClientRect().left;
+                    const leftPos = textWidth + 40 - editorLeft;
+
+                    span.style.left = `${leftPos}px`;
+                  }
+                });
+                
+                return span;
+              }
+            },
+            side: 1
+          }).range(error.to, error.to),
+        ]);
+        
+        decorations = Decoration.set(newDecorations);
+      }
+    }
+    return decorations;
+  },
+  provide: f => EditorView.decorations.from(f)
+});
 
 // Set runtime base path for assets
 getRuntimeBasePath(); // Initialize runtime base path
@@ -55,6 +136,7 @@ smooth_difference(0.03) {
         }
       }),
       oneDark,
+      errorDecorationField,
       EditorView.theme({
         '&': {height: '100%'},
         '.cm-scroller': {overflow: 'auto'},
@@ -83,8 +165,6 @@ function updateOctree() {
     settingsManager.getRenderSettings()
   );
 }
-
-
 
 // Add mesh generation handler
 document.getElementById('show-mesh')?.addEventListener('change', async () => {

@@ -28,7 +28,7 @@ export function parseError(
   return error;
 }
 
-class ParseError extends Error {
+export class ParseError extends Error {
   location!: { start: { line: number, column: number }, end: { line: number, column: number } };
   source?: string;
 }
