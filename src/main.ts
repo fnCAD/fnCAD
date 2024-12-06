@@ -119,14 +119,12 @@ function updateHelpPopup(view: EditorView) {
       const lineRect = view.coordsAtPos(line.from)!;
       const editorRect = view.dom.getBoundingClientRect();
       
-      if (!helpPopup.classList.contains('visible')) {
-        helpPopup.style.display = 'block';
-        helpPopup.style.top = `${lineRect.bottom - editorRect.top + 5}px`;
-        helpPopup.style.left = `${lineRect.left - editorRect.left}px`;
-        // Force reflow
-        helpPopup.offsetHeight;
-        helpPopup.classList.add('visible');
-      }
+      helpPopup.style.display = 'block';
+      helpPopup.style.top = `${lineRect.bottom - editorRect.top + 5}px`;
+      helpPopup.style.left = `${lineRect.left - editorRect.left}px`;
+      // Force reflow
+      helpPopup.offsetHeight;
+      helpPopup.classList.add('visible');
       
       // Add mark decoration to highlight the call
       view.dispatch({
@@ -143,6 +141,7 @@ function updateHelpPopup(view: EditorView) {
   }
   
   helpPopup.style.display = 'none';
+  helpPopup.classList.remove('visible');
 }
 
 const errorDecorationField = StateField.define<DecorationSet>({
