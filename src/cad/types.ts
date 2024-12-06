@@ -22,6 +22,7 @@ export interface ParameterLocation {
   name?: string;
   range: SourceLocation;
   nameRange?: SourceLocation;
+  value?: string;
 }
 
 // Result types for evaluation

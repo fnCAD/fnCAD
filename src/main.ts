@@ -63,8 +63,9 @@ function updateHelpPopup(view: EditorView) {
       if (doc) {
         content += doc.parameters.map((p, i) => {
           const className = i === currentParamIndex ? 'current' : '';
-          const defaultText = p.defaultValue ? ` = ${p.defaultValue}` : '';
-          return `<span class="${className}">${p.name}${defaultText}</span>`;
+          const param = call.parameters[i];
+          const value = param?.value ? ` = ${param.value}` : '';
+          return `<span class="${className}">${p.name}: ${p.type}${value}</span>`;
         }).join(', ');
         content += ')<br/>';
         content += `<small>${doc.description}</small>`;
@@ -75,7 +76,8 @@ function updateHelpPopup(view: EditorView) {
       } else {
         content += call.parameters.map((p, i) => {
           const className = i === currentParamIndex ? 'current' : '';
-          return `<span class="${className}">${p.name || 'arg'}</span>`;
+          const value = p.value ? ` = ${p.value}` : '';
+          return `<span class="${className}">${p.name || `arg${i}`}${value}</span>`;
         }).join(', ') + ')';
       }
       
