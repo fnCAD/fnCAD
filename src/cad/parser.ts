@@ -36,6 +36,42 @@ class Parser {
     return this.tokens[this.current - 1];
   }
 
+  private beginModuleCall(name: string, nameToken: Token) {
+    this.currentCall = {
+      moduleName: name,
+      nameRange: nameToken.location,
+      fullRange: { 
+        start: nameToken.location.start,
+        end: nameToken.location.end // Will be updated when call ends
+      },
+      parameters: [],
+      complete: false
+    };
+  }
+
+  private addParameter(valueToken: Token, nameToken?: Token) {
+    if (this.currentCall) {
+      this.currentCall.parameters.push({
+        name: nameToken?.value,
+        range: valueToken.location,
+        nameRange: nameToken?.location
+      });
+    }
+  }
+
+  private endModuleCall(endToken: Token) {
+    if (this.currentCall) {
+      this.currentCall.fullRange.end = endToken.location.end;
+      this.currentCall.complete = true;
+      this.locations.push(this.currentCall);
+      this.currentCall = null;
+    }
+  }
+
+  getLocations(): ModuleCallLocation[] {
+    return this.locations;
+  }
+
   private advance(): Token {
     if (!this.isAtEnd()) this.current++;
     return this.previous();

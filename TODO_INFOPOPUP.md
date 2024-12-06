@@ -6,9 +6,9 @@ Files affected:
 - src/main.ts - Add parameter help widget and decoration handling
 - src/style.css - Add styles for parameter help popup
 
-## 1. Location Tracking During Parsing
+## 1. Location Tracking During Parsing ✓
 
-### Add Location Tracking to AST
+### Add Location Tracking to AST ✓
 ```typescript
 interface ModuleCallLocation {
   moduleName: string;
