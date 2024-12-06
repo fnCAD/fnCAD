@@ -142,7 +142,6 @@ function updateHelpPopup(view: EditorView) {
       // Position below current line
       const line = view.lineBlockAt(pos);
       const lineRect = view.coordsAtPos(line.from)!;
-      const editorRect = view.dom.getBoundingClientRect();
       
       helpPopup.style.display = 'block';
       helpPopup.style.top = `${lineRect.bottom + window.scrollY}px`;

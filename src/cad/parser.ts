@@ -395,7 +395,6 @@ export class Parser {
       let name = '';
       let nameRange: SourceLocation | undefined;
       let value: Expression;
-      let valueStart = startToken;
       
       // Check if we have a named argument
       if (this.current + 1 < this.tokens.length && this.tokens[this.current + 1].value === '=') {
@@ -405,7 +404,6 @@ export class Parser {
         name = startToken.value;
         nameRange = startToken.location;
         this.current += 2; // Skip name and equals
-        valueStart = this.tokens[this.current];
       }
 
       const paramStartPos = startToken.location.start;
