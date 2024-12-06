@@ -46,6 +46,10 @@ export class Parser {
         start: nameToken.location.start,
         end: nameToken.location.end // Will be updated when call ends
       },
+      paramRange: {
+        start: { line: 0, column: 0, offset: 0 }, // Will be updated in parseArguments
+        end: { line: 0, column: 0, offset: 0 }
+      },
       parameters: [],
       complete: false
     };
@@ -374,6 +378,9 @@ export class Parser {
     if (openParen.value !== '(') {
       throw parseError(`Expected (`, openParen.location, this.source);
     }
+    if (this.currentCall) {
+      this.currentCall.paramRange.start = openParen.location.start;
+    }
     this.current++;
 
     while (this.current < this.tokens.length && this.tokens[this.current].value !== ')') {
@@ -427,6 +434,9 @@ export class Parser {
     const closeParen = this.tokens[this.current];
     if (closeParen.value !== ')') {
       throw parseError('Expected )', closeParen.location, this.source);
+    }
+    if (this.currentCall) {
+      this.currentCall.paramRange.end = closeParen.location.end;
     }
     this.current++;
 
