@@ -10,7 +10,7 @@
 import { 
   Node, ModuleDeclaration, ModuleCall, Expression, 
   Parameter, Statement, BinaryExpression, NumberLiteral,
-  Identifier, SourceLocation
+  Identifier, SourceLocation, ModuleCallLocation
 } from './types';
 import { parseError } from './errors';
 
@@ -23,6 +23,8 @@ class Parser {
   private line = 1;
   private column = 1;
   private tokens: Token[] = [];
+  private locations: ModuleCallLocation[] = [];
+  private currentCall: ModuleCallLocation | null = null;
 
   constructor(private source: string) {
     this.tokenize();
@@ -49,15 +51,6 @@ class Parser {
     };
   }
 
-  private addParameter(valueToken: Token, nameToken?: Token) {
-    if (this.currentCall) {
-      this.currentCall.parameters.push({
-        name: nameToken?.value,
-        range: valueToken.location,
-        nameRange: nameToken?.location
-      });
-    }
-  }
 
   private endModuleCall(endToken: Token) {
     if (this.currentCall) {
@@ -168,7 +161,6 @@ class Parser {
       // Numbers
       if (/[0-9]/.test(char)) {
         let value = '';
-        const start = { line: this.line, column: this.column };
 
         while (/[0-9.]/.test(char)) {
           value += char;
@@ -181,8 +173,8 @@ class Parser {
           type: 'number',
           value,
           location: {
-            start,
-            end: { line: this.line, column: this.column }
+            start: { line: this.line, column: this.column, offset: current },
+            end: { line: this.line, column: this.column, offset: current }
           }
         });
         continue;
@@ -191,7 +183,6 @@ class Parser {
       // Identifiers and keywords
       if (/[a-zA-Z_]/.test(char)) {
         let value = '';
-        const start = { line: this.line, column: this.column };
 
         while (current < this.source.length && /[a-zA-Z0-9_]/.test(char)) {
           value += char;
@@ -204,8 +195,8 @@ class Parser {
           type: 'identifier',
           value,
           location: {
-            start,
-            end: { line: this.line, column: this.column }
+            start: { line: this.line, column: this.column, offset: current },
+            end: { line: this.line, column: this.column, offset: current }
           }
         });
         continue;
@@ -233,8 +224,8 @@ class Parser {
           type: simpleTokens[char],
           value: char,
           location: {
-            start: { line: this.line, column: this.column },
-            end: { line: this.line, column: this.column + 1 }
+            start: { line: this.line, column: this.column, offset: current },
+            end: { line: this.line, column: this.column + 1, offset: current + 1 }
           }
         });
         current++;
@@ -347,27 +338,28 @@ class Parser {
   }
 
   private parseModuleCall(): ModuleCall {
-    const start = this.peek().location.start;
-    const name = this.peek().value;
+    const nameToken = this.peek();
+    const name = nameToken.value;
+    this.beginModuleCall(name, nameToken);
     this.advance();
 
     const args = this.parseArguments();
 
     let children: Statement[] | undefined;
     if (this.check('{')) {
+      this.peek(); // Consume the opening brace
       children = this.parseBlock();
+      this.endModuleCall(this.previous());
     } else {
-      this.expect(';', 'Expected semicolon');
+      const semicolon = this.expect(';', 'Expected semicolon');
+      this.endModuleCall(semicolon);
     }
 
     return new ModuleCall(
       name,
       args,
       children,
-      {
-        start,
-        end: this.previous().location.end
-      }
+      this.currentCall?.fullRange || nameToken.location
     );
   }
 

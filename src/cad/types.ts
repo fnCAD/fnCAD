@@ -9,6 +9,7 @@ export interface SourceLocation {
   end: Position;
 }
 
+
 export interface ModuleCallLocation {
   moduleName: string;
   nameRange: SourceLocation;
