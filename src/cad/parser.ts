@@ -162,6 +162,8 @@ export class Parser {
       // Numbers
       if (/[0-9]/.test(char)) {
         let value = '';
+        const startOffset = current;
+        const startColumn = this.column;
 
         while (/[0-9.]/.test(char)) {
           value += char;
@@ -174,7 +176,7 @@ export class Parser {
           type: 'number',
           value,
           location: {
-            start: { line: this.line, column: this.column, offset: current },
+            start: { line: this.line, column: startColumn, offset: startOffset },
             end: { line: this.line, column: this.column, offset: current }
           }
         });
