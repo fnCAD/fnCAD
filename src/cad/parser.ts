@@ -24,7 +24,7 @@ export class Parser {
   private column = 1;
   private tokens: Token[] = [];
   private locations: ModuleCallLocation[] = [];
-  private currentCall: ModuleCallLocation | null = null;
+  private callStack: ModuleCallLocation[] = [];
 
   constructor(private source: string) {
     this.tokenize();
@@ -39,7 +39,7 @@ export class Parser {
   }
 
   private beginModuleCall(name: string, nameToken: Token) {
-    this.currentCall = {
+    const call = {
       moduleName: name,
       nameRange: nameToken.location,
       fullRange: { 
@@ -53,15 +53,16 @@ export class Parser {
       parameters: [],
       complete: false
     };
+    this.callStack.push(call);
   }
 
 
   private endModuleCall(endToken: Token) {
-    if (this.currentCall) {
-      this.currentCall.fullRange.end = endToken.location.end;
-      this.currentCall.complete = true;
-      this.locations.push(this.currentCall);
-      this.currentCall = null;
+    const call = this.callStack.pop();
+    if (call) {
+      call.fullRange.end = endToken.location.end;
+      call.complete = true;
+      this.locations.push(call);
     }
   }
 
@@ -377,9 +378,9 @@ export class Parser {
 
     // Expect opening paren
     const openParen = this.expect('(', 'Expected (');
-    if (this.currentCall) {
-      // Start the param range after the opening parenthesis
-      this.currentCall.paramRange.start = {
+    if (this.callStack.length > 0) {
+      const currentCall = this.callStack[this.callStack.length - 1];
+      currentCall.paramRange.start = {
         line: openParen.location.start.line,
         column: openParen.location.start.column + 1,
         offset: openParen.location.start.offset + 1
@@ -409,13 +410,14 @@ export class Parser {
       const valueEndPos = this.previous().location.end;
 
       // Add to current module call's parameters if we're tracking one
-      if (this.currentCall) {
+      if (this.callStack.length > 0) {
+        const currentCall = this.callStack[this.callStack.length - 1];
         const paramRange = {
           start: paramStartPos,
           end: valueEndPos
         };
         
-        this.currentCall.parameters.push({
+        currentCall.parameters.push({
           name: name || String(Object.keys(args).length),
           range: paramRange,
           nameRange,
@@ -438,9 +440,10 @@ export class Parser {
     if (closeParen.value !== ')') {
       throw parseError('Expected )', closeParen.location, this.source);
     }
-    if (this.currentCall) {
+    if (this.callStack.length > 0) {
+      const currentCall = this.callStack[this.callStack.length - 1];
       // End the param range before the closing parenthesis
-      this.currentCall.paramRange.end = {
+      currentCall.paramRange.end = {
         line: closeParen.location.end.line,
         column: closeParen.location.end.column - 1,
         offset: closeParen.location.end.offset - 1

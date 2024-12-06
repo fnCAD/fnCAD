@@ -54,19 +54,25 @@ describe('CAD Parser', () => {
   });
 
   test('tracks parameters on call with block', () => {
-    const parser = new Parser('foo(bar) {}');
+    const parser = new Parser('foo(bar) { baz(); }');
     parser.parse();
     const calls = parser.getLocations();
     
-    expect(calls).toHaveLength(1);
-    expect(calls[0].parameters).toHaveLength(1);
-    expect(calls[0].paramRange.start.offset).toBe(4);
-    expect(calls[0].paramRange.end.offset).toBe(7);
+    expect(calls).toHaveLength(2); // foo and baz
     
-    // Verify the parameter is tracked
-    const param = calls[0].parameters[0];
+    // Check inner call (baz)
+    expect(calls[0].parameters).toHaveLength(0);
+    expect(calls[0].paramRange.start.offset).toBe(15);
+    expect(calls[0].paramRange.end.offset).toBe(15);
+
+    // Check outer call (foo) 
+    expect(calls[1].parameters).toHaveLength(1);
+    expect(calls[1].paramRange.start.offset).toBe(4);
+    expect(calls[1].paramRange.end.offset).toBe(7);
+    
+    const param = calls[1].parameters[0];
     expect(param.range.start.offset).toBe(4);
-    expect(param.range.end.offset).toBe(7); // Length of 'foo(bar) {}'
+    expect(param.range.end.offset).toBe(7);
   });
 });
 
