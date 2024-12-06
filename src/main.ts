@@ -120,7 +120,6 @@ function updateHelpPopup(view: EditorView) {
       const editorRect = view.dom.getBoundingClientRect();
       
       helpPopup.style.display = 'block';
-      const editorRect = view.dom.getBoundingClientRect();
       helpPopup.style.top = `${lineRect.bottom + window.scrollY}px`;
       helpPopup.style.left = `${lineRect.left + window.scrollX}px`;
       helpPopup.classList.add('visible');
