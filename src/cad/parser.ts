@@ -379,7 +379,12 @@ export class Parser {
       throw parseError(`Expected (`, openParen.location, this.source);
     }
     if (this.currentCall) {
-      this.currentCall.paramRange.start = openParen.location.start;
+      // Start the param range after the opening parenthesis
+      this.currentCall.paramRange.start = {
+        line: openParen.location.start.line,
+        column: openParen.location.start.column + 1,
+        offset: openParen.location.start.offset + 1
+      };
     }
     this.current++;
 
@@ -436,7 +441,12 @@ export class Parser {
       throw parseError('Expected )', closeParen.location, this.source);
     }
     if (this.currentCall) {
-      this.currentCall.paramRange.end = closeParen.location.end;
+      // End the param range before the closing parenthesis
+      this.currentCall.paramRange.end = {
+        line: closeParen.location.end.line,
+        column: closeParen.location.end.column - 1,
+        offset: closeParen.location.end.offset - 1
+      };
     }
     this.current++;
 
