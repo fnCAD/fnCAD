@@ -50,9 +50,17 @@ function updateHelpPopup(view: EditorView) {
       
       // Find current parameter
       let currentParamIndex = -1;
+      console.log('Checking parameters for position:', pos);
       for (let i = 0; i < call.parameters.length; i++) {
         const param = call.parameters[i];
+        console.log('Parameter', i, ':', {
+          start: param.range.start.offset,
+          end: param.range.end.offset,
+          name: param.name,
+          value: param.value
+        });
         if (pos >= param.range.start.offset && pos <= param.range.end.offset) {
+          console.log('Found matching parameter:', i);
           currentParamIndex = i;
           break;
         }
