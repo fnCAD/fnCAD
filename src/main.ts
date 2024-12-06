@@ -36,46 +36,42 @@ const errorDecorationField = StateField.define<DecorationSet>({
         
         // Log the decorations we're about to create
         const newDecorations = effect.value.flatMap(error => [
-          Decoration.mark({
-            attributes: {
-              "data-error": "true",
-              title: error.error
-            }
-          }).range(error.from, error.to),
           Decoration.widget({
             widget: new class extends WidgetType {
               toDOM() {
                 const span = document.createElement('span');
                 span.className = 'error-message';
                 span.textContent = "⚠️ " + error.error.split('at line')[0].trim();
-                // Position after the text content at error location
+                // Always position at the end of the first line containing the error
                 requestAnimationFrame(() => {
-                  // Get the line containing the error
-                  const errorLine = window._editor?.state.doc.lineAt(error.from);
-                  if (!errorLine) return;
-                  
-                  // Create measuring element
+                  const firstErrorLine = window._editor?.state.doc.lineAt(error.from);
+                  if (!firstErrorLine) return;
+
+                  // Create measuring element for the first line only
                   const measureSpan = document.createElement('span');
                   measureSpan.style.visibility = 'hidden';
                   measureSpan.style.position = 'absolute';
                   measureSpan.style.whiteSpace = 'pre';
-                  // Get font from any cm-line element
                   const anyLine = document.querySelector('.cm-line');
                   if (!anyLine) return;
                   measureSpan.style.font = window.getComputedStyle(anyLine).font;
-                  measureSpan.textContent = errorLine.text;
+                  measureSpan.textContent = firstErrorLine.text;
                   document.body.appendChild(measureSpan);
 
                   const textWidth = measureSpan.getBoundingClientRect().width;
                   document.body.removeChild(measureSpan);
 
-                  // Position relative to line start + text width
                   const editor = document.querySelector('.cm-editor');
                   if (editor) {
                     const editorLeft = editor.getBoundingClientRect().left;
                     const leftPos = textWidth + 40 - editorLeft;
-
                     span.style.left = `${leftPos}px`;
+                    // Position vertically at the first error line
+                    const lineElement = editor.querySelector(`[data-line="${firstErrorLine.number}"]`);
+                    if (lineElement) {
+                      const lineRect = lineElement.getBoundingClientRect();
+                      span.style.top = `${lineRect.top}px`;
+                    }
                   }
                 });
                 
@@ -83,7 +79,14 @@ const errorDecorationField = StateField.define<DecorationSet>({
               }
             },
             side: 1
-          }).range(error.to, error.to),
+          }).range(error.from, error.from),
+          Decoration.mark({
+            attributes: {
+              "data-error": "true",
+              title: error.error
+            },
+            class: "cm-error-mark"
+          }).range(error.from, error.to),
         ]);
         
         decorations = Decoration.set(newDecorations);
