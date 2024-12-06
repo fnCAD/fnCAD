@@ -62,6 +62,7 @@ export class Parser {
   }
 
   getLocations(): ModuleCallLocation[] {
+    console.log('Returning module call locations:', this.locations);
     return this.locations;
   }
 
@@ -367,25 +368,48 @@ export class Parser {
     const args: Record<string, Expression> = {};
 
     // Expect opening paren
-    if (this.tokens[this.current].value !== '(') {
-      throw parseError(`Expected (`, this.tokens[this.current].location, this.source);
+    const openParen = this.tokens[this.current];
+    if (openParen.value !== '(') {
+      throw parseError(`Expected (`, openParen.location, this.source);
     }
     this.current++;
 
     while (this.current < this.tokens.length && this.tokens[this.current].value !== ')') {
-      const nameToken = this.tokens[this.current];
+      const startToken = this.tokens[this.current];
       let name = '';
+      let nameRange: SourceLocation | undefined;
+      let value: Expression;
+      let valueStart = startToken;
       
       // Check if we have a named argument
-      if (this.tokens[this.current + 1].value === '=') {
-        if (nameToken.type !== 'identifier') {
-          throw parseError(`Expected parameter name`, nameToken.location, this.source);
+      if (this.current + 1 < this.tokens.length && this.tokens[this.current + 1].value === '=') {
+        if (startToken.type !== 'identifier') {
+          throw parseError(`Expected parameter name`, startToken.location, this.source);
         }
-        name = nameToken.value;
+        name = startToken.value;
+        nameRange = startToken.location;
         this.current += 2; // Skip name and equals
+        valueStart = this.tokens[this.current];
       }
 
-      const value = this.parseExpression();
+      value = this.parseExpression();
+
+      // Add to current module call's parameters if we're tracking one
+      if (this.currentCall) {
+        this.currentCall.parameters.push({
+          name: name || String(Object.keys(args).length),
+          range: {
+            start: startToken.location.start,
+            end: this.previous().location.end
+          },
+          nameRange,
+          value: this.source.substring(
+            valueStart.location.start.offset,
+            this.previous().location.end.offset
+          )
+        });
+      }
+
       args[name || String(Object.keys(args).length)] = value;
 
       if (this.tokens[this.current].value === ',') {
@@ -394,8 +418,9 @@ export class Parser {
     }
 
     // Expect closing paren
-    if (this.tokens[this.current].value !== ')') {
-      throw parseError('Expected )', this.tokens[this.current].location, this.source);
+    const closeParen = this.tokens[this.current];
+    if (closeParen.value !== ')') {
+      throw parseError('Expected )', closeParen.location, this.source);
     }
     this.current++;
 
