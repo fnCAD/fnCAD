@@ -258,7 +258,7 @@ body {
 }
 
 .parameter-help {
-  position: fixed;
+  position: absolute;
   background: #1e1e1e;
   border: 1px solid #646cff;
   border-radius: 4px;
@@ -272,6 +272,7 @@ body {
   display: none; /* Hidden by default */
   transition: opacity 0.2s;
   opacity: 0;
+  margin-top: 24px; /* Add space above popup */
 }
 
 .parameter-help.visible {
