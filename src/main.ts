@@ -27,7 +27,7 @@ export const errorDecorationFacet = StateEffect.define<ErrorDecoration[]>();
 // Create help popup element
 const helpPopup = document.createElement('div');
 helpPopup.className = 'parameter-help';
-document.body.appendChild(helpPopup);
+document.querySelector('.cm-editor')?.appendChild(helpPopup);
 
 // Function to update help popup
 function updateHelpPopup(view: EditorView) {
@@ -120,8 +120,8 @@ function updateHelpPopup(view: EditorView) {
       const editorRect = view.dom.getBoundingClientRect();
       
       helpPopup.style.display = 'block';
-      helpPopup.style.top = `${lineRect.bottom - editorRect.top}px`;
-      helpPopup.style.left = `${lineRect.left - editorRect.left}px`;
+      helpPopup.style.top = `${lineRect.bottom}px`;
+      helpPopup.style.left = `${lineRect.left}px`;
       helpPopup.classList.add('visible');
       
       // Add mark decoration to highlight the call
