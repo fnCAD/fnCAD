@@ -16,6 +16,23 @@ describe('CAD Parser', () => {
     const result = parse('   \n   \t   ');
     expect(result).toBeDefined();
   });
+
+  test('tracks parameter ranges correctly', () => {
+    const parser = new Parser('translate(x=1, y=2, 3);');
+    parser.parse();
+    const calls = parser.getLocations();
+    
+    expect(calls).toHaveLength(1);
+    expect(calls[0].parameters).toHaveLength(3);
+    
+    // Named parameter should include name
+    const param1 = calls[0].parameters[0];
+    expect(param1.range.start.offset).toBeLessThan(param1.range.end.offset);
+    
+    // Positional parameter should just cover value
+    const param3 = calls[0].parameters[2];
+    expect(param3.range.start.offset).toBeLessThan(param3.range.end.offset);
+  });
 });
 
 describe('OpenSCAD-like Syntax', () => {

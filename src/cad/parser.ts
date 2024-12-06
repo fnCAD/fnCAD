@@ -398,12 +398,14 @@ export class Parser {
 
       // Add to current module call's parameters if we're tracking one
       if (this.currentCall) {
+        const paramRange = {
+          start: name ? startToken.location.start : valueStartPos,
+          end: valueEndPos
+        };
+        
         this.currentCall.parameters.push({
           name: name || String(Object.keys(args).length),
-          range: {
-            start: startToken.location.start,
-            end: valueEndPos
-          },
+          range: paramRange,
           nameRange,
           value: this.source.substring(
             valueStartPos.offset,
