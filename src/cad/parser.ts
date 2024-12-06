@@ -392,7 +392,9 @@ export class Parser {
         valueStart = this.tokens[this.current];
       }
 
+      const valueStartPos = valueStart.location.start;
       value = this.parseExpression();
+      const valueEndPos = this.previous().location.end;
 
       // Add to current module call's parameters if we're tracking one
       if (this.currentCall) {
@@ -400,17 +402,13 @@ export class Parser {
           name: name || String(Object.keys(args).length),
           range: {
             start: startToken.location.start,
-            end: this.previous().location.end
+            end: valueEndPos
           },
           nameRange,
           value: this.source.substring(
-            valueStart.location.start.offset,
-            this.previous().location.end.offset
-          ),
-          valueRange: {
-            start: valueStart.location.start,
-            end: this.previous().location.end
-          }
+            valueStartPos.offset,
+            valueEndPos.offset
+          )
         });
       }
 
