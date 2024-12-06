@@ -272,8 +272,7 @@ body {
   display: none; /* Hidden by default */
   transition: opacity 0.2s;
   opacity: 0;
-  transform: translateY(100%); /* Move down by full height */
-  margin-top: 8px; /* Add small gap */
+  margin-top: 4px; /* Small gap */
 }
 
 .parameter-help.visible {

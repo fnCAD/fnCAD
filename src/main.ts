@@ -120,10 +120,9 @@ function updateHelpPopup(view: EditorView) {
       const editorRect = view.dom.getBoundingClientRect();
       
       helpPopup.style.display = 'block';
+      const popupHeight = helpPopup.offsetHeight;
       helpPopup.style.top = `${lineRect.bottom - editorRect.top}px`;
       helpPopup.style.left = `${lineRect.left - editorRect.left}px`;
-      // Force reflow
-      helpPopup.offsetHeight;
       helpPopup.classList.add('visible');
       
       // Add mark decoration to highlight the call
