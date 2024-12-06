@@ -140,6 +140,13 @@ function updateHelpPopup(view: EditorView) {
   
   helpPopup.style.display = 'none';
   helpPopup.classList.remove('visible');
+      
+  // Clear any existing call highlighting
+  view.dispatch({
+    effects: StateEffect.appendConfig.of([
+      EditorView.decorations.of(Decoration.none)
+    ])
+  });
 }
 
 const errorDecorationField = StateField.define<DecorationSet>({
