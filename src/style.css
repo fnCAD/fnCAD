@@ -272,7 +272,8 @@ body {
   display: none; /* Hidden by default */
   transition: opacity 0.2s;
   opacity: 0;
-  margin-top: 24px; /* Add space above popup */
+  transform: translateY(100%); /* Move down by full height */
+  margin-top: 8px; /* Add small gap */
 }
 
 .parameter-help.visible {
