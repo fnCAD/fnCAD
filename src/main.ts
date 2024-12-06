@@ -27,7 +27,7 @@ export const errorDecorationFacet = StateEffect.define<ErrorDecoration[]>();
 // Create help popup element
 const helpPopup = document.createElement('div');
 helpPopup.className = 'parameter-help';
-document.body.appendChild(helpPopup);
+document.querySelector('#editor-pane')?.appendChild(helpPopup);
 
 // Function to update help popup
 function updateHelpPopup(view: EditorView) {
