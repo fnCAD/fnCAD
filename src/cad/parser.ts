@@ -189,6 +189,8 @@ export class Parser {
 
       // Identifiers and keywords
       if (/[a-zA-Z_]/.test(char)) {
+        const startColumn = this.column;
+        const startOffset = current;
         let value = '';
 
         while (current < this.source.length && /[a-zA-Z0-9_]/.test(char)) {
@@ -202,7 +204,7 @@ export class Parser {
           type: 'identifier',
           value,
           location: {
-            start: { line: this.line, column: this.column, offset: current },
+            start: { line: this.line, column: startColumn, offset: startOffset },
             end: { line: this.line, column: this.column, offset: current }
           }
         });
@@ -374,10 +376,7 @@ export class Parser {
     const args: Record<string, Expression> = {};
 
     // Expect opening paren
-    const openParen = this.tokens[this.current];
-    if (openParen.value !== '(') {
-      throw parseError(`Expected (`, openParen.location, this.source);
-    }
+    const openParen = this.expect('(', 'Expected (');
     if (this.currentCall) {
       // Start the param range after the opening parenthesis
       this.currentCall.paramRange.start = {
@@ -386,7 +385,6 @@ export class Parser {
         offset: openParen.location.start.offset + 1
       };
     }
-    this.current++;
 
     while (this.current < this.tokens.length && this.tokens[this.current].value !== ')') {
       const startToken = this.tokens[this.current];
@@ -406,14 +404,14 @@ export class Parser {
         valueStart = this.tokens[this.current];
       }
 
-      const valueStartPos = valueStart.location.start;
+      const paramStartPos = startToken.location.start;
       value = this.parseExpression();
       const valueEndPos = this.previous().location.end;
 
       // Add to current module call's parameters if we're tracking one
       if (this.currentCall) {
         const paramRange = {
-          start: name ? startToken.location.start : valueStartPos,
+          start: paramStartPos,
           end: valueEndPos
         };
         
@@ -422,7 +420,7 @@ export class Parser {
           range: paramRange,
           nameRange,
           value: this.source.substring(
-            valueStartPos.offset,
+            paramStartPos.offset,
             valueEndPos.offset
           )
         });

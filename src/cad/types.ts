@@ -14,6 +14,7 @@ export interface ModuleCallLocation {
   moduleName: string;
   nameRange: SourceLocation;
   fullRange: SourceLocation;
+  paramRange: SourceLocation;
   parameters: ParameterLocation[];
   complete: boolean;
 }

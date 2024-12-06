@@ -60,6 +60,8 @@ describe('CAD Parser', () => {
     
     expect(calls).toHaveLength(1);
     expect(calls[0].parameters).toHaveLength(1);
+    expect(calls[0].paramRange.start.offset).toBe(4);
+    expect(calls[0].paramRange.end.offset).toBe(7);
     
     // Verify the parameter is tracked
     const param = calls[0].parameters[0];
