@@ -91,25 +91,54 @@ function updateHelpPopup(view: EditorView) {
       
       helpPopup.innerHTML = content;
       
-      // Position relative to cursor
-      const coords = view.coordsAtPos(pos);
-      if (coords) {
-        helpPopup.style.display = 'block';
-        helpPopup.style.top = `${coords.top - helpPopup.offsetHeight - 10}px`;
-        helpPopup.style.left = `${coords.left}px`;
-        
-        // Add mark decoration to highlight the call
-        view.dispatch({
-          effects: StateEffect.appendConfig.of([
-            EditorView.decorations.of(Decoration.set([
-              Decoration.mark({
-                class: "cm-active-call"
-              }).range(call.fullRange.start.offset, call.fullRange.end.offset)
-            ]))
-          ])
+      // Build parameter descriptions
+      let paramDescriptions = '';
+      if (doc) {
+        doc.parameters.forEach((p, i) => {
+          const isCurrent = i === currentParamIndex;
+          paramDescriptions += `<div class="param-desc ${isCurrent ? 'current' : ''}">
+            ${isCurrent ? '<strong>' : ''}${p.name}: ${p.description}${isCurrent ? '</strong>' : ''}
+          </div>`;
         });
-        return;
       }
+
+      // Update content
+      helpPopup.innerHTML = `
+        <strong>${call.moduleName}</strong>(${
+          doc?.parameters.map((p, i) => {
+            const param = call.parameters[i];
+            const value = param?.value ? ` = ${param.value}` : '';
+            return `<span class="${i === currentParamIndex ? 'current' : ''}">${p.name}: ${p.type}${value}</span>`;
+          }).join(', ') || ''
+        })
+        ${paramDescriptions}
+      `;
+      
+      // Position below current line
+      const line = view.lineBlockAt(pos);
+      const lineRect = view.coordsAtPos(line.from)!;
+      const editorRect = view.dom.getBoundingClientRect();
+      
+      if (!helpPopup.classList.contains('visible')) {
+        helpPopup.style.display = 'block';
+        helpPopup.style.top = `${lineRect.bottom - editorRect.top + 5}px`;
+        helpPopup.style.left = `${lineRect.left - editorRect.left}px`;
+        // Force reflow
+        helpPopup.offsetHeight;
+        helpPopup.classList.add('visible');
+      }
+      
+      // Add mark decoration to highlight the call
+      view.dispatch({
+        effects: StateEffect.appendConfig.of([
+          EditorView.decorations.of(Decoration.set([
+            Decoration.mark({
+              class: "cm-active-call"
+            }).range(call.fullRange.start.offset, call.fullRange.end.offset)
+          ]))
+        ])
+      });
+      return;
     }
   }
   

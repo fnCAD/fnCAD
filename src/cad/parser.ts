@@ -406,7 +406,11 @@ export class Parser {
           value: this.source.substring(
             valueStart.location.start.offset,
             this.previous().location.end.offset
-          )
+          ),
+          valueRange: {
+            start: valueStart.location.start,
+            end: this.previous().location.end
+          }
         });
       }
 

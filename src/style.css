@@ -258,7 +258,7 @@ body {
 }
 
 .parameter-help {
-  position: fixed;
+  position: absolute;
   background: #1e1e1e;
   border: 1px solid #646cff;
   border-radius: 4px;
@@ -270,6 +270,12 @@ body {
   max-width: 300px;
   box-shadow: 0 2px 8px rgba(100,108,255,0.3);
   display: none; /* Hidden by default */
+  transition: opacity 0.2s;
+  opacity: 0;
+}
+
+.parameter-help.visible {
+  opacity: 1;
 }
 
 .cm-active-call {
