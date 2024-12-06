@@ -19,7 +19,6 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'radius',
         description: 'Radius of the sphere',
-        defaultValue: 1,
         type: 'number'
       }
     ]
@@ -31,7 +30,6 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'size',
         description: 'Length of cube sides',
-        defaultValue: 1,
         type: 'number'
       }
     ]
@@ -43,13 +41,11 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'radius',
         description: 'Radius of the cylinder',
-        defaultValue: 0.5,
         type: 'number'
       },
       {
         name: 'height',
         description: 'Height of the cylinder',
-        defaultValue: 1,
         type: 'number'
       }
     ]
@@ -61,19 +57,16 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'x',
         description: 'X translation',
-        defaultValue: 0,
         type: 'number'
       },
       {
         name: 'y',
         description: 'Y translation',
-        defaultValue: 0,
         type: 'number'
       },
       {
         name: 'z',
         description: 'Z translation',
-        defaultValue: 0,
         type: 'number'
       }
     ]
@@ -85,7 +78,6 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'radius',
         description: 'Blend radius',
-        defaultValue: 0.5,
         type: 'number'
       }
     ]
