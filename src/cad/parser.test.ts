@@ -1,5 +1,5 @@
 import { describe, it, expect, test } from 'vitest';
-import { parse } from './parser';
+import { parse, Parser } from './parser';
 import { moduleToSDF } from './builtins';
 
 describe('CAD Parser', () => {
