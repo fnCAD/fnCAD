@@ -63,24 +63,24 @@ describe('CAD Parser', () => {
     
     expect(calls).toHaveLength(2); // foo and baz
     
-    // Check inner call (baz)
-    expect(calls[0].parameters).toHaveLength(0);
-    expect(calls[0].paramRange.start.offset).toBe(15);
-    expect(calls[0].paramRange.end.offset).toBe(15);
-
     // Check outer call (foo) 
-    expect(calls[1].parameters).toHaveLength(1);
-    expect(calls[1].paramRange.start.offset).toBe(4);
-    expect(calls[1].paramRange.end.offset).toBe(7);
-    
-    const param = calls[1].parameters[0];
+    expect(calls[0].parameters).toHaveLength(1);
+    expect(calls[0].paramRange.start.offset).toBe(4);
+    expect(calls[0].paramRange.end.offset).toBe(7);
+    const param = calls[0].parameters[0];
     expect(param.range.start.offset).toBe(4);
     expect(param.range.end.offset).toBe(7);
+
+    // Check inner call (baz)
+    expect(calls[1].parameters).toHaveLength(0);
+    expect(calls[1].paramRange.start.offset).toBe(15);
+    expect(calls[1].paramRange.end.offset).toBe(15);
+    
   });
 
   describe('Parameter Help During Incomplete Syntax', () => {
     test('tracks parameters in incomplete call', () => {
-      const parser = new Parser('cube([1, 2, 3], [1+');
+      const parser = new Parser('cube([1, 2, 3], [1 +');
       expect(() => parser.parse()).toThrow(ParseError);
       const calls = parser.getLocations();
       
@@ -94,11 +94,13 @@ describe('CAD Parser', () => {
       
       // Second parameter should be incomplete but tracked
       const param2 = calls[0].parameters[1];
-      expect(param2.value).toBe('[1+');
+      expect(param2.value).toBeUndefined();
+      expect(param2.range.start.offset).toBe(16);
+      expect(param2.range.end.offset).toBe(20);
     });
 
     test('tracks nested calls with incomplete syntax', () => {
-      const parser = new Parser('group() { sphere(1);\n cube([1, 2, 3], [1+      \n sphere(2); }');
+      const parser = new Parser('group() { sphere(1);\n cube([1, 2, 3], [1 + \n sphere(2); }');
       expect(() => parser.parse()).toThrow(ParseError);
       const calls = parser.getLocations();
       
@@ -111,11 +113,13 @@ describe('CAD Parser', () => {
       const cubeCall = calls.find(c => c.moduleName === 'cube');
       expect(cubeCall).toBeDefined();
       expect(cubeCall?.parameters).toHaveLength(2);
-      expect(cubeCall?.parameters[1].value).toBe('[1+');
+      expect(cubeCall?.parameters[1].value).toBeUndefined();
+      expect(cubeCall?.parameters[1].range.start.offset).toBe(38);
+      expect(cubeCall?.parameters[1].range.end.offset).toBe(42);
     });
 
     test('tracks parameter ranges in broken syntax', () => {
-      const parser = new Parser('translate([1, 2, 3]\n sphere(1, true');
+      const parser = new Parser('translate([1, 2, 3])\n sphere(1, true');
       expect(() => parser.parse()).toThrow(ParseError);
       const calls = parser.getLocations();
       

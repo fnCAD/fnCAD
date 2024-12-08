@@ -445,8 +445,17 @@ export class Parser {
       let currentParameter : ParameterLocation | undefined;
       const paramStartPos = startToken.location.start;
       if (this.callStack.length > 0) {
-        // TODO
-        const endOfLine = paramStartPos;
+        // Find end of current line for speculative parameter range
+        let endOfLine = paramStartPos;
+        let lineEnd = this.source.indexOf('\n', paramStartPos.offset);
+        if (lineEnd === -1) lineEnd = this.source.length;
+        else lineEnd = lineEnd - 1;
+        endOfLine = {
+          line: paramStartPos.line,
+          column: paramStartPos.column + (lineEnd - paramStartPos.offset),
+          offset: lineEnd
+        };
+      
         currentParameter = {
           name: name || String(Object.keys(args).length),
           range: {
