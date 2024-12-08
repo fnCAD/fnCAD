@@ -11,7 +11,7 @@ import {
   Node, ModuleDeclaration, ModuleCall, Expression, 
   Parameter, Statement, BinaryExpression, NumberLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
-  VectorLiteral
+  ParameterLocation, VectorLiteral
 } from './types';
 import { parseError } from './errors';
 
@@ -54,6 +54,7 @@ export class Parser {
       parameters: [],
       complete: false
     };
+    this.locations.push(call);
     this.callStack.push(call);
   }
 
@@ -63,7 +64,6 @@ export class Parser {
     if (call) {
       call.fullRange.end = endToken.location.end;
       call.complete = true;
-      this.locations.push(call);
     }
   }
 
@@ -361,6 +361,7 @@ export class Parser {
     
     // Case 1: Block with braces
     if (this.check('{')) {
+      console.log(`parse for ${name} goes into block with braces`);
       this.peek(); // Consume the opening brace
       children = this.parseBlock();
       this.endModuleCall(this.previous());
@@ -372,6 +373,7 @@ export class Parser {
     
     // Case 2: Empty call with semicolon
     if (this.check(';')) {
+      console.log(`parse for ${name} goes into empty call`);
       const semicolon = this.advance();
       this.endModuleCall(semicolon);
       return new ModuleCall(name, args, undefined, {
@@ -381,6 +383,7 @@ export class Parser {
     }
     
     // Case 3: Single child without braces
+    console.log(`parse for ${name} goes into single-arg`);
     const child = this.parseStatement();
     return new ModuleCall(name, args, [child], {
       start: nameToken.location.start,
@@ -412,7 +415,16 @@ export class Parser {
       };
     }
 
-    while (this.current < this.tokens.length && this.tokens[this.current].value !== ')') {
+    let firstArg = true;
+    while (!this.isAtEnd() && this.peek().value !== ')') {
+      if (!firstArg) {
+        this.expect(',', 'Expected ,');
+      }
+      firstArg = false;
+      // python comma
+      if (!this.isAtEnd() && this.peek().value === ')')
+        break;
+
       const startToken = this.tokens[this.current];
       let name = '';
       let nameRange: SourceLocation | undefined;
@@ -428,41 +440,42 @@ export class Parser {
         this.current += 2; // Skip name and equals
       }
 
+      // Add to current module call's parameters if we're tracking one
+      // default to end of line in case parseExpression fails
+      let currentParameter : ParameterLocation | undefined;
       const paramStartPos = startToken.location.start;
+      if (this.callStack.length > 0) {
+        // TODO
+        const endOfLine = paramStartPos;
+        currentParameter = {
+          name: name || String(Object.keys(args).length),
+          range: {
+            start: paramStartPos,
+            end: endOfLine
+          },
+          nameRange
+        };
+        // make the typecheck happy
+        if (!currentParameter) throw 'wtf';
+        this.callStack[this.callStack.length - 1].parameters.push(currentParameter);
+      }
+
       value = this.parseExpression();
       const valueEndPos = this.previous().location.end;
 
-      // Add to current module call's parameters if we're tracking one
-      if (this.callStack.length > 0) {
-        const currentCall = this.callStack[this.callStack.length - 1];
-        const paramRange = {
-          start: paramStartPos,
-          end: valueEndPos
-        };
-        
-        currentCall.parameters.push({
-          name: name || String(Object.keys(args).length),
-          range: paramRange,
-          nameRange,
-          value: this.source.substring(
-            paramStartPos.offset,
-            valueEndPos.offset
-          )
-        });
+      // now fill in parameter properly
+      if (currentParameter) {
+        currentParameter.range.end = valueEndPos;
+        currentParameter.value = this.source.substring(
+          paramStartPos.offset,
+          valueEndPos.offset
+        );
       }
 
       args[name || String(Object.keys(args).length)] = value;
-
-      if (this.tokens[this.current].value === ',') {
-        this.current++;
-      }
     }
 
-    // Expect closing paren
-    const closeParen = this.tokens[this.current];
-    if (closeParen.value !== ')') {
-      throw parseError('Expected )', closeParen.location, this.source);
-    }
+    const closeParen = this.expect(')', 'Expected )');
     if (this.callStack.length > 0) {
       const currentCall = this.callStack[this.callStack.length - 1];
       // End the param range before the closing parenthesis
@@ -472,7 +485,6 @@ export class Parser {
         offset: closeParen.location.end.offset - 1
       };
     }
-    this.current++;
 
     return args;
   }
@@ -504,21 +516,21 @@ export class Parser {
   }
 
   private parsePrimary(): Expression {
-    const token = this.tokens[this.current];
-
     // Handle vector literal [x,y,z]
-    if (token.value === '[') {
-      const startLocation = token.location;
+    if (this.check('[')) {
+      const startLocation = this.peek().location;
       this.advance(); // consume [
       
       const components: Expression[] = [];
       
       while (!this.isAtEnd() && this.peek().value !== ']') {
+        if (components.length > 0)
+          this.expect(',', 'Expected ,');
+        // python comma
+        if (!this.isAtEnd() && this.peek().value === ']')
+          break;
+
         components.push(this.parseExpression());
-        
-        if (this.peek().value === ',') {
-          this.advance(); // consume comma
-        }
       }
       
       if (this.isAtEnd() || this.peek().value !== ']') {
@@ -540,7 +552,7 @@ export class Parser {
     }
 
     // Handle other primary expressions
-    this.advance();
+    const token = this.advance();
 
     if (token.type === 'number') {
       return new NumberLiteral(
