@@ -235,7 +235,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       return {
         type: 'sdf',
-        expr: `scale(${sx}, ${sy}, ${sz}, ${child.expr})`
+        expr: `(scale(${sx}, ${sy}, ${sz}, ${child.expr}) * ${Math.min(sx, sy, sz)})`
       };
     }
 
