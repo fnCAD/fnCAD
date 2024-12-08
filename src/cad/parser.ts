@@ -10,7 +10,8 @@
 import { 
   Node, ModuleDeclaration, ModuleCall, Expression, 
   Parameter, Statement, BinaryExpression, NumberLiteral,
-  Identifier, SourceLocation, ModuleCallLocation
+  Identifier, SourceLocation, ModuleCallLocation,
+  VectorLiteral
 } from './types';
 import { parseError } from './errors';
 
@@ -163,6 +164,7 @@ export class Parser {
         current++;
         continue;
       }
+
 
       // Numbers
       if (/[0-9]/.test(char)) {
@@ -356,14 +358,34 @@ export class Parser {
     const args = this.parseArguments();
 
     let children: Statement[] | undefined;
+    
+    // Case 1: Block with braces
     if (this.check('{')) {
       this.peek(); // Consume the opening brace
       children = this.parseBlock();
       this.endModuleCall(this.previous());
-    } else {
-      const semicolon = this.expect(';', 'Expected semicolon');
-      this.endModuleCall(semicolon);
+      return new ModuleCall(name, args, children, {
+        start: nameToken.location.start,
+        end: this.previous().location.end
+      });
     }
+    
+    // Case 2: Empty call with semicolon
+    if (this.check(';')) {
+      const semicolon = this.advance();
+      this.endModuleCall(semicolon);
+      return new ModuleCall(name, args, undefined, {
+        start: nameToken.location.start,
+        end: semicolon.location.end
+      });
+    }
+    
+    // Case 3: Single child without braces
+    const child = this.parseStatement();
+    return new ModuleCall(name, args, [child], {
+      start: nameToken.location.start,
+      end: child.location.end
+    });
 
     return new ModuleCall(
       name,
@@ -483,7 +505,42 @@ export class Parser {
 
   private parsePrimary(): Expression {
     const token = this.tokens[this.current];
-    this.current++;
+
+    // Handle vector literal [x,y,z]
+    if (token.value === '[') {
+      const startLocation = token.location;
+      this.advance(); // consume [
+      
+      const components: Expression[] = [];
+      
+      while (!this.isAtEnd() && this.peek().value !== ']') {
+        components.push(this.parseExpression());
+        
+        if (this.peek().value === ',') {
+          this.advance(); // consume comma
+        }
+      }
+      
+      if (this.isAtEnd() || this.peek().value !== ']') {
+        throw parseError('Unterminated vector literal', startLocation, this.source);
+      }
+      
+      const endToken = this.advance(); // consume ]
+      
+      if (components.length !== 3) {
+        throw parseError('Vector literals must have exactly 3 components', 
+          { start: startLocation.start, end: endToken.location.end }, 
+          this.source);
+      }
+      
+      return new VectorLiteral(
+        components,
+        { start: startLocation.start, end: endToken.location.end }
+      );
+    }
+
+    // Handle other primary expressions
+    this.advance();
 
     if (token.type === 'number') {
       return new NumberLiteral(

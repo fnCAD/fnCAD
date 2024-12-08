@@ -52,22 +52,12 @@ export const builtinDocs: ModuleDoc[] = [
   },
   {
     name: 'translate',
-    description: 'Translates its child by the given amount',
+    description: 'Translates its child by the given vector',
     parameters: [
       {
-        name: 'x',
-        description: 'X translation',
-        type: 'number'
-      },
-      {
-        name: 'y',
-        description: 'Y translation',
-        type: 'number'
-      },
-      {
-        name: 'z',
-        description: 'Z translation',
-        type: 'number'
+        name: 'vec',
+        description: 'Translation vector [x,y,z]',
+        type: 'vector'
       }
     ]
   },

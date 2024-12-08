@@ -1,18 +1,8 @@
-import { Node, ModuleCall, Context, Value, Identifier, SDFExpression, Expression, BinaryExpression } from './types';
+import { Node, ModuleCall, Context, Value, Identifier, SDFExpression, Expression, BinaryExpression, VectorLiteral, Vector } from './types';
 import { parseError } from './errors';
 
-// Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
-export function evalCAD(node: Node, context: Context): Value {
-  if (node instanceof ModuleCall) {
-    return evalModuleCall(node, context);
-  }
-  if (node instanceof Expression) {
-    return evalExpression(node, context);
-  }
-  throw new Error(`Cannot evaluate node type: ${node.constructor.name}`);
-}
-
-function evalExpression(expr: Expression, context: Context): number {
+// Export evalExpression so it can be used by types.ts
+export function evalExpression(expr: Expression, context: Context): number {
   if ('value' in expr && typeof expr.value === 'number') {
     return expr.value;
   }
@@ -38,8 +28,23 @@ function evalExpression(expr: Expression, context: Context): number {
         return left / right;
     }
   }
+  if (expr instanceof VectorLiteral) {
+    return expr.evaluate(context);
+  }
   throw new Error(`Unsupported expression type: ${expr.constructor.name}`);
 }
+
+// Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
+export function evalCAD(node: Node, context: Context): Value {
+  if (node instanceof ModuleCall) {
+    return evalModuleCall(node, context);
+  }
+  if (node instanceof Expression) {
+    return evalExpression(node, context);
+  }
+  throw new Error(`Cannot evaluate node type: ${node.constructor.name}`);
+}
+
 
 export function moduleToSDF(node: Node): string {
   const result = evalCAD(node, new Context());
@@ -50,14 +55,13 @@ export function moduleToSDF(node: Node): string {
 }
 
 function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
-  const evalArg = (idx: number, defaultVal: number = 0): number => {
+  const evalArg = (idx: number, defaultVal: number = 0): number | Vector => {
     const arg = call.args[idx.toString()];
     if (!arg) return defaultVal;
     const val = evalExpression(arg, context);
-    if (typeof val !== 'number') {
-      throw parseError(`Expected number argument, got ${typeof val}`, arg.location);
-    }
-    return val;
+    if (typeof val === 'number') return val;
+    if (val instanceof Vector) return val;
+    throw parseError(`Expected number or vector argument, got ${typeof val}`, arg.location);
   };
 
   switch (call.name) {
@@ -148,9 +152,13 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'translate': {
-      const dx = evalArg(0);
-      const dy = evalArg(1);
-      const dz = evalArg(2);
+      const vec = evalArg(0);
+      if (!(vec instanceof Vector)) {
+        throw parseError('translate requires a vector argument [x,y,z]', call.location);
+      }
+      const dx = vec.x;
+      const dy = vec.y;
+      const dz = vec.z;
       if (!call.children?.[0]) {
         throw parseError('translate requires a child node', call.location);
       }
@@ -165,9 +173,13 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'rotate': {
-      const rx = evalArg(0);
-      const ry = evalArg(1);
-      const rz = evalArg(2);
+      const vec = evalArg(0);
+      if (!(vec instanceof Vector)) {
+        throw parseError('rotate requires a vector argument [x,y,z]', call.location);
+      }
+      const rx = vec.x;
+      const ry = vec.y;
+      const rz = vec.z;
       if (!call.children?.[0]) {
         throw parseError('rotate requires a child node', call.location);
       }

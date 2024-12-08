@@ -18,20 +18,22 @@ describe('CAD Parser', () => {
   });
 
   test('tracks parameter ranges correctly', () => {
-    const parser = new Parser('translate(x=1, y=2, 3);');
+    const parser = new Parser('foo(bar=baz, qux);');
     parser.parse();
     const calls = parser.getLocations();
     
     expect(calls).toHaveLength(1);
-    expect(calls[0].parameters).toHaveLength(3);
+    expect(calls[0].parameters).toHaveLength(2);
     
-    // Named parameter should include name
+    // Named parameter should include name and value
     const param1 = calls[0].parameters[0];
+    expect(param1.name).toBe('bar');
     expect(param1.range.start.offset).toBeLessThan(param1.range.end.offset);
     
     // Positional parameter should just cover value
-    const param3 = calls[0].parameters[2];
-    expect(param3.range.start.offset).toBeLessThan(param3.range.end.offset);
+    const param2 = calls[0].parameters[1];
+    expect(param2.name).toBe('1');  // Positional params use index as name
+    expect(param2.range.start.offset).toBeLessThan(param2.range.end.offset);
   });
 
   test('tracks parameter ranges on long parameters', () => {
@@ -91,10 +93,10 @@ describe('OpenSCAD-like Syntax', () => {
   });
 
   it('compiles transformations', () => {
-    expect(compileToSDF('translate(1, 0, 0) { sphere(1); }'))
+    expect(compileToSDF('translate([1, 0, 0]) sphere(1);'))
       .toBe('translate(1, 0, 0, sqrt(x*x + y*y + z*z) - 1)');
     
-    expect(compileToSDF('rotate(0, 1.57, 0) { cube(1); }'))
+    expect(compileToSDF('rotate([0, 1.57, 0]) { cube(1); }'))
       .toBe('rotate(0, 1.57, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5))');
   });
 
@@ -108,11 +110,9 @@ describe('OpenSCAD-like Syntax', () => {
 
   it('handles nested transformations', () => {
     const result = compileToSDF(`
-      translate(1, 0, 0) {
-        rotate(0, 1.57, 0) {
+      translate([1, 0, 0])
+        rotate([0, 1.57, 0])
           cube(1);
-        }
-      }
     `);
     expect(result).toBe(
       'translate(1, 0, 0, rotate(0, 1.57, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)))'
@@ -123,9 +123,8 @@ describe('OpenSCAD-like Syntax', () => {
     const result = compileToSDF(`
       difference() {
         cube(2);
-        translate(0.5, 0.5, 0.5) {
+        translate([0.5, 0.5, 0.5])
           sphere(1);
-        }
       }
     `);
     expect(result).toBe(

@@ -1,3 +1,5 @@
+import { evalExpression } from './builtins';
+
 export interface Position {
   line: number;
   column: number;
@@ -27,7 +29,22 @@ export interface ParameterLocation {
 }
 
 // Result types for evaluation
-export type Value = number | SDFExpression;
+export type Value = number | Vector | SDFExpression;
+
+export class Vector {
+  constructor(
+    public x: number,
+    public y: number,
+    public z: number
+  ) {}
+
+  static fromArray(arr: number[]): Vector {
+    if (arr.length !== 3) {
+      throw new Error('Vector requires exactly 3 components');
+    }
+    return new Vector(arr[0], arr[1], arr[2]);
+  }
+}
 
 export interface SDFExpression {
   type: 'sdf';
@@ -118,6 +135,26 @@ export class Identifier extends Expression {
     location: SourceLocation
   ) {
     super(location);
+  }
+}
+
+export class VectorLiteral extends Expression {
+  constructor(
+    public components: Expression[],
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+
+  evaluate(context: Context): Vector {
+    const values = this.components.map(expr => {
+      const val = evalExpression(expr, context);
+      if (typeof val !== 'number') {
+        throw new Error('Vector components must evaluate to numbers');
+      }
+      return val;
+    });
+    return new Vector(values[0], values[1], values[2]);
   }
 }
 
