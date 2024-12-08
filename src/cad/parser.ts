@@ -449,12 +449,14 @@ export class Parser {
         let endOfLine = paramStartPos;
         let lineEnd = this.source.indexOf('\n', paramStartPos.offset);
         if (lineEnd === -1) lineEnd = this.source.length;
-        else lineEnd = lineEnd - 1;
         endOfLine = {
           line: paramStartPos.line,
           column: paramStartPos.column + (lineEnd - paramStartPos.offset),
           offset: lineEnd
         };
+        
+        // Update the current call's paramRange.end as a fallback
+        this.callStack[this.callStack.length - 1].paramRange.end = endOfLine;
       
         currentParameter = {
           name: name || String(Object.keys(args).length),

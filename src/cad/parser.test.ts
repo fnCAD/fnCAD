@@ -115,7 +115,7 @@ describe('CAD Parser', () => {
       expect(cubeCall?.parameters).toHaveLength(2);
       expect(cubeCall?.parameters[1].value).toBeUndefined();
       expect(cubeCall?.parameters[1].range.start.offset).toBe(38);
-      expect(cubeCall?.parameters[1].range.end.offset).toBe(42);
+      expect(cubeCall?.parameters[1].range.end.offset).toBe(43);
     });
 
     test('tracks parameter ranges in broken syntax', () => {
