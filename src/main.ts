@@ -11,6 +11,7 @@ import { EditorView, ViewUpdate, Decoration, DecorationSet, WidgetType } from '@
 import { EditorState, StateEffect, StateField } from '@codemirror/state'
 import { javascript } from '@codemirror/lang-javascript'
 import { Parser } from './cad/parser'
+import { ParseError } from './cad/errors'
 import { getModuleDoc } from './cad/docs'
 import { basicSetup } from 'codemirror'
 import { oneDark } from '@codemirror/theme-one-dark'
@@ -64,7 +65,15 @@ function updateHelpPopup(view: EditorView) {
 
   // Find module call at current position
   const parser = new Parser(view.state.doc.toString());
-  parser.parse();
+  try {
+    parser.parse();
+  } catch (e) {
+    // Only swallow ParseErrors, rethrow everything else
+    if (!(e instanceof ParseError)) {
+      throw e;
+    }
+    // Continue with partial locations if parsing fails
+  }
   const locations = parser.getLocations();
   
   // Show help for any call where we're in the parameter list
