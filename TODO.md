@@ -13,7 +13,7 @@
 - [x] Hot reload setup
 - [x] TypeScript configuration
 
-## 3. SDF Core
+## 3. SDF Core ✓
 - [x] AST parser for SDF functions
 - [x] Function transpiler with multiple targets:
   - [x] Interval arithmetic evaluator
@@ -58,7 +58,7 @@
 - [x] Error metrics
 - [x] Progressive refinement visualization
 
-## 8. Export and UI Polish
+## 8. Export and UI Polish ✓
 - [x] STL export
 - [x] Progress indicators
 - [x] Error handling

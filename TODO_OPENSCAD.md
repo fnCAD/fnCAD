@@ -4,7 +4,7 @@
 - [x] Basic primitives that lower to SDFs:
   - [x] cube
   - [x] sphere
-  - [ ] cylinder
+  - [x] cylinder
   - [ ] polyhedron
 - [x] Boolean operations:
   - [x] union
@@ -13,7 +13,7 @@
 - [x] Transformations:
   - [x] translate
   - [x] rotate
-  - [ ] scale
+  - [x] scale
   - [ ] mirror
   - [ ] multmatrix
 
