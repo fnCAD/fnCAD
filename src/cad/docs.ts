@@ -2,7 +2,7 @@ export interface ParameterDoc {
   name: string;
   description: string;
   defaultValue?: string | number;
-  type: 'number' | 'boolean' | 'string';
+  type: 'number' | 'boolean' | 'string' | 'vector';
 }
 
 export interface ModuleDoc {

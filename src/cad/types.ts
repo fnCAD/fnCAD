@@ -29,7 +29,7 @@ export interface ParameterLocation {
 }
 
 // Result types for evaluation
-export type Value = number | Vector | SDFExpression;
+export type Value = number | SDFExpression | Vector;
 
 export class Vector {
   constructor(
