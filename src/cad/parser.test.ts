@@ -1,10 +1,11 @@
 import { describe, it, expect, test } from 'vitest';
 import { parse, Parser } from './parser';
+import { ParseError } from './errors';
 import { moduleToSDF } from './builtins';
 
 describe('CAD Parser', () => {
   test('handles invalid single character input', () => {
-    expect(() => parse('b')).toThrow();
+    expect(() => parse('b')).toThrow(ParseError);
   });
 
   test('handles empty input', () => {
@@ -75,6 +76,62 @@ describe('CAD Parser', () => {
     const param = calls[1].parameters[0];
     expect(param.range.start.offset).toBe(4);
     expect(param.range.end.offset).toBe(7);
+  });
+
+  describe('Parameter Help During Incomplete Syntax', () => {
+    test('tracks parameters in incomplete call', () => {
+      const parser = new Parser('cube([1, 2, 3], [1+');
+      expect(() => parser.parse()).toThrow(ParseError);
+      const calls = parser.getLocations();
+      
+      expect(calls).toHaveLength(1);
+      expect(calls[0].moduleName).toBe('cube');
+      expect(calls[0].parameters).toHaveLength(2);
+      
+      // First parameter should be complete
+      const param1 = calls[0].parameters[0];
+      expect(param1.value).toBe('[1, 2, 3]');
+      
+      // Second parameter should be incomplete but tracked
+      const param2 = calls[0].parameters[1];
+      expect(param2.value).toBe('[1+');
+    });
+
+    test('tracks nested calls with incomplete syntax', () => {
+      const parser = new Parser('group() { sphere(1);\n cube([1, 2, 3], [1+      \n sphere(2); }');
+      expect(() => parser.parse()).toThrow(ParseError);
+      const calls = parser.getLocations();
+      
+      // Should find all calls even with broken syntax
+      expect(calls.some(c => c.moduleName === 'group')).toBe(true);
+      expect(calls.some(c => c.moduleName === 'sphere')).toBe(true);
+      expect(calls.some(c => c.moduleName === 'cube')).toBe(true);
+      
+      // Find the incomplete cube call
+      const cubeCall = calls.find(c => c.moduleName === 'cube');
+      expect(cubeCall).toBeDefined();
+      expect(cubeCall?.parameters).toHaveLength(2);
+      expect(cubeCall?.parameters[1].value).toBe('[1+');
+    });
+
+    test('tracks parameter ranges in broken syntax', () => {
+      const parser = new Parser('translate([1, 2, 3]\n sphere(1, true');
+      expect(() => parser.parse()).toThrow(ParseError);
+      const calls = parser.getLocations();
+      
+      expect(calls).toHaveLength(2);
+      
+      // Check translate call
+      const translateCall = calls.find(c => c.moduleName === 'translate');
+      expect(translateCall).toBeDefined();
+      expect(translateCall?.parameters).toHaveLength(1);
+      
+      // Check sphere call
+      const sphereCall = calls.find(c => c.moduleName === 'sphere');
+      expect(sphereCall).toBeDefined();
+      expect(sphereCall?.parameters).toHaveLength(2);
+      expect(sphereCall?.parameters[1].value).toBe('true');
+    });
   });
 });
 
