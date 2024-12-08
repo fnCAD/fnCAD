@@ -229,6 +229,9 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (!call.children?.[0]) {
         throw parseError('scale requires a child node', call.location);
       }
+      if (typeof sx !== 'number' || typeof sy !== 'number' || typeof sz !== 'number') {
+        throw parseError('scale() type error', call.location);
+      }
       const child = evalCAD(call.children[0], context);
       if (typeof child === 'number' || child instanceof Vector) {
         throw parseError('scale requires an SDF child', call.location);
