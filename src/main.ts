@@ -270,7 +270,7 @@ const editor = new EditorView({
     doc: `
 smooth_difference(0.03) {
   sphere(1);
-  translate(0, 1, 0) {
+  translate([0, 1, 0]) {
     sphere(0.7);
   }
   cylinder(0.3, 5);
