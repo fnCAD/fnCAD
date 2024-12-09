@@ -31,8 +31,10 @@ export class Parser {
     this.tokenize();
   }
 
-  private peek(): Token {
-    return this.tokens[this.current];
+  private peek(offset = 0): Token {
+    const index = this.current + offset;
+    if (index >= this.tokens.length) return this.tokens[this.tokens.length - 1];
+    return this.tokens[index];
   }
 
   private previous(): Token {
@@ -40,7 +42,7 @@ export class Parser {
   }
 
   private beginModuleCall(name: string, nameToken: Token) {
-    const call = {
+    const call: ModuleCallLocation = {
       moduleName: name,
       nameRange: nameToken.location,
       fullRange: { 
@@ -112,144 +114,152 @@ export class Parser {
    */
   private tokenize() {
     let current = 0;
-    
     while (current < this.source.length) {
-      let char = this.source[current];
-
-      // Handle C-style comments
-      if (char === '/' && current + 1 < this.source.length) {
-        const nextChar = this.source[current + 1];
-        
-        // Single-line comment
-        if (nextChar === '/') {
-          while (current < this.source.length && this.source[current] !== '\n') {
-            current++;
-            this.column++;
-          }
-          continue;
-        }
-        
-        // Multi-line comment
-        if (nextChar === '*') {
-          current += 2; // Skip /*
-          this.column += 2;
-          
-          while (current + 1 < this.source.length) {
-            if (this.source[current] === '*' && this.source[current + 1] === '/') {
-              current += 2; // Skip */
-              this.column += 2;
-              break;
-            }
-            
-            if (this.source[current] === '\n') {
-              this.line++;
-              this.column = 1;
-            } else {
-              this.column++;
-            }
-            current++;
-          }
-          continue;
-        }
+      const char = this.source[current];
+      if (this.isWhitespace(char)) {
+        this.handleWhitespace(char);
+        current++;
+        continue;
       }
+      if (this.isCommentStart(char, current)) {
+        current = this.handleComment(current);
+        continue;
+      }
+      if (this.isNumberStart(char)) {
+        current = this.handleNumber(current);
+        continue;
+      }
+      if (this.isIdentifierStart(char)) {
+        current = this.handleIdentifier(current);
+        continue;
+      }
+      if (this.isSingleCharToken(char)) {
+        current = this.handleSingleCharToken(char, current);
+        continue;
+      }
+      throw parseError(`Unexpected character: ${char}`, this.getTokenLocation(current), this.source);
+    }
+  }
 
-      // Skip whitespace
-      if (/\s/.test(char)) {
-        if (char === '\n') {
+  private isWhitespace(char: string): boolean {
+    return /\s/.test(char);
+  }
+
+  private handleWhitespace(char: string) {
+    if (char === '\n') {
+      this.line++;
+      this.column = 1;
+    } else {
+      this.column++;
+    }
+  }
+
+  private isCommentStart(char: string, current: number): boolean {
+    return char === '/' && (current + 1 < this.source.length && (this.source[current + 1] === '/' || this.source[current + 1] === '*'));
+  }
+
+  private handleComment(start: number): number {
+    let current = start;
+    const char = this.source[current];
+    if (char === '/' && this.source[current + 1] === '/') {
+      current += 2;
+      while (current < this.source.length && this.source[current] !== '\n') {
+        current++;
+        this.column++;
+      }
+    } else if (char === '/' && this.source[current + 1] === '*') {
+      current += 2;
+      while (current + 1 < this.source.length) {
+        if (this.source[current] === '*' && this.source[current + 1] === '/') {
+          current += 2;
+          this.column += 2;
+          break;
+        }
+        if (this.source[current] === '\n') {
           this.line++;
           this.column = 1;
         } else {
           this.column++;
         }
         current++;
-        continue;
       }
-
-
-      // Numbers
-      if (/[0-9]/.test(char)) {
-        let value = '';
-        const startOffset = current;
-        const startColumn = this.column;
-
-        while (/[0-9.]/.test(char)) {
-          value += char;
-          current++;
-          this.column++;
-          char = this.source[current];
-        }
-
-        this.tokens.push({
-          type: 'number',
-          value,
-          location: {
-            start: { line: this.line, column: startColumn, offset: startOffset },
-            end: { line: this.line, column: this.column, offset: current }
-          }
-        });
-        continue;
-      }
-
-      // Identifiers and keywords
-      if (/[a-zA-Z_]/.test(char)) {
-        const startColumn = this.column;
-        const startOffset = current;
-        let value = '';
-
-        while (current < this.source.length && /[a-zA-Z0-9_]/.test(char)) {
-          value += char;
-          current++;
-          this.column++;
-          char = this.source[current];
-        }
-
-        this.tokens.push({
-          type: 'identifier',
-          value,
-          location: {
-            start: { line: this.line, column: startColumn, offset: startOffset },
-            end: { line: this.line, column: this.column, offset: current }
-          }
-        });
-        continue;
-      }
-
-      // Single character tokens
-      const simpleTokens: Record<string, string> = {
-        '(': 'paren',
-        ')': 'paren',
-        '{': 'brace',
-        '}': 'brace',
-        '[': 'bracket',
-        ']': 'bracket',
-        ',': 'comma',
-        ';': 'semicolon',
-        '=': 'equals',
-        '+': 'operator',
-        '-': 'operator',
-        '*': 'operator',
-        '/': 'operator'
-      };
-
-      if (char in simpleTokens) {
-        this.tokens.push({
-          type: simpleTokens[char],
-          value: char,
-          location: {
-            start: { line: this.line, column: this.column, offset: current },
-            end: { line: this.line, column: this.column + 1, offset: current + 1 }
-          }
-        });
-        current++;
-        this.column++;
-        continue;
-      }
-
-      throw parseError(`Unexpected character: ${char}`, 
-        { start: { line: this.line, column: this.column }, 
-          end: { line: this.line, column: this.column + 1 } }, 
-        this.source);
     }
+    return current;
+  }
+
+  private isNumberStart(char: string): boolean {
+    return /[0-9]/.test(char);
+  }
+
+  private handleNumber(start: number): number {
+    let current = start;
+    let value = '';
+    const startColumn = this.column;
+    const startOffset = current;
+    while (current < this.source.length && /[0-9.]/.test(this.source[current])) {
+      value += this.source[current];
+      current++;
+      this.column++;
+    }
+    this.tokens.push({
+      type: 'number',
+      value,
+      location: {
+        start: { line: this.line, column: startColumn, offset: startOffset },
+        end: { line: this.line, column: this.column, offset: current }
+      }
+    });
+    return current;
+  }
+
+  private isIdentifierStart(char: string): boolean {
+    return /[a-zA-Z_]/.test(char);
+  }
+
+  private handleIdentifier(start: number): number {
+    let current = start;
+    let value = '';
+    const startColumn = this.column;
+    const startOffset = current;
+    while (current < this.source.length && /[a-zA-Z0-9_]/.test(this.source[current])) {
+      value += this.source[current];
+      current++;
+      this.column++;
+    }
+    this.tokens.push({
+      type: 'identifier',
+      value,
+      location: {
+        start: { line: this.line, column: startColumn, offset: startOffset },
+        end: { line: this.line, column: this.column, offset: current }
+      }
+    });
+    return current;
+  }
+
+  private isSingleCharToken(char: string): boolean {
+    return char in tokenTypes;
+  }
+
+  private handleSingleCharToken(char: string, current: number): number {
+    this.tokens.push({
+      type: tokenTypes[char],
+      value: char,
+      location: {
+        start: { line: this.line, column: this.column, offset: current },
+        end: { line: this.line, column: this.column + 1, offset: current + 1 }
+      }
+    });
+    current++;
+    this.column++;
+    return current;
+  }
+
+  private getTokenLocation(offset: number): SourceLocation {
+    return {
+      start: { line: this.line, column: this.column, offset },
+      end: { line: this.line, column: this.column + 1, offset: offset + 1 }
+    };
   }
 
   /* Main entry point for parsing.
@@ -260,7 +270,7 @@ export class Parser {
     const nodes: Node[] = [];
     
     // Skip any remaining tokens (whitespace/comments were already handled in tokenizer)
-    while (this.current < this.tokens.length) {
+    while (!this.isAtEnd()) {
       nodes.push(this.parseStatement());
     }
 
@@ -269,8 +279,7 @@ export class Parser {
   }
 
   private parseStatement(): Node {
-    const token = this.tokens[this.current];
-
+    const token = this.peek();
     if (token.type === 'identifier') {
       if (token.value === 'module') {
         return this.parseModuleDeclaration();
@@ -285,28 +294,15 @@ export class Parser {
   }
 
   private parseModuleDeclaration(): ModuleDeclaration {
-    const start = this.peek().location.start;
     this.advance(); // Skip 'module' keyword
-
-    const nameToken = this.peek();
-    if (nameToken.type !== 'identifier') {
-      throw parseError('Expected module name', nameToken.location, this.source);
-    }
+    const nameToken = this.expect('identifier', 'Expected module name');
     const name = nameToken.value;
-    this.advance();
-
     const parameters = this.parseParameters();
     const body = this.parseBlock();
-
-    return new ModuleDeclaration(
-      name,
-      parameters,
-      body,
-      {
-        start,
-        end: this.previous().location.end
-      }
-    );
+    return new ModuleDeclaration(name, parameters, body, {
+      start: nameToken.location.start,
+      end: this.previous().location.end
+    });
   }
 
   private parseParameters(): Parameter[] {
@@ -314,23 +310,14 @@ export class Parser {
     const parameters: Parameter[] = [];
 
     while (!this.isAtEnd() && !this.check(')')) {
-      const nameToken = this.peek();
-      if (nameToken.type !== 'identifier') {
-        throw parseError('Expected parameter name', nameToken.location, this.source);
-      }
-      this.advance();
-
+      const nameToken = this.expect('identifier', 'Expected parameter name');
+      const name = nameToken.value;
       let defaultValue: Expression | undefined;
       if (this.match('=')) {
         defaultValue = this.parseExpression();
       }
-
-      parameters.push({
-        name: nameToken.value,
-        defaultValue
-      });
-
-      this.match(','); // Optional comma
+      parameters.push({ name, defaultValue });
+      this.match(',');
     }
 
     this.expect(')', 'Expected )');
@@ -501,85 +488,70 @@ export class Parser {
   }
 
   private parseExpression(): Expression {
-    let left = this.parsePrimary();
+    return this.parseBinaryExpression();
+  }
 
-    while (
-      this.current < this.tokens.length && 
-      this.tokens[this.current].type === 'operator'
-    ) {
-      const operator = this.tokens[this.current].value as '+' | '-' | '*' | '/';
-      this.current++;
+  private parseBinaryExpression(precedence = 0): Expression {
+    const { precedence: operatorPrecedence } = getOperatorPrecedence(this.peek().value);
+    if (precedence > operatorPrecedence) {
+      return this.parsePrimary();
+    }
 
-      const right = this.parsePrimary();
+    let left = this.parseBinaryExpression(operatorPrecedence + 1);
 
-      left = new BinaryExpression(
-        operator,
-        left,
-        right,
-        {
-          start: left.location.start,
-          end: right.location.end
-        }
-      );
+    while (true) {
+      const operatorToken = this.peek();
+      const { associativity, precedence: currentPrecedence } = getOperatorPrecedence(operatorToken.value);
+      if (currentPrecedence < precedence
+        || (associativity === 'left' && currentPrecedence <= precedence)
+        || (associativity === 'right' && currentPrecedence < precedence))
+      {
+        break;
+      }
+      this.advance();
+      const right = this.parseBinaryExpression(currentPrecedence);
+      left = new BinaryExpression(operatorToken.value as '+' | '-' | '*' | '/', left, right, {
+        start: left.location.start,
+        end: right.location.end
+      });
     }
 
     return left;
   }
 
   private parsePrimary(): Expression {
-    // Handle vector literal [x,y,z]
     if (this.check('[')) {
-      const startLocation = this.peek().location;
-      this.advance(); // consume [
-      
-      const components: Expression[] = [];
-      
-      while (!this.isAtEnd() && this.peek().value !== ']') {
-        if (components.length > 0)
-          this.expect(',', 'Expected ,');
-        // python comma
-        if (!this.isAtEnd() && this.peek().value === ']')
-          break;
-
-        components.push(this.parseExpression());
-      }
-      
-      if (this.isAtEnd() || this.peek().value !== ']') {
-        throw parseError('Unterminated vector literal', startLocation, this.source);
-      }
-      
-      const endToken = this.advance(); // consume ]
-      
-      if (components.length !== 3) {
-        throw parseError('Vector literals must have exactly 3 components', 
-          { start: startLocation.start, end: endToken.location.end }, 
-          this.source);
-      }
-      
-      return new VectorLiteral(
-        components,
-        { start: startLocation.start, end: endToken.location.end }
-      );
+      return this.parseVectorLiteral();
     }
 
     // Handle other primary expressions
     const token = this.advance();
-
-    if (token.type === 'number') {
-      return new NumberLiteral(
-        parseFloat(token.value),
-        token.location
-      );
+    switch (token.type) {
+      case 'number':
+        return new NumberLiteral(parseFloat(token.value), token.location);
+      case 'identifier':
+        return new Identifier(token.value, token.location);
+      default:
+        throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);
     }
+  }
 
-    if (token.type === 'identifier') {
-      return new Identifier(
-        token.value,
-        token.location
-      );
+  private parseVectorLiteral(): VectorLiteral {
+    const startLocation = this.peek().location;
+    this.advance(); // consume '['
+    const components: Expression[] = [];
+    while (!this.isAtEnd() && this.peek().value !== ']') {
+      if (components.length > 0) this.expect(',', 'Expected ,');
+      components.push(this.parseExpression());
     }
-
-    throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);
+    if (this.isAtEnd() || this.peek().value !== ']') {
+      throw parseError('Unterminated vector literal', startLocation, this.source);
+    }
+    const endToken = this.advance(); // consume ']'
+    if (components.length !== 3) {
+      throw parseError('Vector literals must have exactly 3 components', { start: startLocation.start, end: endToken.location.end }, this.source);
+    }
+    return new VectorLiteral(components, { start: startLocation.start, end: endToken.location.end });
   }
 }
 
@@ -587,6 +559,38 @@ interface Token {
   type: string;
   value: string;
   location: SourceLocation;
+}
+
+const tokenTypes: { [key: string]: string } = {
+  '(': 'paren',
+  ')': 'paren',
+  '{': 'brace',
+  '}': 'brace',
+  '[': 'bracket',
+  ']': 'bracket',
+  ',': 'comma',
+  ';': 'semicolon',
+  '=': 'equals',
+  '+': 'operator',
+  '-': 'operator',
+  '*': 'operator',
+  '/': 'operator'
+};
+
+interface OperatorPrecedence {
+  associativity: 'left' | 'right';
+  precedence: number;
+}
+
+const operatorPrecedence: { [operator: string]: OperatorPrecedence } = {
+  '+': { associativity: 'left', precedence: 1 },
+  '-': { associativity: 'left', precedence: 1 },
+  '*': { associativity: 'left', precedence: 2 },
+  '/': { associativity: 'left', precedence: 2 }
+};
+
+function getOperatorPrecedence(value: string): OperatorPrecedence {
+  return operatorPrecedence[value] || { associativity: 'left', precedence: 0 };
 }
 
 export function parse(source: string): Node {
