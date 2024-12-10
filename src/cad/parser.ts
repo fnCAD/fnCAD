@@ -126,7 +126,7 @@ export class Parser {
         current = this.handleComment(current);
         continue;
       }
-      if (this.isNumberStart(char)) {
+      if (this.isNumberStart(char, current)) {
         current = this.handleNumber(current);
         continue;
       }
@@ -188,8 +188,11 @@ export class Parser {
     return current;
   }
 
-  private isNumberStart(char: string): boolean {
-    return /[0-9]/.test(char);
+  private isNumberStart(char: string, pos: number = 0): boolean {
+    return /[0-9-]/.test(char) && (
+      char !== '-' || // Regular digit
+      (pos + 1 < this.source.length && /[0-9]/.test(this.source[pos + 1])) // Negative number
+    );
   }
 
   private handleNumber(start: number): number {
