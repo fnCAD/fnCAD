@@ -559,38 +559,44 @@ export class Parser {
       return this.parseVectorLiteral();
     }
 
-    // Look ahead to see if this is an array indexing expression
-    if (this.current + 1 < this.tokens.length && 
-        this.tokens[this.current].type === 'identifier' && 
-        this.tokens[this.current + 1].value === '[') {
-      const token = this.advance();
-      let expr = new Identifier(token.value, token.location);
-      
-      // Parse any index operators
-      while (this.check('[')) {
-        const startLoc = this.peek().location;
-        this.advance(); // consume '['
-        const index = this.parseExpression();
-        const endToken = this.expect(']', 'Expected ]');
-        expr = new IndexExpression(expr, index, {
-          start: startLoc.start,
-          end: endToken.location.end,
-          source: this.source
-        });
-      }
-      return expr;
-    }
-
-    // Handle other primary expressions
+    // Start with base expression
+    let expr: Expression;
     const token = this.advance();
+    
     switch (token.type) {
       case 'number':
-        return new NumberLiteral(parseFloat(token.value), token.location);
+        expr = new NumberLiteral(parseFloat(token.value), token.location);
+        break;
       case 'identifier':
-        return new Identifier(token.value, token.location);
+        expr = new Identifier(token.value, token.location);
+        // Handle function call if it's followed by (
+        if (this.check('(')) {
+          const args = this.parseArguments();
+          expr = new ModuleCall(token.value, args, undefined, {
+            start: token.location.start,
+            end: this.previous().location.end,
+            source: this.source
+          });
+        }
+        break;
       default:
         throw parseError(`Unexpected token type: ${token.type}`, token.location);
     }
+
+    // Keep consuming postfix operators ([] for now, could add .property later)
+    while (this.check('[')) {
+      const startLoc = this.peek().location;
+      this.advance(); // consume '['
+      const index = this.parseExpression();
+      const endToken = this.expect(']', 'Expected ]');
+      expr = new IndexExpression(expr, index, {
+        start: startLoc.start,
+        end: endToken.location.end,
+        source: this.source
+      });
+    }
+
+    return expr;
   }
 
   private parseVectorLiteral(): VectorLiteral {
