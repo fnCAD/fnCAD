@@ -47,7 +47,12 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
 }
 
 // Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
-export function evalCAD(node: Node, context: Context): Value {
+// Returns undefined for statements that don't produce values (like module declarations)
+export function evalCAD(node: Node, context: Context): Value | undefined {
+  if (node instanceof ModuleDeclaration) {
+    context.defineModule(node.name, node);
+    return undefined;
+  }
   if (node instanceof ModuleCall) {
     return evalModuleCall(node, context);
   }
