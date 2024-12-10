@@ -255,7 +255,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       const children = call.children.map(c => {
         const result = evalCAD(c, context);
-        if (typeof result === 'number' || result instanceof Vector) {
+        if (!result || typeof result === 'number' || result instanceof Vector) {
           throw parseError('union requires SDF children', call.location);
         }
         return result.expr;
