@@ -30,28 +30,13 @@ export interface ParameterLocation {
 }
 
 // Result types for evaluation
-export type Value = number | SDFExpression | Vector;
+export type Value = number | SDFExpression | number[];
 
 export class ScopedModuleDeclaration {
   constructor(
     public declaration: ModuleDeclaration,
     public lexicalContext: Context
   ) {}
-}
-
-export class Vector {
-  constructor(
-    public x: number,
-    public y: number,
-    public z: number
-  ) {}
-
-  static fromArray(arr: number[]): Vector {
-    if (arr.length !== 3) {
-      throw new Error('Vector requires exactly 3 components');
-    }
-    return new Vector(arr[0], arr[1], arr[2]);
-  }
 }
 
 export interface SDFExpression {

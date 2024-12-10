@@ -35,8 +35,8 @@ describe('CAD Parser', () => {
     expect(() => parse('foo([1, 2, 3, 4]);')).not.toThrow();
     
     // But transform operations should still require 3D
-    expect(() => parse('translate([1, 2]) sphere(1);')).toThrow();
-    expect(() => parse('rotate([1, 2, 3, 4]) sphere(1);')).toThrow();
+    expect(() => moduleToSDF(parse('translate([1, 2]) sphere(1);'))).toThrow(ParseError);
+    expect(() => moduleToSDF(parse('rotate([1, 2, 3, 4]) sphere(1);'))).toThrow(ParseError);
   });
 
   test('handles whitespace only input', () => {

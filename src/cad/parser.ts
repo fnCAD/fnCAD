@@ -583,13 +583,6 @@ export class Parser {
       throw parseError('Unterminated vector literal', startLocation);
     }
     const endToken = this.advance(); // consume ']'
-    if (components.length !== 3) {
-      throw parseError('Vector literals must have exactly 3 components', {
-        start: startLocation.start,
-        end: endToken.location.end,
-        source: this.source
-      });
-    }
     return new VectorLiteral(components, {
       start: startLocation.start,
       end: endToken.location.end,
