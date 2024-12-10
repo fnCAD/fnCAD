@@ -13,6 +13,17 @@ describe('CAD Parser', () => {
     expect(result).toBeDefined();
   });
 
+  test('handles negative number literals', () => {
+    const result = parse('-1;');
+    expect(result).toBeDefined();
+    
+    // Should work in expressions
+    expect(() => parse('translate([-1, -2, -3]) sphere(1);')).not.toThrow();
+    
+    // Should work with decimals
+    expect(() => parse('-1.5;')).not.toThrow();
+  });
+
   test('handles whitespace only input', () => {
     const result = parse('   \n   \t   ');
     expect(result).toBeDefined();

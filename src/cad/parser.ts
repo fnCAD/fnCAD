@@ -197,6 +197,14 @@ export class Parser {
     let value = '';
     const startColumn = this.column;
     const startOffset = current;
+    
+    // Handle negative sign
+    if (this.source[current] === '-') {
+      value += '-';
+      current++;
+      this.column++;
+    }
+    
     while (current < this.source.length && /[0-9.]/.test(this.source[current])) {
       value += this.source[current];
       current++;
