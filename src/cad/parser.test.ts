@@ -1,5 +1,7 @@
-import { describe, it, expect, test } from 'vitest';
+import { describe, it, expect, test, vi } from 'vitest';
 import { parse, Parser } from './parser';
+import { ModuleDeclaration } from './types';
+import { moduleToSDF } from './builtins';
 import { ParseError } from './errors';
 import { moduleToSDF } from './builtins';
 
