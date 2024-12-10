@@ -5,8 +5,9 @@
 ### Modules and Functions
 - [x] Basic module calls with parameters
 - [x] Module blocks with children
-- [x] Named parameters
+- [x] Named parameters on call
 - [x] Default parameter values
+- [ ] Module definitions
 - [ ] Function definitions
 - [ ] Let expressions
 - [ ] Echo statements for debugging
@@ -19,12 +20,16 @@
 - [ ] If/else conditionals
 - [ ] Conditional operator (?:)
 
+### Syntax divergences from OpenSCAD
+- [ ] `var a = val;` clarifies that a new name is created
+
 ### Variables and Expressions
 - [x] Basic arithmetic (+, -, *, /)
-- [x] Vector literals [x, y, z]
+- [x] Vector literals `[x, y, z]`
+- [ ] List index `a[2]`
 - [ ] List comprehensions
-- [ ] Range expressions [start:step:end]
-- [ ] String literals and concatenation
+- [ ] Range expressions `[start:step:end]`
+- [/] String literals and concatenation
 - [ ] Boolean operations (&&, ||, !)
 - [ ] Comparison operators (<, >, ==, etc)
 
@@ -38,21 +43,29 @@
 - [ ] multmatrix(m)
 - [ ] color("color", alpha)
 
-### Advanced Transforms
-- [ ] offset(r|delta, chamfer)
-- [ ] minkowski()
-- [ ] hull()
-- [ ] projection(cut = true/false)
-- [ ] linear_extrude(height, ...)
-- [ ] rotate_extrude(angle, ...)
+### OpenSCAD Advanced Transforms
+- We need our own story for this functionality, they're inextricable from OpenSCAD's mesh approach.
+- [/] offset(r|delta, chamfer)
+- [/] minkowski() - Functionality handled by `smooth_*`
+- [/] hull()
+- [/] projection(cut = true/false)
+- [/] linear_extrude(height, ...)
+- [/] rotate_extrude(angle, ...)
+
+### fnCAD Advanced Operations
+- [x] smooth_union()
+- [x] smooth_difference()
+- [x] smooth_intersection()
+- [ ] `repeated(x=2) {}`
 
 ## Primitives
 
 ### 2D Primitives
-- [ ] circle(r|d)
-- [ ] square(size, center)
-- [ ] polygon(points, paths)
-- [ ] text(text, size, ...)
+- Omitted from fnCAD - we have no good 2D story because we're volumetric.
+- [/] circle(r|d)
+- [/] square(size, center)
+- [/] polygon(points, paths)
+- [/] text(text, size, ...)
 
 ### 3D Primitives
 - [x] sphere(r|d)
@@ -66,19 +79,6 @@
 - [x] union()
 - [x] difference()
 - [ ] intersection()
-
-### Advanced Operations
-- [x] smooth_union() (Non-standard extension)
-- [x] smooth_difference() (Non-standard extension)
-- [x] smooth_intersection() (Non-standard extension)
-
-## Special Features
-- [ ] import() for STL/DXF/etc
-- [ ] surface() for heightmaps
-- [ ] render(convexity)
-- [ ] children() selector
-- [ ] $fn, $fa, $fs variables
-- [ ] Special variables ($t, etc)
 
 ## Standard Library
 - [ ] Math functions (sin, cos, etc)
