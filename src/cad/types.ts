@@ -37,6 +37,37 @@ export class ScopedModuleDeclaration {
     public declaration: ModuleDeclaration,
     public lexicalContext: Context
   ) {}
+
+  call(args: Record<string, Expression>, callContext: Context): Value {
+    // Create new context that inherits from the module's lexical scope
+    const moduleContext = this.lexicalContext.child();
+    
+    // Bind parameters in the new context
+    for (const param of this.declaration.parameters) {
+      const arg = args[param.name];
+      if (arg) {
+        moduleContext.set(param.name, evalExpression(arg, callContext));
+      } else if (param.defaultValue) {
+        moduleContext.set(param.name, evalExpression(param.defaultValue, moduleContext));
+      } else {
+        throw new Error(`Missing required parameter: ${param.name}`);
+      }
+    }
+
+    // Evaluate module body in the context
+    let result: Value = { type: 'sdf', expr: '0' };
+    for (const statement of this.declaration.body) {
+      let statementResult = evalCAD(statement, moduleContext);
+      if (statementResult !== undefined) {
+        result = statementResult;
+      }
+    }
+
+    if (!result || typeof result !== 'object' || result.type !== 'sdf') {
+      throw new Error('Module must return an SDF expression');
+    }
+    return result;
+  }
 }
 
 export interface SDFExpression {
