@@ -184,6 +184,11 @@ describe('OpenSCAD-like Syntax', () => {
       .toBe('sqrt(x*x + y*y + z*z) - 1');
   });
 
+  it('handles number literals in blocks', () => {
+    expect(() => compileToSDF('union() { 42; }'))
+      .toThrow('Expected SDF expression in block');
+  });
+
   it('compiles transformations', () => {
     expect(compileToSDF('translate([1, 0, 0]) sphere(1);'))
       .toBe('translate(1, 0, 0, sqrt(x*x + y*y + z*z) - 1)');
