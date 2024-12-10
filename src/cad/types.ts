@@ -38,7 +38,7 @@ export class ScopedModuleDeclaration {
     public lexicalContext: Context
   ) {}
 
-  call(args: Record<string, Expression>, callContext: Context): Value {
+  call(args: Record<string, Expression>, callContext: Context): SDFExpression {
     // Create new context that inherits from the module's lexical scope
     const moduleContext = this.lexicalContext.child();
     
@@ -57,16 +57,17 @@ export class ScopedModuleDeclaration {
     // Evaluate module body in the context
     let result: Value = { type: 'sdf', expr: '0' };
     for (const statement of this.declaration.body) {
-      let statementResult = evalCAD(statement, moduleContext);
+      const statementResult = evalCAD(statement, moduleContext);
       if (statementResult !== undefined) {
         result = statementResult;
       }
     }
 
+    // Validate return type
     if (!result || typeof result !== 'object' || result.type !== 'sdf') {
       throw new Error('Module must return an SDF expression');
     }
-    return result;
+    return result as SDFExpression;
   }
 }
 
