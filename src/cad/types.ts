@@ -9,6 +9,7 @@ export interface Position {
 export interface SourceLocation {
   start: Position;
   end: Position;
+  source: string;
 }
 
 
@@ -63,7 +64,7 @@ export class Context {
   constructor(
     private parent?: Context,
     private vars: Map<string, Value> = new Map(),
-    private modules: Map<string, ModuleDeclaration> = new Map()
+    private modules: Map<string, ScopedModuleDeclaration> = new Map()
   ) {}
 
   get(name: string): Value | undefined {
@@ -89,7 +90,9 @@ export class Context {
 }
 
 export abstract class Node {
-  constructor(public location: SourceLocation) {}
+  constructor(
+    public location: SourceLocation
+  ) {}
 }
 
 export abstract class Statement extends Node {}

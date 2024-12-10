@@ -87,7 +87,7 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
 
 export function moduleToSDF(node: Node): string {
   const result = evalCAD(node, new Context());
-  if (typeof result === 'number' || result instanceof Vector) {
+  if (result === undefined || typeof result === 'number' || result instanceof Vector) {
     throw new Error('Expected SDF expression at top level');
   }
   return result.expr;
@@ -219,7 +219,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('translate requires a child node', call.location);
       }
       const child = evalCAD(call.children[0], context);
-      if (typeof child === 'number' || child instanceof Vector) {
+      if (child === undefined || typeof child === 'number' || child instanceof Vector) {
         throw parseError('translate requires an SDF child', call.location);
       }
       return {
@@ -240,7 +240,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('rotate requires a child node', call.location);
       }
       const child = evalCAD(call.children[0], context);
-      if (typeof child === 'number' || child instanceof Vector) {
+      if (child === undefined || typeof child === 'number' || child instanceof Vector) {
         throw parseError('rotate requires an SDF child', call.location);
       }
       return {
@@ -260,7 +260,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('scale() type error', call.location);
       }
       const child = evalCAD(call.children[0], context);
-      if (typeof child === 'number' || child instanceof Vector) {
+      if (child === undefined || typeof child === 'number' || child instanceof Vector) {
         throw parseError('scale requires an SDF child', call.location);
       }
       return {
@@ -324,7 +324,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       // Evaluate module body in the context
       let result: Value = { type: 'sdf', expr: '0' };
       for (const statement of scopedModule.declaration.body) {
-        result = evalCAD(statement, moduleContext);
+        let statementResult = evalCAD(statement, moduleContext);
+        if (statementResult !== undefined) {
+          result = statementResult;
+        }
       }
       
       if (typeof result === 'number' || result instanceof Vector) {

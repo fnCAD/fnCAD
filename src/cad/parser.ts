@@ -47,11 +47,13 @@ export class Parser {
       nameRange: nameToken.location,
       fullRange: { 
         start: nameToken.location.start,
-        end: nameToken.location.end // Will be updated when call ends
+        end: nameToken.location.end, // Will be updated when call ends
+        source: this.source
       },
       paramRange: {
         start: { line: 0, column: 0, offset: 0 }, // Will be updated in parseArguments
-        end: { line: 0, column: 0, offset: 0 }
+        end: { line: 0, column: 0, offset: 0 },
+        source: this.source
       },
       parameters: [],
       complete: false
@@ -101,7 +103,7 @@ export class Parser {
     }
     // If we're at the end, use the last token's location
     const location = this.isAtEnd() ? this.previous().location : this.peek().location;
-    throw parseError(message, location, this.source);
+    throw parseError(message, location);
   }
 
   /* Tokenize the input source into a stream of tokens.
@@ -136,7 +138,7 @@ export class Parser {
         current = this.handleSingleCharToken(char, current);
         continue;
       }
-      throw parseError(`Unexpected character: ${char}`, this.getTokenLocation(current), this.source);
+      throw parseError(`Unexpected character: ${char}`, this.getTokenLocation(current));
     }
   }
 
@@ -205,7 +207,8 @@ export class Parser {
       value,
       location: {
         start: { line: this.line, column: startColumn, offset: startOffset },
-        end: { line: this.line, column: this.column, offset: current }
+        end: { line: this.line, column: this.column, offset: current },
+        source: this.source
       }
     });
     return current;
@@ -230,7 +233,8 @@ export class Parser {
       value,
       location: {
         start: { line: this.line, column: startColumn, offset: startOffset },
-        end: { line: this.line, column: this.column, offset: current }
+        end: { line: this.line, column: this.column, offset: current },
+        source: this.source
       }
     });
     return current;
@@ -246,7 +250,8 @@ export class Parser {
       value: char,
       location: {
         start: { line: this.line, column: this.column, offset: current },
-        end: { line: this.line, column: this.column + 1, offset: current + 1 }
+        end: { line: this.line, column: this.column + 1, offset: current + 1 },
+        source: this.source
       }
     });
     current++;
@@ -257,7 +262,8 @@ export class Parser {
   private getTokenLocation(offset: number): SourceLocation {
     return {
       start: { line: this.line, column: this.column, offset },
-      end: { line: this.line, column: this.column + 1, offset: offset + 1 }
+      end: { line: this.line, column: this.column + 1, offset: offset + 1 },
+      source: this.source
     };
   }
 
@@ -294,16 +300,16 @@ export class Parser {
     }
 
     if (token.type === 'semicolon') {
-      throw parseError(`Unexpected semicolon`, token.location, this.source);
+      throw parseError(`Unexpected semicolon`, token.location);
     }
-    throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);
+    throw parseError(`Unexpected token type: ${token.type}`, token.location);
   }
 
   private parseModuleDeclaration(): ModuleDeclaration {
     this.advance(); // Skip 'module' keyword
     const nameToken = this.peek();
     if (nameToken.type !== 'identifier') {
-      throw parseError(`Expected module name`, nameToken.location, this.source);
+      throw parseError(`Expected module name`, nameToken.location);
     }
     this.advance();
     const name = nameToken.value;
@@ -311,7 +317,8 @@ export class Parser {
     const body = this.parseBlock();
     return new ModuleDeclaration(name, parameters, body, {
       start: nameToken.location.start,
-      end: this.previous().location.end
+      end: this.previous().location.end,
+      source: this.source
     });
   }
 
@@ -322,7 +329,7 @@ export class Parser {
     while (!this.isAtEnd() && !this.check(')')) {
       const nameToken = this.peek();
       if (nameToken.type !== 'identifier') {
-        throw parseError(`Expected parameter name`, nameToken.location, this.source);
+        throw parseError(`Expected parameter name`, nameToken.location);
       }
       this.advance();
       const name = nameToken.value;
@@ -367,7 +374,8 @@ export class Parser {
       this.endModuleCall(this.previous());
       return new ModuleCall(name, args, children, {
         start: nameToken.location.start,
-        end: this.previous().location.end
+        end: this.previous().location.end,
+        source: this.source
       });
     }
     
@@ -377,7 +385,8 @@ export class Parser {
       this.endModuleCall(semicolon);
       return new ModuleCall(name, args, undefined, {
         start: nameToken.location.start,
-        end: semicolon.location.end
+        end: semicolon.location.end,
+        source: this.source
       });
     }
     
@@ -385,7 +394,8 @@ export class Parser {
     const child = this.parseStatement();
     return new ModuleCall(name, args, [child], {
       start: nameToken.location.start,
-      end: child.location.end
+      end: child.location.end,
+      source: this.source
     });
 
     return new ModuleCall(
@@ -394,7 +404,8 @@ export class Parser {
       children,
       {
         start: nameToken.location.start,
-        end: this.previous().location.end
+        end: this.previous().location.end,
+        source: this.source
       }
     );
   }
@@ -431,7 +442,7 @@ export class Parser {
       // Check if we have a named argument
       if (this.current + 1 < this.tokens.length && this.tokens[this.current + 1].value === '=') {
         if (startToken.type !== 'identifier') {
-          throw parseError(`Expected parameter name`, startToken.location, this.source);
+          throw parseError(`Expected parameter name`, startToken.location);
         }
         name = startToken.value;
         nameRange = startToken.location;
@@ -460,7 +471,8 @@ export class Parser {
           name: name || String(Object.keys(args).length),
           range: {
             start: paramStartPos,
-            end: endOfLine
+            end: endOfLine,
+            source: this.source
           },
           nameRange
         };
@@ -523,7 +535,8 @@ export class Parser {
       const right = this.parseBinaryExpression(currentPrecedence);
       left = new BinaryExpression(operatorToken.value as '+' | '-' | '*' | '/', left, right, {
         start: left.location.start,
-        end: right.location.end
+        end: right.location.end,
+        source: this.source
       });
     }
 
@@ -543,7 +556,7 @@ export class Parser {
       case 'identifier':
         return new Identifier(token.value, token.location);
       default:
-        throw parseError(`Unexpected token type: ${token.type}`, token.location, this.source);
+        throw parseError(`Unexpected token type: ${token.type}`, token.location);
     }
   }
 
@@ -556,13 +569,21 @@ export class Parser {
       components.push(this.parseExpression());
     }
     if (this.isAtEnd() || this.peek().value !== ']') {
-      throw parseError('Unterminated vector literal', startLocation, this.source);
+      throw parseError('Unterminated vector literal', startLocation);
     }
     const endToken = this.advance(); // consume ']'
     if (components.length !== 3) {
-      throw parseError('Vector literals must have exactly 3 components', { start: startLocation.start, end: endToken.location.end }, this.source);
+      throw parseError('Vector literals must have exactly 3 components', {
+        start: startLocation.start,
+        end: endToken.location.end,
+        source: this.source
+      });
     }
-    return new VectorLiteral(components, { start: startLocation.start, end: endToken.location.end });
+    return new VectorLiteral(components, {
+      start: startLocation.start,
+      end: endToken.location.end,
+      source: this.source
+    });
   }
 }
 
@@ -617,7 +638,8 @@ export function parse(source: string): Node {
     statements,
     {
       start: statements[0]?.location.start || { line: 1, column: 1 },
-      end: statements[statements.length - 1]?.location.end || { line: 1, column: 1 }
+      end: statements[statements.length - 1]?.location.end || { line: 1, column: 1 },
+      source: source
     }
   );
 }
