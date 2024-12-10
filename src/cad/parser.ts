@@ -561,14 +561,32 @@ export class Parser {
 
     // Handle other primary expressions
     const token = this.advance();
+    let expr: Expression;
     switch (token.type) {
       case 'number':
-        return new NumberLiteral(parseFloat(token.value), token.location);
+        expr = new NumberLiteral(parseFloat(token.value), token.location);
+        break;
       case 'identifier':
-        return new Identifier(token.value, token.location);
+        expr = new Identifier(token.value, token.location);
+        break;
       default:
         throw parseError(`Unexpected token type: ${token.type}`, token.location);
     }
+
+    // Check for index operator
+    while (this.check('[')) {
+      const startLoc = this.peek().location;
+      this.advance(); // consume '['
+      const index = this.parseExpression();
+      const endToken = this.expect(']', 'Expected ]');
+      expr = new IndexExpression(expr, index, {
+        start: startLoc.start,
+        end: endToken.location.end,
+        source: this.source
+      });
+    }
+
+    return expr;
   }
 
   private parseVectorLiteral(): VectorLiteral {

@@ -40,6 +40,22 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(parse('rotate([1, 2, 3, 4]) sphere(1);'))).toThrow(ParseError);
   });
 
+  test('handles array indexing', () => {
+    // Basic indexing
+    expect(() => parse('v[0];')).not.toThrow();
+    
+    // Nested indexing
+    expect(() => parse('v[i[0]];')).not.toThrow();
+    
+    // Expression as index
+    expect(() => parse('v[1 + 2];')).not.toThrow();
+    
+    // Invalid index
+    expect(() => moduleToSDF(parse('translate(v[-1]) sphere(1);'))).toThrow(ParseError);
+    expect(() => moduleToSDF(parse('translate(v[1.5]) sphere(1);'))).toThrow(ParseError);
+    expect(() => moduleToSDF(parse('translate(v["x"]) sphere(1);'))).toThrow(ParseError);
+  });
+
   test('handles positional parameters', () => {
     // Simple positional parameter
     expect(() => parse('foo(42);')).not.toThrow();

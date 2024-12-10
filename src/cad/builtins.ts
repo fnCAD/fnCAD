@@ -56,6 +56,22 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
   if (expr instanceof VectorLiteral) {
     return expr.evaluate(context);
   }
+  if (expr instanceof IndexExpression) {
+    const array = evalExpression(expr.array, context);
+    const index = evalExpression(expr.index, context);
+    
+    if (!Array.isArray(array)) {
+      throw parseError('Cannot index non-array value', expr.location);
+    }
+    if (typeof index !== 'number' || !Number.isInteger(index)) {
+      throw parseError('Array index must be an integer', expr.location);
+    }
+    if (index < 0 || index >= array.length) {
+      throw parseError(`Array index ${index} out of bounds [0..${array.length-1}]`, expr.location);
+    }
+    
+    return array[index];
+  }
   throw new Error(`Unsupported expression type: ${expr.constructor.name}`);
 }
 

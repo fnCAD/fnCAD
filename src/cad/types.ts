@@ -231,3 +231,13 @@ export class VectorLiteral extends Expression {
   }
 }
 
+export class IndexExpression extends Expression {
+  constructor(
+    public array: Expression,
+    public index: Expression,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
