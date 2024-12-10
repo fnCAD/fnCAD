@@ -1,4 +1,7 @@
-import { Node, ModuleCall, Context, Value, Identifier, SDFExpression, Expression, BinaryExpression, VectorLiteral, Vector } from './types';
+import {
+  Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
+  SDFExpression, Expression, BinaryExpression, VectorLiteral, Vector,
+} from './types';
 
 export type EvalResult = number | Vector;
 import { parseError } from './errors';

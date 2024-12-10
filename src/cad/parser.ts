@@ -70,7 +70,6 @@ export class Parser {
   }
 
   getLocations(): ModuleCallLocation[] {
-    console.log('Returning module call locations:', this.locations);
     return this.locations;
   }
 
@@ -295,7 +294,11 @@ export class Parser {
 
   private parseModuleDeclaration(): ModuleDeclaration {
     this.advance(); // Skip 'module' keyword
-    const nameToken = this.expect('identifier', 'Expected module name');
+    const nameToken = this.peek();
+    if (nameToken.type !== 'identifier') {
+      throw parseError(`Expected module name`, nameToken.location, this.source);
+    }
+    this.advance();
     const name = nameToken.value;
     const parameters = this.parseParameters();
     const body = this.parseBlock();
@@ -310,7 +313,11 @@ export class Parser {
     const parameters: Parameter[] = [];
 
     while (!this.isAtEnd() && !this.check(')')) {
-      const nameToken = this.expect('identifier', 'Expected parameter name');
+      const nameToken = this.peek();
+      if (nameToken.type !== 'identifier') {
+        throw parseError(`Expected parameter name`, nameToken.location, this.source);
+      }
+      this.advance();
       const name = nameToken.value;
       let defaultValue: Expression | undefined;
       if (this.match('=')) {
@@ -348,7 +355,6 @@ export class Parser {
     
     // Case 1: Block with braces
     if (this.check('{')) {
-      console.log(`parse for ${name} goes into block with braces`);
       this.peek(); // Consume the opening brace
       children = this.parseBlock();
       this.endModuleCall(this.previous());
@@ -360,7 +366,6 @@ export class Parser {
     
     // Case 2: Empty call with semicolon
     if (this.check(';')) {
-      console.log(`parse for ${name} goes into empty call`);
       const semicolon = this.advance();
       this.endModuleCall(semicolon);
       return new ModuleCall(name, args, undefined, {
@@ -370,7 +375,6 @@ export class Parser {
     }
     
     // Case 3: Single child without braces
-    console.log(`parse for ${name} goes into single-arg`);
     const child = this.parseStatement();
     return new ModuleCall(name, args, [child], {
       start: nameToken.location.start,
