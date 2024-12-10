@@ -39,6 +39,22 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(parse('rotate([1, 2, 3, 4]) sphere(1);'))).toThrow(ParseError);
   });
 
+  test('handles positional parameters', () => {
+    // Simple positional parameter
+    expect(() => parse('foo(42);')).not.toThrow();
+    
+    // Mix of positional and named parameters
+    expect(() => parse('foo(42, b=3);')).not.toThrow();
+    
+    // Multiple positional parameters
+    expect(() => parse('foo(1, 2, 3);')).not.toThrow();
+    
+    // Test actual evaluation
+    const result = parse('sphere(1);');
+    expect(result).toBeDefined();
+    expect(() => moduleToSDF(result)).not.toThrow();
+  });
+
   test('handles whitespace only input', () => {
     const result = parse('   \n   \t   ');
     expect(result).toBeDefined();
