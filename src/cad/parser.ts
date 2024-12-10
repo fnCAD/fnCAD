@@ -285,6 +285,13 @@ export class Parser {
       }
       return this.parseModuleCall();
     }
+    
+    if (token.type === 'number') {
+      const num = this.advance();
+      if (this.match(';')) {
+        return new NumberLiteral(parseFloat(num.value), num.location);
+      }
+    }
 
     if (token.type === 'semicolon') {
       throw parseError(`Unexpected semicolon`, token.location, this.source);
