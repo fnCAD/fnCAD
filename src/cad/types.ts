@@ -55,7 +55,8 @@ export interface SDFExpression {
 export class Context {
   constructor(
     private parent?: Context,
-    private vars: Map<string, Value> = new Map()
+    private vars: Map<string, Value> = new Map(),
+    private modules: Map<string, ModuleDeclaration> = new Map()
   ) {}
 
   get(name: string): Value | undefined {
@@ -66,8 +67,16 @@ export class Context {
     this.vars.set(name, value);
   }
 
+  getModule(name: string): ModuleDeclaration | undefined {
+    return this.modules.get(name) ?? this.parent?.getModule(name);
+  }
+
+  defineModule(name: string, module: ModuleDeclaration) {
+    this.modules.set(name, module);
+  }
+
   child(): Context {
-    return new Context(this);
+    return new Context(this, new Map(), this.modules);
   }
 }
 

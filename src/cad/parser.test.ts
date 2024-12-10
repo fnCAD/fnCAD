@@ -145,6 +145,37 @@ describe('OpenSCAD-like Syntax', () => {
     return moduleToSDF(ast);
   }
 
+  it('handles module definitions', () => {
+    const result = parse(`
+      module roundedCube(size, r) {
+        smooth_union(r) {
+          cube(size);
+          translate([size/2, size/2, size/2])
+            sphere(r);
+        }
+      }
+      
+      roundedCube(2, 0.2);
+    `);
+    expect(result).toBeDefined();
+  });
+
+  it('compiles module instances', () => {
+    const sdf = compileToSDF(`
+      module hole() {
+        translate([0, 0, 1])
+          cylinder(0.5, 2);
+      }
+      
+      difference() {
+        cube(2);
+        hole();
+      }
+    `);
+    expect(sdf).toContain('max('); // Should use difference()
+    expect(sdf).toContain('translate(0, 0, 1,'); // Should contain the translated cylinder
+  });
+
   it('compiles basic primitives', () => {
     expect(compileToSDF('cube(1);'))
       .toBe('max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)');

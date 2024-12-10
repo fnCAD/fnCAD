@@ -275,8 +275,39 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
-    default:
-      throw parseError(`Unknown module: ${call.name}`, call.location);
+    default: {
+      // Look for user-defined module
+      const module = context.getModule(call.name);
+      if (!module) {
+        throw parseError(`Unknown module: ${call.name}`, call.location);
+      }
+
+      // Create new context for module instance
+      const moduleContext = context.child();
+      
+      // Bind parameters
+      for (const param of module.parameters) {
+        const arg = call.args[param.name];
+        if (arg) {
+          moduleContext.set(param.name, evalExpression(arg, context));
+        } else if (param.defaultValue) {
+          moduleContext.set(param.name, evalExpression(param.defaultValue, context));
+        } else {
+          throw parseError(`Missing required parameter: ${param.name}`, call.location);
+        }
+      }
+
+      // Evaluate module body
+      let result: Value = { type: 'sdf', expr: '0' };
+      for (const statement of module.body) {
+        result = evalCAD(statement, moduleContext);
+      }
+      
+      if (typeof result === 'number' || result instanceof Vector) {
+        throw parseError('Module must return an SDF expression', call.location);
+      }
+      return result;
+    }
   }
 }
 // Smooth blending operations using exponential smoothing with distance threshold
