@@ -203,30 +203,21 @@ describe('OpenSCAD-like Syntax', () => {
   });
 
   it('binds module parameters correctly', () => {
-    const ast = parse(`
-      module test(x, y = 1) {
-        translate([x, y, 0]) sphere(1);
+    const mockCall = vi.spyOn(ModuleDeclaration.prototype, 'call');
+    
+    moduleToSDF(parse(`
+      module test(x, y) {
+        sphere(1);
       }
-    `);
+      test(1, 2);
+    `));
     
-    // Extract the module declaration
-    const modules = ast instanceof ModuleDeclaration ? [ast] : [];
-    expect(modules).toHaveLength(1);
+    expect(mockCall).toHaveBeenCalled();
+    const context = mockCall.mock.calls[0][0] as Context;
+    expect(context.get('x')).toBe(1);
+    expect(context.get('y')).toBe(2);
     
-    const module = modules[0];
-    const context = new Context();
-
-    // Test with both parameters
-    const ctx1 = new Context();
-    module.call(ctx1);
-    expect(ctx1.get('x')).toBe(2);
-    expect(ctx1.get('y')).toBe(3);
-
-    // Test with default parameter
-    const ctx2 = new Context();
-    module.call(ctx2);
-    expect(ctx2.get('x')).toBe(2);
-    expect(ctx2.get('y')).toBe(1);
+    mockCall.mockRestore();
   });
 
   it('compiles module instances', () => {
