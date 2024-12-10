@@ -660,10 +660,21 @@ function getOperatorPrecedence(value: string): OperatorPrecedence {
 export function parse(source: string): Node {
   const parser = new Parser(source);
   const statements = parser.parse();
-  // Wrap multiple statements in an implicit group
+  
+  // Handle single statement case without wrapping
   if (statements.length === 1) {
+    // If it's an expression, it needs to be terminated with semicolon
+    if (statements[0] instanceof Expression && !source.trim().endsWith(';')) {
+      throw parseError('Expected ;', {
+        start: { line: 1, column: source.length },
+        end: { line: 1, column: source.length + 1 },
+        source: source
+      });
+    }
     return statements[0];
   }
+
+  // Wrap multiple statements in an implicit union
   return new ModuleCall(
     'union',
     {},
