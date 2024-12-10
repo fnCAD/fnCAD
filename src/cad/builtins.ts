@@ -52,16 +52,23 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
 // Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
 // Returns undefined for statements that don't produce values (like module declarations)
 function evalSDFBlock(nodes: Node[], context: Context): SDFExpression[] {
-  const results = nodes.map(node => evalCAD(node, context));
-  const filtered = results.filter((result): result is SDFExpression | number => result !== undefined);
+  const results: SDFExpression[] = [];
   
-  // Check for non-SDF results
-  const nonSDF = filtered.find(result => typeof result === 'number' || !('type' in result) || result.type !== 'sdf');
-  if (nonSDF !== undefined) {
-    throw new Error('Expected SDF expression in block');
+  for (const node of nodes) {
+    const result = evalCAD(node, context);
+    
+    // Skip undefined results (like module declarations)
+    if (result === undefined) continue;
+    
+    // Validate SDF type and throw location-aware error
+    if (typeof result === 'number' || !('type' in result) || result.type !== 'sdf') {
+      throw parseError('Expected SDF expression in block', node.location);
+    }
+    
+    results.push(result as SDFExpression);
   }
   
-  return filtered as SDFExpression[];
+  return results;
 }
 
 export function evalCAD(node: Node, context: Context): Value | undefined {
