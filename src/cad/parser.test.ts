@@ -1,4 +1,4 @@
-import { describe, it, expect, test, vi } from 'vitest';
+import { describe, it, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { parse, Parser } from './parser';
 import { Context, ModuleDeclaration } from './types';
 import { moduleToSDF } from './builtins';
@@ -203,22 +203,93 @@ describe('OpenSCAD-like Syntax', () => {
     expect(result).toBeDefined();
   });
 
-  it('binds module parameters correctly', () => {
-    const mockCall = vi.spyOn(ModuleDeclaration.prototype, 'call');
+  describe('module parameter binding', () => {
+    let mockCall: ReturnType<typeof vi.spyOn>;
     
-    moduleToSDF(parse(`
-      module test(x, y) {
-        sphere(1);
-      }
-      test(1, 2);
-    `));
+    beforeEach(() => {
+      mockCall = vi.spyOn(ModuleDeclaration.prototype, 'call');
+    });
     
-    expect(mockCall).toHaveBeenCalled();
-    const context = mockCall.mock.calls[0][0] as Context;
-    expect(context.get('x')).toBe(1);
-    expect(context.get('y')).toBe(2);
-    
-    mockCall.mockRestore();
+    afterEach(() => {
+      mockCall.mockRestore();
+    });
+
+    it('binds positional parameters in order', () => {
+      moduleToSDF(parse(`
+        module test(x, y) { }
+        test(1, 2);
+      `));
+      
+      const context = mockCall.mock.calls[0][0] as Context;
+      expect(context.get('x')).toBe(1);
+      expect(context.get('y')).toBe(2);
+    });
+
+    it('binds named parameters', () => {
+      moduleToSDF(parse(`
+        module test(x, y) { }
+        test(x=1, y=2);
+      `));
+      
+      const context = mockCall.mock.calls[0][0] as Context;
+      expect(context.get('x')).toBe(1);
+      expect(context.get('y')).toBe(2);
+    });
+
+    it('binds named parameters out of order', () => {
+      moduleToSDF(parse(`
+        module test(x, y) { }
+        test(y=2, x=1);
+      `));
+      
+      const context = mockCall.mock.calls[0][0] as Context;
+      expect(context.get('x')).toBe(1);
+      expect(context.get('y')).toBe(2);
+    });
+
+    it('binds mix of positional and named parameters', () => {
+      moduleToSDF(parse(`
+        module test(x, y, z) { }
+        test(1, z=3, y=2);
+      `));
+      
+      const context = mockCall.mock.calls[0][0] as Context;
+      expect(context.get('x')).toBe(1);
+      expect(context.get('y')).toBe(2);
+      expect(context.get('z')).toBe(3);
+    });
+
+    it('uses default values for unspecified parameters', () => {
+      moduleToSDF(parse(`
+        module test(x=10, y=20) { }
+        test(y=2);
+      `));
+      
+      const context = mockCall.mock.calls[0][0] as Context;
+      expect(context.get('x')).toBe(10);
+      expect(context.get('y')).toBe(2);
+    });
+
+    it('errors on unknown parameters', () => {
+      expect(() => moduleToSDF(parse(`
+        module test(x) { }
+        test(y=1);
+      `))).toThrow('Unknown parameter: y');
+    });
+
+    it('errors on double assignment', () => {
+      expect(() => moduleToSDF(parse(`
+        module test(x, y) { }
+        test(1, x=2);
+      `))).toThrow('Parameter x was already set positionally');
+    });
+
+    it('errors on missing required parameters', () => {
+      expect(() => moduleToSDF(parse(`
+        module test(x, y) { }
+        test(x=1);
+      `))).toThrow('Missing required parameter: y');
+    });
   });
 
   it('compiles module instances', () => {
