@@ -559,34 +559,38 @@ export class Parser {
       return this.parseVectorLiteral();
     }
 
+    // Look ahead to see if this is an array indexing expression
+    if (this.current + 1 < this.tokens.length && 
+        this.tokens[this.current].type === 'identifier' && 
+        this.tokens[this.current + 1].value === '[') {
+      const token = this.advance();
+      let expr = new Identifier(token.value, token.location);
+      
+      // Parse any index operators
+      while (this.check('[')) {
+        const startLoc = this.peek().location;
+        this.advance(); // consume '['
+        const index = this.parseExpression();
+        const endToken = this.expect(']', 'Expected ]');
+        expr = new IndexExpression(expr, index, {
+          start: startLoc.start,
+          end: endToken.location.end,
+          source: this.source
+        });
+      }
+      return expr;
+    }
+
     // Handle other primary expressions
     const token = this.advance();
-    let expr: Expression;
     switch (token.type) {
       case 'number':
-        expr = new NumberLiteral(parseFloat(token.value), token.location);
-        break;
+        return new NumberLiteral(parseFloat(token.value), token.location);
       case 'identifier':
-        expr = new Identifier(token.value, token.location);
-        break;
+        return new Identifier(token.value, token.location);
       default:
         throw parseError(`Unexpected token type: ${token.type}`, token.location);
     }
-
-    // Check for index operator
-    while (this.check('[')) {
-      const startLoc = this.peek().location;
-      this.advance(); // consume '['
-      const index = this.parseExpression();
-      const endToken = this.expect(']', 'Expected ]');
-      expr = new IndexExpression(expr, index, {
-        start: startLoc.start,
-        end: endToken.location.end,
-        source: this.source
-      });
-    }
-
-    return expr;
   }
 
   private parseVectorLiteral(): VectorLiteral {
