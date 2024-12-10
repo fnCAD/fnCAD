@@ -51,6 +51,14 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
 
 // Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
 // Returns undefined for statements that don't produce values (like module declarations)
+function evalSDFBlock(nodes: Node[], context: Context): SDFExpression[] {
+  return nodes
+    .map(node => evalCAD(node, context))
+    .filter((result): result is SDFExpression => 
+      result !== undefined && 'type' in result && result.type === 'sdf'
+    );
+}
+
 export function evalCAD(node: Node, context: Context): Value | undefined {
   if (node instanceof ModuleDeclaration) {
     context.defineModule(node.name, node);
@@ -253,16 +261,13 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (!call.children?.length) {
         return { type: 'sdf', expr: '0' };
       }
-      const children = call.children.map(c => {
-        const result = evalCAD(c, context);
-        if (!result || typeof result === 'number' || result instanceof Vector) {
-          throw parseError('union requires SDF children', call.location);
-        }
-        return result.expr;
-      });
+      const children = evalSDFBlock(call.children, context);
+      if (children.length === 0) {
+        return { type: 'sdf', expr: '0' };
+      }
       return {
         type: 'sdf',
-        expr: `min(${children.join(', ')})`
+        expr: `min(${children.map(c => c.expr).join(', ')})`
       };
     }
 
