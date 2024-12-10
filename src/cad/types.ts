@@ -47,15 +47,44 @@ export class ScopedModuleDeclaration {
     // Create new context that inherits from the module's lexical scope
     const moduleContext = this.lexicalContext.child();
     
-    // Bind parameters in the new context
+    // Track which parameters have been set
+    const setParams = new Set<string>();
+    
+    // First, assign positional parameters in order
+    let posIndex = 0;
+    while (args[posIndex.toString()]) {
+      if (posIndex >= this.declaration.parameters.length) {
+        throw new Error(`Too many positional parameters`);
+      }
+      const param = this.declaration.parameters[posIndex];
+      moduleContext.set(param.name, evalExpression(args[posIndex.toString()], callContext));
+      setParams.add(param.name);
+      posIndex++;
+    }
+    
+    // Then handle named parameters
+    for (const [key, value] of Object.entries(args)) {
+      if (!isNaN(Number(key))) continue; // Skip positional args we already handled
+      
+      const param = this.declaration.parameters.find(p => p.name === key);
+      if (!param) {
+        throw new Error(`Unknown parameter: ${key}`);
+      }
+      if (setParams.has(param.name)) {
+        throw new Error(`Parameter ${key} was already set positionally`);
+      }
+      moduleContext.set(param.name, evalExpression(value, callContext));
+      setParams.add(param.name);
+    }
+    
+    // Fill in any remaining parameters with defaults
     for (const param of this.declaration.parameters) {
-      const arg = args[param.name];
-      if (arg) {
-        moduleContext.set(param.name, evalExpression(arg, callContext));
-      } else if (param.defaultValue) {
-        moduleContext.set(param.name, evalExpression(param.defaultValue, moduleContext));
-      } else {
-        throw new Error(`Missing required parameter: ${param.name}`);
+      if (!setParams.has(param.name)) {
+        if (param.defaultValue) {
+          moduleContext.set(param.name, evalExpression(param.defaultValue, moduleContext));
+        } else {
+          throw new Error(`Missing required parameter: ${param.name}`);
+        }
       }
     }
 
