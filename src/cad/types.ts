@@ -54,20 +54,7 @@ export class ScopedModuleDeclaration {
       }
     }
 
-    // Evaluate module body in the context
-    let result: Value = { type: 'sdf', expr: '0' };
-    for (const statement of this.declaration.body) {
-      const statementResult = evalCAD(statement, moduleContext);
-      if (statementResult !== undefined) {
-        result = statementResult;
-      }
-    }
-
-    // Validate return type
-    if (!result || typeof result !== 'object' || result.type !== 'sdf') {
-      throw new Error('Module must return an SDF expression');
-    }
-    return result as SDFExpression;
+    return this.declaration.call(moduleContext);
   }
 }
 
@@ -122,6 +109,23 @@ export class ModuleDeclaration extends Statement {
     location: SourceLocation
   ) {
     super(location);
+  }
+
+  call(context: Context): SDFExpression {
+    // Evaluate module body in the context
+    let result: Value = { type: 'sdf', expr: '0' };
+    for (const statement of this.body) {
+      const statementResult = evalCAD(statement, context);
+      if (statementResult !== undefined) {
+        result = statementResult;
+      }
+    }
+
+    // Validate return type
+    if (!result || typeof result !== 'object' || result.type !== 'sdf') {
+      throw new Error('Module must return an SDF expression');
+    }
+    return result as SDFExpression;
   }
 }
 

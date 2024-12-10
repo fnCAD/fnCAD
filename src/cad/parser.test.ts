@@ -202,6 +202,33 @@ describe('OpenSCAD-like Syntax', () => {
     expect(result).toBeDefined();
   });
 
+  it('binds module parameters correctly', () => {
+    const ast = parse(`
+      module test(x, y = 1) {
+        translate([x, y, 0]) sphere(1);
+      }
+    `);
+    
+    // Extract the module declaration
+    const modules = ast instanceof ModuleDeclaration ? [ast] : [];
+    expect(modules).toHaveLength(1);
+    
+    const module = modules[0];
+    const context = new Context();
+
+    // Test with both parameters
+    const ctx1 = new Context();
+    module.call(ctx1);
+    expect(ctx1.get('x')).toBe(2);
+    expect(ctx1.get('y')).toBe(3);
+
+    // Test with default parameter
+    const ctx2 = new Context();
+    module.call(ctx2);
+    expect(ctx2.get('x')).toBe(2);
+    expect(ctx2.get('y')).toBe(1);
+  });
+
   it('compiles module instances', () => {
     const sdf = compileToSDF(`
       module hole() {
