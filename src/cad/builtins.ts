@@ -57,7 +57,6 @@ export function evalCAD(node: Node, context: Context): Value {
   throw new Error(`Cannot evaluate node type: ${node.constructor.name}`);
 }
 
-
 export function moduleToSDF(node: Node): string {
   const result = evalCAD(node, new Context());
   if (typeof result === 'number' || result instanceof Vector) {
