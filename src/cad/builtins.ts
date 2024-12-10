@@ -42,7 +42,7 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
   if (expr instanceof VectorLiteral) {
     const vec = expr.evaluate(context);
     if (!(vec instanceof Vector)) {
-      throw new Error('Expected vector result');
+      throw new Error(`Expected vector result, not ${vec.constructor.name}`);
     }
     return vec;
   }
@@ -209,12 +209,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'translate': {
       const vec = evalArg(0);
-      if (!(vec instanceof Vector)) {
-        throw parseError('translate requires a vector argument [x,y,z]', call.location);
+      if (!(Array.isArray(vec)) || vec.length !== 3) {
+        throw parseError('translate requires a 3D vector argument [x,y,z]', call.location);
       }
-      const dx = vec.x;
-      const dy = vec.y;
-      const dz = vec.z;
+      const [dx, dy, dz] = vec;
       if (!call.children?.[0]) {
         throw parseError('translate requires a child node', call.location);
       }
@@ -230,12 +228,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'rotate': {
       const vec = evalArg(0);
-      if (!(vec instanceof Vector)) {
-        throw parseError('rotate requires a vector argument [x,y,z]', call.location);
+      if (!(Array.isArray(vec)) || vec.length !== 3) {
+        throw parseError('rotate requires a 3D vector argument [x,y,z]', call.location);
       }
-      const rx = vec.x;
-      const ry = vec.y;
-      const rz = vec.z;
+      const [rx, ry, rz] = vec;
       if (!call.children?.[0]) {
         throw parseError('rotate requires a child node', call.location);
       }

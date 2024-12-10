@@ -24,6 +24,21 @@ describe('CAD Parser', () => {
     expect(() => parse('-1.5;')).not.toThrow();
   });
 
+  test('handles vectors of different sizes', () => {
+    // Should allow 2D vector
+    expect(() => parse('foo([1, 2]);')).not.toThrow();
+    
+    // Should allow 3D vector
+    expect(() => parse('foo([1, 2, 3]);')).not.toThrow();
+    
+    // Should allow 4D vector
+    expect(() => parse('foo([1, 2, 3, 4]);')).not.toThrow();
+    
+    // But transform operations should still require 3D
+    expect(() => parse('translate([1, 2]) sphere(1);')).toThrow();
+    expect(() => parse('rotate([1, 2, 3, 4]) sphere(1);')).toThrow();
+  });
+
   test('handles whitespace only input', () => {
     const result = parse('   \n   \t   ');
     expect(result).toBeDefined();

@@ -166,15 +166,14 @@ export class VectorLiteral extends Expression {
     super(location);
   }
 
-  evaluate(context: Context): Vector {
-    const values = this.components.map(expr => {
+  evaluate(context: Context): number[] {
+    return this.components.map(expr => {
       const val = evalExpression(expr, context);
       if (typeof val !== 'number') {
         throw new Error('Vector components must evaluate to numbers');
       }
       return val;
     });
-    return new Vector(values[0], values[1], values[2]);
   }
 }
 
