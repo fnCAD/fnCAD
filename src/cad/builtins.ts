@@ -251,7 +251,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'rotate': {
       const vec = checkVector(evalArg(0), 3, call.location);
-      const [rx, ry, rz] = vec;
+      // Convert degrees to radians
+      const [rx, ry, rz] = vec.map(deg => deg * Math.PI / 180);
       if (!call.children?.[0]) {
         throw parseError('rotate requires a child node', call.location);
       }

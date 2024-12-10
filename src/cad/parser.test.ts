@@ -341,8 +341,8 @@ describe('OpenSCAD-like Syntax', () => {
     expect(compileToSDF('translate([1, 0, 0]) sphere(1);'))
       .toBe('translate(1, 0, 0, sqrt(x*x + y*y + z*z) - 1)');
     
-    expect(compileToSDF('rotate([0, 1.57, 0]) { cube(1); }'))
-      .toBe('rotate(0, 1.57, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5))');
+    expect(compileToSDF('rotate([0, 90, 0]) { cube(1); }'))
+      .toBe('rotate(0, 1.5707963267948966, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5))');
   });
 
   it('compiles boolean operations', () => {
@@ -360,7 +360,7 @@ describe('OpenSCAD-like Syntax', () => {
           cube(1);
     `);
     expect(result).toBe(
-      'translate(1, 0, 0, rotate(0, 1.57, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)))'
+      'translate(1, 0, 0, rotate(0, 0.027401669256310976, 0, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)))'
     );
   });
 
