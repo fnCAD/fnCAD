@@ -29,7 +29,14 @@ export interface ParameterLocation {
 }
 
 // Result types for evaluation
-export type Value = number | SDFExpression | Vector;
+export type Value = number | SDFExpression | Vector | ScopedModuleDeclaration;
+
+export class ScopedModuleDeclaration {
+  constructor(
+    public declaration: ModuleDeclaration,
+    public lexicalContext: Context
+  ) {}
+}
 
 export class Vector {
   constructor(
@@ -67,12 +74,13 @@ export class Context {
     this.vars.set(name, value);
   }
 
-  getModule(name: string): ModuleDeclaration | undefined {
+  getModule(name: string): ScopedModuleDeclaration | undefined {
     return this.modules.get(name) ?? this.parent?.getModule(name);
   }
 
   defineModule(name: string, module: ModuleDeclaration) {
-    this.modules.set(name, module);
+    // Capture current context when defining the module
+    this.modules.set(name, new ScopedModuleDeclaration(module, this));
   }
 
   child(): Context {

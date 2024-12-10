@@ -276,30 +276,30 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     default: {
-      // Look for user-defined module
-      const module = context.getModule(call.name);
-      if (!module) {
+      // Look for user-defined module with its lexical scope
+      const scopedModule = context.getModule(call.name);
+      if (!scopedModule) {
         throw parseError(`Unknown module: ${call.name}`, call.location);
       }
 
-      // Create new context for module instance
-      const moduleContext = context.child();
+      // Create new context that inherits from the module's lexical scope
+      const moduleContext = scopedModule.lexicalContext.child();
       
-      // Bind parameters
-      for (const param of module.parameters) {
+      // Bind parameters in the new context
+      for (const param of scopedModule.declaration.parameters) {
         const arg = call.args[param.name];
         if (arg) {
           moduleContext.set(param.name, evalExpression(arg, context));
         } else if (param.defaultValue) {
-          moduleContext.set(param.name, evalExpression(param.defaultValue, context));
+          moduleContext.set(param.name, evalExpression(param.defaultValue, moduleContext));
         } else {
           throw parseError(`Missing required parameter: ${param.name}`, call.location);
         }
       }
 
-      // Evaluate module body
+      // Evaluate module body in the context
       let result: Value = { type: 'sdf', expr: '0' };
-      for (const statement of module.body) {
+      for (const statement of scopedModule.declaration.body) {
         result = evalCAD(statement, moduleContext);
       }
       
