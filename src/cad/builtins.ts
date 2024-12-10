@@ -335,7 +335,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
           result = statementResult;
         }
       }
-      
+
       if (!result || typeof result !== 'object' || result.type !== 'sdf') {
         throw parseError('Module must return an SDF expression', call.location);
       }
