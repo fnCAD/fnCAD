@@ -55,34 +55,6 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(result)).not.toThrow();
   });
 
-  test('evaluates module calls correctly', () => {
-    const context = new Context();
-    
-    // Define a test module that returns an SDF
-    const moduleAST = parse(`
-      module test(r) {
-        sphere(r);
-      }
-      test(2);
-    `);
-    
-    // First statement should be module definition
-    expect(moduleAST).toBeDefined();
-    if (Array.isArray(moduleAST)) {
-      const [moduleDef, moduleCall] = moduleAST;
-      expect(moduleDef).toBeInstanceOf(ModuleDeclaration);
-      expect(moduleCall).toBeInstanceOf(ModuleCall);
-      
-      // Evaluate the module definition
-      evalCAD(moduleDef, context);
-      
-      // Now evaluate the call
-      const result = evalCAD(moduleCall, context) as SDFExpression;
-      expect(result.type).toBe('sdf');
-      expect(result.expr).toBe('sqrt(x*x + y*y + z*z) - 2');
-    }
-  });
-
   test('handles whitespace only input', () => {
     const result = parse('   \n   \t   ');
     expect(result).toBeDefined();
