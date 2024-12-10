@@ -1,4 +1,4 @@
-import { evalExpression } from './builtins';
+import { evalCAD, evalExpression } from './builtins';
 
 export interface Position {
   line: number;
@@ -31,6 +31,11 @@ export interface ParameterLocation {
 
 // Result types for evaluation
 export type Value = number | SDFExpression | number[];
+
+export function isSDFExpression(value: Value): value is SDFExpression {
+  if (typeof value === 'number' || Array.isArray(value)) return false;
+  return typeof value === 'object' && value.type === 'sdf';
+}
 
 export class ScopedModuleDeclaration {
   constructor(
@@ -121,8 +126,7 @@ export class ModuleDeclaration extends Statement {
       }
     }
 
-    // Validate return type
-    if (!result || typeof result !== 'object' || result.type !== 'sdf') {
+    if (!isSDFExpression(result)) {
       throw new Error('Module must return an SDF expression');
     }
     return result as SDFExpression;

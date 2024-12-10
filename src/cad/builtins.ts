@@ -1,9 +1,10 @@
 import {
   Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
-  SDFExpression, Expression, BinaryExpression, VectorLiteral, Vector,
+  SDFExpression, isSDFExpression, Expression, BinaryExpression, VectorLiteral,
+  SourceLocation,
 } from './types';
 
-export type EvalResult = number | Vector;
+export type EvalResult = number | number[];
 import { parseError } from './errors';
 
 function checkVector(value: any, requiredSize: number, location: SourceLocation): number[] {
@@ -17,13 +18,6 @@ function checkVector(value: any, requiredSize: number, location: SourceLocation)
     throw parseError(`Expected ${requiredSize}D vector, got ${value.length}D`, location);
   }
   return value;
-}
-
-function isVector(arg: any, requiredSize?: number): arg is number[] {
-  if (!Array.isArray(arg)) return false;
-  if (!arg.every(x => typeof x === 'number')) return false;
-  if (requiredSize !== undefined && arg.length !== requiredSize) return false;
-  return true;
 }
 
 // Export evalExpression so it can be used by types.ts
@@ -103,7 +97,7 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
 
 export function moduleToSDF(node: Node): string {
   const result = evalCAD(node, new Context());
-  if (!result || typeof result !== 'object' || result.type !== 'sdf') {
+  if (!result || !isSDFExpression(result)) {
     throw new Error('Expected SDF expression at top level');
   }
   return result.expr;
@@ -230,7 +224,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('translate requires a child node', call.location);
       }
       const child = evalCAD(call.children[0], context);
-      if (!child || typeof child !== 'object' || child.type !== 'sdf') {
+      if (!child || !isSDFExpression(child)) {
         throw parseError('translate requires an SDF expression', call.location);
       }
       return {
@@ -246,7 +240,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('rotate requires a child node', call.location);
       }
       const child = evalCAD(call.children[0], context);
-      if (!child || typeof child !== 'object' || child.type !== 'sdf') {
+      if (!child || !isSDFExpression(child)) {
         throw parseError('rotate requires an SDF expression', call.location);
       }
       return {
@@ -266,7 +260,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('scale() type error', call.location);
       }
       const child = evalCAD(call.children[0], context);
-      if (!child || typeof child !== 'object' || child.type !== 'sdf') {
+      if (!child || !isSDFExpression(child)) {
         throw parseError('scale requires an SDF expression', call.location);
       }
       return {
@@ -294,7 +288,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         return { type: 'sdf', expr: '0' };
       }
       const results = call.children.map(c => evalCAD(c, context));
-      if (results.some(r => typeof r === 'number')) {
+      if (results.some(r => !r || !isSDFExpression(r))) {
         throw parseError('difference requires SDF children', call.location);
       }
       const children = results.map(r => (r as SDFExpression).expr);
@@ -312,11 +306,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError(`Unknown module: ${call.name}`, call.location);
       }
 
-      try {
-        return scopedModule.call(call.args, context);
-      } catch (e) {
-        throw parseError(e.message, call.location);
-      }
+      return scopedModule.call(call.args, context);
     }
   }
 }
