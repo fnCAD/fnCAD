@@ -7,7 +7,7 @@
 - [x] Module blocks with children
 - [x] Named parameters on call
 - [x] Default parameter values
-- [ ] Module definitions
+- [x] Module definitions
 - [ ] Function definitions
 - [ ] Let expressions
 - [ ] Echo statements for debugging
