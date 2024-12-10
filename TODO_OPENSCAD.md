@@ -1,74 +1,119 @@
-# OpenSCAD-like Syntax Implementation
+# OpenSCAD Compatibility Roadmap
 
-## 1. Core Language Features
-- [x] Basic primitives that lower to SDFs:
-  - [x] cube
-  - [x] sphere
-  - [x] cylinder
-  - [ ] polyhedron
-- [x] Boolean operations:
-  - [x] union
-  - [x] difference
-  - [ ] intersection
-- [x] Transformations:
-  - [x] translate
-  - [x] rotate
-  - [x] scale
-  - [ ] mirror
-  - [ ] multmatrix
+## Core Language Features
 
-## 2. Language Improvements
-- [ ] First-class functions
-- [ ] Let bindings
-- [ ] Pattern matching
-- [x] Type system
-- [x] Modules as proper functions
-- [x] Named arguments with defaults
-- [x] Better error messages
+### Modules and Functions
+- [x] Basic module calls with parameters
+- [x] Module blocks with children
+- [x] Named parameters
+- [x] Default parameter values
+- [ ] Function definitions
+- [ ] Let expressions
+- [ ] Echo statements for debugging
+- [ ] Assert statements
+- [ ] Module instantiation (use)
 
-## 3. Control Flow
-- [ ] for loops with proper iteration
-- [ ] if/else as expressions
-- [ ] list comprehensions
-- [ ] map/reduce/filter
+### Control Flow
+- [ ] For loops
+- [ ] Intersection_for
+- [ ] If/else conditionals
+- [ ] Conditional operator (?:)
 
-## 4. Data Structures
-- [ ] Proper lists/arrays
-- [ ] Records/structs
-- [ ] Optional types
-- [ ] Custom types
+### Variables and Expressions
+- [x] Basic arithmetic (+, -, *, /)
+- [x] Vector literals [x, y, z]
+- [ ] List comprehensions
+- [ ] Range expressions [start:step:end]
+- [ ] String literals and concatenation
+- [ ] Boolean operations (&&, ||, !)
+- [ ] Comparison operators (<, >, ==, etc)
 
-## 5. SDF Integration
-- [x] All primitives implemented as clean SDFs
-- [x] Boolean ops preserve SDF properties
-- [x] Transformations maintain distance field
-- [x] Custom SDF function escape hatch
-- [ ] Smooth unions and other SDF-specific operations
+## Transformations
 
-## 6. Tooling
-- [x] Syntax highlighting (via Monaco)
-- [x] Code completion (via Monaco)
-- [ ] Documentation generation
-- [ ] Import/export system
-- [ ] Package management
+### Basic Transforms
+- [x] translate([x,y,z])
+- [x] rotate([x,y,z])
+- [x] scale([x,y,z])
+- [ ] mirror([x,y,z])
+- [ ] multmatrix(m)
+- [ ] color("color", alpha)
 
-## 7. OpenSCAD Compatibility
-- [ ] Import existing OpenSCAD files
-- [ ] Compatibility layer for common idioms
-- [ ] Migration guide
-- [ ] Common pattern translations
+### Advanced Transforms
+- [ ] offset(r|delta, chamfer)
+- [ ] minkowski()
+- [ ] hull()
+- [ ] projection(cut = true/false)
+- [ ] linear_extrude(height, ...)
+- [ ] rotate_extrude(angle, ...)
 
-## 8. Advanced Features
-- [ ] Named anchors and attachment points
-- [ ] Parametric designs
-- [ ] Library system
-- [ ] Meta-programming capabilities
-- [ ] Debug visualization tools
+## Primitives
 
-## 9. Infrastructure
-- [x] Clean separation between layers:
-  - [x] SDF layer: Pure mathematical primitives
-  - [x] OpenSCAD layer: CAD operations and modules
-  - [x] Bridge layer: Converts between representations
-- [x] Testing infrastructure
-- [x] Error handling
+### 2D Primitives
+- [ ] circle(r|d)
+- [ ] square(size, center)
+- [ ] polygon(points, paths)
+- [ ] text(text, size, ...)
+
+### 3D Primitives
+- [x] sphere(r|d)
+- [x] cube(size, center)
+- [x] cylinder(h, r|d, ...)
+- [ ] polyhedron(points, faces)
+
+## Boolean Operations
+
+### Basic Operations
+- [x] union()
+- [x] difference()
+- [ ] intersection()
+
+### Advanced Operations
+- [x] smooth_union() (Non-standard extension)
+- [x] smooth_difference() (Non-standard extension)
+- [x] smooth_intersection() (Non-standard extension)
+
+## Special Features
+- [ ] import() for STL/DXF/etc
+- [ ] surface() for heightmaps
+- [ ] render(convexity)
+- [ ] children() selector
+- [ ] $fn, $fa, $fs variables
+- [ ] Special variables ($t, etc)
+
+## Standard Library
+- [ ] Math functions (sin, cos, etc)
+- [ ] List operations
+- [ ] String functions
+- [ ] Common shapes (regular_polygon, etc)
+
+## Implementation Notes
+
+1. Parser Enhancements Needed:
+   - Add support for function definitions
+   - Implement control flow parsing
+   - Add string and boolean literal support
+   - Support for more operators
+
+2. Evaluation Changes:
+   - Add scope for function definitions
+   - Implement control flow evaluation
+   - Add type system for lists/strings
+
+3. SDF Generation:
+   - Implement remaining primitives
+   - Add support for 2D operations
+   - Add extrusion support
+   - Implement remaining transforms
+
+4. Standard Library:
+   - Port essential OpenSCAD functions
+   - Implement common shape helpers
+   - Add math function support
+
+## Extensions Beyond OpenSCAD
+
+Current extensions to standard OpenSCAD:
+- [x] Smooth boolean operations
+- [ ] Direct SDF function support
+- [ ] Live preview with ray marching
+- [ ] Adaptive mesh generation
