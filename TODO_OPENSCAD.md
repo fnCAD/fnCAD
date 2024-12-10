@@ -2,31 +2,32 @@
 
 ## Core Language Features
 
+### Differences from OpenSCAD
+- `var a = 3;` explicitly defines a scoped variable `a`.
+- `a = 5;` reassigns `a` *even for future scopes* by overwriting the *existing* binding. (Like in every other language!)
+- `module foo()` can return values, obviating functions.
+- All loop/group operators return *grouped* SDFs, which are *expanded* in the caller.
+   This removes the need for `intersection_for`.
+
 ### Modules and Functions
 - [x] Basic module calls with parameters
 - [x] Module blocks with children
 - [x] Named parameters on call
 - [x] Default parameter values
 - [x] Module definitions
-- [ ] Function definitions
-- [ ] Let expressions
 - [ ] Echo statements for debugging
 - [ ] Assert statements
-- [ ] Module instantiation (use)
+- [x] Module instantiation (use)
 
 ### Control Flow
 - [ ] For loops
-- [ ] Intersection_for
 - [ ] If/else conditionals
 - [ ] Conditional operator (?:)
-
-### Syntax divergences from OpenSCAD
-- [ ] `var a = val;` clarifies that a new name is created
 
 ### Variables and Expressions
 - [x] Basic arithmetic (+, -, *, /)
 - [x] Vector literals `[x, y, z]`
-- [ ] List index `a[2]`
+- [x] List index `a[2]`
 - [ ] List comprehensions
 - [ ] Range expressions `[start:step:end]`
 - [/] String literals and concatenation

@@ -1,7 +1,7 @@
 import {
   Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
   SDFExpression, isSDFExpression, Expression, BinaryExpression, VectorLiteral,
-  SourceLocation,
+  SourceLocation, IndexExpression,
 } from './types';
 
 export type EvalResult = number | number[];

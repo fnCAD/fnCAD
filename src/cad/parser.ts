@@ -11,7 +11,7 @@ import {
   Node, ModuleDeclaration, ModuleCall, Expression, 
   Parameter, Statement, BinaryExpression, NumberLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
-  ParameterLocation, VectorLiteral
+  ParameterLocation, VectorLiteral, IndexExpression,
 } from './types';
 import { parseError } from './errors';
 
@@ -300,7 +300,16 @@ export class Parser {
       if (token.value === 'module') {
         return this.parseModuleDeclaration();
       }
-      return this.parseModuleCall();
+      // Parse as expression first to handle array indexing
+      const expr = this.parseExpression();
+      if (this.match(';')) {
+        return expr;
+      }
+      // If no semicolon, treat as module call
+      if (expr instanceof ModuleCall) {
+        return expr;
+      }
+      throw parseError(`Expected ; after expression`, this.previous().location);
     }
     
     if (token.type === 'number') {
@@ -368,12 +377,7 @@ export class Parser {
     return statements;
   }
 
-  private parseModuleCall(): ModuleCall {
-    const nameToken = this.peek();
-    const name = nameToken.value;
-    this.beginModuleCall(name, nameToken);
-    this.advance();
-
+  private parseModuleCall(name: string, location: SourceLocation): ModuleCall {
     const args = this.parseArguments();
 
     let children: Statement[] | undefined;
@@ -384,7 +388,7 @@ export class Parser {
       children = this.parseBlock();
       this.endModuleCall(this.previous());
       return new ModuleCall(name, args, children, {
-        start: nameToken.location.start,
+        start: location.start,
         end: this.previous().location.end,
         source: this.source
       });
@@ -395,7 +399,7 @@ export class Parser {
       const semicolon = this.advance();
       this.endModuleCall(semicolon);
       return new ModuleCall(name, args, undefined, {
-        start: nameToken.location.start,
+        start: location.start,
         end: semicolon.location.end,
         source: this.source
       });
@@ -404,7 +408,7 @@ export class Parser {
     // Case 3: Single child without braces
     const child = this.parseStatement();
     return new ModuleCall(name, args, [child], {
-      start: nameToken.location.start,
+      start: location.start,
       end: child.location.end,
       source: this.source
     });
@@ -414,7 +418,7 @@ export class Parser {
       args,
       children,
       {
-        start: nameToken.location.start,
+        start: location.start,
         end: this.previous().location.end,
         source: this.source
       }
@@ -568,15 +572,13 @@ export class Parser {
         expr = new NumberLiteral(parseFloat(token.value), token.location);
         break;
       case 'identifier':
-        expr = new Identifier(token.value, token.location);
-        // Handle function call if it's followed by (
+        const name = token.value;
+        // Handle module call if it's followed by (
         if (this.check('(')) {
-          const args = this.parseArguments();
-          expr = new ModuleCall(token.value, args, undefined, {
-            start: token.location.start,
-            end: this.previous().location.end,
-            source: this.source
-          });
+          this.beginModuleCall(name, token);
+          expr = this.parseModuleCall(name, token.location);
+        } else {
+          expr = new Identifier(token.value, token.location);
         }
         break;
       default:
