@@ -66,8 +66,8 @@
 - [x] Performance settings
 
 ## 9. Language Redesign
-- [ ] Switch to OpenSCAD-like syntax (see TODO_OPENSCAD.md)
-- [ ] SDF lowering layer for OpenSCAD operations
+- [x] Switch to OpenSCAD-like syntax (see TODO_OPENSCAD.md)
+- [x] SDF lowering layer for OpenSCAD operations
 - [ ] Preserve direct SDF function support as escape hatch
 
 ## 10. Advanced Features
@@ -77,8 +77,8 @@
 - [ ] Material/color support
 
 ## 11. Documentation & Examples
-- [ ] User guide
-- [ ] OpenSCAD compatibility guide
+- [x] User guide
+- [x] OpenSCAD compatibility guide
 - [ ] SDF function reference
 - [ ] Example gallery
 - [ ] Tutorial content
