@@ -77,7 +77,27 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
 
 // Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
 // Returns undefined for statements that don't produce values (like module declarations)
-function evalSDFBlock(nodes: Node[], context: Context): SDFExpression[] {
+/**
+ * Helper functions for handling SDF children
+ * 
+ * Module handler checklist for conversion:
+ * [ ] smooth_union
+ * [ ] smooth_intersection 
+ * [ ] smooth_difference
+ * [ ] cube
+ * [ ] sphere
+ * [ ] box
+ * [ ] cylinder
+ * [ ] translate
+ * [ ] rotate
+ * [ ] scale
+ * [ ] union
+ * [ ] difference
+ * [ ] custom modules
+ */
+
+// First step: evaluate children and ensure they're all valid SDFs
+function flattenScope(nodes: Node[], context: Context, errorMsg: string, location: SourceLocation): SDFExpression[] {
   const results: SDFExpression[] = [];
   
   for (const node of nodes) {
@@ -87,14 +107,36 @@ function evalSDFBlock(nodes: Node[], context: Context): SDFExpression[] {
     if (result === undefined) continue;
     
     // Validate SDF type and throw location-aware error
-    if (typeof result === 'number' || !('type' in result) || result.type !== 'sdf') {
-      throw parseError('Expected SDF expression in block', node.location);
+    if (!isSDFExpression(result)) {
+      throw parseError(errorMsg, location);
     }
     
-    results.push(result as SDFExpression);
+    results.push(result);
   }
   
   return results;
+}
+
+// Second step: optionally wrap multiple SDFs in a union
+function wrapUnion(expressions: SDFExpression[]): SDFExpression {
+  if (expressions.length === 0) {
+    return { type: 'sdf', expr: '0' };
+  }
+  if (expressions.length === 1) {
+    return expressions[0];
+  }
+  return {
+    type: 'sdf',
+    expr: `min(${expressions.map(e => e.expr).join(', ')})`
+  };
+}
+
+function evalSDFBlock(nodes: Node[], context: Context): SDFExpression[] {
+  return flattenScope(nodes, context, 'Expected SDF expression in block', nodes[0]?.location || {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: ''
+  });
 }
 
 export function evalCAD(node: Node, context: Context): Value | undefined {
