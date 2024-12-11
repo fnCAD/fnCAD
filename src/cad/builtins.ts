@@ -266,6 +266,14 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'sphere': {
       const r = evalArg(0, 1);
+      if (typeof r !== 'number') {
+        throw parseError('sphere radius must be a number', call.location);
+      }
+      
+      if (call.children?.length) {
+        throw parseError('sphere does not accept children', call.location);
+      }
+      
       return {
         type: 'sdf',
         expr: `sqrt(x*x + y*y + z*z) - ${r}`
