@@ -87,9 +87,9 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * [x] cube (no children)
  * [x] sphere (no children)
  * [x] cylinder (no children)
- * [ ] translate
- * [ ] rotate
- * [ ] scale
+ * [x] translate
+ * [x] rotate
+ * [x] scale
  * [ ] union
  * [ ] difference
  * [ ] custom modules
@@ -300,16 +300,15 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     case 'translate': {
       const vec = checkVector(evalArg(0), 3, call.location);
       const [dx, dy, dz] = vec;
-      if (!call.children?.[0]) {
-        throw parseError('translate requires a child node', call.location);
+      
+      const children = flattenScope(call.children || [], context, 'translate', call.location);
+      if (children.length === 0) {
+        throw parseError('translate requires at least one child', call.location);
       }
-      const child = evalCAD(call.children[0], context);
-      if (!child || !isSDFExpression(child)) {
-        throw parseError('translate requires an SDF expression', call.location);
-      }
+      
       return {
         type: 'sdf',
-        expr: `translate(${dx}, ${dy}, ${dz}, ${child.expr})`
+        expr: `translate(${dx}, ${dy}, ${dz}, ${wrapUnion(children).expr})`
       };
     }
 
@@ -317,16 +316,15 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const vec = checkVector(evalArg(0), 3, call.location);
       // Convert degrees to radians
       const [rx, ry, rz] = vec.map(deg => deg * Math.PI / 180);
-      if (!call.children?.[0]) {
-        throw parseError('rotate requires a child node', call.location);
+      
+      const children = flattenScope(call.children || [], context, 'rotate', call.location);
+      if (children.length === 0) {
+        throw parseError('rotate requires at least one child', call.location);
       }
-      const child = evalCAD(call.children[0], context);
-      if (!child || !isSDFExpression(child)) {
-        throw parseError('rotate requires an SDF expression', call.location);
-      }
+      
       return {
         type: 'sdf',
-        expr: `rotate(${rx}, ${ry}, ${rz}, ${child.expr})`
+        expr: `rotate(${rx}, ${ry}, ${rz}, ${wrapUnion(children).expr})`
       };
     }
 
@@ -334,19 +332,18 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const sx = evalArg(0, 1);
       const sy = evalArg(1, 1);
       const sz = evalArg(2, 1);
-      if (!call.children?.[0]) {
-        throw parseError('scale requires a child node', call.location);
-      }
       if (typeof sx !== 'number' || typeof sy !== 'number' || typeof sz !== 'number') {
         throw parseError('scale() type error', call.location);
       }
-      const child = evalCAD(call.children[0], context);
-      if (!child || !isSDFExpression(child)) {
-        throw parseError('scale requires an SDF expression', call.location);
+      
+      const children = flattenScope(call.children || [], context, 'scale', call.location);
+      if (children.length === 0) {
+        throw parseError('scale requires at least one child', call.location);
       }
+      
       return {
         type: 'sdf',
-        expr: `(scale(${sx}, ${sy}, ${sz}, ${child.expr}) * ${Math.min(sx, sy, sz)})`
+        expr: `(scale(${sx}, ${sy}, ${sz}, ${wrapUnion(children).expr}) * ${Math.min(sx, sy, sz)})`
       };
     }
 
