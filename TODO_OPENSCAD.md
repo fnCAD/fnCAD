@@ -20,8 +20,8 @@
 - [x] Module instantiation (use)
 
 ### Control Flow
-- [ ] For loops
-- [ ] If/else conditionals
+- [x] For loops
+- [x] If/else conditionals
 - [ ] Conditional operator (?:)
 
 ### Variables and Expressions
@@ -29,12 +29,12 @@
 - [x] Vector literals `[x, y, z]`
 - [x] List index `a[2]`
 - [x] Variable declarations
-- [ ] For loops with range `for(var i = [1:10])`
+- [x] For loops with range `for(var i = [1:10])`
 - [ ] List comprehensions
-- [ ] Range expressions `[start:step:end]`
+- [ ] Ranges with step `[start:step:end]`
 - [/] String literals and concatenation
-- [ ] Boolean operations (&&, ||, !)
-- [ ] Comparison operators (<, >, ==, etc)
+- [x] Boolean operations (&&, ||, !)
+- [x] Comparison operators (<, >, ==, etc)
 
 ## Transformations
 
