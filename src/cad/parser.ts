@@ -322,6 +322,9 @@ export class Parser {
   private parseStatement(): Node {
     const token = this.peek();
     if (token.type === 'identifier') {
+      if (token.value === 'for') {
+        return this.parseForLoop();
+      }
       if (token.value === 'var') {
         this.advance(); // Skip 'var'
         const decl = this.parseVariableDeclaration();
@@ -622,6 +625,39 @@ export class Parser {
     }
 
     return expr;
+  }
+
+  private parseForLoop(): ForLoop {
+    const startLocation = this.peek().location;
+    this.advance(); // consume 'for'
+    
+    this.expect('(', 'Expected ( after for');
+    this.expect('var', 'Expected var declaration in for loop');
+    
+    const varName = this.expectIdentifier('Expected variable name').value;
+    this.expect('=', 'Expected = after variable name');
+    
+    // Parse range expression [start:end]
+    this.expect('[', 'Expected [ for range');
+    const start = this.parseExpression();
+    this.expect(':', 'Expected : in range');
+    const end = this.parseExpression();
+    this.expect(']', 'Expected ] after range');
+    
+    this.expect(')', 'Expected ) after for header');
+    
+    const body = this.parseBlock();
+    
+    return new ForLoop(
+      varName,
+      { start, end },
+      body,
+      {
+        start: startLocation.start,
+        end: this.previous().location.end,
+        source: this.source
+      }
+    );
   }
 
   private parseVectorLiteral(): VectorLiteral {

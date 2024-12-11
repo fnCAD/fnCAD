@@ -110,6 +110,30 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
     context.set(node.name, value);
     return undefined;
   }
+  if (node instanceof ForLoop) {
+    const start = evalExpression(node.range.start, context);
+    const end = evalExpression(node.range.end, context);
+    
+    if (typeof start !== 'number' || typeof end !== 'number') {
+      throw parseError('For loop range must evaluate to numbers', node.location);
+    }
+
+    // Create new scope for loop variable
+    const loopContext = context.child();
+    let lastResult: Value | undefined;
+
+    for (let i = start; i <= end; i++) {
+      loopContext.set(node.variable, i);
+      // Evaluate body statements
+      for (const stmt of node.body) {
+        const result = evalCAD(stmt, loopContext);
+        if (result !== undefined) {
+          lastResult = result;
+        }
+      }
+    }
+    return lastResult;
+  }
   if (node instanceof Expression) {
     return evalExpression(node, context);
   }

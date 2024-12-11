@@ -85,6 +85,18 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(result)).not.toThrow();
   });
 
+  test('handles basic for loops', () => {
+    const ctx = new Context();
+    const result = parse(`
+      var sum = 0;
+      for(var i = [1:3]) {
+        var sum = sum + i;
+      }
+      sum;
+    `);
+    expect(evalCAD(result, ctx)).toBe(6); // 1 + 2 + 3
+  });
+
   test('handles whitespace only input', () => {
     const result = parse('   \n   \t   ');
     expect(result).toBeDefined();
