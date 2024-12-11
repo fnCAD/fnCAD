@@ -82,7 +82,7 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * 
  * Module handler checklist for conversion:
  * [x] smooth_union
- * [ ] smooth_intersection 
+ * [x] smooth_intersection 
  * [ ] smooth_difference
  * [ ] cube
  * [ ] sphere
@@ -233,16 +233,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (typeof radius !== 'number') {
         throw parseError('smooth_intersection radius must be a number', call.location);
       }
-      const results = call.children.map(c => evalCAD(c, context));
-      if (results.some(r => typeof r === 'number')) {
-        throw parseError('smooth_intersection requires SDF children', call.location);
-      }
-      const children = results.map(r => (r as SDFExpression).expr);
       
-      // Reduce multiple children using binary smooth_intersection
+      const children = flattenScope(call.children, context, 'smooth_intersection requires SDF children', call.location);
       return {
         type: 'sdf',
-        expr: children.reduce((acc, curr) => smooth_intersection(acc, curr, radius))
+        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_intersection(acc, curr, radius))
       };
     }
 
