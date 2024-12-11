@@ -1,7 +1,7 @@
 import {
   Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
   SDFExpression, isSDFExpression, Expression, BinaryExpression, VectorLiteral,
-  SourceLocation, IndexExpression, VariableDeclaration,
+  SourceLocation, IndexExpression, VariableDeclaration, ForLoop,
 } from './types';
 
 export type EvalResult = number | number[];
@@ -120,7 +120,7 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
 
     // Create new scope for loop variable
     const loopContext = context.child();
-    let lastResult: Value | undefined;
+    const results: SDFExpression[] = [];
 
     for (let i = start; i <= end; i++) {
       loopContext.set(node.variable, i);
@@ -128,11 +128,17 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
       for (const stmt of node.body) {
         const result = evalCAD(stmt, loopContext);
         if (result !== undefined) {
-          lastResult = result;
+          if (!isSDFExpression(result)) {
+            throw parseError('Expected SDF expression in for loop body', stmt.location);
+          }
+          results.push(result);
         }
       }
     }
-    return lastResult;
+    return {
+      type: 'group',
+      expressions: results
+    };
   }
   if (node instanceof Expression) {
     return evalExpression(node, context);

@@ -30,7 +30,16 @@ export interface ParameterLocation {
 }
 
 // Result types for evaluation
-export type Value = number | SDFExpression | number[];
+export type Value = number | SDFExpression | number[] | SDFGroup;
+
+export interface SDFGroup {
+  type: 'group';
+  expressions: SDFExpression[];
+}
+
+export function isSDFGroup(value: Value): value is SDFGroup {
+  return typeof value === 'object' && 'type' in value && value.type === 'group';
+}
 
 export function isSDFExpression(value: Value): value is SDFExpression {
   if (typeof value === 'number' || Array.isArray(value)) return false;

@@ -12,7 +12,7 @@ import {
   Parameter, Statement, BinaryExpression, NumberLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
   ParameterLocation, VectorLiteral, IndexExpression,
-  VariableDeclaration,
+  VariableDeclaration, ForLoop,
 } from './types';
 import { parseError } from './errors';
 
@@ -696,6 +696,7 @@ const tokenTypes: { [key: string]: string } = {
   ',': 'comma',
   ';': 'semicolon',
   '=': 'equals',
+  ':': 'colon',
   '+': 'operator',
   '-': 'operator',
   '*': 'operator',
