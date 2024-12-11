@@ -86,7 +86,6 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * [x] smooth_difference
  * [x] cube (no children)
  * [ ] sphere (no children)
- * [ ] box (no children)
  * [ ] cylinder (no children)
  * [ ] translate
  * [ ] rotate
@@ -280,21 +279,6 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
-    case 'box': {
-      const size = evalArg(0, 1);
-      if (typeof size !== 'number') {
-        throw parseError('box size must be a number', call.location);
-      }
-      
-      if (call.children?.length) {
-        throw parseError('box does not accept children', call.location);
-      }
-      
-      return {
-        type: 'sdf',
-        expr: `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`
-      };
-    }
 
     case 'cylinder': {
       const radius = evalArg(0, 0.5);
