@@ -145,6 +145,17 @@ export class VariableDeclaration extends Statement {
   }
 }
 
+export class ForLoop extends Statement {
+  constructor(
+    public variable: string,
+    public range: { start: Expression, end: Expression },
+    public body: Statement[],
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
 export class ModuleDeclaration extends Statement {
   constructor(
     public name: string,

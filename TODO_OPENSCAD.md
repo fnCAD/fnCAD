@@ -28,6 +28,8 @@
 - [x] Basic arithmetic (+, -, *, /)
 - [x] Vector literals `[x, y, z]`
 - [x] List index `a[2]`
+- [x] Variable declarations
+- [ ] For loops with range `for(var i = [1:10])`
 - [ ] List comprehensions
 - [ ] Range expressions `[start:step:end]`
 - [/] String literals and concatenation
