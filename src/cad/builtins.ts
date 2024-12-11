@@ -90,9 +90,9 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * [x] translate
  * [x] rotate
  * [x] scale
- * [ ] union
- * [ ] difference
- * [ ] custom modules
+ * [x] union
+ * [x] difference
+ * [x] custom modules
  */
 
 // First step: evaluate children and ensure they're all valid SDFs
@@ -351,29 +351,26 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (!call.children?.length) {
         return { type: 'sdf', expr: '0' };
       }
-      const children = flattenScope(call.children, context, 'block', call.location);
-      if (children.length === 0) {
-        return { type: 'sdf', expr: '0' };
-      }
-      return {
-        type: 'sdf',
-        expr: `min(${children.map(c => c.expr).join(', ')})`
-      };
+      const children = flattenScope(call.children, context, 'union', call.location);
+      return wrapUnion(children);
     }
 
     case 'difference': {
       if (!call.children?.length) {
-        return { type: 'sdf', expr: '0' };
+        throw parseError('difference requires at least one child', call.location);
       }
-      const results = call.children.map(c => evalCAD(c, context));
-      if (results.some(r => !r || !isSDFExpression(r))) {
-        throw parseError('difference requires SDF children', call.location);
+      const children = flattenScope(call.children, context, 'difference', call.location);
+      if (children.length === 0) {
+        throw parseError('difference requires at least one child', call.location);
       }
-      const children = results.map(r => (r as SDFExpression).expr);
-      const negatedChildren = children.slice(1).map(c => `-(${c})`);
+      
+      // First child is the base shape, remaining children are subtracted
+      const base = children[0].expr;
+      const negatedChildren = children.slice(1).map(c => `-(${c.expr})`);
+      
       return {
         type: 'sdf',
-        expr: `max(${children[0]}, ${negatedChildren.join(', ')})`
+        expr: `max(${base}, ${negatedChildren.join(', ')})`
       };
     }
 
@@ -383,8 +380,12 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (!scopedModule) {
         throw parseError(`Unknown module: ${call.name}`, call.location);
       }
-
-      return scopedModule.call(call.args, context);
+      
+      const result = scopedModule.call(call.args, context);
+      if (!isSDFExpression(result)) {
+        throw parseError(`Module ${call.name} must return an SDF expression`, call.location);
+      }
+      return result;
     }
   }
 }
