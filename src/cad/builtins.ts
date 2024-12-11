@@ -301,7 +301,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const vec = checkVector(evalArg(0), 3, call.location);
       const [dx, dy, dz] = vec;
       
-      const children = flattenScope(call.children || [], context, 'translate', call.location);
+      const children = flattenScope(call.children, context, 'translate', call.location);
       if (children.length === 0) {
         throw parseError('translate requires at least one child', call.location);
       }
@@ -317,7 +317,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       // Convert degrees to radians
       const [rx, ry, rz] = vec.map(deg => deg * Math.PI / 180);
       
-      const children = flattenScope(call.children || [], context, 'rotate', call.location);
+      const children = flattenScope(call.children, context, 'rotate', call.location);
       if (children.length === 0) {
         throw parseError('rotate requires at least one child', call.location);
       }
@@ -336,7 +336,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('scale() type error', call.location);
       }
       
-      const children = flattenScope(call.children || [], context, 'scale', call.location);
+      const children = flattenScope(call.children, context, 'scale', call.location);
       if (children.length === 0) {
         throw parseError('scale requires at least one child', call.location);
       }
