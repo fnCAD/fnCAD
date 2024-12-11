@@ -159,8 +159,8 @@ export class Parser {
         current = this.handleIdentifier(current);
         continue;
       }
-      if (this.isSingleCharToken(char)) {
-        current = this.handleSingleCharToken(char, current);
+      if (this.isSymbolToken(char)) {
+        current = this.handleSymbolToken(char, current);
         continue;
       }
       throw parseError(`Unexpected character: ${char}`, this.getTokenLocation(current));
@@ -276,11 +276,11 @@ export class Parser {
     return current;
   }
 
-  private isSingleCharToken(char: string): boolean {
+  private isSymbolToken(char: string): boolean {
     return char in tokenTypes;
   }
 
-  private handleSingleCharToken(char: string, current: number): number {
+  private handleSymbolToken(char: string, current: number): number {
     // Check for two-character operators
     const nextChar = current + 1 < this.source.length ? this.source[current + 1] : '';
     let value = char;

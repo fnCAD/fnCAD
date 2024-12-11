@@ -53,6 +53,30 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(parse('rotate([1, 2, 3, 4]) sphere(1);'))).toThrow(ParseError);
   });
 
+  test('handles boolean operators', () => {
+    // Basic boolean operations
+    expect(() => parse('if (1 && 0) {}')).not.toThrow();
+    expect(() => parse('if (1 || 0) {}')).not.toThrow();
+    
+    // Comparison operators
+    expect(() => parse('if (x == 1) {}')).not.toThrow();
+    expect(() => parse('if (x != 0) {}')).not.toThrow();
+    expect(() => parse('if (x <= 5) {}')).not.toThrow();
+    expect(() => parse('if (x >= 2) {}')).not.toThrow();
+    
+    // Short-circuit evaluation
+    const ctx = new Context();
+    parse('var x = 1 && 2;').map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('x')).toBe(1);
+    
+    parse('var y = 0 || 3;').map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('y')).toBe(1);
+    
+    // Operator precedence
+    parse('var z = 1 && 0 || 1;').map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('z')).toBe(1);
+  });
+
   test('handles array indexing', () => {
     // Basic indexing
     expect(() => parse('v[0];')).not.toThrow();
