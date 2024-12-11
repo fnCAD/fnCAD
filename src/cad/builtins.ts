@@ -285,6 +285,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (typeof size !== 'number') {
         throw parseError('box size must be a number', call.location);
       }
+      
+      if (call.children?.length) {
+        throw parseError('box does not accept children', call.location);
+      }
+      
       return {
         type: 'sdf',
         expr: `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`
