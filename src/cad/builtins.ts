@@ -100,8 +100,11 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
 function flattenScope(nodes: Node[], context: Context, errorMsg: string, location: SourceLocation): SDFExpression[] {
   const results: SDFExpression[] = [];
   
+  // Create new scope for evaluating children
+  const childScope = context.child();
+  
   for (const node of nodes) {
-    const result = evalCAD(node, context);
+    const result = evalCAD(node, childScope);
     
     // Skip undefined results (like module declarations)
     if (result === undefined) continue;
