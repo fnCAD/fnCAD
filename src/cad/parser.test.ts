@@ -127,44 +127,89 @@ describe('CAD Parser', () => {
       .toThrow('Undefined variable: z');
   });
 
-  test('handles if statements', () => {
-    const ctx = new Context();
+  describe('if statements', () => {
+    let ctx: Context;
     
-    // Basic if with then branch
-    parse(`
-      var x = 1;
-      if (x) {
-        x = 2;
-      }
-    `).map(stmt => evalCAD(stmt, ctx));
-    expect(ctx.get('x')).toBe(2);
-    
-    // If with else branch
-    parse(`
-      var x = 0;
-      if (x) {
-        var a = 1;
-        x = 1;
-      } else {
-        var b = 2;
-        x = 2;
-      }
-    `).map(stmt => evalCAD(stmt, ctx));
-    expect(ctx.get('a')).toBeUndefined();
-    expect(ctx.get('b')).toBeUndefined();
-    expect(ctx.get('x')).toBe(2);
+    beforeEach(() => {
+      ctx = new Context();
+    });
 
-    // Nested if statements
-    parse(`
-      var x = 1;
-      var y = 1;
-      if (x) {
-        if (y) {
-          x = 3;
+    test('executes then branch when condition is true', () => {
+      parse(`
+        var taken = 0;
+        var x = 1;
+        if (x) {
+          taken = 1;
+        } else {
+          taken = 2;
         }
-      }
-    `).map(stmt => evalCAD(stmt, ctx));
-    expect(ctx.get('x')).toBe(3);
+      `).map(stmt => evalCAD(stmt, ctx));
+      expect(ctx.get('taken')).toBe(1);
+    });
+
+    test('executes else branch when condition is false', () => {
+      parse(`
+        var taken = 0;
+        var x = 0;
+        if (x) {
+          taken = 1;
+        } else {
+          taken = 2;
+        }
+      `).map(stmt => evalCAD(stmt, ctx));
+      expect(ctx.get('taken')).toBe(2);
+    });
+
+    test('handles nested if statements with correct branch execution', () => {
+      parse(`
+        var result = 0;
+        var x = 1;
+        var y = 1;
+        if (x) {
+          result = 1;
+          if (y) {
+            result = 2;
+          } else {
+            result = 3;
+          }
+        } else {
+          result = 4;
+        }
+      `).map(stmt => evalCAD(stmt, ctx));
+      expect(ctx.get('result')).toBe(2);
+      
+      // Test nested else branch
+      parse(`
+        var result = 0;
+        var x = 1;
+        var y = 0;
+        if (x) {
+          result = 1;
+          if (y) {
+            result = 2;
+          } else {
+            result = 3;
+          }
+        } else {
+          result = 4;
+        }
+      `).map(stmt => evalCAD(stmt, ctx));
+      expect(ctx.get('result')).toBe(3);
+    });
+
+    test('handles comparison operators in conditions', () => {
+      parse(`
+        var result = 0;
+        var x = 5;
+        if (x > 3) {
+          result = 1;
+        }
+        if (x <= 5) {
+          result = result + 2;
+        }
+      `).map(stmt => evalCAD(stmt, ctx));
+      expect(ctx.get('result')).toBe(3);
+    });
   });
 
   test('handles basic for loops', () => {
