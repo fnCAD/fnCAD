@@ -358,12 +358,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'scale': {
-      const sx = evalArg(0, 1);
-      const sy = evalArg(1, 1);
-      const sz = evalArg(2, 1);
-      if (typeof sx !== 'number' || typeof sy !== 'number' || typeof sz !== 'number') {
-        throw parseError('scale() type error', call.location);
-      }
+      const vec = checkVector(evalArg(0), 3, call.location);
+      const [sx, sy, sz] = vec;
       
       const children = flattenScope(call.children, context, 'scale', call.location);
       if (children.length === 0) {

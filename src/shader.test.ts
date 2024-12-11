@@ -80,7 +80,7 @@ describe('Shader Generation and Raymarching', () => {
 
   it('correctly raymarches stretched sphere from all angles', () => {
     const cadCode = `
-      scale(1, 1, 2) {
+      scale([1, 1, 2]) {
         sphere(1);
       }
     `;
