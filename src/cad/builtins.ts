@@ -51,6 +51,14 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
       case '/': 
         if (right === 0) throw new Error('Division by zero');
         return left / right;
+      case '==': return Number(left === right);
+      case '!=': return Number(left !== right);
+      case '<': return Number(left < right);
+      case '<=': return Number(left <= right);
+      case '>': return Number(left > right);
+      case '>=': return Number(left >= right);
+      case '&&': return left !== 0 && right !== 0 ? 1 : 0;
+      case '||': return left !== 0 || right !== 0 ? 1 : 0;
     }
   }
   if (expr instanceof VectorLiteral) {

@@ -281,17 +281,30 @@ export class Parser {
   }
 
   private handleSingleCharToken(char: string, current: number): number {
+    // Check for two-character operators
+    const nextChar = current + 1 < this.source.length ? this.source[current + 1] : '';
+    let value = char;
+    let length = 1;
+
+    if (nextChar) {
+      const combined = char + nextChar;
+      if (['==', '!=', '<=', '>=', '&&', '||'].includes(combined)) {
+        value = combined;
+        length = 2;
+      }
+    }
+
     this.tokens.push({
       type: tokenTypes[char],
-      value: char,
+      value,
       location: {
         start: { line: this.line, column: this.column, offset: current },
-        end: { line: this.line, column: this.column + 1, offset: current + 1 },
+        end: { line: this.line, column: this.column + length, offset: current + length },
         source: this.source
       }
     });
-    current++;
-    this.column++;
+    current += length;
+    this.column += length;
     return current;
   }
 
@@ -737,7 +750,12 @@ const tokenTypes: { [key: string]: string } = {
   '+': 'operator',
   '-': 'operator',
   '*': 'operator',
-  '/': 'operator'
+  '/': 'operator',
+  '<': 'operator',
+  '>': 'operator',
+  '!': 'operator',
+  '&': 'operator',
+  '|': 'operator'
 };
 
 interface OperatorPrecedence {
@@ -746,10 +764,18 @@ interface OperatorPrecedence {
 }
 
 const operatorPrecedence: { [operator: string]: OperatorPrecedence } = {
-  '+': { associativity: 'left', precedence: 1 },
-  '-': { associativity: 'left', precedence: 1 },
-  '*': { associativity: 'left', precedence: 2 },
-  '/': { associativity: 'left', precedence: 2 }
+  '||': { associativity: 'left', precedence: 1 },
+  '&&': { associativity: 'left', precedence: 2 },
+  '==': { associativity: 'left', precedence: 3 },
+  '!=': { associativity: 'left', precedence: 3 },
+  '<': { associativity: 'left', precedence: 4 },
+  '<=': { associativity: 'left', precedence: 4 },
+  '>': { associativity: 'left', precedence: 4 },
+  '>=': { associativity: 'left', precedence: 4 },
+  '+': { associativity: 'left', precedence: 5 },
+  '-': { associativity: 'left', precedence: 5 },
+  '*': { associativity: 'left', precedence: 6 },
+  '/': { associativity: 'left', precedence: 6 }
 };
 
 function getOperatorPrecedence(value: string): OperatorPrecedence {

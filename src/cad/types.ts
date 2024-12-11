@@ -245,7 +245,7 @@ export class NumberLiteral extends Expression {
 
 export class BinaryExpression extends Expression {
   constructor(
-    public operator: '+' | '-' | '*' | '/',
+    public operator: '+' | '-' | '*' | '/' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | '||',
     public left: Expression,
     public right: Expression,
     location: SourceLocation
