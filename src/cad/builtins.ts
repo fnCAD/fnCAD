@@ -234,7 +234,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('smooth_intersection radius must be a number', call.location);
       }
       
-      const children = flattenScope(call.children, context, 'smooth_intersection requires SDF children', call.location);
+      const children = flattenScope(call.children, context, 'smooth_intersection', call.location);
       return {
         type: 'sdf',
         expr: children.map(c => c.expr).reduce((acc, curr) => smooth_intersection(acc, curr, radius))
