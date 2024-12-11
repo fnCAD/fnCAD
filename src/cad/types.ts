@@ -176,19 +176,34 @@ export class ModuleDeclaration extends Statement {
   }
 
   call(context: Context): SDFExpression {
-    // Evaluate module body in the context
-    let result: Value = { type: 'sdf', expr: '0' };
+    // Evaluate all statements in the module body
+    const results: SDFExpression[] = [];
+    
     for (const statement of this.body) {
-      const statementResult = evalCAD(statement, context);
-      if (statementResult !== undefined) {
-        result = statementResult;
+      const result = evalCAD(statement, context);
+      if (result !== undefined) {
+        if (!isSDFExpression(result)) {
+          throw new Error('Module statements must evaluate to SDF expressions');
+        }
+        results.push(result);
       }
     }
 
-    if (!isSDFExpression(result)) {
-      throw new Error('Module must return an SDF expression');
+    // Return empty SDF if no statements produced results
+    if (results.length === 0) {
+      return { type: 'sdf', expr: '0' };
     }
-    return result as SDFExpression;
+    
+    // Return single result directly
+    if (results.length === 1) {
+      return results[0];
+    }
+    
+    // Multiple results get combined with union
+    return {
+      type: 'sdf',
+      expr: `min(${results.map(r => r.expr).join(', ')})`
+    };
   }
 }
 
