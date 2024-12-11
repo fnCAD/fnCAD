@@ -85,8 +85,8 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * [x] smooth_intersection 
  * [x] smooth_difference
  * [x] cube (no children)
- * [ ] sphere (no children)
- * [ ] cylinder (no children)
+ * [x] sphere (no children)
+ * [x] cylinder (no children)
  * [ ] translate
  * [ ] rotate
  * [ ] scale
@@ -286,6 +286,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (typeof radius !== 'number' || typeof height !== 'number') {
         throw parseError('cylinder radius and height must be numbers', call.location);
       }
+      
+      if (call.children?.length) {
+        throw parseError('cylinder does not accept children', call.location);
+      }
+      
       return {
         type: 'sdf',
         expr: `max(sqrt(x*x + z*z) - ${radius}, abs(y) - ${height/2})`
