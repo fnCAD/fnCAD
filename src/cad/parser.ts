@@ -12,6 +12,7 @@ import {
   Parameter, Statement, BinaryExpression, NumberLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
   ParameterLocation, VectorLiteral, IndexExpression,
+  VariableDeclaration,
 } from './types';
 import { parseError } from './errors';
 
@@ -106,6 +107,14 @@ export class Parser {
     throw parseError(message, location);
   }
 
+  private expectIdentifier(message: string): Token {
+    const token = this.peek();
+    if (token.type === 'identifier') {
+      return this.advance();
+    }
+    throw parseError(message, token.location);
+  }
+
   /* Tokenize the input source into a stream of tokens.
    * Handles:
    * - Whitespace and newlines for line/column tracking
@@ -113,6 +122,22 @@ export class Parser {
    * - Identifiers and keywords
    * - Single-character tokens (operators, braces, etc)
    */
+  private parseVariableDeclaration(): VariableDeclaration {
+    const nameToken = this.expectIdentifier('Expected variable name');
+    this.expect('=', 'Expected = after variable name');
+    const initializer = this.parseExpression();
+    
+    return new VariableDeclaration(
+      nameToken.value,
+      initializer,
+      {
+        start: nameToken.location.start,
+        end: this.previous().location.end,
+        source: this.source
+      }
+    );
+  }
+
   private tokenize() {
     let current = 0;
     while (current < this.source.length) {
@@ -297,6 +322,12 @@ export class Parser {
   private parseStatement(): Node {
     const token = this.peek();
     if (token.type === 'identifier') {
+      if (token.value === 'var') {
+        this.advance(); // Skip 'var'
+        const decl = this.parseVariableDeclaration();
+        this.expect(';', 'Expected ; after variable declaration');
+        return decl;
+      }
       if (token.value === 'module') {
         return this.parseModuleDeclaration();
       }
@@ -327,11 +358,7 @@ export class Parser {
 
   private parseModuleDeclaration(): ModuleDeclaration {
     this.advance(); // Skip 'module' keyword
-    const nameToken = this.peek();
-    if (nameToken.type !== 'identifier') {
-      throw parseError(`Expected module name`, nameToken.location);
-    }
-    this.advance();
+    const nameToken = this.expectIdentifier('Expected module name');
     const name = nameToken.value;
     const parameters = this.parseParameters();
     const body = this.parseBlock();
@@ -347,11 +374,7 @@ export class Parser {
     const parameters: Parameter[] = [];
 
     while (!this.isAtEnd() && !this.check(')')) {
-      const nameToken = this.peek();
-      if (nameToken.type !== 'identifier') {
-        throw parseError(`Expected parameter name`, nameToken.location);
-      }
-      this.advance();
+      const nameToken = this.expectIdentifier('Expected parameter name');
       const name = nameToken.value;
       let defaultValue: Expression | undefined;
       if (this.match('=')) {

@@ -1,7 +1,7 @@
 import { describe, it, expect, test, vi, beforeEach, afterEach, SpyInstance } from 'vitest';
 import { parse, Parser } from './parser';
 import { Context, ModuleDeclaration, SDFExpression } from './types';
-import { moduleToSDF } from './builtins';
+import { evalCAD, moduleToSDF } from './builtins';
 import { ParseError } from './errors';
 
 describe('CAD Parser', () => {
@@ -12,6 +12,19 @@ describe('CAD Parser', () => {
   test('handles empty input', () => {
     const result = parse('');
     expect(result).toBeDefined();
+  });
+
+  test('handles variable declarations', () => {
+    const result = parse('var x = 42;');
+    expect(result).toBeDefined();
+    
+    // Test variable usage
+    expect(() => parse('var r = 5; sphere(r);')).not.toThrow();
+    
+    // Test variable scoping
+    const ctx = new Context();
+    evalCAD(parse('var size = 10; cube(size);'), ctx);
+    expect(ctx.get('size')).toBe(10);
   });
 
   test('handles negative number literals', () => {

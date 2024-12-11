@@ -135,6 +135,16 @@ export abstract class Node {
 
 export abstract class Statement extends Node {}
 
+export class VariableDeclaration extends Statement {
+  constructor(
+    public name: string,
+    public initializer: Expression,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
 export class ModuleDeclaration extends Statement {
   constructor(
     public name: string,
