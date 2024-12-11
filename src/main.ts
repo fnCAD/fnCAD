@@ -287,10 +287,14 @@ smooth_difference(0.03) {
     extensions: [
       basicSetup,
       javascript(),
-      EditorView.updateListener.of((update: ViewUpdate) => {
+      EditorView.updateListener.of(async (update: ViewUpdate) => {
         if (update.docChanged) {
           stateManager.updateEditorContent(update.state.doc.toString());
           updateOctree();
+          
+          if (settingsManager.isMeshVisible()) {
+            await regenerateMesh();
+          }
         }
       }),
       oneDark,
@@ -331,13 +335,14 @@ function updateOctree() {
 }
 
 // Add mesh generation handler
-document.getElementById('show-mesh')?.addEventListener('change', async () => {
+document.getElementById('show-mesh')?.addEventListener('change', regenerateMesh);
+
+async function regenerateMesh() {
   const state = stateManager.getState();
   if (!state.currentOctree) {
     console.warn('No octree available for mesh generation');
     return;
   }
-
   const taskId = stateManager.taskQueue.addTask({
     type: 'mesh',
     optimize: settingsManager.isMeshOptimizationEnabled(),
@@ -364,16 +369,14 @@ document.getElementById('show-mesh')?.addEventListener('change', async () => {
       });
     });
 
-    if (task.result) {
-      if (task.result && 'vertices' in task.result) {
-        stateManager.setCurrentMesh(task.result);
-        rendererManager.updateMesh(task.result);
-      }
+    if (task.result && 'vertices' in task.result) {
+      stateManager.setCurrentMesh(task.result);
+      rendererManager.updateMesh(task.result);
     }
   } catch (error) {
     console.error('Mesh generation failed:', error);
   }
-});
+}
 
 // Add STL export handler
 const saveStlButton = document.getElementById('save-stl') as HTMLButtonElement;
