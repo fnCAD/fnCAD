@@ -12,7 +12,7 @@ import {
   Parameter, Statement, BinaryExpression, NumberLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
   ParameterLocation, VectorLiteral, IndexExpression,
-  VariableDeclaration, ForLoop, AssignmentStatement,
+  VariableDeclaration, ForLoop, AssignmentStatement, IfStatement,
 } from './types';
 import { parseError } from './errors';
 

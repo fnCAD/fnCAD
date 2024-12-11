@@ -110,34 +110,37 @@ describe('CAD Parser', () => {
     parse(`
       var x = 1;
       if (x) {
-        var y = 2;
+        x = 2;
       }
     `).map(stmt => evalCAD(stmt, ctx));
-    expect(ctx.get('y')).toBe(2);
+    expect(ctx.get('x')).toBe(2);
     
     // If with else branch
     parse(`
       var x = 0;
       if (x) {
         var a = 1;
+        x = 1;
       } else {
         var b = 2;
+        x = 2;
       }
     `).map(stmt => evalCAD(stmt, ctx));
     expect(ctx.get('a')).toBeUndefined();
-    expect(ctx.get('b')).toBe(2);
-    
+    expect(ctx.get('b')).toBeUndefined();
+    expect(ctx.get('x')).toBe(2);
+
     // Nested if statements
     parse(`
       var x = 1;
       var y = 1;
       if (x) {
         if (y) {
-          var z = 3;
+          x = 3;
         }
       }
     `).map(stmt => evalCAD(stmt, ctx));
-    expect(ctx.get('z')).toBe(3);
+    expect(ctx.get('x')).toBe(3);
   });
 
   test('handles basic for loops', () => {
