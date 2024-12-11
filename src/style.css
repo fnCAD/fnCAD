@@ -44,16 +44,38 @@ body {
   display: flex;
   align-items: center;
   padding: 0 10px;
+  gap: 8px;
 }
 
-#menu-bar button {
+.menu-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#menu-bar button, #menu-bar .github-link {
   height: 30px;
-  padding: 0 15px;
   background: #2d2d2d;
   border: 1px solid #444;
   color: #ddd;
   border-radius: 4px;
   cursor: pointer;
+  text-decoration: none;
+}
+
+#menu-bar .github-link {
+  width: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#menu-bar button {
+  width: auto;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
 }
 
 #menu-bar button:hover {
@@ -134,32 +156,31 @@ body {
   top: 10px;
   right: 10px;
   background: rgba(45, 45, 45, 0.9);
-  padding: 10px;
+  padding: 4px 10px;
   border-radius: 5px;
   border: 1px solid #444;
   z-index: 1000;
+  /* Only hide content when collapsed */
+  &.collapsed .settings-content {
+    display: none;
+  }
+  &:not(.collapsed) h3:after {
+    content: ' ▼';
+  }
+  &.collapsed h3:after {
+    content: ' ▶';
+  }
 }
 
 #settings-panel h3 {
-  margin: 0 0 10px 0;
+  margin: 0;
   font-size: 14px;
   color: #fff;
   cursor: pointer;
   user-select: none;
+  padding: 2px 0;
 }
 
-#settings-panel h3:after {
-  content: ' ▼';
-  font-size: 12px;
-}
-
-#settings-panel.collapsed h3:after {
-  content: ' ▶';
-}
-
-#settings-panel.collapsed .settings-content {
-  display: none;
-}
 
 #stats-panel {
   position: absolute;

@@ -25,6 +25,7 @@ export class SettingsManager {
   private createSettingsPanel() {
     this.settingsPanel = document.createElement('div');
     this.settingsPanel.id = 'settings-panel';
+    this.settingsPanel.classList.add('collapsed');
     this.settingsPanel.innerHTML = `
       <h3>Settings</h3>
       <div class="settings-content">
