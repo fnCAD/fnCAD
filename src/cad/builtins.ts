@@ -134,14 +134,6 @@ function wrapUnion(expressions: SDFExpression[]): SDFExpression {
   };
 }
 
-function evalSDFBlock(nodes: Node[], context: Context): SDFExpression[] {
-  return flattenScope(nodes, context, 'Expected SDF expression in block', nodes[0]?.location || {
-    start: { line: 1, column: 1, offset: 0 },
-    end: { line: 1, column: 1, offset: 0 },
-    source: ''
-  });
-}
-
 export function evalCAD(node: Node, context: Context): Value | undefined {
   if (node instanceof ModuleDeclaration) {
     context.defineModule(node.name, node);
@@ -250,7 +242,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('smooth_difference radius must be a number', call.location);
       }
       
-      const children = flattenScope(call.children, context, 'smooth_difference requires SDF children', call.location);
+      const children = flattenScope(call.children, context, 'smooth_difference', call.location);
       return {
         type: 'sdf',
         expr: children.map(c => c.expr).reduce((acc, curr) => smooth_difference(acc, curr, radius))
@@ -360,7 +352,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (!call.children?.length) {
         return { type: 'sdf', expr: '0' };
       }
-      const children = evalSDFBlock(call.children, context);
+      const children = flattenScope(call.children, context, 'block', call.location);
       if (children.length === 0) {
         return { type: 'sdf', expr: '0' };
       }
