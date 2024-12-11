@@ -121,6 +121,19 @@ export class Context {
     this.vars.set(name, value);
   }
 
+  assign(name: string, value: Value): boolean {
+    // Try to find the variable in current scope
+    if (this.vars.has(name)) {
+      this.vars.set(name, value);
+      return true;
+    }
+    // Try parent scope
+    if (this.parent?.assign(name, value)) {
+      return true;
+    }
+    return false;
+  }
+
   getModule(name: string): ScopedModuleDeclaration | undefined {
     return this.modules.get(name) ?? this.parent?.getModule(name);
   }
@@ -147,6 +160,16 @@ export class VariableDeclaration extends Statement {
   constructor(
     public name: string,
     public initializer: Expression,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
+export class AssignmentStatement extends Statement {
+  constructor(
+    public name: string,
+    public value: Expression,
     location: SourceLocation
   ) {
     super(location);

@@ -1,7 +1,7 @@
 import {
   Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
   SDFExpression, isSDFExpression, isSDFGroup, Expression, BinaryExpression, VectorLiteral,
-  SourceLocation, IndexExpression, VariableDeclaration, ForLoop,
+  SourceLocation, IndexExpression, VariableDeclaration, ForLoop, AssignmentStatement,
 } from './types';
 
 export type EvalResult = number | number[];
@@ -145,6 +145,13 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
   if (node instanceof VariableDeclaration) {
     const value = evalExpression(node.initializer, context);
     context.set(node.name, value);
+    return undefined;
+  }
+  if (node instanceof AssignmentStatement) {
+    const value = evalExpression(node.value, context);
+    if (!context.assign(node.name, value)) {
+      throw parseError(`Undefined variable: ${node.name}`, node.location);
+    }
     return undefined;
   }
   if (node instanceof ForLoop) {

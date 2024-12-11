@@ -12,7 +12,7 @@ import {
   Parameter, Statement, BinaryExpression, NumberLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
   ParameterLocation, VectorLiteral, IndexExpression,
-  VariableDeclaration, ForLoop,
+  VariableDeclaration, ForLoop, AssignmentStatement,
 } from './types';
 import { parseError } from './errors';
 
@@ -334,8 +334,25 @@ export class Parser {
       if (token.value === 'module') {
         return this.parseModuleDeclaration();
       }
+      
       // Parse as expression first to handle array indexing
       const expr = this.parseExpression();
+      
+      // Check for assignment
+      if (this.check('=')) {
+        if (!(expr instanceof Identifier)) {
+          throw parseError('Left side of assignment must be an identifier', expr.location);
+        }
+        this.advance(); // consume =
+        const value = this.parseExpression();
+        this.expect(';', 'Expected ; after assignment');
+        return new AssignmentStatement(expr.name, value, {
+          start: expr.location.start,
+          end: this.previous().location.end,
+          source: this.source
+        });
+      }
+      
       if (this.match(';')) {
         return expr;
       }

@@ -85,17 +85,35 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(result)).not.toThrow();
   });
 
-  /*test('handles basic for loops', () => {
+  test('handles variable assignment', () => {
     const ctx = new Context();
-    const result = parse(`
+    parse('var x = 5;').map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('x')).toBe(5);
+    
+    // Test reassignment
+    parse('x = 10;').map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('x')).toBe(10);
+    
+    // Test using assigned value
+    parse('var y = x + 5;').map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('y')).toBe(15);
+    
+    // Test assignment to undefined variable
+    expect(() => parse('z = 1;').map(stmt => evalCAD(stmt, ctx)))
+      .toThrow('Undefined variable: z');
+  });
+
+  test('handles basic for loops', () => {
+    const ctx = new Context();
+    parse(`
       var sum = 0;
       for(var i = [1:3]) {
         sum = sum + i;
       }
       sum;
-    `);
-    expect(evalCAD(result, ctx)).toBe(6); // 1 + 2 + 3
-  });*/
+    `).map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('sum')).toBe(6); // 1 + 2 + 3
+  });
 
   test('handles whitespace only input', () => {
     const result = parse('   \n   \t   ');
