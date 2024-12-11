@@ -176,6 +176,17 @@ export class AssignmentStatement extends Statement {
   }
 }
 
+export class IfStatement extends Statement {
+  constructor(
+    public condition: Expression,
+    public thenBranch: Statement[],
+    public elseBranch: Statement[] | null,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
 export class ForLoop extends Statement {
   constructor(
     public variable: string,

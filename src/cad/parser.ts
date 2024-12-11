@@ -322,6 +322,9 @@ export class Parser {
   private parseStatement(): Node {
     const token = this.peek();
     if (token.type === 'identifier') {
+      if (token.value === 'if') {
+        return this.parseIfStatement();
+      }
       if (token.value === 'for') {
         return this.parseForLoop();
       }
@@ -631,6 +634,34 @@ export class Parser {
     }
 
     return expr;
+  }
+
+  private parseIfStatement(): IfStatement {
+    const startLocation = this.peek().location;
+    this.advance(); // consume 'if'
+    
+    this.expect('(', 'Expected ( after if');
+    const condition = this.parseExpression();
+    this.expect(')', 'Expected ) after condition');
+    
+    const thenBranch = this.parseBlock();
+    
+    let elseBranch = null;
+    if (this.check('else')) {
+      this.advance(); // consume 'else'
+      elseBranch = this.parseBlock();
+    }
+    
+    return new IfStatement(
+      condition,
+      thenBranch,
+      elseBranch,
+      {
+        start: startLocation.start,
+        end: this.previous().location.end,
+        source: this.source
+      }
+    );
   }
 
   private parseForLoop(): ForLoop {

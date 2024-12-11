@@ -154,6 +154,27 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
     }
     return undefined;
   }
+  if (node instanceof IfStatement) {
+    const condition = evalExpression(node.condition, context);
+    if (typeof condition !== 'number') {
+      throw parseError('If condition must evaluate to a number', node.location);
+    }
+    
+    // Any non-zero value is considered true
+    if (condition !== 0) {
+      return {
+        type: 'group',
+        expressions: flattenScope(node.thenBranch, context, 'if branch', node.location)
+      };
+    } else if (node.elseBranch) {
+      return {
+        type: 'group',
+        expressions: flattenScope(node.elseBranch, context, 'else branch', node.location)
+      };
+    }
+    return { type: 'group', expressions: [] };
+  }
+
   if (node instanceof ForLoop) {
     const start = evalExpression(node.range.start, context);
     const end = evalExpression(node.range.end, context);

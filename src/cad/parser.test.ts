@@ -103,6 +103,43 @@ describe('CAD Parser', () => {
       .toThrow('Undefined variable: z');
   });
 
+  test('handles if statements', () => {
+    const ctx = new Context();
+    
+    // Basic if with then branch
+    parse(`
+      var x = 1;
+      if (x) {
+        var y = 2;
+      }
+    `).map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('y')).toBe(2);
+    
+    // If with else branch
+    parse(`
+      var x = 0;
+      if (x) {
+        var a = 1;
+      } else {
+        var b = 2;
+      }
+    `).map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('a')).toBeUndefined();
+    expect(ctx.get('b')).toBe(2);
+    
+    // Nested if statements
+    parse(`
+      var x = 1;
+      var y = 1;
+      if (x) {
+        if (y) {
+          var z = 3;
+        }
+      }
+    `).map(stmt => evalCAD(stmt, ctx));
+    expect(ctx.get('z')).toBe(3);
+  });
+
   test('handles basic for loops', () => {
     const ctx = new Context();
     parse(`
