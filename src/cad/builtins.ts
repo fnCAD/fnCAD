@@ -84,10 +84,10 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * [x] smooth_union
  * [x] smooth_intersection 
  * [x] smooth_difference
- * [x] cube
- * [ ] sphere
- * [ ] box
- * [ ] cylinder
+ * [x] cube (no children)
+ * [ ] sphere (no children)
+ * [ ] box (no children)
+ * [ ] cylinder (no children)
  * [ ] translate
  * [ ] rotate
  * [ ] scale
@@ -262,14 +262,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('cube size must be a number', call.location);
       }
       
-      // Handle any children by intersecting with the cube
       if (call.children?.length) {
-        const children = flattenScope(call.children, context, 'cube requires SDF children', call.location);
-        const cube = `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`;
-        return {
-          type: 'sdf',
-          expr: `max(${cube}, ${children.map(c => c.expr).join(', ')})`
-        };
+        throw parseError('cube does not accept children', call.location);
       }
       
       return {
