@@ -83,8 +83,8 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * Module handler checklist for conversion:
  * [x] smooth_union
  * [x] smooth_intersection 
- * [ ] smooth_difference
- * [ ] cube
+ * [x] smooth_difference
+ * [x] cube
  * [ ] sphere
  * [ ] box
  * [ ] cylinder
@@ -249,16 +249,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (typeof radius !== 'number') {
         throw parseError('smooth_difference radius must be a number', call.location);
       }
-      const results = call.children.map(c => evalCAD(c, context));
-      if (results.some(r => typeof r === 'number')) {
-        throw parseError('smooth_difference requires SDF children', call.location);
-      }
-      const children = results.map(r => (r as SDFExpression).expr);
       
-      // Reduce multiple children using binary smooth_difference
+      const children = flattenScope(call.children, context, 'smooth_difference requires SDF children', call.location);
       return {
         type: 'sdf',
-        expr: children.reduce((acc, curr) => smooth_difference(acc, curr, radius))
+        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_difference(acc, curr, radius))
       };
     }
     case 'cube': {
@@ -266,6 +261,17 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (typeof size !== 'number') {
         throw parseError('cube size must be a number', call.location);
       }
+      
+      // Handle any children by intersecting with the cube
+      if (call.children?.length) {
+        const children = flattenScope(call.children, context, 'cube requires SDF children', call.location);
+        const cube = `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`;
+        return {
+          type: 'sdf',
+          expr: `max(${cube}, ${children.map(c => c.expr).join(', ')})`
+        };
+      }
+      
       return {
         type: 'sdf',
         expr: `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`
