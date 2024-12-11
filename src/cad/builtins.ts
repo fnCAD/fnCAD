@@ -97,7 +97,7 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  */
 
 // First step: evaluate children and ensure they're all valid SDFs
-function flattenScope(nodes: Node[], context: Context, errorMsg: string, location: SourceLocation): SDFExpression[] {
+function flattenScope(nodes: Node[], context: Context, name: string, location: SourceLocation): SDFExpression[] {
   const results: SDFExpression[] = [];
   
   // Create new scope for evaluating children
@@ -111,7 +111,7 @@ function flattenScope(nodes: Node[], context: Context, errorMsg: string, locatio
     
     // Validate SDF type and throw location-aware error
     if (!isSDFExpression(result)) {
-      throw parseError(errorMsg, location);
+      throw parseError(`${name} requires SDF children`, location);
     }
     
     results.push(result);
@@ -218,7 +218,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('smooth_union radius must be a number', call.location);
       }
       
-      const children = flattenScope(call.children, context, 'smooth_union requires SDF children', call.location);
+      const children = flattenScope(call.children, context, 'smooth_union', call.location);
       return {
         type: 'sdf',
         expr: children.map(c => c.expr).reduce((acc, curr) => smooth_union(acc, curr, radius))
