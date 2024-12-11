@@ -1,6 +1,6 @@
 import {
   Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
-  SDFExpression, isSDFExpression, Expression, BinaryExpression, VectorLiteral,
+  SDFExpression, isSDFExpression, isSDFGroup, Expression, BinaryExpression, VectorLiteral,
   SourceLocation, IndexExpression, VariableDeclaration, ForLoop,
 } from './types';
 
@@ -96,7 +96,7 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  */
 
 // First step: evaluate children and ensure they're all valid SDFs
-function flattenScope(nodes: Node[], context: Context, name: string, location: SourceLocation): SDFExpression[] {
+export function flattenScope(nodes: Node[], context: Context, name: string, location: SourceLocation): SDFExpression[] {
   const results: SDFExpression[] = [];
   
   // Create new scope for evaluating children
@@ -108,19 +108,20 @@ function flattenScope(nodes: Node[], context: Context, name: string, location: S
     // Skip undefined results (like module declarations)
     if (result === undefined) continue;
     
-    // Validate SDF type and throw location-aware error
-    if (!isSDFExpression(result)) {
+    if (isSDFGroup(result)) {
+      results.push(...result.expressions);
+    } else if (isSDFExpression(result)) {
+      results.push(result);
+    } else {
       throw parseError(`${name} requires SDF children`, location);
     }
-    
-    results.push(result);
   }
   
   return results;
 }
 
 // Second step: optionally wrap multiple SDFs in a union
-function wrapUnion(expressions: SDFExpression[]): SDFExpression {
+export function wrapUnion(expressions: SDFExpression[]): SDFExpression {
   if (expressions.length === 0) {
     return { type: 'sdf', expr: '0' };
   }
@@ -161,15 +162,7 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
     for (let i = start; i <= end; i++) {
       loopContext.set(node.variable, i);
       // Evaluate body statements
-      for (const stmt of node.body) {
-        const result = evalCAD(stmt, loopContext);
-        if (result !== undefined) {
-          if (!isSDFExpression(result)) {
-            throw parseError('Expected SDF expression in for loop body', stmt.location);
-          }
-          results.push(result);
-        }
-      }
+      results.push(...flattenScope(node.body, loopContext, 'for loop', node.location));
     }
     return {
       type: 'group',
@@ -182,12 +175,12 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
   throw new Error(`Cannot evaluate node type: ${node.constructor.name}`);
 }
 
-export function moduleToSDF(node: Node): string {
-  const result = evalCAD(node, new Context());
-  if (!result || !isSDFExpression(result)) {
-    throw new Error('Expected SDF expression at top level');
-  }
-  return result.expr;
+export function moduleToSDF(nodes: Node[]): string {
+  return wrapUnion(flattenScope(nodes, new Context(), 'toplevel', {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: '',
+  })).expr;
 }
 
 function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {

@@ -1,4 +1,4 @@
-import { evalCAD, evalExpression } from './builtins';
+import { evalExpression, wrapUnion, flattenScope } from './builtins';
 
 export interface Position {
   line: number;
@@ -42,8 +42,7 @@ export function isSDFGroup(value: Value): value is SDFGroup {
 }
 
 export function isSDFExpression(value: Value): value is SDFExpression {
-  if (typeof value === 'number' || Array.isArray(value)) return false;
-  return typeof value === 'object' && value.type === 'sdf';
+  return typeof value === 'object' && 'type' in value && value.type === 'sdf';
 }
 
 export class ScopedModuleDeclaration {
@@ -190,7 +189,7 @@ export class ModuleCall extends Statement {
   constructor(
     public name: string,
     public args: Record<string, Expression>,
-    public children: Statement[] | undefined,
+    public children: Statement[],
     location: SourceLocation
   ) {
     super(location);

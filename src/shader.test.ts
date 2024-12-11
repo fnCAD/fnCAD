@@ -92,9 +92,9 @@ describe('Shader Generation and Raymarching', () => {
   it('correctly handles axis-aligned smooth union', () => {
     const cadCode = `
       smooth_union(0.03) {
-        box(1);
+        cube(1);
         translate([0, 0.7, 0]) {
-          box(0.5);
+          cube(0.5);
         }
       }
     `;

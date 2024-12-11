@@ -424,7 +424,7 @@ export class Parser {
     if (this.check(';')) {
       const semicolon = this.advance();
       this.endModuleCall(semicolon);
-      return new ModuleCall(name, args, undefined, {
+      return new ModuleCall(name, args, [], {
         start: location.start,
         end: semicolon.location.end,
         source: this.source
@@ -438,17 +438,6 @@ export class Parser {
       end: child.location.end,
       source: this.source
     });
-
-    return new ModuleCall(
-      name,
-      args,
-      children,
-      {
-        start: location.start,
-        end: this.previous().location.end,
-        source: this.source
-      }
-    );
   }
 
   private parseArguments(): Record<string, Expression> {
@@ -719,32 +708,8 @@ function getOperatorPrecedence(value: string): OperatorPrecedence {
   return operatorPrecedence[value] || { associativity: 'left', precedence: 0 };
 }
 
-export function parse(source: string): Node {
+export function parse(source: string): Node[] {
   const parser = new Parser(source);
-  const statements = parser.parse();
-  
-  // Handle single statement case without wrapping
-  if (statements.length === 1) {
-    // If it's an expression, it needs to be terminated with semicolon
-    if (statements[0] instanceof Expression && !source.trim().endsWith(';')) {
-      throw parseError('Expected ;', {
-        start: { line: 1, column: source.length },
-        end: { line: 1, column: source.length + 1 },
-        source: source
-      });
-    }
-    return statements[0];
-  }
 
-  // Wrap multiple statements in an implicit union
-  return new ModuleCall(
-    'union',
-    {},
-    statements,
-    {
-      start: statements[0]?.location.start || { line: 1, column: 1 },
-      end: statements[statements.length - 1]?.location.end || { line: 1, column: 1 },
-      source: source
-    }
-  );
+  return parser.parse();
 }
