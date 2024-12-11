@@ -4,7 +4,7 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: rgba(255, 255, 255, 0.95);
   background-color: #242424;
 
   font-synthesis: none;
@@ -349,15 +349,129 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+  background-color: #1e1e1e;
+  margin: 2% auto;
+  padding: 15px;
+  border: 1px solid #444;
+  width: 90%;
+  max-width: 1200px;
+  border-radius: 5px;
+  max-height: 95vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  color: #888;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #fff;
+}
+
+.cheatsheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.cheatsheet .section {
+  background: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.cheatsheet ul li {
+  margin-bottom: 8px;
+}
+
+.cheatsheet table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.cheatsheet table th {
+  color: #646cff;
+  font-weight: 600;
+  text-align: left;
+  padding-bottom: 8px;
+}
+
+.cheatsheet table td {
+  padding: 4px 0;
+}
+
+.cheatsheet h3 {
+  color: #646cff;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.1em;
+  border-bottom: 1px solid #444;
+  padding-bottom: 5px;
+}
+
+.cheatsheet dl {
+  margin: 0;
+}
+
+.cheatsheet dt {
+  margin-bottom: 5px;
+}
+
+.cheatsheet dd {
+  margin-left: 20px;
+  margin-bottom: 15px;
+  color: #888;
+  font-size: 0.9em;
+}
+
+.cheatsheet code {
+  background: #1a1a1a;
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: #e6e6e6;
+  font-family: monospace;
+}
+
+.cheatsheet pre {
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: 'Fira Code', monospace;
+}
+
+.cheatsheet .links {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+.cheatsheet .links a {
+  color: #646cff;
+  text-decoration: none;
+}
+
+.cheatsheet .links a:hover {
+  text-decoration: underline;
 }

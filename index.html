@@ -8,9 +8,83 @@
   </head>
   <body>
     <div id="app">
+      <div id="help-modal" class="modal">
+        <div class="modal-content">
+          <h2 style="margin: 0; display: inline-block; margin-right: 20px">fnCAD Help</h2>
+          <span class="close">&times;</span>
+          <div class="modal-body cheatsheet">
+            <div class="section">
+              <h3>Basic Syntax</h3>
+              <ul>
+                <li><code>var x = 42;</code></li>
+                <li><code>module name() {}</code></li>
+                <li><code>if (x &gt; 0) {}</code></li>
+                <li><code>for(var i = [1:10]) {}</code></li>
+                <li><code>[1, 2, 3]</code></li>
+              </ul>
+            </div>
+
+            <div class="section">
+              <h3>Operators</h3>
+              <ul>
+                <li><code>+ - * /</code></li>
+                <li><code>&lt; &lt;= &gt; &gt;= == !=</code></li>
+                <li><code>&amp;&amp; || !</code></li>
+                <li><code>vector[number]</code></li>
+              </ul>
+            </div>
+
+            <div class="section">
+              <h3>Basic Shapes</h3>
+              <ul>
+                <li><code>sphere(radius);</code></li>
+                <li><code>cube(size);</code></li>
+                <li><code>cylinder(radius, height);</code></li>
+              </ul>
+            </div>
+
+            <div class="section">
+              <h3>Transformations</h3>
+              <ul>
+                <li><code>translate([x,y,z]) {}</code></li>
+                <li><code>rotate([x,y,z]) {}</code></li>
+                <li><code>scale([x,y,z]) {}</code></li>
+              </ul>
+            </div>
+
+            <div class="section">
+              <h3>Boolean Operations</h3>
+              <ul>
+                <li><code>union() {}</code></li>
+                <li><code>difference() {}</code></li>
+                <li><code>smooth_union(r) {}</code></li>
+                <li><code>smooth_difference(r) {}</code></li>
+              </ul>
+            </div>
+
+            <div class="section">
+              <h3>Example</h3>
+              <pre>
+smooth_union(0.1) {
+  sphere(1);
+  translate([0.8, 0, 0])
+    sphere(0.7);
+}</pre>
+            </div>
+
+            <div class="section links">
+              <p>
+                <a href="https://github.com/antimatter15/fncad" target="_blank">Source Code</a> |
+                <a href="https://github.com/antimatter15/fncad/issues" target="_blank">Issues</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div id="menu-bar">
         <div class="menu-item">
           <button id="save-stl">Save STL</button>
+          <button id="show-help">Help</button>
         </div>
         <div id="task-status" class="task-status">
           <div class="task-info"></div>
@@ -23,5 +97,6 @@
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/help-modal.ts"></script>
   </body>
 </html>
