@@ -2,6 +2,7 @@ import {
   Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
   SDFExpression, isSDFExpression, isSDFGroup, Expression, BinaryExpression, VectorLiteral,
   SourceLocation, IndexExpression, VariableDeclaration, ForLoop, AssignmentStatement, IfStatement,
+  AssertStatement,
 } from './types';
 
 export type EvalResult = number | number[];
@@ -204,6 +205,17 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
       type: 'group',
       expressions: results
     };
+  }
+  if (node instanceof AssertStatement) {
+    const condition = evalExpression(node.condition, context);
+    if (typeof condition !== 'number') {
+      throw parseError('Assert condition must evaluate to a number', node.location);
+    }
+    if (condition === 0) {
+      const message = node.message || 'Assertion failed';
+      throw parseError(`Assertion failed: ${message}`, node.location);
+    }
+    return undefined;
   }
   if (node instanceof Expression) {
     return evalExpression(node, context);
