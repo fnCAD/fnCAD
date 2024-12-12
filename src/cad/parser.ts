@@ -9,10 +9,10 @@
 
 import { 
   Node, ModuleDeclaration, ModuleCall, Expression, 
-  Parameter, Statement, BinaryExpression, NumberLiteral,
+  Parameter, Statement, BinaryExpression, NumberLiteral, StringLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
   ParameterLocation, VectorLiteral, IndexExpression,
-  VariableDeclaration, ForLoop, AssignmentStatement, IfStatement,
+  VariableDeclaration, ForLoop, AssignmentStatement, IfStatement, AssertStatement,
 } from './types';
 import { parseError } from './errors';
 
@@ -277,10 +277,52 @@ export class Parser {
   }
 
   private isSymbolToken(char: string): boolean {
-    return char in tokenTypes;
+    return char in tokenTypes || char === '"';
+  }
+
+  private handleStringLiteral(start: number): number {
+    let current = start + 1; // Skip opening quote
+    let value = '';
+    const startColumn = this.column;
+    const startOffset = start;
+    
+    while (current < this.source.length && this.source[current] !== '"') {
+      if (this.source[current] === '\\') {
+        current++;
+        if (current < this.source.length) {
+          value += this.source[current];
+        }
+      } else {
+        value += this.source[current];
+      }
+      current++;
+      this.column++;
+    }
+    
+    if (current >= this.source.length) {
+      throw parseError('Unterminated string literal', this.getTokenLocation(start));
+    }
+    
+    // Skip closing quote
+    current++;
+    this.column++;
+    
+    this.tokens.push({
+      type: 'string',
+      value,
+      location: {
+        start: { line: this.line, column: startColumn, offset: startOffset },
+        end: { line: this.line, column: this.column, offset: current },
+        source: this.source
+      }
+    });
+    return current;
   }
 
   private handleSymbolToken(char: string, current: number): number {
+    if (char === '"') {
+      return this.handleStringLiteral(current);
+    }
     // Check for two-character operators
     const nextChar = current + 1 < this.source.length ? this.source[current + 1] : '';
     let value = char;
@@ -349,6 +391,25 @@ export class Parser {
       }
       if (token.value === 'module') {
         return this.parseModuleDeclaration();
+      }
+      if (token.value === 'assert') {
+        this.advance(); // consume 'assert'
+        this.expect('(', 'Expected ( after assert');
+        const condition = this.parseExpression();
+        
+        let message: Expression | undefined;
+        if (this.match(',')) {
+          message = this.parseExpression();
+        }
+        
+        this.expect(')', 'Expected )');
+        this.expect(';', 'Expected ; after assert statement');
+        
+        return new AssertStatement(condition, message, {
+          start: token.location.start,
+          end: this.previous().location.end,
+          source: this.source
+        });
       }
       
       // Parse as expression first to handle array indexing
@@ -434,6 +495,26 @@ export class Parser {
 
     this.expect('}', 'Expected }');
     return statements;
+  }
+
+  private parseAssertStatement(): AssertStatement {
+    const assertToken = this.advance(); // consume 'assert'
+    this.expect('(', 'Expected ( after assert');
+    const condition = this.parseExpression();
+    
+    let message: Expression | undefined;
+    if (this.match(',')) {
+      message = this.parseExpression();
+    }
+    
+    this.expect(')', 'Expected )');
+    this.expect(';', 'Expected ; after assert statement');
+    
+    return new AssertStatement(condition, message, {
+      start: assertToken.location.start,
+      end: this.previous().location.end,
+      source: this.source
+    });
   }
 
   private parseModuleCall(name: string, location: SourceLocation): ModuleCall {
@@ -618,6 +699,9 @@ export class Parser {
     switch (token.type) {
       case 'number':
         expr = new NumberLiteral(parseFloat(token.value), token.location);
+        break;
+    case 'string':
+        expr = new StringLiteral(token.value, token.location);
         break;
       case 'identifier':
         const name = token.value;

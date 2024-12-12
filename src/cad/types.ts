@@ -198,6 +198,16 @@ export class ForLoop extends Statement {
   }
 }
 
+export class AssertStatement extends Statement {
+  constructor(
+    public condition: Expression,
+    public message: Expression | undefined,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
 export class ModuleDeclaration extends Statement {
   constructor(
     public name: string,
@@ -237,6 +247,15 @@ export abstract class Expression implements Node {
 export class NumberLiteral extends Expression {
   constructor(
     public value: number,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
+export class StringLiteral extends Expression {
+  constructor(
+    public value: string,
     location: SourceLocation
   ) {
     super(location);
