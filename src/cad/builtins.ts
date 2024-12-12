@@ -5,7 +5,7 @@ import {
   AssertStatement, StringLiteral,
 } from './types';
 
-export type EvalResult = number | number[] | string;
+export type EvalResult = number | number[];
 import { parseError } from './errors';
 
 function checkVector(value: any, requiredSize: number, location: SourceLocation): number[] {
@@ -23,10 +23,7 @@ function checkVector(value: any, requiredSize: number, location: SourceLocation)
 
 // Export evalExpression so it can be used by types.ts
 export function evalExpression(expr: Expression, context: Context): EvalResult {
-  if (expr instanceof StringLiteral) {
-    return expr.value;
-  }
-if ('value' in expr && typeof expr.value === 'number') {
+  if ('value' in expr && typeof expr.value === 'number') {
     return expr.value;
   }
   if (expr instanceof Identifier) {
@@ -215,21 +212,14 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
       throw parseError('Assert condition must evaluate to a number', node.location);
     }
     if (condition === 0) {
-      const message = node.message ? evalExpression(node.message, context) : 'Assertion failed';
-      throw parseError(`Assertion failed: ${message}`, node.location);
-    }
-    return undefined;
-  }
-  if (node instanceof AssertStatement) {
-    const condition = evalExpression(node.condition, context);
-    if (typeof condition !== 'number') {
-      throw parseError('Assert condition must evaluate to a number', node.location);
-    }
-    if (condition === 0) {
       let message = 'Assertion failed';
       if (node.message) {
-        const msgValue = evalExpression(node.message, context);
-        message = msgValue.toString();
+        if (node.message instanceof StringLiteral) {
+          message = node.message.value;
+        } else {
+          const msgValue = evalExpression(node.message, context);
+          message = msgValue.toString();
+        }
       }
       throw parseError(`Assertion failed: ${message}`, node.location);
     }

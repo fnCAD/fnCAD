@@ -497,26 +497,6 @@ export class Parser {
     return statements;
   }
 
-  private parseAssertStatement(): AssertStatement {
-    const assertToken = this.advance(); // consume 'assert'
-    this.expect('(', 'Expected ( after assert');
-    const condition = this.parseExpression();
-    
-    let message: Expression | undefined;
-    if (this.match(',')) {
-      message = this.parseExpression();
-    }
-    
-    this.expect(')', 'Expected )');
-    this.expect(';', 'Expected ; after assert statement');
-    
-    return new AssertStatement(condition, message, {
-      start: assertToken.location.start,
-      end: this.previous().location.end,
-      source: this.source
-    });
-  }
-
   private parseModuleCall(name: string, location: SourceLocation): ModuleCall {
     const args = this.parseArguments();
 
