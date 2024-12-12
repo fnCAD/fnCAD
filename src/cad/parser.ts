@@ -9,7 +9,7 @@
 
 import { 
   Node, ModuleDeclaration, ModuleCall, Expression, 
-  Parameter, Statement, BinaryExpression, NumberLiteral, StringLiteral,
+  Parameter, Statement, BinaryExpression, NumberLiteral,
   Identifier, SourceLocation, ModuleCallLocation,
   ParameterLocation, VectorLiteral, IndexExpression,
   VariableDeclaration, ForLoop, AssignmentStatement, IfStatement, AssertStatement,
@@ -397,9 +397,9 @@ export class Parser {
         this.expect('(', 'Expected ( after assert');
         const condition = this.parseExpression();
         
-        let message: Expression | undefined;
+        let message: string | undefined;
         if (this.match(',')) {
-          message = this.parseExpression();
+          message = this.parseStringLiteral();
         }
         
         this.expect(')', 'Expected )');
@@ -495,6 +495,15 @@ export class Parser {
 
     this.expect('}', 'Expected }');
     return statements;
+  }
+
+  private parseStringLiteral(): string {
+    const token = this.peek();
+    if (token.type !== 'string') {
+      throw parseError('Expected string literal', token.location);
+    }
+    this.advance();
+    return token.value;
   }
 
   private parseModuleCall(name: string, location: SourceLocation): ModuleCall {
