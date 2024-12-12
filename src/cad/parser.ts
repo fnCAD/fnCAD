@@ -690,8 +690,7 @@ export class Parser {
         expr = new NumberLiteral(parseFloat(token.value), token.location);
         break;
     case 'string':
-        expr = new StringLiteral(token.value, token.location);
-        break;
+        throw parseError('Unexpected string literal', token.location);
       case 'identifier':
         const name = token.value;
         // Handle module call if it's followed by (
