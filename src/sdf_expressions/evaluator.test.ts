@@ -2,10 +2,16 @@ import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
 import { Interval } from '../interval';
 import { GLSLContext, GLSLGenerator } from './glslgen';
+import { Vector3 } from 'three';
+
 describe('Expression Evaluation', () => {
-  function evaluate(expr: string, context: Record<string, number> = {}): number {
+  function evaluate(expr: string, coords: Partial<{x: number, y: number, z: number}> = {}): number {
     const ast = parse(expr);
-    return ast.evaluate(context);
+    return ast.evaluate(new Vector3(
+      coords.x ?? 0,
+      coords.y ?? 0,
+      coords.z ?? 0
+    ));
   }
 
   it('evaluates numbers', () => {
@@ -27,6 +33,7 @@ describe('Expression Evaluation', () => {
 
   it('evaluates variables', () => {
     expect(evaluate('x + y', { x: 1, y: 2 })).toBe(3);
+    expect(evaluate('x + z', { x: 1, z: 3 })).toBe(4);
   });
 
   it('evaluates functions', () => {
@@ -78,18 +85,19 @@ describe('Expression Evaluation', () => {
 
   it('evaluates abs with intervals', () => {
     const ast = parse('abs(x)');
-    expect(ast.evaluateInterval({ x: new Interval(-3, -1) })).toEqual(new Interval(1, 3));
-    expect(ast.evaluateInterval({ x: new Interval(1, 3) })).toEqual(new Interval(1, 3));
-    expect(ast.evaluateInterval({ x: new Interval(-1, 2) })).toEqual(new Interval(0, 2));
+    const zero = new Interval(0, 0);
+    expect(ast.evaluateInterval(new Interval(-3, -1), zero, zero)).toEqual(new Interval(1, 3));
+    expect(ast.evaluateInterval(new Interval(1, 3), zero, zero)).toEqual(new Interval(1, 3));
+    expect(ast.evaluateInterval(new Interval(-1, 2), zero, zero)).toEqual(new Interval(0, 2));
   });
 
   it('handles translate transformation', () => {
     const ast = parse('translate(1, 0, 0, x*x + y*y + z*z - 1)');
-    expect(ast.evaluate({ x: 2, y: 0, z: 0 })).toBe(0); // At (2,0,0), we're exactly on the surface of the sphere centered at (1,0,0)
+    expect(ast.evaluate(new Vector3(2, 0, 0))).toBe(0); // At (2,0,0), we're exactly on the surface of the sphere centered at (1,0,0)
   });
 
   it('handles rotate transformation', () => {
     const ast = parse('rotate(0, 3.14159/2, 0, x*x + y*y + z*z - 1)');
-    expect(ast.evaluate({ x: 1, y: 0, z: 0 })).toBeCloseTo(0, 4); // Should be ~0 at radius 1
+    expect(ast.evaluate(new Vector3(1, 0, 0))).toBeCloseTo(0, 4); // Should be ~0 at radius 1
   });
 });

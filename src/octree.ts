@@ -334,11 +334,11 @@ export function createOctreeNode(
 ): OctreeNode {
   // Evaluate SDF over the cube bounds to determine initial state
   const half = size / 2;
-  const interval = sdf.evaluateInterval({
-    x: new Interval(center.x - half, center.x + half),
-    y: new Interval(center.y - half, center.y + half),
-    z: new Interval(center.z - half, center.z + half)
-  });
+  const interval = sdf.evaluateInterval(
+    new Interval(center.x - half, center.x + half),
+    new Interval(center.y - half, center.y + half),
+    new Interval(center.z - half, center.z + half),
+  );
 
   // Determine cell state
   let state: CellState;

@@ -1,36 +1,48 @@
 import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
+import { Vector3 } from 'three';
 
 export function createNumberNode(value: number): NumberNode {
   return {
     type: 'Number',
     value,
-    evaluate: () => value,
+    evaluate: (_point: Vector3) => value,
     toGLSL: (context: GLSLContext) => {
       // Format number with at least one decimal place
       const glslNumber = Number.isInteger(value) ? `${value}.0` : value.toString();
       return context.generator.save(glslNumber, 'float');
     },
-    evaluateInterval: () => Interval.from(value)
+    evaluateInterval: (_x: Interval, _y: Interval, _z: Interval) => Interval.from(value)
   };
+}
+
+function constantValue(node: Node): number {
+  if (node.type === 'Number') {
+    return (node as NumberNode).value;
+  }
+  throw new Error('Expected constant numeric value');
 }
 
 export function createVariableNode(name: string): VariableNode {
   return {
     type: 'Variable',
     name,
-    evaluate: (context) => {
-      if (!(name in context)) {
-        throw new Error(`Undefined variable: ${name}`);
+    evaluate: (point: Vector3) => {
+      switch (name) {
+        case 'x': return point.x;
+        case 'y': return point.y;
+        case 'z': return point.z;
+        default: throw new Error(`Unknown variable: ${name}`);
       }
-      return context[name];
     },
-    evaluateInterval: (context: Record<string, Interval>) => {
-      if (!(name in context)) {
-        throw new Error(`Undefined variable: ${name}`);
+    evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+      switch (name) {
+        case 'x': return x;
+        case 'y': return y;
+        case 'z': return z;
+        default: throw new Error(`Unknown variable: ${name}`);
       }
-      return context[name];
     },
     toGLSL: (context: GLSLContext) => {
       // Map x,y,z to components of the current point
@@ -48,14 +60,14 @@ export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, 
     operator,
     left,
     right,
-    evaluate: (context) => {
-      const lval = left.evaluate(context);
-      const rval = right.evaluate(context);
+    evaluate: (point: Vector3) => {
+      const lval = left.evaluate(point);
+      const rval = right.evaluate(point);
       switch (operator) {
         case '+': return lval + rval;
         case '-': return lval - rval;
         case '*': return lval * rval;
-        case '/': 
+        case '/':
           if (rval === 0) throw new Error('Division by zero');
           return lval / rval;
       }
@@ -65,9 +77,9 @@ export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, 
       const rval = right.toGLSL(context);
       return context.generator.save(`${lval} ${operator} ${rval}`, 'float');
     },
-    evaluateInterval: (context) => {
-      const lval = left.evaluateInterval(context);
-      const rval = right.evaluateInterval(context);
+    evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+      const lval = left.evaluateInterval(x, y, z);
+      const rval = right.evaluateInterval(x, y, z);
       switch (operator) {
         case '+': return lval.add(rval);
         case '-': return lval.subtract(rval);
@@ -83,21 +95,20 @@ export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
     type: 'UnaryOp',
     operator,
     operand,
-    evaluate: (context) => {
-      const val = operand.evaluate(context);
+    evaluate: (point: Vector3) => {
+      const val = operand.evaluate(point);
       return -val;
     },
     toGLSL: (context: GLSLContext) => {
       const val = operand.toGLSL(context);
       return context.generator.save(`-${val}`, 'float');
     },
-    evaluateInterval: (context) => {
-      const val = operand.evaluateInterval(context);
+    evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+      const val = operand.evaluateInterval(x, y, z);
       return val.negate();
     }
   };
 }
-
 
 function enforceArgumentLength(name: string, args: Node[], expected: number) {
   if (args.length !== expected) {
@@ -109,14 +120,14 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'sin') {
     enforceArgumentLength(name, args, 1);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        return args[0].evaluateInterval(context).sin();
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        return args[0].evaluateInterval(x, y, z).sin();
       },
-      evaluate: (context: Record<string, number>) => {
-        return Math.sin(args[0].evaluate(context));
+      evaluate: (point: Vector3) => {
+        return Math.sin(args[0].evaluate(point));
       },
       toGLSL: (context: GLSLContext) => {
         return context.generator.save(`sin(${args[0].toGLSL(context)})`, 'float');
@@ -127,14 +138,14 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'cos') {
     enforceArgumentLength(name, args, 1);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        return args[0].evaluateInterval(context).cos();
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        return args[0].evaluateInterval(x, y, z).cos();
       },
-      evaluate: (context: Record<string, number>) => {
-        return Math.cos(args[0].evaluate(context));
+      evaluate: (point: Vector3) => {
+        return Math.cos(args[0].evaluate(point));
       },
       toGLSL: (context: GLSLContext) => {
         return context.generator.save(`cos(${args[0].toGLSL(context)})`, 'float');
@@ -145,14 +156,14 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'sqrt') {
     enforceArgumentLength(name, args, 1);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        return args[0].evaluateInterval(context).sqrt();
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        return args[0].evaluateInterval(x, y, z).sqrt();
       },
-      evaluate: (context: Record<string, number>) => {
-        return Math.sqrt(args[0].evaluate(context));
+      evaluate: (point: Vector3) => {
+        return Math.sqrt(args[0].evaluate(point));
       },
       toGLSL: (context: GLSLContext) => {
         return context.generator.save(`sqrt(${args[0].toGLSL(context)})`, 'float');
@@ -163,20 +174,20 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'sqr') {
     enforceArgumentLength(name, args, 1);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        const x = args[0].evaluateInterval(context);
-        return x.multiply(x);
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        const val = args[0].evaluateInterval(x, y, z);
+        return val.multiply(val);
       },
-      evaluate: (context: Record<string, number>) => {
-        const x = args[0].evaluate(context);
-        return x * x;
+      evaluate: (point: Vector3) => {
+        const val = args[0].evaluate(point);
+        return val * val;
       },
       toGLSL: (context: GLSLContext) => {
-        const x = args[0].toGLSL(context);
-        return context.generator.save(`(${x} * ${x})`, 'float');
+        const val = args[0].toGLSL(context);
+        return context.generator.save(`(${val} * ${val})`, 'float');
       }
     };
   }
@@ -184,14 +195,14 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'log') {
     enforceArgumentLength(name, args, 1);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        return args[0].evaluateInterval(context).log();
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        return args[0].evaluateInterval(x, y, z).log();
       },
-      evaluate: (context: Record<string, number>) => {
-        return Math.log(args[0].evaluate(context));
+      evaluate: (point: Vector3) => {
+        return Math.log(args[0].evaluate(point));
       },
       toGLSL: (context: GLSLContext) => {
         return context.generator.save(`log(${args[0].toGLSL(context)})`, 'float');
@@ -202,19 +213,19 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'min') {
     if (args.length < 1) throw new Error('min requires at least 1 argument');
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        const intervals = args.map(arg => arg.evaluateInterval(context));
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        const intervals = args.map(arg => arg.evaluateInterval(x, y, z));
         if (intervals.length === 1) return intervals[0];
         return intervals.reduce((acc, interval) => new Interval(
           Math.min(acc.min, interval.min),
           Math.min(acc.max, interval.max)
         ));
       },
-      evaluate: (context: Record<string, number>) => {
-        const values = args.map(arg => arg.evaluate(context));
+      evaluate: (point: Vector3) => {
+        const values = args.map(arg => arg.evaluate(point));
         if (values.length === 1) return values[0];
         return Math.min(...values);
       },
@@ -233,31 +244,28 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
     enforceArgumentLength(name, args, 4);
     const [rx, ry, rz, body] = args;
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
         // Get rotation angles
-        const ax = rx.evaluate({});
-        const ay = ry.evaluate({});
-        const az = rz.evaluate({});
-        
+        const ax = constantValue(rx);
+        const ay = constantValue(ry);
+        const az = constantValue(rz);
+
         // Get corners of the interval box
-        const x = context['x'];
-        const y = context['y'];
-        const z = context['z'];
         const corners = [
           [x.min, y.min, z.min], [x.max, y.min, z.min],
           [x.min, y.max, z.min], [x.max, y.max, z.min],
           [x.min, y.min, z.max], [x.max, y.min, z.max],
           [x.min, y.max, z.max], [x.max, y.max, z.max]
         ];
-        
+
         // Compute trig values
         const cx = Math.cos(ax), sx = Math.sin(ax);
         const cy = Math.cos(ay), sy = Math.sin(ay);
         const cz = Math.cos(az), sz = Math.sin(az);
-        
+
         // Transform each corner
         const transformedX: number[] = [];
         const transformedY: number[] = [];
@@ -269,65 +277,59 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           const x1 = px;
           const y1 = py * cx - pz * sx;
           const z1 = py * sx + pz * cx;
-          
+
           // Then around Y
           const x2 = x1 * cy + z1 * sy;
           const y2 = y1;
           const z2 = -x1 * sy + z1 * cy;
-          
+
           // Finally around Z
           const nx = x2 * cz - y2 * sz;
           const ny = x2 * sz + y2 * cz;
           const nz = z2;
-          
+
           transformedX.push(nx);
           transformedY.push(ny);
           transformedZ.push(nz);
         }
-        
-        // Compute bounds for each axis
-        const newContext = {...context};
-        newContext['x'] = Interval.bound(transformedX);
-        newContext['y'] = Interval.bound(transformedY);
-        newContext['z'] = Interval.bound(transformedZ);
-        
-        return body.evaluateInterval(newContext);
+
+        return body.evaluateInterval(
+          Interval.bound(transformedX),
+          Interval.bound(transformedY),
+          Interval.bound(transformedZ)
+        );
       },
-      evaluate: (context: Record<string, number>) => {
-        const ax = rx.evaluate(context);
-        const ay = ry.evaluate(context);
-        const az = rz.evaluate(context);
-        
+      evaluate: (point: Vector3) => {
+        const ax = rx.evaluate(point);
+        const ay = ry.evaluate(point);
+        const az = rz.evaluate(point);
+
         // Compute trig values
         const cx = Math.cos(ax), sx = Math.sin(ax);
         const cy = Math.cos(ay), sy = Math.sin(ay);
         const cz = Math.cos(az), sz = Math.sin(az);
-        
-        const x = context.x;
-        const y = context.y;
-        const z = context.z;
-        
+
         // First rotate around X
-        const x1 = x;
-        const y1 = y * cx - z * sx;
-        const z1 = y * sx + z * cx;
-        
+        const x1 = point.x;
+        const y1 = point.y * cx - point.z * sx;
+        const z1 = point.y * sx + point.z * cx;
+
         // Then around Y
         const x2 = x1 * cy + z1 * sy;
         const y2 = y1;
         const z2 = -x1 * sy + z1 * cy;
-        
+
         // Finally around Z
         const nx = x2 * cz - y2 * sz;
         const ny = x2 * sz + y2 * cz;
         const nz = z2;
-        
-        return body.evaluate({...context, x: nx, y: ny, z: nz});
+
+        return body.evaluate(new Vector3(nx, ny, nz));
       },
       toGLSL: (context: GLSLContext) => {
-        const evalRx = rx.evaluate({});
-        const evalRy = ry.evaluate({});
-        const evalRz = rz.evaluate({});
+        const evalRx = constantValue(rx);
+        const evalRy = constantValue(ry);
+        const evalRz = constantValue(rz);
         const newContext = context.rotate(evalRx, evalRy, evalRz);
         return body.toGLSL(newContext);
       }
@@ -338,39 +340,36 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
     enforceArgumentLength(name, args, 4);
     const [sx, sy, sz, body] = args;
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
         // Get scale factors
-        const scaleX = sx.evaluate({});
-        const scaleY = sy.evaluate({});
-        const scaleZ = sz.evaluate({});
-        
-        // Scale the intervals by dividing by scale factors
-        const newContext = {...context};
-        newContext['x'] = context['x'].divide(Interval.from(scaleX));
-        newContext['y'] = context['y'].divide(Interval.from(scaleY));
-        newContext['z'] = context['z'].divide(Interval.from(scaleZ));
-        
-        return body.evaluateInterval(newContext);
+        const scaleX = constantValue(sx);
+        const scaleY = constantValue(sy);
+        const scaleZ = constantValue(sz);
+
+        return body.evaluateInterval(
+          x.divide(Interval.from(scaleX)),
+          y.divide(Interval.from(scaleY)),
+          z.divide(Interval.from(scaleZ))
+        );
       },
-      evaluate: (context: Record<string, number>) => {
-        const scaleX = sx.evaluate(context);
-        const scaleY = sy.evaluate(context);
-        const scaleZ = sz.evaluate(context);
-        
-        return body.evaluate({
-          ...context,
-          x: context.x / scaleX,
-          y: context.y / scaleY,
-          z: context.z / scaleZ
-        });
+      evaluate: (point: Vector3) => {
+        const scaleX = sx.evaluate(point);
+        const scaleY = sy.evaluate(point);
+        const scaleZ = sz.evaluate(point);
+
+        return body.evaluate(new Vector3(
+          point.x / scaleX,
+          point.y / scaleY,
+          point.z / scaleZ
+        ));
       },
       toGLSL: (context: GLSLContext) => {
-        const evalSx = sx.evaluate({});
-        const evalSy = sy.evaluate({});
-        const evalSz = sz.evaluate({});
+        const evalSx = constantValue(sx);
+        const evalSy = constantValue(sy);
+        const evalSz = constantValue(sz);
         const newContext = context.scale(evalSx, evalSy, evalSz);
         return body.toGLSL(newContext);
       }
@@ -381,40 +380,34 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
     enforceArgumentLength(name, args, 4);
     const [dx, dy, dz, body] = args;
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
         // Evaluate translation amounts
-        const tx = dx.evaluateInterval(context);
-        const ty = dy.evaluateInterval(context);
-        const tz = dz.evaluateInterval(context);
+        const tx = constantValue(dx);
+        const ty = constantValue(dy);
+        const tz = constantValue(dz);
+
         // Translate the intervals
-        const newContext = {...context};
-        newContext['x'] = new Interval(
-          context['x'].min - tx.max,
-          context['x'].max - tx.min
+        return body.evaluateInterval(
+          new Interval(x.min - tx, x.max - tx),
+          new Interval(y.min - ty, y.max - ty),
+          new Interval(z.min - tz, z.max - tz)
         );
-        newContext['y'] = new Interval(
-          context['y'].min - ty.max,
-          context['y'].max - ty.min
-        );
-        newContext['z'] = new Interval(
-          context['z'].min - tz.max,
-          context['z'].max - tz.min
-        );
-        return body.evaluateInterval(newContext);
       },
-      evaluate: (context: Record<string, number>) => {
-        const newX = context['x'] - dx.evaluate(context);
-        const newY = context['y'] - dy.evaluate(context);
-        const newZ = context['z'] - dz.evaluate(context);
-        return body.evaluate({...context, 'x': newX, 'y': newY, 'z': newZ});
+      evaluate: (point: Vector3) => {
+        const newX = point.x - constantValue(dx);
+        const newY = point.y - constantValue(dy);
+        const newZ = point.z - constantValue(dz);
+
+        return body.evaluate(new Vector3(newX, newY, newZ));
       },
       toGLSL: (context: GLSLContext) => {
-        const evalDx = dx.evaluate({});
-        const evalDy = dy.evaluate({});
-        const evalDz = dz.evaluate({});
+        const evalDx = constantValue(dx);
+        const evalDy = constantValue(dy);
+        const evalDz = constantValue(dz);
+
         const newContext = context.translate(evalDx, evalDy, evalDz);
         return body.toGLSL(newContext);
       }
@@ -424,19 +417,19 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'max') {
     if (args.length < 1) throw new Error('max requires at least 1 argument');
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        const intervals = args.map(arg => arg.evaluateInterval(context));
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        const intervals = args.map(arg => arg.evaluateInterval(x, y, z));
         if (intervals.length === 1) return intervals[0];
         return intervals.reduce((acc, interval) => new Interval(
           Math.max(acc.min, interval.min),
           Math.max(acc.max, interval.max)
         ));
       },
-      evaluate: (context: Record<string, number>) => {
-        const values = args.map(arg => arg.evaluate(context));
+      evaluate: (point: Vector3) => {
+        const values = args.map(arg => arg.evaluate(point));
         if (values.length === 1) return values[0];
         return Math.max(...values);
       },
@@ -454,11 +447,13 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'smooth_union') {
     enforceArgumentLength(name, args, 3);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        const [d1, d2, _r] = args.map(arg => arg.evaluateInterval(context));
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        const d1 = args[0].evaluateInterval(x, y, z);
+        const d2 = args[1].evaluateInterval(x, y, z);
+        // const _r = constantValue(args[2]);
         // For interval arithmetic, we use a conservative approximation
         // that encompasses both the smooth and regular union
         return new Interval(
@@ -466,9 +461,11 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
           Math.min(d1.max, d2.max)
         );
       },
-      evaluate: (context: Record<string, number>) => {
-        const [d1, d2, r] = args.map(arg => arg.evaluate(context));
-        
+      evaluate: (point: Vector3) => {
+        const d1 = args[0].evaluate(point);
+        const d2 = args[1].evaluate(point);
+        const r = constantValue(args[2]);
+
         // For points far from both shapes (> 10*radius), just use regular min
         const minDist = Math.min(d1, d2);
         if (minDist > r * 10.0) {
@@ -489,14 +486,14 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'exp') {
     enforceArgumentLength(name, args, 1);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        return args[0].evaluateInterval(context).exp();
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        return args[0].evaluateInterval(x, y, z).exp();
       },
-      evaluate: (context: Record<string, number>) => {
-        return Math.exp(args[0].evaluate(context));
+      evaluate: (point: Vector3) => {
+        return Math.exp(args[0].evaluate(point));
       },
       toGLSL: (context: GLSLContext) => {
         return context.generator.save(`exp(${args[0].toGLSL(context)})`, 'float');
@@ -507,21 +504,21 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   if (name === 'abs') {
     enforceArgumentLength(name, args, 1);
     return {
-      type: 'FunctionCall' as const,
+      type: 'FunctionCall',
       name,
       args,
-      evaluateInterval: (context: Record<string, Interval>) => {
-        const x = args[0].evaluateInterval(context);
-        if (x.max < 0) {
-          return new Interval(-x.max, -x.min);
-        } else if (x.min > 0) {
-          return x;
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        const val = args[0].evaluateInterval(x, y, z);
+        if (val.max < 0) {
+          return new Interval(-val.max, -val.min);
+        } else if (val.min > 0) {
+          return val;
         } else {
-          return new Interval(0, Math.max(-x.min, x.max));
+          return new Interval(0, Math.max(-val.min, val.max));
         }
       },
-      evaluate: (context: Record<string, number>) => {
-        return Math.abs(args[0].evaluate(context));
+      evaluate: (point: Vector3) => {
+        return Math.abs(args[0].evaluate(point));
       },
       toGLSL: (context: GLSLContext) => {
         return context.generator.save(`abs(${args[0].toGLSL(context)})`, 'float');

@@ -83,18 +83,18 @@ describe('Interval', () => {
     const y = new Interval(-0.1, 0.1); // Around y=0
     const z = new Interval(-0.1, 0.1); // Around z=0
     
-    const result = ast.evaluateInterval({ x, y, z });
+    const result = ast.evaluateInterval(x, y, z);
     expect(result.contains(0)).toBe(true); // Should contain surface point
   });
 
   it('handles rotate transformation', () => {
-    const ast = parseSDFExpression('rotate(0, 3.14159/2, 0, sqrt(x*x + y*y + z*z) - 1)');
+    const ast = parseSDFExpression('rotate(0, 1.570795, 0, sqrt(x*x + y*y + z*z) - 1)');
     // Test point at (1,0,0) which should rotate to (0,0,-1)
     const x = new Interval(0.9, 1.1);
     const y = new Interval(-0.1, 0.1);
     const z = new Interval(-0.1, 0.1);
     
-    const result = ast.evaluateInterval({ x, y, z });
+    const result = ast.evaluateInterval(x, y, z);
     expect(result.contains(0)).toBe(true); // Should contain surface point
   });
 });

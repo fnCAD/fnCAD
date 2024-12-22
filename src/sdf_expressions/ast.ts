@@ -11,11 +11,13 @@ export type NodeType =
 export type BinaryOperator = '+' | '-' | '*' | '/';
 export type UnaryOperator = '-';
 
+import { Vector3 } from 'three';
+
 export interface Node {
   type: NodeType;
-  evaluate(context: Record<string, number>): number;
-  toGLSL(context: GLSLContext): string; 
-  evaluateInterval(context: Record<string, Interval>): Interval;
+  evaluate(point: Vector3): number;
+  toGLSL(context: GLSLContext): string;
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
 }
 
 export interface NumberNode extends Node {

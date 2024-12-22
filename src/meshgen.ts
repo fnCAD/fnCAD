@@ -67,11 +67,7 @@ export class MeshGenerator {
 
         // Phase 2: Optimize vertices if enabled (50-55%)
         if (this.optimize) {
-            mesh.refineEdges((pos) => this.sdf.evaluate({
-                x: pos.x,
-                y: pos.y,
-                z: pos.z
-            }), {
+            mesh.refineEdges((pos) => this.sdf.evaluate(pos), {
                 errorThreshold: minSize / 100.0,
                 maxSubdivisions: mesh.halfEdges.length,
                 minEdgeLength: minSize / 100.0
