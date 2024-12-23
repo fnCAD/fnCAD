@@ -306,8 +306,21 @@ smooth_difference(0.03) {
         }
       }),
       EditorView.theme({
-        '&': {height: '100%'},
-        '.cm-scroller': {overflow: 'auto'},
+        '&': {
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,  /* Important for nested flex! */
+          overflow: 'hidden'
+        },
+        '.cm-scroller': {
+          overflow: 'auto',
+          flex: 1,
+          minHeight: 0  /* Important for nested flex! */
+        },
+        '.cm-content': {
+          minHeight: '100%'
+        },
         '.cm-gutters': {backgroundColor: 'transparent'},
         '.cm-lineNumbers': {color: '#666'}
       })
