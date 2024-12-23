@@ -309,7 +309,8 @@ export class OctreeNode {
   }
 
   countBoundary(): number {
-    if (this.state === CellState.Boundary || this.state === CellState.BoundarySubdivided) return 1;
+    // Only count leaf boundary cells, not subdivided ones
+    if (this.state === CellState.Boundary) return 1;
     let count = 0;
     for (const child of this.children) {
       if (child) count += child.countBoundary();

@@ -87,11 +87,35 @@ export class StateManager {
   }
 
   setCellCount(count: number) {
-    const statsPanel = document.getElementById('stats-panel');
-    if (statsPanel) {
-      statsPanel.textContent = `Octree cells: ${count}`;
-    }
     this.cellCount = count;
+    
+    // Update detailed stats if octree exists
+    if (this.currentOctree) {
+      const insideCount = this.currentOctree.countInside();
+      const outsideCount = this.currentOctree.countOutside();
+      const boundaryCount = this.currentOctree.countBoundary();
+      
+      document.getElementById('inside-cells')!.textContent = insideCount.toString();
+      document.getElementById('outside-cells')!.textContent = outsideCount.toString();
+      document.getElementById('boundary-cells')!.textContent = boundaryCount.toString();
+    }
+  }
+
+  private updateTaskTime(startTime: number) {
+    const endTime = performance.now();
+    const duration = endTime - startTime;
+    document.getElementById('last-update-time')!.textContent = `${duration.toFixed(1)}ms`;
+  }
+
+  async updateOctree(minSize: number, cellBudget: number, renderSettings: OctreeRenderSettings) {
+    const startTime = performance.now();
+    try {
+      await this.octreeManager.updateOctree(minSize, cellBudget, renderSettings);
+      this.updateTaskTime(startTime);
+    } catch (error) {
+      console.error('Octree update failed:', error);
+      throw error;
+    }
   }
 
   parseContent(): SdfNode {

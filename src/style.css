@@ -155,25 +155,85 @@ body {
   transition: width 0.3s ease;
 }
 
-#settings-panel {
+.control-icon {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  width: 32px;
+  height: 32px;
   background: rgba(45, 45, 45, 0.9);
-  padding: 4px 10px;
+  border: 1px solid #444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+  transition: background-color 0.2s;
+}
+
+.control-icon:hover {
+  background: rgba(60, 60, 60, 0.9);
+}
+
+.control-panel {
+  position: absolute;
+  background: rgba(45, 45, 45, 0.9);
+  padding: 10px;
   border-radius: 5px;
   border: 1px solid #444;
   z-index: 1000;
-  /* Only hide content when collapsed */
-  &.collapsed .settings-content {
-    display: none;
-  }
-  &:not(.collapsed) h3:after {
-    content: ' ▼';
-  }
-  &.collapsed h3:after {
-    content: ' ▶';
-  }
+  min-width: 200px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.control-panel.visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+#settings-panel, #info-panel {
+  top: 10px;
+}
+
+#settings-panel {
+  right: 10px;
+}
+
+#info-panel {
+  right: 60px;
+}
+
+.control-panel h3 {
+  margin: 0;
+  padding: 2px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.control-panel .icon {
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+.control-panel:hover .icon {
+  opacity: 1;
+}
+
+.info-group {
+  margin-bottom: 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: #ddd;
+}
+
+.stat-row label {
+  color: #888;
 }
 
 #settings-panel h3 {

@@ -23,11 +23,17 @@ export class SettingsManager {
   }
 
   private createSettingsPanel() {
+    // Create settings icon
+    const settingsIcon = document.createElement('div');
+    settingsIcon.id = 'settings-icon';
+    settingsIcon.className = 'control-icon';
+    settingsIcon.innerHTML = '⚙️';
+    
+    // Create settings panel
     this.settingsPanel = document.createElement('div');
     this.settingsPanel.id = 'settings-panel';
-    this.settingsPanel.classList.add('collapsed');
+    this.settingsPanel.classList.add('control-panel');
     this.settingsPanel.innerHTML = `
-      <h3>Settings</h3>
       <div class="settings-content">
         <div class="setting-row">
           <input type="checkbox" id="show-raymarched" checked>
@@ -88,7 +94,49 @@ export class SettingsManager {
         </div>
       </div>
     `;
+    // Create info icon
+    const infoIcon = document.createElement('div');
+    infoIcon.id = 'info-icon';
+    infoIcon.className = 'control-icon';
+    infoIcon.innerHTML = 'ℹ️';
+    
+    // Create info panel
+    const infoPanel = document.createElement('div');
+    infoPanel.id = 'info-panel';
+    infoPanel.classList.add('control-panel');
+    infoPanel.innerHTML = `
+      <div class="info-content">
+        <div class="info-group">
+          <h4>Octree Stats</h4>
+          <div class="stat-row">
+            <label>Inside Cells:</label>
+            <span id="inside-cells">0</span>
+          </div>
+          <div class="stat-row">
+            <label>Outside Cells:</label>
+            <span id="outside-cells">0</span>
+          </div>
+          <div class="stat-row">
+            <label>Boundary Cells:</label>
+            <span id="boundary-cells">0</span>
+          </div>
+        </div>
+        <div class="info-group">
+          <h4>Performance</h4>
+          <div class="stat-row">
+            <label>Last Update:</label>
+            <span id="last-update-time">-</span>
+          </div>
+          <div class="stat-row">
+            <label>Subdivisions:</label>
+            <span id="subdivision-count">0</span>
+          </div>
+        </div>
+      </div>
+    `;
+
     this.previewPane.appendChild(this.settingsPanel);
+    this.previewPane.appendChild(infoPanel);
 
     // Get references to inputs
     this.showRaymarchedCheckbox = document.getElementById('show-raymarched') as HTMLInputElement;
@@ -108,11 +156,45 @@ export class SettingsManager {
     this.showOctreeCheckbox.checked = false;
     this.showMeshCheckbox.checked = false;
 
-    // Add settings panel collapse behavior
-    const settingsHeader = this.settingsPanel.querySelector('h3')!;
-    settingsHeader.addEventListener('click', () => {
-      this.settingsPanel.classList.toggle('collapsed');
+    // Position icons and add click handlers
+    settingsIcon.style.right = '10px';
+    settingsIcon.style.top = '10px';
+    infoIcon.style.right = '52px';
+    infoIcon.style.top = '10px';
+
+    // Position panels
+    this.settingsPanel.style.right = '10px';
+    this.settingsPanel.style.top = '52px';
+    infoPanel.style.right = '52px';
+    infoPanel.style.top = '52px';
+
+    // Add click handlers
+    settingsIcon.addEventListener('click', () => {
+      this.settingsPanel.classList.toggle('visible');
+      infoPanel.classList.remove('visible');
     });
+
+    infoIcon.addEventListener('click', () => {
+      infoPanel.classList.toggle('visible');
+      this.settingsPanel.classList.remove('visible');
+    });
+
+    // Close panels when clicking outside
+    document.addEventListener('click', (event) => {
+      if (!event.target) return;
+      const target = event.target as HTMLElement;
+      if (!target.closest('#settings-panel') && 
+          !target.closest('#settings-icon') &&
+          !target.closest('#info-panel') &&
+          !target.closest('#info-icon')) {
+        this.settingsPanel.classList.remove('visible');
+        infoPanel.classList.remove('visible');
+      }
+    });
+
+    // Add elements to DOM
+    this.previewPane.appendChild(settingsIcon);
+    this.previewPane.appendChild(infoIcon);
   }
 
   private setupEventListeners() {
