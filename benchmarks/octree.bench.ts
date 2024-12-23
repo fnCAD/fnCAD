@@ -22,6 +22,6 @@ describe('Octree Generation Benchmarks', () => {
     
     // Create and subdivide octree
     const octree = createOctreeNode(new THREE.Vector3(0, 0, 0), 65536, sdf)
-    octree.subdivide(sdf, 0.1, 100000)
+    octree.subdivide(sdf, 0.5, 100000)
   })
 })
