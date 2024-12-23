@@ -64,6 +64,7 @@
 - [x] Error handling
 - [x] UI controls for all stages
 - [x] Performance settings
+- [ ] Filename field (applied on save)
 
 ## 9. Language Redesign
 - [x] Switch to OpenSCAD-like syntax (see TODO_OPENSCAD.md)

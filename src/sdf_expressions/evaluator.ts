@@ -241,99 +241,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   }
 
   if (name === 'rotate') {
-    enforceArgumentLength(name, args, 4);
-    const [rx, ry, rz, body] = args;
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        // Get rotation angles
-        const ax = constantValue(rx);
-        const ay = constantValue(ry);
-        const az = constantValue(rz);
-
-        // Get corners of the interval box
-        const corners = [
-          [x.min, y.min, z.min], [x.max, y.min, z.min],
-          [x.min, y.max, z.min], [x.max, y.max, z.min],
-          [x.min, y.min, z.max], [x.max, y.min, z.max],
-          [x.min, y.max, z.max], [x.max, y.max, z.max]
-        ];
-
-        // Compute trig values
-        const cx = Math.cos(ax), sx = Math.sin(ax);
-        const cy = Math.cos(ay), sy = Math.sin(ay);
-        const cz = Math.cos(az), sz = Math.sin(az);
-
-        // Transform each corner
-        const transformedX: number[] = [];
-        const transformedY: number[] = [];
-        const transformedZ: number[] = [];
-        
-        // It says this is XYZ order but in GLSL it has to be ZYX order to match. Why?
-        for (const [px, py, pz] of corners) {
-          // First rotate around X
-          const x1 = px;
-          const y1 = py * cx - pz * sx;
-          const z1 = py * sx + pz * cx;
-
-          // Then around Y
-          const x2 = x1 * cy + z1 * sy;
-          const y2 = y1;
-          const z2 = -x1 * sy + z1 * cy;
-
-          // Finally around Z
-          const nx = x2 * cz - y2 * sz;
-          const ny = x2 * sz + y2 * cz;
-          const nz = z2;
-
-          transformedX.push(nx);
-          transformedY.push(ny);
-          transformedZ.push(nz);
-        }
-
-        return body.evaluateInterval(
-          Interval.bound(transformedX),
-          Interval.bound(transformedY),
-          Interval.bound(transformedZ)
-        );
-      },
-      evaluate: (point: Vector3) => {
-        const ax = rx.evaluate(point);
-        const ay = ry.evaluate(point);
-        const az = rz.evaluate(point);
-
-        // Compute trig values
-        const cx = Math.cos(ax), sx = Math.sin(ax);
-        const cy = Math.cos(ay), sy = Math.sin(ay);
-        const cz = Math.cos(az), sz = Math.sin(az);
-
-        // First rotate around X
-        const x1 = point.x;
-        const y1 = point.y * cx - point.z * sx;
-        const z1 = point.y * sx + point.z * cx;
-
-        // Then around Y
-        const x2 = x1 * cy + z1 * sy;
-        const y2 = y1;
-        const z2 = -x1 * sy + z1 * cy;
-
-        // Finally around Z
-        const nx = x2 * cz - y2 * sz;
-        const ny = x2 * sz + y2 * cz;
-        const nz = z2;
-
-        return body.evaluate(new Vector3(nx, ny, nz));
-      },
-      toGLSL: (context: GLSLContext) => {
-        const evalRx = constantValue(rx);
-        const evalRy = constantValue(ry);
-        const evalRz = constantValue(rz);
-        const newContext = context.rotate(evalRx, evalRy, evalRz);
-        return body.toGLSL(newContext);
-      }
-    };
+    return new RotateFunctionCall(name, args);
   }
 
   if (name === 'scale') {
@@ -583,4 +491,123 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
   }
 
   throw new Error(`Unknown function: ${name}`);
+}
+
+// TODO maybe everything should be classes
+class RotateFunctionCall implements FunctionCallNode {
+  readonly type = 'FunctionCall' as const;
+
+  // Cache trig values for evaluateInterval
+  #cx: number;
+  #sx: number;
+  #cy: number;
+  #sy: number;
+  #cz: number;
+  #sz: number;
+  #body: Node;
+
+  constructor(
+    public readonly name: string,
+    public readonly args: Node[],
+  ) {
+    enforceArgumentLength(name, args, 4);
+    const [rx, ry, rz, body] = args;
+
+    // Get rotation angles
+    const ax = constantValue(rx);
+    const ay = constantValue(ry);
+    const az = constantValue(rz);
+
+    // Compute and cache trig values for evaluateInterval
+    this.#cx = Math.cos(ax);
+    this.#sx = Math.sin(ax);
+    this.#cy = Math.cos(ay);
+    this.#sy = Math.sin(ay);
+    this.#cz = Math.cos(az);
+    this.#sz = Math.sin(az);
+    this.#body = body;
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    var minX: number = Number.MAX_VALUE, maxX: number = -Number.MAX_VALUE;
+    var minY: number = Number.MAX_VALUE, maxY: number = -Number.MAX_VALUE;
+    var minZ: number = Number.MAX_VALUE, maxZ: number = -Number.MAX_VALUE;
+
+    // Get corners of the interval box, transform each corner (alloc-free)
+    for (var iz = 0; iz < 2; iz++) {
+      for (var iy = 0; iy < 2; iy++) {
+        for (var ix = 0; ix < 2; ix++) {
+          const px = (ix === 0) ? x.min : x.max;
+          const py = (iy === 0) ? y.min : y.max;
+          const pz = (iz === 0) ? z.min : z.max;
+
+          // First rotate around X
+          const x1 = px;
+          const y1 = py * this.#cx - pz * this.#sx;
+          const z1 = py * this.#sx + pz * this.#cx;
+
+          // Then around Y
+          const x2 = x1 * this.#cy + z1 * this.#sy;
+          const y2 = y1;
+          const z2 = -x1 * this.#sy + z1 * this.#cy;
+
+          // Finally around Z
+          const nx = x2 * this.#cz - y2 * this.#sz;
+          const ny = x2 * this.#sz + y2 * this.#cz;
+          const nz = z2;
+
+          minX = nx < minX ? nx : minX;
+          minY = ny < minY ? ny : minY;
+          minZ = nz < minZ ? nz : minZ;
+          maxX = nx > maxX ? nx : maxX;
+          maxY = ny > maxY ? ny : maxY;
+          maxZ = nz > maxZ ? nz : maxZ;
+        }
+      }
+    }
+
+    return this.#body.evaluateInterval(
+      new Interval(minX!, maxX!),
+      new Interval(minY!, maxY!),
+      new Interval(minZ!, maxZ!)
+    );
+  }
+
+  evaluate(point: Vector3): number {
+    const [rx, ry, rz] = this.args;
+    const ax = rx.evaluate(point);
+    const ay = ry.evaluate(point);
+    const az = rz.evaluate(point);
+
+    // Compute trig values
+    const cx = Math.cos(ax), sx = Math.sin(ax);
+    const cy = Math.cos(ay), sy = Math.sin(ay);
+    const cz = Math.cos(az), sz = Math.sin(az);
+
+    // First rotate around X
+    const x1 = point.x;
+    const y1 = point.y * cx - point.z * sx;
+    const z1 = point.y * sx + point.z * cx;
+
+    // Then around Y
+    const x2 = x1 * cy + z1 * sy;
+    const y2 = y1;
+    const z2 = -x1 * sy + z1 * cy;
+
+    // Finally around Z
+    const nx = x2 * cz - y2 * sz;
+    const ny = x2 * sz + y2 * cz;
+    const nz = z2;
+
+    return this.#body.evaluate(new Vector3(nx, ny, nz));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const [rx, ry, rz] = this.args;
+    const evalRx = constantValue(rx);
+    const evalRy = constantValue(ry);
+    const evalRz = constantValue(rz);
+    const newContext = context.rotate(evalRx, evalRy, evalRz);
+    return this.#body.toGLSL(newContext);
+  }
 }
