@@ -1,7 +1,7 @@
 import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
-import { Vector3 } from 'three';
+import { Box3, Vector3 } from 'three';
 
 export function createNumberNode(value: number): NumberNode {
   return {
@@ -522,6 +522,62 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       },
       toGLSL: (context: GLSLContext) => {
         return context.generator.save(`abs(${args[0].toGLSL(context)})`, 'float');
+      }
+    };
+  }
+
+  if (name === 'aabb') {
+    enforceArgumentLength(name, args, 7);
+    const [fromx, fromy, fromz, tox, toy, toz, fn] = args;
+    
+    // Create AABB from constant bounds
+    const aabb = new Box3(
+      new Vector3(constantValue(fromx), constantValue(fromy), constantValue(fromz)),
+      new Vector3(constantValue(tox), constantValue(toy), constantValue(toz))
+    );
+    
+    // Create expanded AABB so that gradients are actually correct when we get close.
+    const expanded = aabb.clone();
+    const size = new Vector3();
+    expanded.getSize(size);
+    expanded.expandByVector(size.multiplyScalar(0.2));
+
+    return {
+      type: 'FunctionCall',
+      name,
+      args,
+      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
+        // TODO: Implement proper interval arithmetic for AABB distance
+        // For now, just evaluate the inner function
+        return fn.evaluateInterval(x, y, z);
+      },
+      evaluate: (point: Vector3) => {
+        // If point is inside expanded AABB, use exact SDF
+        if (expanded.containsPoint(point)) {
+          return fn.evaluate(point);
+        }
+
+        // Otherwise return distance to expanded AABB
+        return aabb.distanceToPoint(point);
+      },
+      toGLSL: (context: GLSLContext) => {
+        const resultVar = context.generator.freshVar();
+        // Initialize result variable
+        context.generator.addRaw(`float ${resultVar} = 0.0;`);
+        
+        // Generate AABB check (`aabb_check` does its own expansion)
+        context.generator.addRaw(
+          `if (aabb_check(vec3(${aabb.min.x}, ${aabb.min.y}, ${aabb.min.z}), ` +
+          `vec3(${aabb.max.x}, ${aabb.max.y}, ${aabb.max.z}), ` +
+          `${context.getPoint()}, ${resultVar})) {`
+        );
+        
+        // Inside AABB - evaluate actual function
+        const innerResult = fn.toGLSL(context);
+        context.generator.addRaw(`  ${resultVar} = ${innerResult};`);
+        context.generator.addRaw(`}`);
+        
+        return resultVar;
       }
     };
   }

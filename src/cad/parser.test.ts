@@ -1,7 +1,7 @@
 import { describe, it, expect, test, vi, beforeEach, afterEach, SpyInstance } from 'vitest';
 import { parse, Parser } from './parser';
-import { Context, ModuleDeclaration, SDFExpression } from './types';
-import { evalCAD, moduleToSDF } from './builtins';
+import { AABB, Context, ModuleDeclaration, SDFExpression } from './types';
+import { evalCAD, moduleToSDF, flattenScope, wrapUnion } from './builtins';
 import { ParseError } from './errors';
 
 describe('CAD Parser', () => {
@@ -499,10 +499,10 @@ describe('OpenSCAD-like Syntax', () => {
 
   it('compiles boolean operations', () => {
     expect(compileToSDF('union() { sphere(1); cube(1); }'))
-      .toBe('min(sqrt(x*x + y*y + z*z) - 1, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5))');
+      .toBe('aabb(-1, -1, -1, 1, 1, 1, min(sqrt(x*x + y*y + z*z) - 1, max(max(abs(x) - 0.5, abs(y) - 0.5), abs(z) - 0.5)))');
     
     expect(compileToSDF('difference() { cube(2); sphere(1); }'))
-      .toBe('max(max(max(abs(x) - 1, abs(y) - 1), abs(z) - 1), -(sqrt(x*x + y*y + z*z) - 1))');
+      .toBe('aabb(-1, -1, -1, 1, 1, 1, max(max(max(abs(x) - 1, abs(y) - 1), abs(z) - 1), -(sqrt(x*x + y*y + z*z) - 1)))');
   });
 
   it('handles nested transformations', () => {
@@ -525,8 +525,99 @@ describe('OpenSCAD-like Syntax', () => {
       }
     `);
     expect(result).toBe(
-      'max(max(max(abs(x) - 1, abs(y) - 1), abs(z) - 1), ' +
-      '-(translate(0.5, 0.5, 0.5, sqrt(x*x + y*y + z*z) - 1)))'
+      'aabb(-1, -1, -1, 1, 1, 1, max(max(max(abs(x) - 1, abs(y) - 1), abs(z) - 1), ' +
+      '-(translate(0.5, 0.5, 0.5, sqrt(x*x + y*y + z*z) - 1))))'
     );
+  });
+});
+
+describe('AABB Bounds Calculation', () => {
+  function getBounds(code: string): AABB | undefined {
+    const ast = parse(code);
+    const nodes = flattenScope(ast, new Context(), 'test', {
+      start: { line: 1, column: 1, offset: 0 },
+      end: { line: 1, column: 1, offset: 0 },
+      source: code
+    });
+    return wrapUnion(nodes).bounds;
+  }
+
+  it('calculates primitive bounds', () => {
+    const sphereBounds = getBounds('sphere(1);');
+    expect(sphereBounds).toEqual({
+      min: [-1, -1, -1],
+      max: [1, 1, 1]
+    });
+
+    const cubeBounds = getBounds('cube(2);');
+    expect(cubeBounds).toEqual({
+      min: [-1, -1, -1],
+      max: [1, 1, 1]
+    });
+  });
+
+  it('calculates union bounds', () => {
+    const bounds = getBounds(`
+      union() {
+        translate([2, 0, 0]) sphere(1);
+        translate([-2, 0, 0]) sphere(1);
+      }
+    `);
+    expect(bounds).toEqual({
+      min: [-3, -1, -1],
+      max: [3, 1, 1]
+    });
+  });
+
+  it('calculates intersection bounds', () => {
+    const bounds = getBounds(`
+      intersection() {
+        translate([0.5, 0, 0]) cube(2);
+        translate([-0.5, 0, 0]) cube(2);
+      }
+    `);
+    expect(bounds).toEqual({
+      min: [-0.5, -1, -1],
+      max: [0.5, 1, 1]
+    });
+  });
+
+  it('calculates smooth_union bounds with radius', () => {
+    const bounds = getBounds(`
+      smooth_union(0.5) {
+        sphere(1);
+        translate([2, 0, 0]) sphere(1);
+      }
+    `);
+    expect(bounds).toEqual({
+      min: [-1.5, -1.5, -1.5],
+      max: [3.5, 1.5, 1.5]
+    });
+  });
+
+  it('calculates transformed bounds', () => {
+    const bounds = getBounds('translate([1, 2, 3]) cube(2);');
+    expect(bounds).toEqual({
+      min: [0, 1, 2],
+      max: [2, 3, 4]
+    });
+
+    const scaledBounds = getBounds('scale([2, 1, 0.5]) cube(2);');
+    expect(scaledBounds).toEqual({
+      min: [-2, -1, -0.5],
+      max: [2, 1, 0.5]
+    });
+  });
+
+  it('handles undefined bounds gracefully', () => {
+    // Create a module that doesn't specify bounds
+    const bounds = getBounds(`
+      module test() { 
+        // Return empty union to ensure no bounds
+        union() {}
+      }
+      test();
+    `);
+    expect(bounds).toBeUndefined();
   });
 });

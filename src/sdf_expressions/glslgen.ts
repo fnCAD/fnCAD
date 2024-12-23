@@ -16,6 +16,10 @@ export class GLSLGenerator {
     return varName;
   }
 
+  addRaw(stmt: string) {
+    this.statements.push(stmt);
+  }
+
   // Generate final GLSL code
   generateCode(): string {
     return this.statements.join('\n');

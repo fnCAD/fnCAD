@@ -2,7 +2,7 @@ import {
   Node, ModuleCall, ModuleDeclaration, Context, Value, Identifier,
   SDFExpression, isSDFExpression, isSDFGroup, Expression, BinaryExpression, VectorLiteral,
   SourceLocation, IndexExpression, VariableDeclaration, ForLoop, AssignmentStatement, IfStatement,
-  AssertStatement,
+  AABB, AssertStatement,
 } from './types';
 
 export type EvalResult = number | number[];
@@ -104,7 +104,6 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
  * [x] custom modules
  */
 
-// First step: evaluate children and ensure they're all valid SDFs
 export function flattenScope(nodes: Node[], context: Context, name: string, location: SourceLocation): SDFExpression[] {
   const results: SDFExpression[] = [];
   
@@ -129,17 +128,32 @@ export function flattenScope(nodes: Node[], context: Context, name: string, loca
   return results;
 }
 
-// Second step: optionally wrap multiple SDFs in a union
 export function wrapUnion(expressions: SDFExpression[]): SDFExpression {
   if (expressions.length === 0) {
-    return { type: 'sdf', expr: '0' };
+    return { 
+      type: 'sdf', 
+      expr: '0',
+      bounds: {
+        min: [0, 0, 0],
+        max: [-1, -1, -1]
+      }
+    };
   }
   if (expressions.length === 1) {
     return expressions[0];
   }
+
+  const bounds = combineAABBs(expressions);
+  const expr = `min(${expressions.map(e => e.expr).join(', ')})`;
+  
+  if (!bounds) return { type: 'sdf', expr };
+  
   return {
     type: 'sdf',
-    expr: `min(${expressions.map(e => e.expr).join(', ')})`
+    expr: `aabb(${bounds.min[0]}, ${bounds.min[1]}, ${bounds.min[2]}, ` +
+          `${bounds.max[0]}, ${bounds.max[1]}, ${bounds.max[2]}, ` +
+          `${expr})`,
+    bounds
   };
 }
 
@@ -251,9 +265,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       
       const children = flattenScope(call.children, context, 'smooth_union', call.location);
+
       return {
         type: 'sdf',
-        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_union(acc, curr, radius))
+        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_union(acc, curr, radius)),
+        bounds: growAABB(combineAABBs(children), radius)
       };
     }
 
@@ -267,9 +283,24 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       
       const children = flattenScope(call.children, context, 'smooth_intersection', call.location);
+      // For smooth_intersection, take most restrictive bounds from all children with bounds
+      const childBounds = children.map(c => c.bounds).filter((b): b is NonNullable<typeof b> => b !== undefined);
+      const bounds = childBounds.length > 0 ? {
+        min: [
+          Math.max(...childBounds.map(b => b.min[0])),
+          Math.max(...childBounds.map(b => b.min[1])),
+          Math.max(...childBounds.map(b => b.min[2]))
+        ] as [number, number, number],
+        max: [
+          Math.min(...childBounds.map(b => b.max[0])),
+          Math.min(...childBounds.map(b => b.max[1])),
+          Math.min(...childBounds.map(b => b.max[2]))
+        ] as [number, number, number]
+      } : undefined;
       return {
         type: 'sdf',
-        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_intersection(acc, curr, radius))
+        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_intersection(acc, curr, radius)),
+        bounds
       };
     }
 
@@ -283,9 +314,14 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       
       const children = flattenScope(call.children, context, 'smooth_difference', call.location);
+      
+      // For smooth difference, we need to grow the first shape's bounds by the blend radius
+      const bounds = growAABB(children[0].bounds, radius);
+      
       return {
         type: 'sdf',
-        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_difference(acc, curr, radius))
+        expr: children.map(c => c.expr).reduce((acc, curr) => smooth_difference(acc, curr, radius)),
+        bounds
       };
     }
     case 'cube': {
@@ -298,9 +334,14 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('cube does not accept children', call.location);
       }
       
+      const halfSize = size/2;
       return {
         type: 'sdf',
-        expr: `max(max(abs(x) - ${size/2}, abs(y) - ${size/2}), abs(z) - ${size/2})`
+        expr: `max(max(abs(x) - ${halfSize}, abs(y) - ${halfSize}), abs(z) - ${halfSize})`,
+        bounds: {
+          min: [-halfSize, -halfSize, -halfSize],
+          max: [halfSize, halfSize, halfSize]
+        }
       };
     }
 
@@ -316,7 +357,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       
       return {
         type: 'sdf',
-        expr: `sqrt(x*x + y*y + z*z) - ${r}`
+        expr: `sqrt(x*x + y*y + z*z) - ${r}`,
+        bounds: {
+          min: [-r, -r, -r],
+          max: [r, r, r]
+        }
       };
     }
 
@@ -332,9 +377,14 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('cylinder does not accept children', call.location);
       }
       
+      const halfHeight = height/2;
       return {
         type: 'sdf',
-        expr: `max(sqrt(x*x + z*z) - ${radius}, abs(y) - ${height/2})`
+        expr: `max(sqrt(x*x + z*z) - ${radius}, abs(y) - ${halfHeight})`,
+        bounds: {
+          min: [-radius, -halfHeight, -radius],
+          max: [radius, halfHeight, radius]
+        }
       };
     }
 
@@ -347,9 +397,26 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('translate requires at least one child', call.location);
       }
       
+      const childExpr = wrapUnion(children);
+      let bounds = undefined;
+      if (childExpr.bounds) {
+        const min: [number, number, number] = [
+          childExpr.bounds.min[0] + dx,
+          childExpr.bounds.min[1] + dy,
+          childExpr.bounds.min[2] + dz
+        ];
+        const max: [number, number, number] = [
+          childExpr.bounds.max[0] + dx,
+          childExpr.bounds.max[1] + dy,
+          childExpr.bounds.max[2] + dz
+        ];
+        bounds = { min, max };
+      }
+      
       return {
         type: 'sdf',
-        expr: `translate(${dx}, ${dy}, ${dz}, ${wrapUnion(children).expr})`
+        expr: `translate(${dx}, ${dy}, ${dz}, ${childExpr.expr})`,
+        bounds
       };
     }
 
@@ -363,9 +430,12 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('rotate requires at least one child', call.location);
       }
       
+      const childExpr = wrapUnion(children);
       return {
         type: 'sdf',
-        expr: `rotate(${rx}, ${ry}, ${rz}, ${wrapUnion(children).expr})`
+        expr: `rotate(${rx}, ${ry}, ${rz}, ${childExpr.expr})`,
+        // Negation experimentally determined. Why? Because fuck you that's why.
+        bounds: rotateAABB(childExpr.bounds, -rx, -ry, -rz)
       };
     }
 
@@ -377,10 +447,31 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (children.length === 0) {
         throw parseError('scale requires at least one child', call.location);
       }
+
+      const childExpr = wrapUnion(children);
+      let bounds = undefined;
+      if (childExpr.bounds) {
+        // For each component, multiply by scale factor and swap if negative
+        const [minX, minY, minZ] = childExpr.bounds.min;
+        const [maxX, maxY, maxZ] = childExpr.bounds.max;
+        bounds = {
+          min: [
+            sx >= 0 ? minX * sx : maxX * sx,
+            sy >= 0 ? minY * sy : maxY * sy,
+            sz >= 0 ? minZ * sz : maxZ * sz
+          ] as [number, number, number],
+          max: [
+            sx >= 0 ? maxX * sx : minX * sx,
+            sy >= 0 ? maxY * sy : minY * sy,
+            sz >= 0 ? maxZ * sz : minZ * sz
+          ] as [number, number, number]
+        };
+      }
       
       return {
         type: 'sdf',
-        expr: `(scale(${sx}, ${sy}, ${sz}, ${wrapUnion(children).expr}) * ${Math.min(sx, sy, sz)})`
+        expr: `(scale(${sx}, ${sy}, ${sz}, ${childExpr.expr}) * ${Math.min(sx, sy, sz)})`,
+        bounds
       };
     }
 
@@ -402,12 +493,59 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       
       // First child is the base shape, remaining children are subtracted
-      const base = children[0].expr;
+      const base = children[0];
       const negatedChildren = children.slice(1).map(c => `-(${c.expr})`);
+      
+      // For difference, we keep the first child's bounds since that's the maximum possible extent
+      const bounds = base.bounds;
+      
+      const expr = `max(${base.expr}, ${negatedChildren.join(', ')})`;
+      
+      if (!bounds) return { type: 'sdf', expr };
       
       return {
         type: 'sdf',
-        expr: `max(${base}, ${negatedChildren.join(', ')})`
+        expr: `aabb(${bounds.min[0]}, ${bounds.min[1]}, ${bounds.min[2]}, ` +
+              `${bounds.max[0]}, ${bounds.max[1]}, ${bounds.max[2]}, ` +
+              `${expr})`,
+        bounds
+      };
+    }
+
+    case 'intersection': {
+      if (!call.children?.length) {
+        throw parseError('intersection requires at least one child', call.location);
+      }
+      const children = flattenScope(call.children, context, 'intersection', call.location);
+      if (children.length === 0) {
+        throw parseError('intersection requires at least one child', call.location);
+      }
+
+      // For intersection, take most restrictive bounds from all children with bounds
+      const childBounds = children.map(c => c.bounds).filter((b): b is NonNullable<typeof b> => b !== undefined);
+      const bounds = childBounds.length > 0 ? {
+        min: [
+          Math.max(...childBounds.map(b => b.min[0])),
+          Math.max(...childBounds.map(b => b.min[1])),
+          Math.max(...childBounds.map(b => b.min[2]))
+        ] as [number, number, number],
+        max: [
+          Math.min(...childBounds.map(b => b.max[0])),
+          Math.min(...childBounds.map(b => b.max[1])),
+          Math.min(...childBounds.map(b => b.max[2]))
+        ] as [number, number, number]
+      } : undefined;
+      
+      const expr = `max(${children.map(c => c.expr).join(', ')})`;
+      
+      if (!bounds) return { type: 'sdf', expr };
+      
+      return {
+        type: 'sdf',
+        expr: `aabb(${bounds.min[0]}, ${bounds.min[1]}, ${bounds.min[2]}, ` +
+              `${bounds.max[0]}, ${bounds.max[1]}, ${bounds.max[2]}, ` +
+              `${expr})`,
+        bounds
       };
     }
 
@@ -436,5 +574,104 @@ export function smooth_intersection(expr1: string, expr2: string, radius: number
 }
 
 export function smooth_difference(expr1: string, expr2: string, radius: number): string {
+  // For smooth difference, we need to grow the first shape's bounds by the blend radius
+  // since material can be removed up to radius distance away
   return `-${smooth_union(`-(${expr1})`, `${expr2}`, radius)}`;
+}
+
+// Helper to combine multiple AABBs into a single encompassing AABB
+function combineAABBs(expressions: SDFExpression[]): AABB | undefined {
+  if (!expressions.every(e => e.bounds)) return undefined;
+
+  return {
+    min: [
+      Math.min(...expressions.map(e => e.bounds!.min[0])),
+      Math.min(...expressions.map(e => e.bounds!.min[1])),
+      Math.min(...expressions.map(e => e.bounds!.min[2]))
+    ] as [number, number, number],
+    max: [
+      Math.max(...expressions.map(e => e.bounds!.max[0])),
+      Math.max(...expressions.map(e => e.bounds!.max[1])),
+      Math.max(...expressions.map(e => e.bounds!.max[2]))
+    ] as [number, number, number]
+  };
+}
+
+// Helper to grow an AABB by a radius in all directions
+function growAABB(
+  bounds: AABB | undefined,
+  radius: number): AABB | undefined
+{
+  if (bounds === undefined) return;
+  return {
+    min: [
+      bounds.min[0] - radius,
+      bounds.min[1] - radius, 
+      bounds.min[2] - radius
+    ],
+    max: [
+      bounds.max[0] + radius,
+      bounds.max[1] + radius,
+      bounds.max[2] + radius
+    ]
+  };
+}
+
+// Helper to rotate an AABB and return a new AABB that contains the rotated box
+function rotateAABB(
+  bounds: AABB | undefined,
+  rx: number, ry: number, rz: number): AABB | undefined
+{
+  if (bounds === undefined) return;
+  // Get all 8 corners of the AABB
+  const corners: [number, number, number][] = [
+    [bounds.min[0], bounds.min[1], bounds.min[2]],
+    [bounds.min[0], bounds.min[1], bounds.max[2]],
+    [bounds.min[0], bounds.max[1], bounds.min[2]],
+    [bounds.min[0], bounds.max[1], bounds.max[2]],
+    [bounds.max[0], bounds.min[1], bounds.min[2]],
+    [bounds.max[0], bounds.min[1], bounds.max[2]],
+    [bounds.max[0], bounds.max[1], bounds.min[2]],
+    [bounds.max[0], bounds.max[1], bounds.max[2]]
+  ];
+  // Like evaluator.ts:'rotate' (TODO factor into common function)
+
+  // Compute trig values
+  const cx = Math.cos(rx), sx = Math.sin(rx);
+  const cy = Math.cos(ry), sy = Math.sin(ry);
+  const cz = Math.cos(rz), sz = Math.sin(rz);
+
+  // Rotate each corner
+  const rotated = corners.map(([x, y, z]) => {
+    // First rotate around X
+    const x1 = x;
+    const y1 = y * cx - z * sx;
+    const z1 = y * sx + z * cx;
+
+    // Then around Y
+    const x2 = x1 * cy + z1 * sy;
+    const y2 = y1;
+    const z2 = -x1 * sy + z1 * cy;
+
+    // Finally around Z
+    const nx = x2 * cz - y2 * sz;
+    const ny = x2 * sz + y2 * cz;
+    const nz = z2;
+
+    return [nx, ny, nz] as [number, number, number];
+  });
+
+  // Find new min/max
+  const min: [number, number, number] = [
+    Math.min(...rotated.map(p => p[0])),
+    Math.min(...rotated.map(p => p[1])),
+    Math.min(...rotated.map(p => p[2]))
+  ];
+  const max: [number, number, number] = [
+    Math.max(...rotated.map(p => p[0])),
+    Math.max(...rotated.map(p => p[1])),
+    Math.max(...rotated.map(p => p[2]))
+  ];
+
+  return { min, max };
 }

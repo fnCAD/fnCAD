@@ -100,9 +100,15 @@ export class ScopedModuleDeclaration {
   }
 }
 
+export interface AABB {
+  min: readonly [number, number, number];
+  max: readonly [number, number, number];
+}
+
 export interface SDFExpression {
   type: 'sdf';
   expr: string;
+  bounds?: AABB;
 }
 
 // Evaluation context

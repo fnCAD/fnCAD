@@ -19,6 +19,25 @@ export function generateShader(ast: Node): string {
       return x * x;
     }
 
+    bool aabb_check(vec3 low, vec3 high, vec3 p, out float result) {
+      // Check if point is inside expanded AABB
+      vec3 elow = low - (high - low) * vec3(0.2);
+      vec3 ehigh = high + (high - low) * vec3(0.2);
+      if (p.x >= elow.x && p.x <= ehigh.x &&
+          p.y >= elow.y && p.y <= ehigh.y &&
+          p.z >= elow.z && p.z <= ehigh.z) {
+        return true; // better compute the actual function.
+      }
+      
+      // Otherwise calculate distance to AABB
+      float dx = max(low.x - p.x, p.x - high.x);
+      float dy = max(low.y - p.y, p.y - high.y);
+      float dz = max(low.z - p.z, p.z - high.z);
+      
+      result = max(dx, max(dy, dz));
+      return false;
+    }
+
     float smooth_union(float d1, float d2, float r) {
       // If outside the central region, just use min.
       float x = abs(d1 - d2) / r;

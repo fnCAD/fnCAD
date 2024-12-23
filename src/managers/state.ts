@@ -146,8 +146,8 @@ export class StateManager {
     // When invisible, modify the scene() function to return inf
     const modifiedShader = isVisible ? fragmentShader : 
       fragmentShader.replace(
-        /float scene\(vec3 pos\) {([^}]*)}/s,
-        'float scene(vec3 pos) {\n  return 1.0e10;\n}'
+        /float scene\(vec3 pos\) {/s,
+        'float scene(vec3 pos) {\n  return 1.0e10;\n'
       );
     
     this.setCurrentShader(modifiedShader);

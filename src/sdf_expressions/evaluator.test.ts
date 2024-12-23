@@ -96,6 +96,25 @@ describe('Expression Evaluation', () => {
     expect(ast.evaluate(new Vector3(2, 0, 0))).toBe(0); // At (2,0,0), we're exactly on the surface of the sphere centered at (1,0,0)
   });
 
+  it('handles aabb optimization', () => {
+    const ast = parse('aabb(-1, -1, -1, 1, 1, 1, sqrt(x*x + y*y + z*z) - 1)');
+    
+    // Test point inside AABB - should use exact SDF
+    expect(ast.evaluate(new Vector3(0, 0, 0))).toBe(-1);
+    
+    // Test point far from AABB in x - should use AABB approximation
+    expect(ast.evaluate(new Vector3(10, 0, 0))).toBeCloseTo(9, 5);
+
+    // Test point far from AABB in y - should use AABB approximation
+    expect(ast.evaluate(new Vector3(0, -10, 0))).toBeCloseTo(9, 5);
+
+    // Test point far from AABB in z - should use AABB approximation
+    expect(ast.evaluate(new Vector3(0, 0, 10))).toBeCloseTo(9, 5);
+
+    // Test point just outside AABB - should use exact SDF
+    expect(ast.evaluate(new Vector3(1.1, 0, 0))).toBeCloseTo(0.1, 5);
+  });
+
   it('handles rotate transformation', () => {
     const ast = parse('rotate(0, 3.14159/2, 0, x*x + y*y + z*z - 1)');
     expect(ast.evaluate(new Vector3(1, 0, 0))).toBeCloseTo(0, 4); // Should be ~0 at radius 1

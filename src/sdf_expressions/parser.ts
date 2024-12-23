@@ -1,10 +1,10 @@
-import { Node } from './ast';
+import { Node, NumberNode } from './ast';
 import { 
   createNumberNode,
   createVariableNode,
   createBinaryOpNode,
   createUnaryOpNode,
-  createFunctionCallNode
+  createFunctionCallNode,
 } from './evaluator';
 
 class Parser {
@@ -56,7 +56,11 @@ class Parser {
 
   private unary(): Node {
     if (this.match('-')) {
-      return createUnaryOpNode('-', this.unary());
+      const next = this.unary();
+      if (next.type == 'Number') {
+        return createNumberNode(-(next as NumberNode).value);
+      }
+      return createUnaryOpNode('-', next);
     }
 
     return this.primary();
