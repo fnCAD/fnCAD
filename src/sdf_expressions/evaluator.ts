@@ -54,40 +54,48 @@ export function createVariableNode(name: string): VariableNode {
   };
 }
 
-export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, right: Node): BinaryOpNode {
-  return {
-    type: 'BinaryOp',
-    operator,
-    left,
-    right,
-    evaluate: (point: Vector3) => {
-      const lval = left.evaluate(point);
-      const rval = right.evaluate(point);
-      switch (operator) {
-        case '+': return lval + rval;
-        case '-': return lval - rval;
-        case '*': return lval * rval;
-        case '/':
-          if (rval === 0) throw new Error('Division by zero');
-          return lval / rval;
-      }
-    },
-    toGLSL: (context: GLSLContext) => {
-      const lval = left.toGLSL(context);
-      const rval = right.toGLSL(context);
-      return context.generator.save(`${lval} ${operator} ${rval}`, 'float');
-    },
-    evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-      const lval = left.evaluateInterval(x, y, z);
-      const rval = right.evaluateInterval(x, y, z);
-      switch (operator) {
-        case '+': return lval.add(rval);
-        case '-': return lval.subtract(rval);
-        case '*': return lval.multiply(rval);
-        case '/': return lval.divide(rval);
-      }
+class BinaryOpNodeImpl implements BinaryOpNode {
+  readonly type = 'BinaryOp' as const;
+
+  constructor(
+    public readonly operator: '+' | '-' | '*' | '/',
+    public readonly left: Node,
+    public readonly right: Node
+  ) {}
+
+  evaluate(point: Vector3): number {
+    const lval = this.left.evaluate(point);
+    const rval = this.right.evaluate(point);
+    switch (this.operator) {
+      case '+': return lval + rval;
+      case '-': return lval - rval;
+      case '*': return lval * rval;
+      case '/':
+        if (rval === 0) throw new Error('Division by zero');
+        return lval / rval;
     }
-  };
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const lval = this.left.toGLSL(context);
+    const rval = this.right.toGLSL(context);
+    return context.generator.save(`${lval} ${this.operator} ${rval}`, 'float');
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const lval = this.left.evaluateInterval(x, y, z);
+    const rval = this.right.evaluateInterval(x, y, z);
+    switch (this.operator) {
+      case '+': return lval.add(rval);
+      case '-': return lval.subtract(rval);
+      case '*': return lval.multiply(rval);
+      case '/': return lval.divide(rval);
+    }
+  }
+}
+
+export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, right: Node): BinaryOpNode {
+  return new BinaryOpNodeImpl(operator, left, right);
 }
 
 export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
