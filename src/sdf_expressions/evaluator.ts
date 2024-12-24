@@ -267,6 +267,8 @@ class LogFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`log(${this.args[0].toGLSL(context)})`, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 class MinFunctionCall extends FunctionCallNode {
@@ -387,6 +389,8 @@ class ExpFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`exp(${this.args[0].toGLSL(context)})`, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 class AbsFunctionCall extends FunctionCallNode {
@@ -413,6 +417,8 @@ class AbsFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`abs(${this.args[0].toGLSL(context)})`, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 class ScaleFunctionCall extends FunctionCallNode {
