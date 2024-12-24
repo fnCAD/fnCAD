@@ -121,7 +121,17 @@ export class UnaryOpNode implements Node {
     return val.negate();
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    const content = this.operand.evaluateContent(x, y, z);
+    if (!content) return null;
+
+    switch (content.category) {
+      case 'inside': return { category: 'outside' };
+      case 'outside': return { category: 'inside' };
+      case 'face': return { category: 'face' };
+      case 'edge': return { category: 'edge' };
+    }
+  }
 }
 
 function enforceArgumentLength(name: string, args: Node[], expected: number) {
