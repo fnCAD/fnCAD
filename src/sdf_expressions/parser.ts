@@ -2,7 +2,7 @@ import { Node, NumberNode } from './ast';
 import { 
   createNumberNode,
   createVariableNode,
-  createBinaryOpNode,
+  BinaryOpNode,
   createUnaryOpNode,
   createFunctionCallNode,
 } from './evaluator';
@@ -36,7 +36,7 @@ class Parser {
     while (this.match('+', '-')) {
       const operator = this.previous();
       const right = this.multiplicative();
-      left = createBinaryOpNode(operator as '+' | '-', left, right);
+      left = new BinaryOpNode(operator as '+' | '-', left, right);
     }
 
     return left;
@@ -48,7 +48,7 @@ class Parser {
     while (this.match('*', '/')) {
       const operator = this.previous();
       const right = this.unary();
-      left = createBinaryOpNode(operator as '*' | '/', left, right);
+      left = new BinaryOpNode(operator as '*' | '/', left, right);
     }
 
     return left;

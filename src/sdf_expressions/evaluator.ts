@@ -1,4 +1,4 @@
-import { Node, NumberNode, VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode } from './ast';
+import { Node, NumberNode, VariableNode, UnaryOpNode, FunctionCallNode } from './ast';
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
 import { Box3, Vector3 } from 'three';
@@ -54,7 +54,7 @@ export function createVariableNode(name: string): VariableNode {
   };
 }
 
-class BinaryOpNodeImpl implements BinaryOpNode {
+export class BinaryOpNode implements Node {
   readonly type = 'BinaryOp' as const;
 
   constructor(
@@ -92,10 +92,6 @@ class BinaryOpNodeImpl implements BinaryOpNode {
       case '/': return lval.divide(rval);
     }
   }
-}
-
-export function createBinaryOpNode(operator: '+' | '-' | '*' | '/', left: Node, right: Node): BinaryOpNode {
-  return new BinaryOpNodeImpl(operator, left, right);
 }
 
 export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {

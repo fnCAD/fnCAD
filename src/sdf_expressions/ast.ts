@@ -1,17 +1,14 @@
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
+import { Vector3 } from 'three';
 
 export type NodeType = 
   | 'Number'
   | 'Variable'
-  | 'BinaryOp'
   | 'UnaryOp'
   | 'FunctionCall';
 
-export type BinaryOperator = '+' | '-' | '*' | '/';
 export type UnaryOperator = '-';
-
-import { Vector3 } from 'three';
 
 export interface Node {
   type: NodeType;
@@ -28,13 +25,6 @@ export interface NumberNode extends Node {
 export interface VariableNode extends Node {
   type: 'Variable';
   name: string;
-}
-
-export interface BinaryOpNode extends Node {
-  type: 'BinaryOp';
-  operator: BinaryOperator;
-  left: Node;
-  right: Node;
 }
 
 export interface UnaryOpNode extends Node {
