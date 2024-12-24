@@ -21,19 +21,19 @@ Adding a fourth evaluation method:
 
 ```typescript
 evaluateContents(x: Interval, y: Interval, z: Interval): {
-  face: number | 'edge' | 'outside' | 'inside'
+  category: 'face' | 'edge' | 'outside' | 'inside'
 }
 ```
 
 This will replace `evaluateInterval` for octree subdivision.
 
 `evaluateContents` appears only on `ObjectNode : Node`.
-Only `faceId(<number>, ...)` can turn `Node` into `ObjectNode`. CSG and such assert that they take `ObjectNode`.
+Only `face(...)` can turn `Node` into `ObjectNode`. CSG and such assert that they take `ObjectNode`.
 
 A 'face' in this parlance is (part of) the boundary of an object that is usually smooth (bounded first derivative).
 
 Cases:
-- `number`: contains a known face (set with `faceId(37, ...)`)
+- `'face'`: contains a known face (set with `face(...)`)
 - `'outside'`: does not contain any faces.
 - `'inside'`: fully inside one or more objects.
 - `'edge'`: contains *more than one* known face.
@@ -60,6 +60,6 @@ Cases:
 ### Implementation Strategy
 
 1. Initial subdivision uses evaluateContents()
-2. Transitions to evaluateInterval() in `faceId()` nodes.
+2. Transitions to evaluateInterval() in `face()` nodes.
 
 This refactor will improve quality on transitions between objects for cheap.
