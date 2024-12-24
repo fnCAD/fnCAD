@@ -300,6 +300,43 @@ class MinFunctionCall extends FunctionCallNode {
       return context.generator.save(`min(${acc}, ${arg})`, 'float');
     });
   }
+
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    // Get content evaluations for all children
+    const contents = this.args.map(arg => arg.evaluateContent(x, y, z));
+
+    // If any child is inside, the union is inside
+    if (contents.some(c => c?.category === 'inside')) {
+      return { category: 'inside' };
+    }
+
+    // If all children are outside, the union is outside
+    if (contents.every(c => c?.category === 'outside')) {
+      return { category: 'outside' };
+    }
+
+    // If any child is edge, the union is edge
+    if (contents.some(c => c?.category === 'edge')) {
+      return { category: 'edge' };
+    }
+
+    // Count faces
+    const faceCount = contents.filter(c => c?.category === 'face').length;
+    if (faceCount > 1) {
+      return { category: 'edge' };
+    }
+    if (faceCount === 1) {
+      return { category: 'face' };
+    }
+
+    // If any child is null, result is null
+    if (contents.some(c => c === null)) {
+      return null;
+    }
+
+    // All remaining children must be 'outside'
+    return { category: 'outside' };
+  }
 }
 
 class MaxFunctionCall extends FunctionCallNode {
