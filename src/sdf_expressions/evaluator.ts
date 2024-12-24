@@ -529,6 +529,14 @@ class ScaleFunctionCall extends FunctionCallNode {
     const newContext = context.scale(evalSx, evalSy, evalSz);
     return this.#body.toGLSL(newContext);
   }
+
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    return this.#body.evaluateContent(
+      x.divide(Interval.from(constantValue(this.#sx))),
+      y.divide(Interval.from(constantValue(this.#sy))),
+      z.divide(Interval.from(constantValue(this.#sz)))
+    );
+  }
 }
 
 class TranslateFunctionCall extends FunctionCallNode {
@@ -572,6 +580,14 @@ class TranslateFunctionCall extends FunctionCallNode {
 
     const newContext = context.translate(evalDx, evalDy, evalDz);
     return this.#body.toGLSL(newContext);
+  }
+
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    return this.#body.evaluateContent(
+      new Interval(x.min - constantValue(this.#dx), x.max - constantValue(this.#dx)),
+      new Interval(y.min - constantValue(this.#dy), y.max - constantValue(this.#dy)),
+      new Interval(z.min - constantValue(this.#dz), z.max - constantValue(this.#dz))
+    );
   }
 }
 
@@ -695,48 +711,8 @@ class RotateFunctionCall extends FunctionCallNode {
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    var minX: number = Number.MAX_VALUE, maxX: number = -Number.MAX_VALUE;
-    var minY: number = Number.MAX_VALUE, maxY: number = -Number.MAX_VALUE;
-    var minZ: number = Number.MAX_VALUE, maxZ: number = -Number.MAX_VALUE;
-
-    // Get corners of the interval box, transform each corner (alloc-free)
-    for (var iz = 0; iz < 2; iz++) {
-      for (var iy = 0; iy < 2; iy++) {
-        for (var ix = 0; ix < 2; ix++) {
-          const px = (ix === 0) ? x.min : x.max;
-          const py = (iy === 0) ? y.min : y.max;
-          const pz = (iz === 0) ? z.min : z.max;
-
-          // First rotate around X
-          const x1 = px;
-          const y1 = py * this.#cx - pz * this.#sx;
-          const z1 = py * this.#sx + pz * this.#cx;
-
-          // Then around Y
-          const x2 = x1 * this.#cy + z1 * this.#sy;
-          const y2 = y1;
-          const z2 = -x1 * this.#sy + z1 * this.#cy;
-
-          // Finally around Z
-          const nx = x2 * this.#cz - y2 * this.#sz;
-          const ny = x2 * this.#sz + y2 * this.#cz;
-          const nz = z2;
-
-          minX = nx < minX ? nx : minX;
-          minY = ny < minY ? ny : minY;
-          minZ = nz < minZ ? nz : minZ;
-          maxX = nx > maxX ? nx : maxX;
-          maxY = ny > maxY ? ny : maxY;
-          maxZ = nz > maxZ ? nz : maxZ;
-        }
-      }
-    }
-
-    return this.#body.evaluateInterval(
-      new Interval(minX!, maxX!),
-      new Interval(minY!, maxY!),
-      new Interval(minZ!, maxZ!)
-    );
+    const rotated = this.#rotateIntervalBox({ x, y, z });
+    return this.#body.evaluateInterval(rotated.x, rotated.y, rotated.z);
   }
 
   evaluate(point: Vector3): number {
@@ -775,5 +751,10 @@ class RotateFunctionCall extends FunctionCallNode {
     const evalRz = constantValue(rz);
     const newContext = context.rotate(evalRx, evalRy, evalRz);
     return this.#body.toGLSL(newContext);
+  }
+
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    const rotated = this.#rotateIntervalBox({ x, y, z });
+    return this.#body.evaluateContent(rotated.x, rotated.y, rotated.z);
   }
 }
