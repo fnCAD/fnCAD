@@ -689,6 +689,52 @@ class RotateFunctionCall extends FunctionCallNode {
   #sz: number;
   #body: Node;
 
+  // Helper to compute rotated intervals
+  #rotateInterval(x: Interval, y: Interval, z: Interval): { x: Interval, y: Interval, z: Interval } {
+    let minX = Number.MAX_VALUE, maxX = -Number.MAX_VALUE;
+    let minY = Number.MAX_VALUE, maxY = -Number.MAX_VALUE;
+    let minZ = Number.MAX_VALUE, maxZ = -Number.MAX_VALUE;
+
+    // Transform each corner of the box
+    for (let iz = 0; iz < 2; iz++) {
+      for (let iy = 0; iy < 2; iy++) {
+        for (let ix = 0; ix < 2; ix++) {
+          const px = (ix === 0) ? x.min : x.max;
+          const py = (iy === 0) ? y.min : y.max;
+          const pz = (iz === 0) ? z.min : z.max;
+
+          // First rotate around X
+          const x1 = px;
+          const y1 = py * this.#cx - pz * this.#sx;
+          const z1 = py * this.#sx + pz * this.#cx;
+
+          // Then around Y
+          const x2 = x1 * this.#cy + z1 * this.#sy;
+          const y2 = y1;
+          const z2 = -x1 * this.#sy + z1 * this.#cy;
+
+          // Finally around Z
+          const nx = x2 * this.#cz - y2 * this.#sz;
+          const ny = x2 * this.#sz + y2 * this.#cz;
+          const nz = z2;
+
+          minX = nx < minX ? nx : minX;
+          minY = ny < minY ? ny : minY;
+          minZ = nz < minZ ? nz : minZ;
+          maxX = nx > maxX ? nx : maxX;
+          maxY = ny > maxY ? ny : maxY;
+          maxZ = nz > maxZ ? nz : maxZ;
+        }
+      }
+    }
+
+    return {
+      x: new Interval(minX, maxX),
+      y: new Interval(minY, maxY),
+      z: new Interval(minZ, maxZ)
+    };
+  }
+
   constructor(args: Node[]) {
     super('rotate', args);
     enforceArgumentLength('rotate', args, 4);
@@ -711,7 +757,7 @@ class RotateFunctionCall extends FunctionCallNode {
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    const rotated = this.#rotateIntervalBox({ x, y, z });
+    const rotated = this.#rotateInterval(x, y, z);
     return this.#body.evaluateInterval(rotated.x, rotated.y, rotated.z);
   }
 
@@ -754,7 +800,7 @@ class RotateFunctionCall extends FunctionCallNode {
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
-    const rotated = this.#rotateIntervalBox({ x, y, z });
+    const rotated = this.#rotateInterval(x, y, z);
     return this.#body.evaluateContent(rotated.x, rotated.y, rotated.z);
   }
 }
