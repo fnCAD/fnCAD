@@ -315,6 +315,11 @@ class MinFunctionCall extends FunctionCallNode {
       return { category: 'edge' };
     }
 
+    // Propagate invalid materials so we can exclude the case going forward.
+    if (contents.some(c => c === null)) {
+      return null;
+    }
+
     // Count faces
     const faceCount = contents.filter(c => c?.category === 'face').length;
     if (faceCount > 1) {
@@ -322,11 +327,6 @@ class MinFunctionCall extends FunctionCallNode {
     }
     if (faceCount === 1) {
       return { category: 'face' };
-    }
-
-    // If any child is null, result is null
-    if (contents.some(c => c === null)) {
-      return null;
     }
 
     // All remaining children must be 'outside'
@@ -406,11 +406,11 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     const d1 = this.args[0].evaluateInterval(x, y, z);
     const d2 = this.args[1].evaluateInterval(x, y, z);
-    // For interval arithmetic, we use a conservative approximation
-    // that encompasses both the smooth and regular union
+    // For now, use a conservative approximation.
+    // We know that we have to land *somewhere* between d1 and d2.
     return new Interval(
       Math.min(d1.min, d2.min),
-      Math.min(d1.max, d2.max)
+      Math.max(d1.max, d2.max)
     );
   }
 
