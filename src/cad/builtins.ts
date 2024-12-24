@@ -337,7 +337,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const halfSize = size/2;
       return {
         type: 'sdf',
-        expr: `max(max(abs(x) - ${halfSize}, abs(y) - ${halfSize}), abs(z) - ${halfSize})`,
+        expr: `max(max(face(abs(x) - ${halfSize}), face(abs(y) - ${halfSize})), face(abs(z) - ${halfSize}))`,
         bounds: {
           min: [-halfSize, -halfSize, -halfSize],
           max: [halfSize, halfSize, halfSize]
@@ -357,7 +357,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       
       return {
         type: 'sdf',
-        expr: `sqrt(x*x + y*y + z*z) - ${r}`,
+        expr: `face(sqrt(x*x + y*y + z*z) - ${r})`,
         bounds: {
           min: [-r, -r, -r],
           max: [r, r, r]
@@ -380,7 +380,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const halfHeight = height/2;
       return {
         type: 'sdf',
-        expr: `max(sqrt(x*x + z*z) - ${radius}, abs(y) - ${halfHeight})`,
+        expr: `max(face(sqrt(x*x + z*z) - ${radius}), face(abs(y) - ${halfHeight}))`,
         bounds: {
           min: [-radius, -halfHeight, -radius],
           max: [radius, halfHeight, radius]
