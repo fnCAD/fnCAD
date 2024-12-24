@@ -73,8 +73,8 @@
 
 ## 10. Advanced Features
 - [ ] Undo/redo
+- [ ] Localstorage
 - [ ] Project save/load
-- [ ] Multiple viewport angles
 - [ ] Material/color support
 
 ## 11. Documentation & Examples
