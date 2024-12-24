@@ -1,62 +1,64 @@
-import { Node, NumberNode, VariableNode, UnaryOpNode, FunctionCallNode } from './ast';
+import { Node } from './ast';
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
 import { Box3, Vector3 } from 'three';
 
-export function createNumberNode(value: number): NumberNode {
-  return {
-    type: 'Number',
-    value,
-    evaluate: (_point: Vector3) => value,
-    toGLSL: (context: GLSLContext) => {
-      // Format number with at least one decimal place
-      const glslNumber = Number.isInteger(value) ? `${value}.0` : value.toString();
-      return context.generator.save(glslNumber, 'float');
-    },
-    evaluateInterval: (_x: Interval, _y: Interval, _z: Interval) => Interval.from(value)
-  };
+export class NumberNode implements Node {
+  constructor(public readonly value: number) {}
+
+  evaluate(_point: Vector3): number {
+    return this.value;
+  }
+
+  toGLSL(context: GLSLContext): string {
+    // Format number with at least one decimal place
+    const glslNumber = Number.isInteger(this.value) ? `${this.value}.0` : this.value.toString();
+    return context.generator.save(glslNumber, 'float');
+  }
+
+  evaluateInterval(_x: Interval, _y: Interval, _z: Interval): Interval {
+    return Interval.from(this.value);
+  }
 }
 
 function constantValue(node: Node): number {
-  if (node.type === 'Number') {
-    return (node as NumberNode).value;
+  if (node instanceof NumberNode) {
+    return node.value;
   }
   throw new Error('Expected constant numeric value');
 }
 
-export function createVariableNode(name: string): VariableNode {
-  return {
-    type: 'Variable',
-    name,
-    evaluate: (point: Vector3) => {
-      switch (name) {
-        case 'x': return point.x;
-        case 'y': return point.y;
-        case 'z': return point.z;
-        default: throw new Error(`Unknown variable: ${name}`);
-      }
-    },
-    evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-      switch (name) {
-        case 'x': return x;
-        case 'y': return y;
-        case 'z': return z;
-        default: throw new Error(`Unknown variable: ${name}`);
-      }
-    },
-    toGLSL: (context: GLSLContext) => {
-      // Map x,y,z to components of the current point
-      if (name === 'x') return context.generator.save(`${context.getPoint()}.x`, 'float');
-      if (name === 'y') return context.generator.save(`${context.getPoint()}.y`, 'float');
-      if (name === 'z') return context.generator.save(`${context.getPoint()}.z`, 'float');
-      return context.generator.save(name, 'float');
+export class VariableNode implements Node {
+  constructor(public readonly name: string) {}
+
+  evaluate(point: Vector3): number {
+    switch (this.name) {
+      case 'x': return point.x;
+      case 'y': return point.y;
+      case 'z': return point.z;
+      default: throw new Error(`Unknown variable: ${this.name}`);
     }
-  };
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    switch (this.name) {
+      case 'x': return x;
+      case 'y': return y;
+      case 'z': return z;
+      default: throw new Error(`Unknown variable: ${this.name}`);
+    }
+  }
+
+  toGLSL(context: GLSLContext): string {
+    // Map x,y,z to components of the current point
+    if (this.name === 'x') return context.generator.save(`${context.getPoint()}.x`, 'float');
+    if (this.name === 'y') return context.generator.save(`${context.getPoint()}.y`, 'float');
+    if (this.name === 'z') return context.generator.save(`${context.getPoint()}.z`, 'float');
+    return context.generator.save(this.name, 'float');
+  }
 }
 
 export class BinaryOpNode implements Node {
-  readonly type = 'BinaryOp' as const;
-
   constructor(
     public readonly operator: '+' | '-' | '*' | '/',
     public readonly left: Node,
@@ -94,24 +96,26 @@ export class BinaryOpNode implements Node {
   }
 }
 
-export function createUnaryOpNode(operator: '-', operand: Node): UnaryOpNode {
-  return {
-    type: 'UnaryOp',
-    operator,
-    operand,
-    evaluate: (point: Vector3) => {
-      const val = operand.evaluate(point);
-      return -val;
-    },
-    toGLSL: (context: GLSLContext) => {
-      const val = operand.toGLSL(context);
-      return context.generator.save(`-${val}`, 'float');
-    },
-    evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-      const val = operand.evaluateInterval(x, y, z);
-      return val.negate();
-    }
-  };
+export class UnaryOpNode implements Node {
+  constructor(
+    public readonly operator: '-',
+    public readonly operand: Node
+  ) {}
+
+  evaluate(point: Vector3): number {
+    const val = this.operand.evaluate(point);
+    return -val;
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const val = this.operand.toGLSL(context);
+    return context.generator.save(`-${val}`, 'float');
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const val = this.operand.evaluateInterval(x, y, z);
+    return val.negate();
+  }
 }
 
 function enforceArgumentLength(name: string, args: Node[], expected: number) {
@@ -120,387 +124,433 @@ function enforceArgumentLength(name: string, args: Node[], expected: number) {
   }
 }
 
+abstract class FunctionCallNode implements Node {
+  constructor(
+    public readonly name: string,
+    public readonly args: Node[]
+  ) { }
+
+  abstract evaluate(point: Vector3): number;
+  abstract evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
+  abstract toGLSL(context: GLSLContext): string;
+}
+
 export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode {
-  if (name === 'sin') {
-    enforceArgumentLength(name, args, 1);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        return args[0].evaluateInterval(x, y, z).sin();
-      },
-      evaluate: (point: Vector3) => {
-        return Math.sin(args[0].evaluate(point));
-      },
-      toGLSL: (context: GLSLContext) => {
-        return context.generator.save(`sin(${args[0].toGLSL(context)})`, 'float');
-      }
-    };
+  switch (name) {
+    case 'sin': return new SinFunctionCall(args);
+    case 'cos': return new CosFunctionCall(args);
+    case 'sqrt': return new SqrtFunctionCall(args);
+    case 'sqr': return new SqrFunctionCall(args);
+    case 'log': return new LogFunctionCall(args);
+    case 'min': return new MinFunctionCall(args);
+    case 'max': return new MaxFunctionCall(args);
+    case 'smooth_union': return new SmoothUnionFunctionCall(args);
+    case 'exp': return new ExpFunctionCall(args);
+    case 'abs': return new AbsFunctionCall(args);
+    case 'rotate': return new RotateFunctionCall(args);
+    case 'scale': return new ScaleFunctionCall(args);
+    case 'translate': return new TranslateFunctionCall(args);
+    case 'aabb': return new AABBFunctionCall(args);
+    default: throw new Error(`Unknown function: ${name}`);
+  }
+}
+
+class SinFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('sin', args);
+    enforceArgumentLength('sin', args, 1);
   }
 
-  if (name === 'cos') {
-    enforceArgumentLength(name, args, 1);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        return args[0].evaluateInterval(x, y, z).cos();
-      },
-      evaluate: (point: Vector3) => {
-        return Math.cos(args[0].evaluate(point));
-      },
-      toGLSL: (context: GLSLContext) => {
-        return context.generator.save(`cos(${args[0].toGLSL(context)})`, 'float');
-      }
-    };
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    return this.args[0].evaluateInterval(x, y, z).sin();
   }
 
-  if (name === 'sqrt') {
-    enforceArgumentLength(name, args, 1);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        return args[0].evaluateInterval(x, y, z).sqrt();
-      },
-      evaluate: (point: Vector3) => {
-        return Math.sqrt(args[0].evaluate(point));
-      },
-      toGLSL: (context: GLSLContext) => {
-        return context.generator.save(`sqrt(${args[0].toGLSL(context)})`, 'float');
-      }
-    };
+  evaluate(point: Vector3): number {
+    return Math.sin(this.args[0].evaluate(point));
   }
 
-  if (name === 'sqr') {
-    enforceArgumentLength(name, args, 1);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        const val = args[0].evaluateInterval(x, y, z);
-        return val.multiply(val);
-      },
-      evaluate: (point: Vector3) => {
-        const val = args[0].evaluate(point);
-        return val * val;
-      },
-      toGLSL: (context: GLSLContext) => {
-        const val = args[0].toGLSL(context);
-        return context.generator.save(`(${val} * ${val})`, 'float');
-      }
-    };
+  toGLSL(context: GLSLContext): string {
+    return context.generator.save(`sin(${this.args[0].toGLSL(context)})`, 'float');
+  }
+}
+
+class CosFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('cos', args);
+    enforceArgumentLength('cos', args, 1);
   }
 
-  if (name === 'log') {
-    enforceArgumentLength(name, args, 1);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        return args[0].evaluateInterval(x, y, z).log();
-      },
-      evaluate: (point: Vector3) => {
-        return Math.log(args[0].evaluate(point));
-      },
-      toGLSL: (context: GLSLContext) => {
-        return context.generator.save(`log(${args[0].toGLSL(context)})`, 'float');
-      }
-    };
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    return this.args[0].evaluateInterval(x, y, z).cos();
   }
 
-  if (name === 'min') {
+  evaluate(point: Vector3): number {
+    return Math.cos(this.args[0].evaluate(point));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    return context.generator.save(`cos(${this.args[0].toGLSL(context)})`, 'float');
+  }
+}
+
+class SqrtFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('sqrt', args);
+    enforceArgumentLength('sqrt', args, 1);
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    return this.args[0].evaluateInterval(x, y, z).sqrt();
+  }
+
+  evaluate(point: Vector3): number {
+    return Math.sqrt(this.args[0].evaluate(point));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    return context.generator.save(`sqrt(${this.args[0].toGLSL(context)})`, 'float');
+  }
+}
+
+class SqrFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('sqr', args);
+    enforceArgumentLength('sqr', args, 1);
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const val = this.args[0].evaluateInterval(x, y, z);
+    return val.multiply(val);
+  }
+
+  evaluate(point: Vector3): number {
+    const val = this.args[0].evaluate(point);
+    return val * val;
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const val = this.args[0].toGLSL(context);
+    return context.generator.save(`(${val} * ${val})`, 'float');
+  }
+}
+
+class LogFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('log', args);
+    enforceArgumentLength('log', args, 1);
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    return this.args[0].evaluateInterval(x, y, z).log();
+  }
+
+  evaluate(point: Vector3): number {
+    return Math.log(this.args[0].evaluate(point));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    return context.generator.save(`log(${this.args[0].toGLSL(context)})`, 'float');
+  }
+}
+
+class MinFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('min', args);
     if (args.length < 1) throw new Error('min requires at least 1 argument');
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        const intervals = args.map(arg => arg.evaluateInterval(x, y, z));
-        if (intervals.length === 1) return intervals[0];
-        return intervals.reduce((acc, interval) => new Interval(
-          Math.min(acc.min, interval.min),
-          Math.min(acc.max, interval.max)
-        ));
-      },
-      evaluate: (point: Vector3) => {
-        const values = args.map(arg => arg.evaluate(point));
-        if (values.length === 1) return values[0];
-        return Math.min(...values);
-      },
-      toGLSL: (context: GLSLContext) => {
-        const evalArgs = args.map(arg => arg.toGLSL(context));
-        if (evalArgs.length === 1) return evalArgs[0];
-        return evalArgs.reduce((acc, arg, i) => {
-          if (i === 0) return arg;
-          return context.generator.save(`min(${acc}, ${arg})`, 'float');
-        });
-      }
-    };
   }
 
-  if (name === 'rotate') {
-    return new RotateFunctionCall(name, args);
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const intervals = this.args.map(arg => arg.evaluateInterval(x, y, z));
+    if (intervals.length === 1) return intervals[0];
+    return intervals.reduce((acc, interval) => new Interval(
+      Math.min(acc.min, interval.min),
+      Math.min(acc.max, interval.max)
+    ));
   }
 
-  if (name === 'scale') {
-    enforceArgumentLength(name, args, 4);
-    const [sx, sy, sz, body] = args;
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        // Get scale factors
-        const scaleX = constantValue(sx);
-        const scaleY = constantValue(sy);
-        const scaleZ = constantValue(sz);
-
-        return body.evaluateInterval(
-          x.divide(Interval.from(scaleX)),
-          y.divide(Interval.from(scaleY)),
-          z.divide(Interval.from(scaleZ))
-        );
-      },
-      evaluate: (point: Vector3) => {
-        const scaleX = sx.evaluate(point);
-        const scaleY = sy.evaluate(point);
-        const scaleZ = sz.evaluate(point);
-
-        return body.evaluate(new Vector3(
-          point.x / scaleX,
-          point.y / scaleY,
-          point.z / scaleZ
-        ));
-      },
-      toGLSL: (context: GLSLContext) => {
-        const evalSx = constantValue(sx);
-        const evalSy = constantValue(sy);
-        const evalSz = constantValue(sz);
-        const newContext = context.scale(evalSx, evalSy, evalSz);
-        return body.toGLSL(newContext);
-      }
-    };
+  evaluate(point: Vector3): number {
+    const values = this.args.map(arg => arg.evaluate(point));
+    if (values.length === 1) return values[0];
+    return Math.min(...values);
   }
 
-  if (name === 'translate') {
-    enforceArgumentLength(name, args, 4);
-    const [dx, dy, dz, body] = args;
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        // Evaluate translation amounts
-        const tx = constantValue(dx);
-        const ty = constantValue(dy);
-        const tz = constantValue(dz);
-
-        // Translate the intervals
-        return body.evaluateInterval(
-          new Interval(x.min - tx, x.max - tx),
-          new Interval(y.min - ty, y.max - ty),
-          new Interval(z.min - tz, z.max - tz)
-        );
-      },
-      evaluate: (point: Vector3) => {
-        const newX = point.x - constantValue(dx);
-        const newY = point.y - constantValue(dy);
-        const newZ = point.z - constantValue(dz);
-
-        return body.evaluate(new Vector3(newX, newY, newZ));
-      },
-      toGLSL: (context: GLSLContext) => {
-        const evalDx = constantValue(dx);
-        const evalDy = constantValue(dy);
-        const evalDz = constantValue(dz);
-
-        const newContext = context.translate(evalDx, evalDy, evalDz);
-        return body.toGLSL(newContext);
-      }
-    };
+  toGLSL(context: GLSLContext): string {
+    const evalArgs = this.args.map(arg => arg.toGLSL(context));
+    if (evalArgs.length === 1) return evalArgs[0];
+    return evalArgs.reduce((acc, arg, i) => {
+      if (i === 0) return arg;
+      return context.generator.save(`min(${acc}, ${arg})`, 'float');
+    });
   }
+}
 
-  if (name === 'max') {
+class MaxFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('max', args);
     if (args.length < 1) throw new Error('max requires at least 1 argument');
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        const intervals = args.map(arg => arg.evaluateInterval(x, y, z));
-        if (intervals.length === 1) return intervals[0];
-        return intervals.reduce((acc, interval) => new Interval(
-          Math.max(acc.min, interval.min),
-          Math.max(acc.max, interval.max)
-        ));
-      },
-      evaluate: (point: Vector3) => {
-        const values = args.map(arg => arg.evaluate(point));
-        if (values.length === 1) return values[0];
-        return Math.max(...values);
-      },
-      toGLSL: (context: GLSLContext) => {
-        const evalArgs = args.map(arg => arg.toGLSL(context));
-        if (evalArgs.length === 1) return evalArgs[0];
-        return evalArgs.reduce((acc, arg, i) => {
-          if (i === 0) return arg;
-          return context.generator.save(`max(${acc}, ${arg})`, 'float');
-        });
-      }
-    };
   }
 
-  if (name === 'smooth_union') {
-    enforceArgumentLength(name, args, 3);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        const d1 = args[0].evaluateInterval(x, y, z);
-        const d2 = args[1].evaluateInterval(x, y, z);
-        // const _r = constantValue(args[2]);
-        // For interval arithmetic, we use a conservative approximation
-        // that encompasses both the smooth and regular union
-        return new Interval(
-          Math.min(d1.min, d2.min),
-          Math.min(d1.max, d2.max)
-        );
-      },
-      evaluate: (point: Vector3) => {
-        const d1 = args[0].evaluate(point);
-        const d2 = args[1].evaluate(point);
-        const r = constantValue(args[2]);
-
-        // For points far from both shapes (> 10*radius), just use regular min
-        const minDist = Math.min(d1, d2);
-        if (minDist > r * 10.0) {
-          return Math.min(d1, d2);
-        }
-
-        // Otherwise compute the smooth union
-        const k = 1.0/r;
-        return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
-      },
-      toGLSL: (context: GLSLContext) => {
-        const evalArgs = args.map(arg => arg.toGLSL(context));
-        return context.generator.save(`smooth_union(${evalArgs.join(', ')})`, 'float');
-      }
-    };
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const intervals = this.args.map(arg => arg.evaluateInterval(x, y, z));
+    if (intervals.length === 1) return intervals[0];
+    return intervals.reduce((acc, interval) => new Interval(
+      Math.max(acc.min, interval.min),
+      Math.max(acc.max, interval.max)
+    ));
   }
 
-  if (name === 'exp') {
-    enforceArgumentLength(name, args, 1);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        return args[0].evaluateInterval(x, y, z).exp();
-      },
-      evaluate: (point: Vector3) => {
-        return Math.exp(args[0].evaluate(point));
-      },
-      toGLSL: (context: GLSLContext) => {
-        return context.generator.save(`exp(${args[0].toGLSL(context)})`, 'float');
-      }
-    };
+  evaluate(point: Vector3): number {
+    const values = this.args.map(arg => arg.evaluate(point));
+    if (values.length === 1) return values[0];
+    return Math.max(...values);
   }
 
-  if (name === 'abs') {
-    enforceArgumentLength(name, args, 1);
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        const val = args[0].evaluateInterval(x, y, z);
-        if (val.max < 0) {
-          return new Interval(-val.max, -val.min);
-        } else if (val.min > 0) {
-          return val;
-        } else {
-          return new Interval(0, Math.max(-val.min, val.max));
-        }
-      },
-      evaluate: (point: Vector3) => {
-        return Math.abs(args[0].evaluate(point));
-      },
-      toGLSL: (context: GLSLContext) => {
-        return context.generator.save(`abs(${args[0].toGLSL(context)})`, 'float');
-      }
-    };
+  toGLSL(context: GLSLContext): string {
+    const evalArgs = this.args.map(arg => arg.toGLSL(context));
+    if (evalArgs.length === 1) return evalArgs[0];
+    return evalArgs.reduce((acc, arg, i) => {
+      if (i === 0) return arg;
+      return context.generator.save(`max(${acc}, ${arg})`, 'float');
+    });
+  }
+}
+
+class SmoothUnionFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('smooth_union', args);
+    enforceArgumentLength('smooth_union', args, 3);
   }
 
-  if (name === 'aabb') {
-    enforceArgumentLength(name, args, 7);
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const d1 = this.args[0].evaluateInterval(x, y, z);
+    const d2 = this.args[1].evaluateInterval(x, y, z);
+    // For interval arithmetic, we use a conservative approximation
+    // that encompasses both the smooth and regular union
+    return new Interval(
+      Math.min(d1.min, d2.min),
+      Math.min(d1.max, d2.max)
+    );
+  }
+
+  evaluate(point: Vector3): number {
+    const d1 = this.args[0].evaluate(point);
+    const d2 = this.args[1].evaluate(point);
+    const r = constantValue(this.args[2]);
+
+    // For points far from both shapes (> 10*radius), just use regular min
+    const minDist = Math.min(d1, d2);
+    if (minDist > r * 10.0) {
+      return Math.min(d1, d2);
+    }
+
+    // Otherwise compute the smooth union
+    const k = 1.0/r;
+    return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const evalArgs = this.args.map(arg => arg.toGLSL(context));
+    return context.generator.save(`smooth_union(${evalArgs.join(', ')})`, 'float');
+  }
+}
+
+class ExpFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('exp', args);
+    enforceArgumentLength('exp', args, 1);
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    return this.args[0].evaluateInterval(x, y, z).exp();
+  }
+
+  evaluate(point: Vector3): number {
+    return Math.exp(this.args[0].evaluate(point));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    return context.generator.save(`exp(${this.args[0].toGLSL(context)})`, 'float');
+  }
+}
+
+class AbsFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('abs', args);
+    enforceArgumentLength('abs', args, 1);
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const val = this.args[0].evaluateInterval(x, y, z);
+    if (val.max < 0) {
+      return new Interval(-val.max, -val.min);
+    } else if (val.min > 0) {
+      return val;
+    } else {
+      return new Interval(0, Math.max(-val.min, val.max));
+    }
+  }
+
+  evaluate(point: Vector3): number {
+    return Math.abs(this.args[0].evaluate(point));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    return context.generator.save(`abs(${this.args[0].toGLSL(context)})`, 'float');
+  }
+}
+
+class ScaleFunctionCall extends FunctionCallNode {
+  #body: Node;
+  #sx: Node;
+  #sy: Node;
+  #sz: Node;
+
+  constructor(args: Node[]) {
+    super('scale', args);
+    enforceArgumentLength('scale', args, 4);
+    [this.#sx, this.#sy, this.#sz, this.#body] = args;
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    // Get scale factors
+    const scaleX = constantValue(this.#sx);
+    const scaleY = constantValue(this.#sy);
+    const scaleZ = constantValue(this.#sz);
+
+    return this.#body.evaluateInterval(
+      x.divide(Interval.from(scaleX)),
+      y.divide(Interval.from(scaleY)),
+      z.divide(Interval.from(scaleZ))
+    );
+  }
+
+  evaluate(point: Vector3): number {
+    const scaleX = this.#sx.evaluate(point);
+    const scaleY = this.#sy.evaluate(point);
+    const scaleZ = this.#sz.evaluate(point);
+
+    return this.#body.evaluate(new Vector3(
+      point.x / scaleX,
+      point.y / scaleY,
+      point.z / scaleZ
+    ));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const evalSx = constantValue(this.#sx);
+    const evalSy = constantValue(this.#sy);
+    const evalSz = constantValue(this.#sz);
+    const newContext = context.scale(evalSx, evalSy, evalSz);
+    return this.#body.toGLSL(newContext);
+  }
+}
+
+class TranslateFunctionCall extends FunctionCallNode {
+  #body: Node;
+  #dx: Node;
+  #dy: Node;
+  #dz: Node;
+
+  constructor(args: Node[]) {
+    super('translate', args);
+    enforceArgumentLength('translate', args, 4);
+    [this.#dx, this.#dy, this.#dz, this.#body] = args;
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    // Evaluate translation amounts
+    const tx = constantValue(this.#dx);
+    const ty = constantValue(this.#dy);
+    const tz = constantValue(this.#dz);
+
+    // Translate the intervals
+    return this.#body.evaluateInterval(
+      new Interval(x.min - tx, x.max - tx),
+      new Interval(y.min - ty, y.max - ty),
+      new Interval(z.min - tz, z.max - tz)
+    );
+  }
+
+  evaluate(point: Vector3): number {
+    const newX = point.x - constantValue(this.#dx);
+    const newY = point.y - constantValue(this.#dy);
+    const newZ = point.z - constantValue(this.#dz);
+
+    return this.#body.evaluate(new Vector3(newX, newY, newZ));
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const evalDx = constantValue(this.#dx);
+    const evalDy = constantValue(this.#dy);
+    const evalDz = constantValue(this.#dz);
+
+    const newContext = context.translate(evalDx, evalDy, evalDz);
+    return this.#body.toGLSL(newContext);
+  }
+}
+
+class AABBFunctionCall extends FunctionCallNode {
+  #fn: Node;
+  #aabb: Box3;
+  #expanded: Box3;
+
+  constructor(args: Node[]) {
+    super('aabb', args);
+    enforceArgumentLength('aabb', args, 7);
     const [fromx, fromy, fromz, tox, toy, toz, fn] = args;
-    
+    this.#fn = fn;
+
     // Create AABB from constant bounds
-    const aabb = new Box3(
+    this.#aabb = new Box3(
       new Vector3(constantValue(fromx), constantValue(fromy), constantValue(fromz)),
       new Vector3(constantValue(tox), constantValue(toy), constantValue(toz))
     );
-    
-    // Create expanded AABB so that gradients are actually correct when we get close.
-    const expanded = aabb.clone();
+
+    // Create expanded AABB so that gradients are actually correct when we get close
+    this.#expanded = this.#aabb.clone();
     const size = new Vector3();
-    expanded.getSize(size);
-    expanded.expandByVector(size.multiplyScalar(0.2));
-
-    return {
-      type: 'FunctionCall',
-      name,
-      args,
-      evaluateInterval: (x: Interval, y: Interval, z: Interval) => {
-        // TODO: Implement proper interval arithmetic for AABB distance
-        // For now, just evaluate the inner function
-        return fn.evaluateInterval(x, y, z);
-      },
-      evaluate: (point: Vector3) => {
-        // If point is inside expanded AABB, use exact SDF
-        if (expanded.containsPoint(point)) {
-          return fn.evaluate(point);
-        }
-
-        // Otherwise return distance to expanded AABB
-        return aabb.distanceToPoint(point);
-      },
-      toGLSL: (context: GLSLContext) => {
-        const resultVar = context.generator.freshVar();
-        // Initialize result variable
-        context.generator.addRaw(`float ${resultVar} = 0.0;`);
-        
-        // Generate AABB check (`aabb_check` does its own expansion)
-        context.generator.addRaw(
-          `if (aabb_check(vec3(${aabb.min.x}, ${aabb.min.y}, ${aabb.min.z}), ` +
-          `vec3(${aabb.max.x}, ${aabb.max.y}, ${aabb.max.z}), ` +
-          `${context.getPoint()}, ${resultVar})) {`
-        );
-        
-        // Inside AABB - evaluate actual function
-        const innerResult = fn.toGLSL(context);
-        context.generator.addRaw(`  ${resultVar} = ${innerResult};`);
-        context.generator.addRaw(`}`);
-        
-        return resultVar;
-      }
-    };
+    this.#expanded.getSize(size);
+    this.#expanded.expandByVector(size.multiplyScalar(0.2));
   }
 
-  throw new Error(`Unknown function: ${name}`);
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    // TODO: Implement proper interval arithmetic for AABB distance
+    // For now, just evaluate the inner function
+    return this.#fn.evaluateInterval(x, y, z);
+  }
+
+  evaluate(point: Vector3): number {
+    // If point is inside expanded AABB, use exact SDF
+    if (this.#expanded.containsPoint(point)) {
+      return this.#fn.evaluate(point);
+    }
+
+    // Otherwise return distance to expanded AABB
+    return this.#aabb.distanceToPoint(point);
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const resultVar = context.generator.freshVar();
+    // Initialize result variable
+    context.generator.addRaw(`float ${resultVar} = 0.0;`);
+
+    // Generate AABB check (`aabb_check` does its own expansion)
+    context.generator.addRaw(
+      `if (aabb_check(vec3(${this.#aabb.min.x}, ${this.#aabb.min.y}, ${this.#aabb.min.z}), ` +
+      `vec3(${this.#aabb.max.x}, ${this.#aabb.max.y}, ${this.#aabb.max.z}), ` +
+      `${context.getPoint()}, ${resultVar})) {`
+    );
+
+    // Inside AABB - evaluate actual function
+    const innerResult = this.#fn.toGLSL(context);
+    context.generator.addRaw(`  ${resultVar} = ${innerResult};`);
+    context.generator.addRaw(`}`);
+
+    return resultVar;
+  }
 }
 
-// TODO maybe everything should be classes
-class RotateFunctionCall implements FunctionCallNode {
-  readonly type = 'FunctionCall' as const;
-
+class RotateFunctionCall extends FunctionCallNode {
   // Cache trig values for evaluateInterval
   #cx: number;
   #sx: number;
@@ -510,11 +560,10 @@ class RotateFunctionCall implements FunctionCallNode {
   #sz: number;
   #body: Node;
 
-  constructor(
-    public readonly name: string,
-    public readonly args: Node[],
-  ) {
-    enforceArgumentLength(name, args, 4);
+  constructor(args: Node[]) {
+    super('rotate', args);
+    enforceArgumentLength('rotate', args, 4);
+
     const [rx, ry, rz, body] = args;
 
     // Get rotation angles
