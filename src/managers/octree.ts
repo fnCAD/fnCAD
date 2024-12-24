@@ -2,33 +2,30 @@ import * as THREE from 'three';
 import { OctreeNode } from '../octree';
 import { TaskProgress } from '../workers/task_types';
 import { StateManager } from './state';
-import { OctreeRenderSettings } from '../octreevis';
 import { RendererManager } from './renderer';
+import { SettingsManager } from './settings';
 
 export class OctreeManager {
   constructor(
     private stateManager: StateManager,
-    private rendererManager: RendererManager
+    private rendererManager: RendererManager,
+    private settingsManager: SettingsManager
   ) {}
 
-  async updateOctree(
-    minSize: number,
-    cellBudget: number,
-    renderSettings: OctreeRenderSettings
-  ) {
+  async updateOctree() {
+    const startTime = performance.now();
     const source = this.stateManager.getEditorContent();
     
     // Create octree task
     const taskId = this.stateManager.taskQueue.addTask({
       type: 'octree',
-      minSize,
-      cellBudget,
+      minSize: this.settingsManager.getMinSize(),
+      cellBudget: this.settingsManager.getCellBudget(),
       source
     });
     
     // Set this as the active task
     this.stateManager.setActiveTaskId(taskId);
-
 
     try {
       // Wait for task completion
@@ -100,14 +97,11 @@ export class OctreeManager {
         // Update state
         this.stateManager.setCurrentOctree(octree);
         this.stateManager.setCellCount(octree.getCellCount());
+        this.stateManager.updateOctreeTaskTime(startTime);
 
         // Update visualization
         const showOctree = this.stateManager.isOctreeVisible();
-        this.rendererManager.updateOctreeVisualization(
-          octree,
-          renderSettings,
-          showOctree
-        );
+        this.rendererManager.updateOctreeVisualization(octree, showOctree);
       }
     } catch (error) {
       console.error('Octree generation failed:', error);

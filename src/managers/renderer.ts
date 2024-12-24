@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OctreeNode } from '../octree';
 import { SerializedMesh } from '../types';
 import { TaskProgress } from '../workers/task_types';
-import { OctreeRenderSettings, visualizeOctree } from '../octreevis';
+import { visualizeOctree } from '../octreevis';
 
 export class RendererManager {
   renderer: THREE.WebGLRenderer;
@@ -254,7 +254,7 @@ export class RendererManager {
     return this.FOV;
   }
 
-  updateOctreeVisualization(octree: OctreeNode, settings: OctreeRenderSettings, visible: boolean = true) {
+  updateOctreeVisualization(octree: OctreeNode, visible: boolean = true) {
 
     // Remove existing octree visualization
     this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => 
@@ -263,7 +263,7 @@ export class RendererManager {
 
     // Create new visualization only if visible
     if (visible) {
-      const octreeGroup = visualizeOctree(octree, settings);
+      const octreeGroup = visualizeOctree(octree, this.settingsManager.getRenderSettings());
       if (octreeGroup) {
         octreeGroup.userData.isOctreeVisualization = true;
         this.previewOverlayScene.add(octreeGroup);

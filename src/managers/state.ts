@@ -101,21 +101,10 @@ export class StateManager {
     }
   }
 
-  private updateTaskTime(startTime: number) {
+  public updateOctreeTaskTime(startTime: number) {
     const endTime = performance.now();
     const duration = endTime - startTime;
     document.getElementById('last-update-time')!.textContent = `${duration.toFixed(1)}ms`;
-  }
-
-  async updateOctree(minSize: number, cellBudget: number, renderSettings: OctreeRenderSettings) {
-    const startTime = performance.now();
-    try {
-      await this.octreeManager.updateOctree(minSize, cellBudget, renderSettings);
-      this.updateTaskTime(startTime);
-    } catch (error) {
-      console.error('Octree update failed:', error);
-      throw error;
-    }
   }
 
   parseContent(): SdfNode {

@@ -116,7 +116,7 @@ describe('Expression Evaluation', () => {
   });
 
   it('handles rotate transformation', () => {
-    const ast = parse('rotate(0, 3.14159/2, 0, x*x + y*y + z*z - 1)');
+    const ast = parse('rotate(0, 1.570795, 0, x*x + y*y + z*z - 1)');
     expect(ast.evaluate(new Vector3(1, 0, 0))).toBeCloseTo(0, 4); // Should be ~0 at radius 1
   });
 });

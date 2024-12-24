@@ -271,7 +271,7 @@ const settingsManager = new SettingsManager(previewPane, () => {
 });
 const rendererManager = new RendererManager(previewPane, settingsManager);
 const stateManager = new StateManager(rendererManager, settingsManager);
-const octreeManager = new OctreeManager(stateManager, rendererManager);
+const octreeManager = new OctreeManager(stateManager, rendererManager, settingsManager);
 
 // Initialize CodeMirror editor
 const editor = new EditorView({
@@ -340,11 +340,7 @@ updateOctree();
 function updateOctree() {
   const ast = stateManager.parseContent();
   stateManager.updateShader(ast);
-  octreeManager.updateOctree(
-    settingsManager.getMinSize(),
-    settingsManager.getCellBudget(),
-    settingsManager.getRenderSettings()
-  );
+  octreeManager.updateOctree();
 }
 
 // Add mesh generation handler
