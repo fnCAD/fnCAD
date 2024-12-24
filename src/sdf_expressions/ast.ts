@@ -8,7 +8,7 @@ export type Content = null | {
 
 export interface Node {
   evaluate(point: Vector3): number;
-  toGLSL(context: GLSLContext): string;
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
   evaluateContent(x: Interval, y: Interval, z: Interval): Content;
+  toGLSL(context: GLSLContext): string;
 }
