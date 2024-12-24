@@ -15,29 +15,35 @@ The SDF system currently has three ways to evaluate distances:
 3. `toGLSL()`
    - Generates shader code for raymarching
 
-## Planned Addition: evaluateContents()
+## Planned Addition: evaluateContent()
 
 Adding a fourth evaluation method:
 
 ```typescript
-evaluateContents(x: Interval, y: Interval, z: Interval): {
+evaluateContent(x: Interval, y: Interval, z: Interval): null | {
   category: 'face' | 'edge' | 'outside' | 'inside'
 }
 ```
 
 This will replace `evaluateInterval` for octree subdivision.
 
-`evaluateContents` appears only on `ObjectNode : Node`.
-Only `face(...)` can turn `Node` into `ObjectNode`. CSG and such assert that they take `ObjectNode`.
+`evaluateContent` is `null` on most arithmetic.
+
+The new SDF function `face(...)` returns `'face'` iff its child `evaluateInterval` contains 0.
 
 A 'face' in this parlance is (part of) the boundary of an object that is usually smooth (bounded first derivative).
 
 Cases:
+- `null`: "plain arithmetic".
 - `'face'`: contains a known face (set with `face(...)`)
-- `'outside'`: does not contain any faces.
-- `'inside'`: fully inside one or more objects.
 - `'edge'`: contains *more than one* known face.
    - We want to recurse on this.
+- `'outside'`: does not contain any faces.
+- `'inside'`: fully inside one or more objects.
+
+The idea here is that a SDF expression will *generally* have a form of
+"CSG things (min/max), `face()`, arithmetic things".
+So `min`/`max` recurse to their children, but `+` does not and just returns `null`.
 
 ### Key Benefits
 

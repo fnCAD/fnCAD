@@ -1,7 +1,12 @@
-import { Node } from './ast';
+import { Node, Content } from './ast';
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
 import { Box3, Vector3 } from 'three';
+
+function constantValue(node: Node): number {
+  if (node instanceof NumberNode) return node.value;
+  throw new Error(`Expected constant numeric value, but got ${node}`);
+}
 
 export class NumberNode implements Node {
   constructor(public readonly value: number) {}
@@ -19,13 +24,8 @@ export class NumberNode implements Node {
   evaluateInterval(_x: Interval, _y: Interval, _z: Interval): Interval {
     return Interval.from(this.value);
   }
-}
 
-function constantValue(node: Node): number {
-  if (node instanceof NumberNode) {
-    return node.value;
-  }
-  throw new Error('Expected constant numeric value');
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 export class VariableNode implements Node {
@@ -56,6 +56,8 @@ export class VariableNode implements Node {
     if (this.name === 'z') return context.generator.save(`${context.getPoint()}.z`, 'float');
     return context.generator.save(this.name, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 export class BinaryOpNode implements Node {
@@ -94,6 +96,8 @@ export class BinaryOpNode implements Node {
       case '/': return lval.divide(rval);
     }
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 export class UnaryOpNode implements Node {
@@ -116,6 +120,8 @@ export class UnaryOpNode implements Node {
     const val = this.operand.evaluateInterval(x, y, z);
     return val.negate();
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 function enforceArgumentLength(name: string, args: Node[], expected: number) {
@@ -172,6 +178,8 @@ class SinFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`sin(${this.args[0].toGLSL(context)})`, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 class CosFunctionCall extends FunctionCallNode {
@@ -191,6 +199,8 @@ class CosFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`cos(${this.args[0].toGLSL(context)})`, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 class SqrtFunctionCall extends FunctionCallNode {
@@ -210,6 +220,8 @@ class SqrtFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`sqrt(${this.args[0].toGLSL(context)})`, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 class SqrFunctionCall extends FunctionCallNode {
@@ -232,6 +244,8 @@ class SqrFunctionCall extends FunctionCallNode {
     const val = this.args[0].toGLSL(context);
     return context.generator.save(`(${val} * ${val})`, 'float');
   }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
 }
 
 class LogFunctionCall extends FunctionCallNode {
