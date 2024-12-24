@@ -310,11 +310,6 @@ class MinFunctionCall extends FunctionCallNode {
       return { category: 'inside' };
     }
 
-    // If all children are outside, the union is outside
-    if (contents.every(c => c?.category === 'outside')) {
-      return { category: 'outside' };
-    }
-
     // If any child is edge, the union is edge
     if (contents.some(c => c?.category === 'edge')) {
       return { category: 'edge' };
