@@ -138,6 +138,7 @@ abstract class FunctionCallNode implements Node {
 
   abstract evaluate(point: Vector3): number;
   abstract evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
+  abstract evaluateContent(x: Interval, y: Interval, z: Interval): Content;
   abstract toGLSL(context: GLSLContext): string;
 }
 
@@ -157,6 +158,7 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
     case 'scale': return new ScaleFunctionCall(args);
     case 'translate': return new TranslateFunctionCall(args);
     case 'aabb': return new AABBFunctionCall(args);
+    case 'face': return new FaceFunctionCall(args);
     default: throw new Error(`Unknown function: ${name}`);
   }
 }
@@ -561,6 +563,33 @@ class AABBFunctionCall extends FunctionCallNode {
     context.generator.addRaw(`}`);
 
     return resultVar;
+  }
+}
+
+class FaceFunctionCall extends FunctionCallNode {
+  constructor(args: Node[]) {
+    super('face', args);
+    enforceArgumentLength('face', args, 1);
+  }
+
+  evaluate(point: Vector3): number {
+    return this.args[0].evaluate(point);
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    return this.args[0].evaluateInterval(x, y, z);
+  }
+
+  toGLSL(context: GLSLContext): string {
+    return this.args[0].toGLSL(context);
+  }
+
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    const interval = this.args[0].evaluateInterval(x, y, z);
+    if (interval.contains(0)) {
+      return { category: 'face' };
+    }
+    return interval.max < 0 ? { category: 'inside' } : { category: 'outside' };
   }
 }
 
