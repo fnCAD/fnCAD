@@ -434,6 +434,15 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     const evalArgs = this.args.map(arg => arg.toGLSL(context));
     return context.generator.save(`smooth_union(${evalArgs.join(', ')})`, 'float');
   }
+
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    // Use our own evaluateInterval to determine if we contain a potential face
+    const interval = this.evaluateInterval(x, y, z);
+    if (interval.contains(0)) {
+      return { category: 'face' };
+    }
+    return interval.max < 0 ? { category: 'inside' } : { category: 'outside' };
+  }
 }
 
 class ExpFunctionCall extends FunctionCallNode {
