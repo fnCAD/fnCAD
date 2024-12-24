@@ -640,6 +640,18 @@ class AABBFunctionCall extends FunctionCallNode {
     return this.#aabb.distanceToPoint(point);
   }
 
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    // Quick check - if the interval box is completely outside our AABB, return 'outside'
+    if (x.min > this.#aabb.max.x || x.max < this.#aabb.min.x ||
+        y.min > this.#aabb.max.y || y.max < this.#aabb.min.y ||
+        z.min > this.#aabb.max.z || z.max < this.#aabb.min.z) {
+      return { category: 'outside' };
+    }
+
+    // Otherwise, delegate to child node
+    return this.#fn.evaluateContent(x, y, z);
+  }
+
   toGLSL(context: GLSLContext): string {
     const resultVar = context.generator.freshVar();
     // Initialize result variable
