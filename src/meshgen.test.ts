@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parse } from './cad/parser';
 import { moduleToSDF } from './cad/builtins';
 import { parse as parseSDF } from './sdf_expressions/parser';
-import { createOctreeNode } from './octree';
+import { createOctreeNode, subdivideOctree } from './octree';
 import { MeshGenerator } from './meshgen';
 import { Vector3 } from 'three';
 
@@ -30,7 +30,7 @@ describe('Mesh generation', () => {
     // Subdivide octree with reasonable settings
     const minSize = 2;
     const cellBudget = 10000;
-    octree.subdivide(sdfAst, minSize, cellBudget);
+    subdivideOctree(octree, sdfAst, minSize, cellBudget);
     
     // Generate mesh
     const meshGen = new MeshGenerator(octree, sdfAst, true);

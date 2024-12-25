@@ -202,81 +202,6 @@ export class OctreeNode {
     return this.state === CellState.Outside;
   }
 
-  subdivide(
-    sdf: Node,
-    minSize: number = 0.1,
-    cellBudget: number = 100000,
-    onProgress?: (cells: number) => void
-  ): number {
-    let totalCells = 1;
-    const newSize = this.size / 2;
-
-    // If we're not a boundary cell, stop subdividing
-    if (this.state !== CellState.Boundary) {
-      return 1;
-    }
-
-    // If we've reached minimum size, stay as boundary cell
-    if (newSize < minSize) {
-      return 1;
-    }
-
-    // If no budget left, throw
-    if (cellBudget <= 1) {
-      throw new Error('Cell budget exhausted');
-    }
-
-    // Decrement budget for this cell
-    cellBudget--;
-
-    // Create 8 children with new size
-    const half = this.size/2;
-    const offsets = [
-      [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
-      [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
-    ];
-
-    // Mark boundary cells as subdivided before creating children
-    if (this.state === CellState.Boundary) {
-      this.state = CellState.BoundarySubdivided;
-    }
-
-    for (let i = 0; i < 8; i++) {
-      const [x, y, z] = offsets[i];
-      const childCenter = new THREE.Vector3(
-        this.center.x + x * half/2,
-        this.center.y + y * half/2,
-        this.center.z + z * half/2
-      );
-      const childNode = createOctreeNode(childCenter, newSize, sdf, this);
-      childNode.parent = this;
-      childNode.octant = i;
-      this.children[i] = childNode;
-
-      // Try to subdivide child with current budget
-      const child = this.children[i];
-      if (!child) continue;
-
-      const cellsCreated = child.subdivide(sdf, minSize, cellBudget);
-      totalCells += cellsCreated;
-      cellBudget -= cellsCreated;
-
-      if (cellBudget <= 0) {
-        console.log('Cell budget exhausted during subdivision');
-        break;
-      }
-    }
-
-
-    // Report progress if callback provided
-    if (onProgress) {
-      onProgress(totalCells);
-    }
-
-    // Return number of cells created
-    return totalCells;
-  }
-
   getCellCount(): number {
     let count = 1; // Count this node
     for (const child of this.children) {
@@ -351,4 +276,79 @@ export function createOctreeNode(
   }
 
   return new OctreeNode(center, size, state, parent, octant);
+}
+
+export function subdivideOctree(
+  node: OctreeNode,
+  sdf: Node,
+  minSize: number = 0.1,
+  cellBudget: number = 100000,
+  onProgress?: (cells: number) => void
+): number {
+  let totalCells = 1;
+  const newSize = node.size / 2;
+
+  // If we're not a boundary cell, stop subdividing
+  if (node.state !== CellState.Boundary) {
+    return 1;
+  }
+
+  // If we've reached minimum size, stay as boundary cell
+  if (newSize < minSize) {
+    return 1;
+  }
+
+  // If no budget left, throw
+  if (cellBudget <= 1) {
+    throw new Error('Cell budget exhausted');
+  }
+
+  // Decrement budget for this cell
+  cellBudget--;
+
+  // Create 8 children with new size
+  const half = node.size/2;
+  const offsets = [
+    [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
+    [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
+  ];
+
+  // Mark boundary cells as subdivided before creating children
+  if (node.state === CellState.Boundary) {
+    node.state = CellState.BoundarySubdivided;
+  }
+
+  for (let i = 0; i < 8; i++) {
+    const [x, y, z] = offsets[i];
+    const childCenter = new THREE.Vector3(
+      node.center.x + x * half/2,
+      node.center.y + y * half/2,
+      node.center.z + z * half/2
+    );
+    const childNode = createOctreeNode(childCenter, newSize, sdf, node);
+    childNode.octant = i;
+    node.children[i] = childNode;
+
+    // Try to subdivide child with current budget
+    const child = node.children[i];
+    if (!child) continue;
+
+    const cellsCreated = subdivideOctree(child, sdf, minSize, cellBudget);
+    totalCells += cellsCreated;
+    cellBudget -= cellsCreated;
+
+    if (cellBudget <= 0) {
+      console.log('Cell budget exhausted during subdivision');
+      break;
+    }
+  }
+
+
+  // Report progress if callback provided
+  if (onProgress) {
+    onProgress(totalCells);
+  }
+
+  // Return number of cells created
+  return totalCells;
 }

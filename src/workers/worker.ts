@@ -3,6 +3,9 @@ import { WorkerMessage, WorkerTask, TaskProgress } from './messages';
 import { parse as parseCAD } from '../cad/parser';
 import { moduleToSDF } from '../cad/builtins';
 import { OctreeTask, MeshTask } from '../types';
+import { OctreeNode, createOctreeNode, subdivideOctree } from '../octree';
+import { MeshGenerator } from '../meshgen';
+import { parse as parseSDF } from '../sdf_expressions/parser';
 
 // Store active tasks
 const activeTasks = new Map<string, TaskProgress>();
@@ -55,10 +58,6 @@ async function processTask(taskId: string, task: WorkerTask) {
   }
 }
 
-import { OctreeNode, createOctreeNode } from '../octree';
-import { MeshGenerator } from '../meshgen';
-import { parse as parseSDF } from '../sdf_expressions/parser';
-
 async function processOctreeTask(taskId: string, task: OctreeTask) {
   try {
     // Parse CAD code into SDF expression
@@ -77,7 +76,8 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     };
     
     // Subdivide with progress tracking
-    await octree.subdivide(
+    await subdivideOctree(
+      octree,
       sdf,
       task.minSize, 
       task.cellBudget,
