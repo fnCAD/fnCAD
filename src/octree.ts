@@ -38,19 +38,6 @@ export class OctreeNode {
     this.state = state;
   }
 
-  private getNeighborOctant(direction: Direction): number {
-    // Octant mapping for each direction
-    const octantMaps = {
-      [Direction.PosX]: [1, 0, 3, 2, 5, 4, 7, 6],
-      [Direction.NegX]: [1, 0, 3, 2, 5, 4, 7, 6],
-      [Direction.PosY]: [2, 3, 0, 1, 6, 7, 4, 5],
-      [Direction.NegY]: [2, 3, 0, 1, 6, 7, 4, 5],
-      [Direction.PosZ]: [4, 5, 6, 7, 0, 1, 2, 3],
-      [Direction.NegZ]: [4, 5, 6, 7, 0, 1, 2, 3]
-    };
-    return octantMaps[direction][this.octant];
-  }
-
   private getMirrorOctant(direction: Direction): number {
     // Mirror the octant across the appropriate axis
     switch (direction) {
@@ -92,7 +79,7 @@ export class OctreeNode {
 
     // If neighbor is in same parent, just return sibling
     if (this.isNeighborInSameParent(direction)) {
-      const neighborOctant = this.getNeighborOctant(direction);
+      const neighborOctant = this.getMirrorOctant(direction);
       return this.parent.children[neighborOctant];
     }
 
