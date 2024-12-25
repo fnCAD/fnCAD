@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { SerializedMesh } from './workers/mesh_types';
 import { HalfEdgeMesh } from './halfedge';
-import { OctreeNode, Direction, CellState } from './octree';
+import { OctreeNode, Direction, CellState, octreeChildCenter } from './octree';
 
 /**
  * Generates a triangle mesh from an octree representation of an SDF 
@@ -62,7 +62,7 @@ export class MeshGenerator {
         
         // Phase 1: Extract surface mesh from octree (0-50%)
         this.reportProgress(0);
-        this.extractMeshFromOctree(this.octree, mesh);
+        this.extractMeshFromOctree(this.octree, mesh, new THREE.Vector3(0, 0, 0), 65536);
         this.reportProgress(0.5);
 
         // Phase 2: Optimize vertices if enabled (50-55%)
@@ -88,21 +88,22 @@ export class MeshGenerator {
         return serialized;
     }
 
-    private extractMeshFromOctree(node: OctreeNode, mesh: HalfEdgeMesh) {
+    private extractMeshFromOctree(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number) {
         // Check if this is a boundary cell
         if (node.state === CellState.Boundary || node.state === CellState.BoundarySubdivided) {
             // Only process leaf nodes
             const isLeaf = node.children.every(child => child === null);
             if (isLeaf || node.state === CellState.Boundary) {
-                this.addCellFaces(node, mesh);
+                this.addCellFaces(node, mesh, center, size);
                 return;
             }
         }
 
         // Recurse into children for subdivided nodes
-        node.children.forEach(child => {
+        const half = size / 2;
+        node.children.forEach((child, index) => {
             if (child) {
-                this.extractMeshFromOctree(child, mesh);
+                this.extractMeshFromOctree(child, mesh, octreeChildCenter(index, center, half), half);
             }
         });
     }
@@ -124,8 +125,8 @@ export class MeshGenerator {
         return index;
     }
 
-    private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh) {
-        const half = node.size / 2;
+    private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number) {
+        const half = size / 2;
         const corners = [
             [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
@@ -157,7 +158,7 @@ export class MeshGenerator {
             // Get neighbor using enum-based method
             const neighbor = node.getNeighborAtLevel(face.direction);
             if (!neighbor) {
-                throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}`);
+                throw new Error(`Missing neighbor cell in octree for node at ${center.toArray()} with size ${size}`);
             } else {
                 // Add face if the neighbor is outside or at a coarser level
                 if (neighbor.isFullyOutside()) {

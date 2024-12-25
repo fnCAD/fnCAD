@@ -79,6 +79,8 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     await subdivideOctree(
       octree,
       sdf,
+      new THREE.Vector3(0, 0, 0),
+      65536,
       task.minSize, 
       task.cellBudget,
       onProgress

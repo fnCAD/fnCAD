@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { OctreeNode, CellState } from './octree';
+import { OctreeNode, CellState, octreeChildCenter } from './octree';
 
 export class OctreeRenderSettings {
   constructor(
@@ -10,11 +10,11 @@ export class OctreeRenderSettings {
   ) {}
 }
 
-function getColorForCell(node: OctreeNode): THREE.Color {
+function getColorForCell(node: OctreeNode, size: number): THREE.Color {
   // Map size to a color - red for small cells, green for large
   // Using log scale since sizes vary greatly
   const maxSize = 65536; // Our current max size
-  const t = Math.log(node.size) / Math.log(maxSize); // Normalized 0-1
+  const t = Math.log(size) / Math.log(maxSize); // Normalized 0-1
   
   if (node.state === CellState.Boundary) {
     return new THREE.Color(1, 1, 0); // Bright yellow for leaf boundary cells
@@ -29,9 +29,11 @@ function getColorForCell(node: OctreeNode): THREE.Color {
   }
 }
 
-function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings): THREE.LineSegments | null {
+function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings, center: THREE.Vector3, size: number)
+  : THREE.LineSegments | null
+{
   // Skip if cell is too small to render
-  if (node.size < settings.minRenderSize) {
+  if (size < settings.minRenderSize) {
     return null;
   }
 
@@ -43,18 +45,14 @@ function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings):
   }
 
   // Create edges for this cell
-  const half = node.size / 2;
+  const half = size / 2;
   const corners = [
     [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
     [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
   ];
   
   const vertices = corners.map(([x, y, z]) => 
-    new THREE.Vector3(
-      node.center.x + x * half,
-      node.center.y + y * half,
-      node.center.z + z * half
-    )
+    new THREE.Vector3(center.x + x * half, center.y + y * half, center.z + z * half)
   );
 
   // Create edges
@@ -75,7 +73,7 @@ function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings):
 
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   const material = new THREE.LineBasicMaterial({ 
-    color: getColorForCell(node),
+    color: getColorForCell(node, size),
     transparent: true,
     opacity: 1.0,
     blending: THREE.AdditiveBlending,
@@ -93,20 +91,21 @@ export function visualizeOctree(root: OctreeNode | null, settings: OctreeRenderS
   const group = new THREE.Group();
   group.userData.isOctreeVisualization = true;
   
-  function addNodeToGroup(node: OctreeNode) {
-    const geom = createOctreeGeometry(node, settings);
+  function addNodeToGroup(node: OctreeNode, center: THREE.Vector3, size: number) {
+    const half = size / 2;
+    const geom = createOctreeGeometry(node, settings, center, size);
     if (geom) {
       group.add(geom);
     }
     
     // Recurse into children
-    node.children.forEach(child => {
+    node.children.forEach((child, index) => {
       if (child) {
-        addNodeToGroup(child);
+        addNodeToGroup(child, octreeChildCenter(index, center, half), half);
       }
     });
   }
   
-  addNodeToGroup(root);
+  addNodeToGroup(root, new THREE.Vector3(0, 0, 0), 65536);
   return group;
 }

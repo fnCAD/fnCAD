@@ -146,12 +146,20 @@ export class OctreeNode {
   }
 }
 
+export function octreeChildCenter(index: number, center: THREE.Vector3, half: number): THREE.Vector3 {
+  const quart = half / 2;
+  const xDir = (index & 1) === 0 ? 1 : -1;
+  const yDir = (index & 2) === 0 ? 1 : -1;
+  const zDir = (index & 4) === 0 ? 1 : -1;
+  return new THREE.Vector3(center.x + xDir * quart, center.y + yDir * quart, center.z + zDir * quart);
+}
+
 export function createOctreeNode(
   center: THREE.Vector3,
   size: number,
   sdf: Node,
-  parent: OctreeNode | null = null,
-  octant: number = -1
+  octant: number = -1,
+  parent: OctreeNode | null = null
 ): OctreeNode {
   // Evaluate content over the cube bounds to determine initial state
   const half = size / 2;
@@ -186,12 +194,14 @@ export function createOctreeNode(
 export function subdivideOctree(
   node: OctreeNode,
   sdf: Node,
+  center: THREE.Vector3,
+  size: number,
   minSize: number = 0.1,
   cellBudget: number = 100000,
   onProgress?: (cells: number) => void
 ): number {
   let totalCells = 1;
-  const newSize = node.size / 2;
+  const half = node.size / 2;
 
   // If we're not a boundary cell, stop subdividing
   if (node.state !== CellState.Boundary) {
@@ -199,7 +209,7 @@ export function subdivideOctree(
   }
 
   // If we've reached minimum size, stay as boundary cell
-  if (newSize < minSize) {
+  if (half < minSize) {
     return 1;
   }
 
@@ -212,7 +222,6 @@ export function subdivideOctree(
   cellBudget--;
 
   // Create 8 children with new size
-  const half = node.size/2;
   const offsets = [
     [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
     [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
@@ -230,7 +239,7 @@ export function subdivideOctree(
       node.center.y + y * half/2,
       node.center.z + z * half/2
     );
-    const childNode = createOctreeNode(childCenter, newSize, sdf, node);
+    const childNode = createOctreeNode(childCenter, half, sdf, node);
     childNode.octant = i;
     node.children[i] = childNode;
 
@@ -238,7 +247,7 @@ export function subdivideOctree(
     const child = node.children[i];
     if (!child) continue;
 
-    const cellsCreated = subdivideOctree(child, sdf, minSize, cellBudget);
+    const cellsCreated = subdivideOctree(child, sdf, childCenter, half, minSize, cellBudget);
     totalCells += cellsCreated;
     cellBudget -= cellsCreated;
 

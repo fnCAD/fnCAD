@@ -30,7 +30,7 @@ describe('Mesh generation', () => {
     // Subdivide octree with reasonable settings
     const minSize = 2;
     const cellBudget = 10000;
-    subdivideOctree(octree, sdfAst, minSize, cellBudget);
+    subdivideOctree(octree, sdfAst, new Vector3(0, 0, 0), 65536, minSize, cellBudget);
     
     // Generate mesh
     const meshGen = new MeshGenerator(octree, sdfAst, true);
