@@ -136,9 +136,9 @@ export class MeshGenerator {
         function vertexIndex(corner: number): number {
             const [x, y, z] = corners[corner];
             const pos = new THREE.Vector3(
-                node.center.x + x * half,
-                node.center.y + y * half,
-                node.center.z + z * half
+                center.x + x * half,
+                center.y + y * half,
+                center.z + z * half
             );
             return self.getVertexIndex(pos, mesh);
         }
