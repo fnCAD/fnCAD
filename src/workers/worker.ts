@@ -91,12 +91,6 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     const serializeNode = (node: OctreeNode): any => {
       const state = node.state;
       return {
-        center: {
-          x: node.center.x,
-          y: node.center.y,
-          z: node.center.z
-        },
-        size: node.size,
         state: state,
         children: node.children.map(child => child ? serializeNode(child) : null),
         octant: node.octant
@@ -123,11 +117,7 @@ async function processMeshTask(taskId: string, task: MeshTask) {
         throw new Error('Cannot reconstruct null octree data');
       }
       
-      const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
-      
       const node = Object.assign(new OctreeNode(
-        center,
-        data.size,
         data.state,
         parent,
         data.octant

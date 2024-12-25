@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { OctreeNode } from '../octree';
 import { TaskProgress } from '../workers/task_types';
 import { StateManager } from './state';
@@ -51,27 +50,15 @@ export class OctreeManager {
           }
           
           // Detailed validation with specific error messages
-          if (!data.center) {
-            throw new Error('Invalid octree data: missing center');
-          }
-          if (typeof data.center.x !== 'number' || 
-              typeof data.center.y !== 'number' || 
-              typeof data.center.z !== 'number') {
-            throw new Error('Invalid octree data: center coordinates must be numbers');
-          }
-          if (typeof data.size !== 'number') {
-            throw new Error('Invalid octree data: size must be a number');
-          }
           if (typeof data.state !== 'number') {
             throw new Error('Invalid octree data: state must be a number');
           }
+          if (typeof data.octant !== 'number') {
+            throw new Error('Invalid octree data: octant must be a number');
+          }
 
-          const center = new THREE.Vector3(data.center.x, data.center.y, data.center.z);
-          
           // Create node with proper prototype chain
           const node = Object.assign(new OctreeNode(
-            center,
-            data.size,
             data.state,
             parent,
             data.octant

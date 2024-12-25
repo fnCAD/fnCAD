@@ -22,21 +22,12 @@ export class OctreeNode {
   // (z << 2) | (y << 1) | x
   // [-1, 1]
   children: (OctreeNode | null)[] = new Array(8).fill(null);
-  state!: CellState;
 
   constructor(
-    public center: THREE.Vector3,
-    public size: number,
-    state: CellState,
-    public parent: OctreeNode | null = null,
-    public octant: number = -1
-  ) {
-    // Validate size
-    if (size <= 0) {
-      throw new Error(`Invalid octree node size: ${size}`);
-    }
-    this.state = state;
-  }
+    public state: CellState,
+    public readonly parent: OctreeNode | null = null,
+    public readonly octant: number = -1
+  ) { }
 
   private getMirrorOctant(direction: Direction): number {
     // Mirror the octant across the appropriate axis
@@ -188,7 +179,7 @@ export function createOctreeNode(
     }
   }
 
-  return new OctreeNode(center, size, state, parent, octant);
+  return new OctreeNode(state, parent, octant);
 }
 
 export function subdivideOctree(
@@ -239,15 +230,8 @@ export function subdivideOctree(
       center.y + y * half/2,
       center.z + z * half/2
     );
-    const childNode = createOctreeNode(childCenter, half, sdf, i, node);
-    childNode.octant = i;
-    node.children[i] = childNode;
-
-    // Try to subdivide child with current budget
-    const child = node.children[i];
-    if (!child) continue;
-
-    const cellsCreated = subdivideOctree(child, sdf, childCenter, half, minSize, cellBudget);
+    node.children[i] = createOctreeNode(childCenter, half, sdf, i, node);
+    const cellsCreated = subdivideOctree(node.children[i]!, sdf, childCenter, half, minSize, cellBudget);
     totalCells += cellsCreated;
     cellBudget -= cellsCreated;
 
