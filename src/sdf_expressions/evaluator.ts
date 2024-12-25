@@ -420,7 +420,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     // We know that we have to land *somewhere* between d1 and d2.
     return new Interval(
       Math.min(d1.min, d2.min),
-      Math.max(d1.max, d2.max)
+      Math.min(d1.max, d2.max)
     );
   }
 

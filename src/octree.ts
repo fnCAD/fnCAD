@@ -26,7 +26,7 @@ export class OctreeNode {
   constructor(
     public state: CellState,
     public readonly parent: OctreeNode | null = null,
-    public readonly octant: number = -1
+    public readonly octant: number = -1,
   ) { }
 
   private getMirrorOctant(direction: Direction): number {
@@ -212,25 +212,16 @@ export function subdivideOctree(
   // Decrement budget for this cell
   cellBudget--;
 
-  // Create 8 children with new size
-  const offsets = [
-    [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
-    [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
-  ];
-
   // Mark boundary cells as subdivided before creating children
   if (node.state === CellState.Boundary) {
     node.state = CellState.BoundarySubdivided;
   }
 
   for (let i = 0; i < 8; i++) {
-    const [x, y, z] = offsets[i];
-    const childCenter = new THREE.Vector3(
-      center.x + x * half/2,
-      center.y + y * half/2,
-      center.z + z * half/2
-    );
+    const childCenter = octreeChildCenter(i, center, half);
     node.children[i] = createOctreeNode(childCenter, half, sdf, i, node);
+
+    // Try to subdivide child with current budget
     const cellsCreated = subdivideOctree(node.children[i]!, sdf, childCenter, half, minSize, cellBudget);
     totalCells += cellsCreated;
     cellBudget -= cellsCreated;

@@ -97,7 +97,7 @@ export function visualizeOctree(root: OctreeNode | null, settings: OctreeRenderS
     if (geom) {
       group.add(geom);
     }
-    
+
     // Recurse into children
     node.children.forEach((child, index) => {
       if (child) {

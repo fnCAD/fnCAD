@@ -157,23 +157,20 @@ export class MeshGenerator {
         faces.forEach(face => {
             // Get neighbor using enum-based method
             const neighbor = node.getNeighborAtLevel(face.direction);
-            if (!neighbor) {
-                throw new Error(`Missing neighbor cell in octree for node at ${center.toArray()} with size ${size}`);
-            } else {
-                // Add face if the neighbor is outside or at a coarser level
-                if (neighbor.isFullyOutside()) {
-                    // Add two triangles for this quad face
-                    mesh.addFace(
-                        vertexIndex(face.vertices[0]),
-                        vertexIndex(face.vertices[1]),
-                        vertexIndex(face.vertices[2]),
-                    );
-                    mesh.addFace(
-                        vertexIndex(face.vertices[3]),
-                        vertexIndex(face.vertices[4]),
-                        vertexIndex(face.vertices[5]),
-                    );
-                }
+            // Add face if the neighbor is outside
+
+            if (!neighbor || neighbor.isFullyOutside()) {
+                // Add two triangles for this quad face
+                mesh.addFace(
+                    vertexIndex(face.vertices[0]),
+                    vertexIndex(face.vertices[1]),
+                    vertexIndex(face.vertices[2]),
+                );
+                mesh.addFace(
+                    vertexIndex(face.vertices[3]),
+                    vertexIndex(face.vertices[4]),
+                    vertexIndex(face.vertices[5]),
+                );
             }
         });
     }

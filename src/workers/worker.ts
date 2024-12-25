@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { WorkerMessage, WorkerTask, TaskProgress } from './messages';
+import { OctreeNode, createOctreeNode, subdivideOctree } from '../octree';
 import { parse as parseCAD } from '../cad/parser';
 import { moduleToSDF } from '../cad/builtins';
 import { OctreeTask, MeshTask } from '../types';
-import { OctreeNode, createOctreeNode, subdivideOctree } from '../octree';
 import { MeshGenerator } from '../meshgen';
 import { parse as parseSDF } from '../sdf_expressions/parser';
 
@@ -76,12 +76,12 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     };
     
     // Subdivide with progress tracking
-    await subdivideOctree(
+    subdivideOctree(
       octree,
       sdf,
       new THREE.Vector3(0, 0, 0),
       65536,
-      task.minSize, 
+      task.minSize,
       task.cellBudget,
       onProgress
     );
@@ -89,11 +89,10 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     
     // Ensure we send a proper OctreeNode instance with all required data
     const serializeNode = (node: OctreeNode): any => {
-      const state = node.state;
       return {
-        state: state,
-        children: node.children.map(child => child ? serializeNode(child) : null),
-        octant: node.octant
+        state: node.state,
+        octant: node.octant,
+        children: node.children.map(child => child ? serializeNode(child) : null)
       };
     };
 
