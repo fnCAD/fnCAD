@@ -145,43 +145,6 @@ export function octreeChildCenter(index: number, center: THREE.Vector3, half: nu
   return new THREE.Vector3(center.x + xDir * quart, center.y + yDir * quart, center.z + zDir * quart);
 }
 
-export function createOctreeNode(
-  center: THREE.Vector3,
-  size: number,
-  sdf: Node,
-  octant: number = -1,
-  parent: OctreeNode | null = null
-): OctreeNode {
-  // Evaluate content over the cube bounds to determine initial state
-  const half = size / 2;
-  const rangeX = new Interval(center.x - half, center.x + half);
-  const rangeY = new Interval(center.y - half, center.y + half);
-  const rangeZ = new Interval(center.z - half, center.z + half);
-  const content = sdf.evaluateContent(rangeX, rangeY, rangeZ);
-
-  // Determine cell state based on content category
-  let state: CellState;
-  if (!content) {
-    // Null content (plain arithmetic). This should never happen, but
-    // for now just fall back to interval evaluation.
-    const interval = sdf.evaluateInterval(rangeX, rangeY, rangeZ);
-
-    state = interval.max < 0 ? CellState.Inside :
-            interval.min > 0 ? CellState.Outside :
-            CellState.Boundary;
-  } else {
-    switch (content.category) {
-      case 'inside': state = CellState.Inside; break;
-      case 'outside': state = CellState.Outside; break;
-      case 'face': state = CellState.Boundary; break;
-      // TODO: boundary of special interest, mark for extended subdivision.
-      case 'edge': state = CellState.Boundary; break;
-    }
-  }
-
-  return new OctreeNode(state, parent, octant);
-}
-
 export function subdivideOctree(
   node: OctreeNode,
   sdf: Node,
@@ -217,9 +180,36 @@ export function subdivideOctree(
     node.state = CellState.BoundarySubdivided;
   }
 
+  const quart = half / 2;
   for (let i = 0; i < 8; i++) {
     const childCenter = octreeChildCenter(i, center, half);
-    node.children[i] = createOctreeNode(childCenter, half, sdf, i, node);
+
+    // Evaluate content over the cube bounds to determine initial state
+    const rangeX = new Interval(childCenter.x - quart, childCenter.x + quart);
+    const rangeY = new Interval(childCenter.y - quart, childCenter.y + quart);
+    const rangeZ = new Interval(childCenter.z - quart, childCenter.z + quart);
+    const content = sdf.evaluateContent(rangeX, rangeY, rangeZ);
+
+    // Determine cell state based on content category
+    let state: CellState;
+    if (!content) {
+      // Null content (plain arithmetic). This should never happen, but
+      // for now just fall back to interval evaluation.
+      const interval = sdf.evaluateInterval(rangeX, rangeY, rangeZ);
+
+      state = interval.max < 0 ? CellState.Inside :
+              interval.min > 0 ? CellState.Outside :
+              CellState.Boundary;
+    } else {
+      switch (content.category) {
+        case 'inside': state = CellState.Inside; break;
+        case 'outside': state = CellState.Outside; break;
+        case 'face': state = CellState.Boundary; break;
+        // TODO: boundary of special interest, mark for extended subdivision.
+        case 'edge': state = CellState.Boundary; break;
+      }
+    }
+    node.children[i] = new OctreeNode(state, node, i);
 
     // Try to subdivide child with current budget
     const cellsCreated = subdivideOctree(node.children[i]!, sdf, childCenter, half, minSize, cellBudget);

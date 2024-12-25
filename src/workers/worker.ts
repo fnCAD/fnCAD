@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { WorkerMessage, WorkerTask, TaskProgress } from './messages';
-import { OctreeNode, createOctreeNode, subdivideOctree } from '../octree';
+import { OctreeNode, CellState, subdivideOctree } from '../octree';
 import { parse as parseCAD } from '../cad/parser';
 import { moduleToSDF } from '../cad/builtins';
 import { OctreeTask, MeshTask } from '../types';
@@ -65,7 +65,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
     
-    const octree = createOctreeNode(new THREE.Vector3(0, 0, 0), 65536, sdf);
+    const octree = new OctreeNode(CellState.Boundary);
     
     // Track subdivision progress
     let totalCells = 0;
