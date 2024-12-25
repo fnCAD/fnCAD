@@ -131,7 +131,7 @@ export class MeshGenerator {
             [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
         ];
-        
+
         const self = this;
         function vertexIndex(corner: number): number {
             const [x, y, z] = corners[corner];
@@ -145,33 +145,92 @@ export class MeshGenerator {
 
         // Define faces with their normal directions
         const faces = [
-            { vertices: [1, 5, 3, 3, 5, 7], direction: Direction.PosX }, // Right
-            { vertices: [0, 2, 4, 4, 2, 6], direction: Direction.NegX }, // Left
-            { vertices: [2, 3, 6, 6, 3, 7], direction: Direction.PosY }, // Top
-            { vertices: [0, 4, 1, 1, 4, 5], direction: Direction.NegY }, // Bottom
-            { vertices: [4, 6, 5, 5, 6, 7], direction: Direction.PosZ }, // Back
-            { vertices: [0, 1, 2, 2, 1, 3], direction: Direction.NegZ }, // Front
+            { vertices: [1, 3, 5, 7], direction: Direction.PosX }, // Right
+            { vertices: [0, 2, 4, 6], direction: Direction.NegX }, // Left
+            { vertices: [2, 3, 6, 7], direction: Direction.PosY }, // Top
+            { vertices: [0, 1, 4, 5], direction: Direction.NegY }, // Bottom
+            { vertices: [4, 5, 6, 7], direction: Direction.PosZ }, // Back
+            { vertices: [0, 1, 2, 3], direction: Direction.NegZ }, // Front
         ];
 
         // Add faces checking neighbors
         faces.forEach(face => {
-            // Get neighbor using enum-based method
             const neighbor = node.getNeighborAtLevel(face.direction);
-            // Add face if the neighbor is outside
-
-            if (!neighbor || neighbor.isFullyOutside()) {
-                // Add two triangles for this quad face
-                mesh.addFace(
-                    vertexIndex(face.vertices[0]),
-                    vertexIndex(face.vertices[1]),
-                    vertexIndex(face.vertices[2]),
-                );
-                mesh.addFace(
-                    vertexIndex(face.vertices[3]),
-                    vertexIndex(face.vertices[4]),
-                    vertexIndex(face.vertices[5]),
-                );
-            }
+            
+            this.considerNeighborFace(neighbor, face.vertices.map((a) => vertexIndex(a)), size, face.direction, mesh);
         });
+    }
+
+    private considerNeighborFace(
+        neighbor: OctreeNode | null,
+        vertices: number[],
+        size: number,
+        direction: Direction,
+        mesh: HalfEdgeMesh)
+    {
+        if (!neighbor || neighbor.state === CellState.Outside) {
+            // Add two triangles for this quad face
+            mesh.addFace(vertices[0], vertices[1], vertices[2]);
+            mesh.addFace(vertices[2], vertices[1], vertices[3]);
+        } else if (neighbor.state === CellState.BoundarySubdivided) {
+            this.addSubdividedFace(neighbor, vertices, size, direction, mesh);
+        }
+    }
+
+    private addSubdividedFace(
+        neighbor: OctreeNode,
+        vertices: number[],
+        size: number,
+        direction: Direction,
+        mesh: HalfEdgeMesh
+    ) {
+        const childIndices = this.getAdjacentChildIndices(direction);
+
+        // For each quadrant of the face
+        for (let i = 0; i < 4; i++) {
+            const childNeighbor = neighbor.children[childIndices[i]];
+            const quadVertices = this.getQuadrantVertices(vertices, i, mesh);
+
+            this.considerNeighborFace(childNeighbor, quadVertices, size / 2, direction, mesh);
+        }
+    }
+
+    private getAdjacentChildIndices(direction: Direction): number[] {
+        switch (direction) {
+            case Direction.PosX: return [1, 3, 5, 7];
+            case Direction.NegX: return [0, 2, 4, 6];
+            case Direction.PosY: return [2, 3, 6, 7];
+            case Direction.NegY: return [0, 1, 4, 5];
+            case Direction.PosZ: return [4, 5, 6, 7];
+            case Direction.NegZ: return [0, 1, 2, 3];
+        }
+    }
+
+    private getQuadrantVertices(faceVertices: number[], quadrant: number, mesh: HalfEdgeMesh): number[] {
+        // Calculate vertices for each quadrant of the face
+        const quadrantOffsets = [
+            [0, 0], // Bottom left
+            [1, 0], // Bottom right
+            [0, 1], // Top left
+            [1, 1]  // Top right
+        ];
+
+        const [x, y] = quadrantOffsets[quadrant];
+
+        // Add vertices for the quadrant's triangles
+        // half-steps in each direction
+        const dx = mesh.vertices[faceVertices[1]].position.clone().sub(mesh.vertices[faceVertices[0]].position);
+        const dy = mesh.vertices[faceVertices[2]].position.clone().sub(mesh.vertices[faceVertices[0]].position);
+        const hdx = dx.clone().divideScalar(2);
+        const hdy = dy.clone().divideScalar(2);
+        const base = mesh.vertices[faceVertices[0]].position.clone();
+        if (x == 1) base.add(hdx);
+        if (y == 1) base.add(hdy);
+        return [
+            this.getVertexIndex(base, mesh),
+            this.getVertexIndex(base.clone().add(hdx), mesh),
+            this.getVertexIndex(base.clone().add(hdy), mesh),
+            this.getVertexIndex(base.clone().add(hdx).add(hdy), mesh),
+        ];
     }
 }

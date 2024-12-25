@@ -306,7 +306,6 @@ export class RendererManager {
             meshData.vertices[vertexIndex * 3 + 1],
             meshData.vertices[vertexIndex * 3 + 2]
           );
-          // Add color if available, otherwise use default
           colors.push(1.0, 1.0, 1.0);
         }
       }
