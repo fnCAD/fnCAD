@@ -18,35 +18,11 @@ export enum Direction {
   NegZ
 }
 
-// Convert Vector3 direction to enum
-function vectorToDirection(direction: THREE.Vector3): Direction {
-  if (Math.abs(direction.x) > Math.abs(direction.y) && Math.abs(direction.x) > Math.abs(direction.z)) {
-    return direction.x > 0 ? Direction.PosX : Direction.NegX;
-  } else if (Math.abs(direction.y) > Math.abs(direction.z)) {
-    return direction.y > 0 ? Direction.PosY : Direction.NegY;
-  } else {
-    return direction.z > 0 ? Direction.PosZ : Direction.NegZ;
-  }
-}
-
 export class OctreeNode {
+  // (z << 2) | (y << 1) | x
   // pos 1 == index 0, pos -1 == index 1
   children: (OctreeNode | null)[] = new Array(8).fill(null);
   state!: CellState;
-
-  dup(): OctreeNode {
-    const copy = new OctreeNode(
-      this.center.clone(),
-      this.size,
-      this.state,
-      this.parent,
-      this.octant
-    );
-    copy.state = this.state;
-    copy.children = this.children.map(child => child?.dup() || null);
-    return copy;
-  }
-
 
   constructor(
     public center: THREE.Vector3,
@@ -62,7 +38,7 @@ export class OctreeNode {
     this.state = state;
   }
 
-  private getNeighborOctant(octant: number, direction: Direction): number {
+  private getNeighborOctant(direction: Direction): number {
     // Octant mapping for each direction
     const octantMaps = {
       [Direction.PosX]: [1, 0, 3, 2, 5, 4, 7, 6],
@@ -72,63 +48,39 @@ export class OctreeNode {
       [Direction.PosZ]: [4, 5, 6, 7, 0, 1, 2, 3],
       [Direction.NegZ]: [4, 5, 6, 7, 0, 1, 2, 3]
     };
-    return octantMaps[direction][octant];
+    return octantMaps[direction][this.octant];
   }
 
-  private getMirrorOctant(octant: number, direction: Direction): number {
+  private getMirrorOctant(direction: Direction): number {
     // Mirror the octant across the appropriate axis
     switch (direction) {
       case Direction.PosX:
       case Direction.NegX:
-        return octant ^ 1; // Flip x bit
+        return this.octant ^ 1; // Flip x bit
       case Direction.PosY:
       case Direction.NegY:
-        return octant ^ 2; // Flip y bit
+        return this.octant ^ 2; // Flip y bit
       case Direction.PosZ:
       case Direction.NegZ:
-        return octant ^ 4; // Flip z bit
+        return this.octant ^ 4; // Flip z bit
     }
   }
 
-  private isNeighborInSameParent(octant: number, direction: Direction): boolean {
+  private isNeighborInSameParent(direction: Direction): boolean {
     // Check if moving in the given direction stays within the same parent
     switch (direction) {
       case Direction.PosX:
-        return (octant & 1) === 0; // x bit is 0
+        return (this.octant & 1) === 0; // x bit is 0
       case Direction.NegX:
-        return (octant & 1) === 1; // x bit is 1
+        return (this.octant & 1) === 1; // x bit is 1
       case Direction.PosY:
-        return (octant & 2) === 0; // y bit is 0
+        return (this.octant & 2) === 0; // y bit is 0
       case Direction.NegY:
-        return (octant & 2) === 2; // y bit is 1
+        return (this.octant & 2) === 2; // y bit is 1
       case Direction.PosZ:
-        return (octant & 4) === 0; // z bit is 0
+        return (this.octant & 4) === 0; // z bit is 0
       case Direction.NegZ:
-        return (octant & 4) === 4; // z bit is 1
-    }
-  }
-
-  private isAtBoundary(direction: Direction): boolean {
-    if (!this.parent) {
-      return true;
-    }
-
-    const parentSize = this.parent.size;
-    const parentCenter = this.parent.center;
-
-    switch (direction) {
-      case Direction.PosX:
-        return this.center.x + this.size/2 >= parentCenter.x + parentSize/2;
-      case Direction.NegX:
-        return this.center.x - this.size/2 <= parentCenter.x - parentSize/2;
-      case Direction.PosY:
-        return this.center.y + this.size/2 >= parentCenter.y + parentSize/2;
-      case Direction.NegY:
-        return this.center.y - this.size/2 <= parentCenter.y - parentSize/2;
-      case Direction.PosZ:
-        return this.center.z + this.size/2 >= parentCenter.z + parentSize/2;
-      case Direction.NegZ:
-        return this.center.z - this.size/2 <= parentCenter.z - parentSize/2;
+        return (this.octant & 4) === 4; // z bit is 1
     }
   }
 
@@ -138,37 +90,9 @@ export class OctreeNode {
       return null;
     }
 
-    // Get our octant index in parent
-    const myOctant = this.octant;
-
-    // If we're at a boundary in this direction, need to go up
-    if (this.isAtBoundary(direction)) {
-      const parentNeighbor = this.parent.getNeighborAtLevel(direction);
-      if (!parentNeighbor) {
-        // Create virtual outside node at boundary
-        const directionVector = new THREE.Vector3();
-        switch (direction) {
-          case Direction.PosX: directionVector.set(1, 0, 0); break;
-          case Direction.NegX: directionVector.set(-1, 0, 0); break;
-          case Direction.PosY: directionVector.set(0, 1, 0); break;
-          case Direction.NegY: directionVector.set(0, -1, 0); break;
-          case Direction.PosZ: directionVector.set(0, 0, 1); break;
-          case Direction.NegZ: directionVector.set(0, 0, -1); break;
-        }
-        const virtualCenter = new THREE.Vector3()
-          .copy(this.center)
-          .addScaledVector(directionVector, this.size);
-        return new OctreeNode(virtualCenter, this.size, CellState.Outside);
-      }
-      
-      // Get the mirror octant in the neighbor
-      const neighborOctant = this.getMirrorOctant(myOctant, direction);
-      return parentNeighbor.children[neighborOctant] || parentNeighbor;
-    }
-
     // If neighbor is in same parent, just return sibling
-    if (this.isNeighborInSameParent(myOctant, direction)) {
-      const neighborOctant = this.getNeighborOctant(myOctant, direction);
+    if (this.isNeighborInSameParent(direction)) {
+      const neighborOctant = this.getNeighborOctant(direction);
       return this.parent.children[neighborOctant];
     }
 
@@ -179,15 +103,9 @@ export class OctreeNode {
     }
 
     // Return appropriate child of parent's neighbor
-    const targetOctant = this.getMirrorOctant(myOctant, direction);
+    const targetOctant = this.getMirrorOctant(direction);
     return parentNeighbor.children[targetOctant] || parentNeighbor;
   }
-
-  // Vector3 interface delegates to enum-based version
-  getNeighbor(direction: THREE.Vector3): OctreeNode | null {
-    return this.getNeighborAtLevel(vectorToDirection(direction));
-  }
-
 
   isSurfaceCell(): boolean {
     // Only leaf boundary cells are surface cells
