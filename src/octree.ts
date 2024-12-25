@@ -30,6 +30,7 @@ function vectorToDirection(direction: THREE.Vector3): Direction {
 }
 
 export class OctreeNode {
+  // pos 1 == index 0, pos -1 == index 1
   children: (OctreeNode | null)[] = new Array(8).fill(null);
   state!: CellState;
 

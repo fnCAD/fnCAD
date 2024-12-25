@@ -131,61 +131,46 @@ export class MeshGenerator {
             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
         ];
         
-        // Add vertices with caching
-        const vertexIndices = corners.map(([x, y, z]) => {
+        const self = this;
+        function vertexIndex(corner: number): number {
+            const [x, y, z] = corners[corner];
             const pos = new THREE.Vector3(
                 node.center.x + x * half,
                 node.center.y + y * half,
                 node.center.z + z * half
             );
-            return this.getVertexIndex(pos, mesh);
-        });
+            return self.getVertexIndex(pos, mesh);
+        }
 
         // Define faces with their normal directions
         const faces = [
-            // Front (negative Z)
-            { vertices: [0, 1, 2, 2, 1, 3], normal: new THREE.Vector3(0, 0, -1) },
-            // Back (positive Z)
-            { vertices: [4, 6, 5, 5, 6, 7], normal: new THREE.Vector3(0, 0, 1) },
-            // Left (negative X)
-            { vertices: [0, 2, 4, 4, 2, 6], normal: new THREE.Vector3(-1, 0, 0) },
-            // Right (positive X)
-            { vertices: [1, 5, 3, 3, 5, 7], normal: new THREE.Vector3(1, 0, 0) },
-            // Top (positive Y)
-            { vertices: [2, 3, 6, 6, 3, 7], normal: new THREE.Vector3(0, 1, 0) },
-            // Bottom (negative Y)
-            { vertices: [0, 4, 1, 1, 4, 5], normal: new THREE.Vector3(0, -1, 0) }
+            { vertices: [1, 5, 3, 3, 5, 7], direction: Direction.PosX }, // Right
+            { vertices: [0, 2, 4, 4, 2, 6], direction: Direction.NegX }, // Left
+            { vertices: [2, 3, 6, 6, 3, 7], direction: Direction.PosY }, // Top
+            { vertices: [0, 4, 1, 1, 4, 5], direction: Direction.NegY }, // Bottom
+            { vertices: [4, 6, 5, 5, 6, 7], direction: Direction.PosZ }, // Back
+            { vertices: [0, 1, 2, 2, 1, 3], direction: Direction.NegZ }, // Front
         ];
 
         // Add faces checking neighbors
         faces.forEach(face => {
-            // Convert face normal to Direction enum
-            let direction: Direction;
-            if (face.normal.x > 0) direction = Direction.PosX;
-            else if (face.normal.x < 0) direction = Direction.NegX;
-            else if (face.normal.y > 0) direction = Direction.PosY;
-            else if (face.normal.y < 0) direction = Direction.NegY;
-            else if (face.normal.z > 0) direction = Direction.PosZ;
-            else direction = Direction.NegZ;
-
             // Get neighbor using enum-based method
-            const neighbor = node.getNeighborAtLevel(direction);
+            const neighbor = node.getNeighborAtLevel(face.direction);
             if (!neighbor) {
                 throw new Error(`Missing neighbor cell in octree for node at ${node.center.toArray()} with size ${node.size}`);
             } else {
                 // Add face if the neighbor is outside or at a coarser level
-                if (neighbor.isFullyOutside() || 
-                    (neighbor.state === CellState.Outside && neighbor.size > node.size)) {
+                if (neighbor.isFullyOutside()) {
                     // Add two triangles for this quad face
                     mesh.addFace(
-                        vertexIndices[face.vertices[0]],
-                        vertexIndices[face.vertices[1]],
-                        vertexIndices[face.vertices[2]]
+                        vertexIndex(face.vertices[0]),
+                        vertexIndex(face.vertices[1]),
+                        vertexIndex(face.vertices[2]),
                     );
                     mesh.addFace(
-                        vertexIndices[face.vertices[3]],
-                        vertexIndices[face.vertices[4]],
-                        vertexIndices[face.vertices[5]]
+                        vertexIndex(face.vertices[3]),
+                        vertexIndex(face.vertices[4]),
+                        vertexIndex(face.vertices[5]),
                     );
                 }
             }
