@@ -204,16 +204,12 @@ export class OctreeNode {
 
   subdivide(
     sdf: Node,
-    minSize: number = 0.1, 
-    cellBudget: number = 100000, 
-    renderSettings?: OctreeRenderSettings,
+    minSize: number = 0.1,
+    cellBudget: number = 100000,
     onProgress?: (cells: number) => void
   ): number {
     let totalCells = 1;
     const newSize = this.size / 2;
-
-    // Create default settings if none provided
-    const settings = renderSettings || new OctreeRenderSettings();
 
     // If we're not a boundary cell, stop subdividing
     if (this.state !== CellState.Boundary) {
@@ -244,7 +240,7 @@ export class OctreeNode {
     if (this.state === CellState.Boundary) {
       this.state = CellState.BoundarySubdivided;
     }
-    
+
     for (let i = 0; i < 8; i++) {
       const [x, y, z] = offsets[i];
       const childCenter = new THREE.Vector3(
@@ -256,21 +252,21 @@ export class OctreeNode {
       childNode.parent = this;
       childNode.octant = i;
       this.children[i] = childNode;
-      
+
       // Try to subdivide child with current budget
       const child = this.children[i];
       if (!child) continue;
-      
-      const cellsCreated = child.subdivide(sdf, minSize, cellBudget, settings);
+
+      const cellsCreated = child.subdivide(sdf, minSize, cellBudget);
       totalCells += cellsCreated;
       cellBudget -= cellsCreated;
-      
+
       if (cellBudget <= 0) {
         console.log('Cell budget exhausted during subdivision');
         break;
       }
     }
-    
+
 
     // Report progress if callback provided
     if (onProgress) {
@@ -319,14 +315,7 @@ export class OctreeNode {
     return count;
   }
 }
-export class OctreeRenderSettings {
-  constructor(
-    public showOutside: boolean = true,
-    public showInside: boolean = true,
-    public showBoundary: boolean = true,
-    public minRenderSize: number = 0.1
-  ) {}
-}
+
 export function createOctreeNode(
   center: THREE.Vector3,
   size: number,

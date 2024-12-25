@@ -81,7 +81,6 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       sdf,
       task.minSize, 
       task.cellBudget,
-      undefined, // renderSettings not needed in worker
       onProgress
     );
     
