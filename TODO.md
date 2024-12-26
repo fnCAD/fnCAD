@@ -83,6 +83,3 @@
 - [ ] SDF function reference
 - [ ] Example gallery
 - [ ] Tutorial content
-
-## 12. Code Cleanup
-- [ ] Remove CellState.Outside in favor of null children

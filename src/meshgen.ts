@@ -52,7 +52,10 @@ export class MeshGenerator {
         // Phase 2: Process edge splits (40-50%)
         this.reportProgress(0.4);
         for (const {start, end, split} of this.splitQueue) {
-            mesh.lateSplitEdge(start, end, split);
+            const startIdx = this.getVertexIndex(start, mesh);
+            const endIdx = this.getVertexIndex(end, mesh);
+            const splitIdx = this.getVertexIndex(split, mesh);
+            mesh.lateSplitEdge(startIdx, endIdx, splitIdx);
         }
         this.reportProgress(0.5);
 
@@ -67,9 +70,9 @@ export class MeshGenerator {
         }
 
         // Phase 3: Verify mesh is manifold (55-60%)
-        /*if (!mesh.isManifold()) {
+        if (!mesh.isManifold()) {
             throw new Error('Generated mesh is not manifold');
-        }*/
+        }
         this.reportProgress(0.6);
 
         // Phase 3: Convert to serialized format (60-100%)
@@ -112,14 +115,11 @@ export class MeshGenerator {
 
     private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number) {
         const half = size / 2;
-        const corners = [
-            [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
-            [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1],  [1, 1, 1]
-        ];
-
         const self = this;
         function vertexIndex(corner: number): number {
-            const [x, y, z] = corners[corner];
+            const x = (corner & 1) !== 0 ? 1 : -1;
+            const y = (corner & 2) !== 0 ? 1 : -1;
+            const z = (corner & 4) !== 0 ? 1 : -1;
             const pos = new THREE.Vector3(
                 center.x + x * half,
                 center.y + y * half,
@@ -141,7 +141,7 @@ export class MeshGenerator {
         // Add faces checking neighbors
         faces.forEach(face => {
             const neighbor = node.getNeighborAtLevel(face.direction);
-            
+
             this.considerNeighborFace(neighbor, face.vertices.map((a) => vertexIndex(a)), size, face.direction, mesh);
         });
     }
@@ -157,36 +157,25 @@ export class MeshGenerator {
             mesh.addFace(vertices[0], vertices[1], vertices[2]);
             mesh.addFace(vertices[2], vertices[1], vertices[3]);
         } else if (Array.isArray(neighbor.state)) {
-            this.addSubdividedFace(neighbor, vertices, size, direction, mesh);
-        }
-    }
+            const childIndices = this.getAdjacentChildIndices(direction);
+            const quadVertices = this.getQuadrantVertices(vertices, mesh);
 
-    private addSubdividedFace(
-        neighbor: OctreeNode,
-        vertices: number[],
-        size: number,
-        direction: Direction,
-        mesh: HalfEdgeMesh
-    ) {
-        if (!Array.isArray(neighbor.state)) throw new Error("logic error");
-        const childIndices = this.getAdjacentChildIndices(direction);
-        const quadVertices = this.getQuadrantVertices(vertices, mesh);
-
-        // For each quadrant of the face
-        for (let i = 0; i < 4; i++) {
-            const childNeighbor = neighbor.state[childIndices[i]];
-            this.considerNeighborFace(childNeighbor, quadVertices[i], size / 2, direction, mesh);
+            // For each quadrant of the face
+            for (let i = 0; i < 4; i++) {
+                const childNeighbor = neighbor.state[childIndices[i]];
+                this.considerNeighborFace(childNeighbor, quadVertices[i], size / 2, direction, mesh);
+            }
         }
     }
 
     private getAdjacentChildIndices(direction: Direction): number[] {
         switch (direction) {
-            case Direction.PosX: return [1, 3, 5, 7];
-            case Direction.NegX: return [0, 2, 4, 6];
-            case Direction.PosY: return [2, 3, 6, 7];
-            case Direction.NegY: return [0, 1, 4, 5];
-            case Direction.PosZ: return [4, 5, 6, 7];
-            case Direction.NegZ: return [0, 1, 2, 3];
+            case Direction.PosX: return [0, 2, 4, 6];
+            case Direction.NegX: return [1, 3, 5, 7];
+            case Direction.PosY: return [0, 1, 4, 5];
+            case Direction.NegY: return [2, 3, 6, 7];
+            case Direction.PosZ: return [0, 1, 2, 3];
+            case Direction.NegZ: return [4, 5, 6, 7];
         }
     }
 

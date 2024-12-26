@@ -26,40 +26,30 @@ export class HalfEdgeMesh {
     lateSplitEdge(startIdx: number, endIdx: number, splitIdx: number): void {
         // Try to find existing edge
         const key = `${Math.min(startIdx, endIdx)},${Math.max(startIdx, endIdx)}`;
-        const existingEdge = this.edgeMap.get(key);
-        
-        if (existingEdge === undefined) {
+        const existingIdx = this.edgeMap.get(key);
+
+        if (existingIdx === undefined) {
             return; // No edge to split
         }
+
+        const targetIdx = this.halfEdges[existingIdx].vertexIndex;
 
         // Remove the edge from the map since we're splitting it
         this.edgeMap.delete(key);
 
-        // Create new edges and link them up
-        const he1 = this.halfEdges.length;
-        const he2 = he1 + 1;
-        
-        this.halfEdges.push(
-            { vertexIndex: splitIdx, nextIndex: -1, pairIndex: -1 },
-            { vertexIndex: endIdx, nextIndex: -1, pairIndex: -1 }
-        );
+        // Create new edges
+        const {tailToSplit: tailToSplit, splitToHead: splitToHead} = this.splitHalfEdge(existingIdx, splitIdx);
 
         // Link the new edges
-        this.linkPair(startIdx, splitIdx, existingEdge);
-        this.linkPair(splitIdx, endIdx, he1);
-    }
-
-    private getVertexIndex(pos: THREE.Vector3): number {
-        const key = `${pos.x.toFixed(6)},${pos.y.toFixed(6)},${pos.z.toFixed(6)}`;
-        
-        for (let i = 0; i < this.vertices.length; i++) {
-            const v = this.vertices[i].position;
-            if (v.distanceTo(pos) < 1e-5) {
-                return i;
-            }
+        if (targetIdx == endIdx) {
+            // edge was pointing at endIdx
+            this.linkPair(startIdx, splitIdx, tailToSplit);
+            this.linkPair(splitIdx, endIdx, splitToHead);
+        } else {
+            // edge was pointing at startIdx
+            this.linkPair(endIdx, splitIdx, tailToSplit);
+            this.linkPair(splitIdx, startIdx, splitToHead);
         }
-
-        return this.addVertex(pos.clone());
     }
 
     addVertex(position: THREE.Vector3): number {

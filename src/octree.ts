@@ -64,6 +64,10 @@ export class OctreeNode {
     }
   }
 
+  /**
+   * This function can return a neighbor above the level of `this`,
+   * but when it does, it has to be Inside, Outside, Boundary or `null`.
+   */
   getNeighborAtLevel(direction: Direction): OctreeNode | null {
     // If at root, handle boundary case
     if (!this.parent) {
@@ -166,16 +170,7 @@ export function subdivideOctree(
 ): number {
   let totalCells = 1;
   const half = size / 2;
-
-  // If we're not a boundary cell, stop subdividing
-  if (node.state !== CellState.Boundary) {
-    return 1;
-  }
-
-  // If we've reached minimum size, stay as boundary cell
-  if (half < minSize) {
-    return 1;
-  }
+  const quart = size / 4;
 
   // If no budget left, throw
   if (cellBudget <= 1) {
@@ -189,7 +184,6 @@ export function subdivideOctree(
   var children: OctreeNode[] = [];
   node.state = children;
 
-  const quart = half / 2;
   for (let i = 0; i < 8; i++) {
     const childCenter = octreeChildCenter(i, center, half);
 
@@ -200,6 +194,7 @@ export function subdivideOctree(
     const content = sdf.evaluateContent(rangeX, rangeY, rangeZ);
 
     // Determine cell state based on content category
+    var adjMinSize = minSize;
     let state: CellState;
     if (!content) {
       // Null content (plain arithmetic). This should never happen, but
@@ -214,15 +209,22 @@ export function subdivideOctree(
         case 'inside': state = CellState.Inside; break;
         case 'outside': state = CellState.Outside; break;
         case 'face': state = CellState.Boundary; break;
-        // TODO: boundary of special interest, mark for extended subdivision.
-        case 'edge': state = CellState.Boundary; break;
+        // boundary of special interest, mark for extended subdivision.
+        case 'edge':
+          state = CellState.Boundary;
+          adjMinSize /= 4;
+          break;
       }
     }
-    const child = new OctreeNode(state, node, i);
-    children.push(child);
+    children.push(new OctreeNode(state, node, i));
+
+    if (state !== CellState.Boundary || quart < adjMinSize)
+    {
+      continue;
+    }
 
     // Try to subdivide child with current budget
-    const cellsCreated = subdivideOctree(child, sdf, childCenter, half, minSize, cellBudget);
+    const cellsCreated = subdivideOctree(children[i], sdf, childCenter, half, minSize, cellBudget);
     totalCells += cellsCreated;
     cellBudget -= cellsCreated;
 
