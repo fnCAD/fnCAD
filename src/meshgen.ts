@@ -20,6 +20,12 @@ export class MeshGenerator {
 
     // Cache to reuse vertices at shared corners
     private vertexCache = new Map<string, number>();
+    
+    // Queue of edges that need splitting
+    private splitQueue: Array<{
+        edgeIndex: number,
+        position: THREE.Vector3
+    }> = [];
 
     constructor(
         private octree: OctreeNode,
@@ -37,12 +43,19 @@ export class MeshGenerator {
         // Create half-edge mesh
         const mesh = new HalfEdgeMesh();
         
-        // Phase 1: Extract surface mesh from octree (0-50%)
+        // Phase 1: Extract surface mesh from octree (0-40%)
         this.reportProgress(0);
         this.extractMeshFromOctree(this.octree, mesh, new THREE.Vector3(0, 0, 0), 65536);
+        this.reportProgress(0.4);
+
+        // Phase 2: Process edge splits (40-50%)
+        this.reportProgress(0.4);
+        for (const {edgeIndex, position} of this.splitQueue) {
+            mesh.splitEdge(edgeIndex, position);
+        }
         this.reportProgress(0.5);
 
-        // Phase 2: Optimize vertices if enabled (50-55%)
+        // Phase 3: Optimize vertices if enabled (50-55%)
         if (this.optimize) {
             mesh.refineEdges((pos) => this.sdf.evaluate(pos), {
                 errorThreshold: minSize / 100.0,
@@ -138,12 +151,41 @@ export class MeshGenerator {
         direction: Direction,
         mesh: HalfEdgeMesh)
     {
-        if (!neighbor || neighbor.state === CellState.Outside) {
-            // Add two triangles for this quad face
-            mesh.addFace(vertices[0], vertices[1], vertices[2]);
-            mesh.addFace(vertices[2], vertices[1], vertices[3]);
-        } else if (neighbor.state === CellState.BoundarySubdivided) {
-            this.addSubdividedFace(neighbor, vertices, size, direction, mesh);
+        // Always add the basic face triangles
+        const face1 = mesh.addFace(vertices[0], vertices[1], vertices[2]);
+        const face2 = mesh.addFace(vertices[2], vertices[1], vertices[3]);
+
+        // If neighbor is subdivided, queue edge splits
+        if (neighbor?.state === CellState.BoundarySubdivided) {
+            // Calculate midpoints for the four edges
+            const midpoints = [
+                new THREE.Vector3().addVectors(
+                    mesh.vertices[vertices[0]].position,
+                    mesh.vertices[vertices[1]].position
+                ).multiplyScalar(0.5),
+                new THREE.Vector3().addVectors(
+                    mesh.vertices[vertices[1]].position,
+                    mesh.vertices[vertices[3]].position
+                ).multiplyScalar(0.5),
+                new THREE.Vector3().addVectors(
+                    mesh.vertices[vertices[3]].position,
+                    mesh.vertices[vertices[2]].position
+                ).multiplyScalar(0.5),
+                new THREE.Vector3().addVectors(
+                    mesh.vertices[vertices[2]].position,
+                    mesh.vertices[vertices[0]].position
+                ).multiplyScalar(0.5)
+            ];
+
+            // Queue splits for all edges of both triangles
+            this.splitQueue.push(
+                { edgeIndex: face1, position: midpoints[0] },
+                { edgeIndex: face1 + 1, position: midpoints[1] },
+                { edgeIndex: face1 + 2, position: midpoints[3] },
+                { edgeIndex: face2, position: midpoints[1] },
+                { edgeIndex: face2 + 1, position: midpoints[2] },
+                { edgeIndex: face2 + 2, position: midpoints[3] }
+            );
         }
     }
 
