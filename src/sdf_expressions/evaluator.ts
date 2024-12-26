@@ -296,10 +296,14 @@ class MinFunctionCall extends FunctionCallNode {
     ));
   }
 
+
   evaluate(point: Vector3): number {
-    const values = this.args.map(arg => arg.evaluate(point));
-    if (values.length === 1) return values[0];
-    return Math.min(...values);
+    var value = this.args[0].evaluate(point);
+    for (var i = 1; i < this.args.length; i++) {
+      const nextValue = this.args[i].evaluate(point);
+      if (nextValue < value) value = nextValue;
+    }
+    return value;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -360,9 +364,12 @@ class MaxFunctionCall extends FunctionCallNode {
   }
 
   evaluate(point: Vector3): number {
-    const values = this.args.map(arg => arg.evaluate(point));
-    if (values.length === 1) return values[0];
-    return Math.max(...values);
+    var value = this.args[0].evaluate(point);
+    for (var i = 1; i < this.args.length; i++) {
+      const nextValue = this.args[i].evaluate(point);
+      if (nextValue > value) value = nextValue;
+    }
+    return value;
   }
 
   toGLSL(context: GLSLContext): string {
