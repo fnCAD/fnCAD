@@ -168,13 +168,12 @@ export class MeshGenerator {
         mesh: HalfEdgeMesh
     ) {
         const childIndices = this.getAdjacentChildIndices(direction);
+        const quadVertices = this.getQuadrantVertices(vertices, mesh);
 
         // For each quadrant of the face
         for (let i = 0; i < 4; i++) {
             const childNeighbor = neighbor.children[childIndices[i]];
-            const quadVertices = this.getQuadrantVertices(vertices, i, mesh);
-
-            this.considerNeighborFace(childNeighbor, quadVertices, size / 2, direction, mesh);
+            this.considerNeighborFace(childNeighbor, quadVertices[i], size / 2, direction, mesh);
         }
     }
 
@@ -236,7 +235,7 @@ export class MeshGenerator {
             end: vertices[8],
         });
 
-        return quadrantOffsets.map(([x, y]) {
+        return quadrantOffsets.map(([x, y]) => {
             return [
                 this.getVertexIndex(vertices[y * 3 + x], mesh),
                 this.getVertexIndex(vertices[y * 3 + (x + 1)], mesh),

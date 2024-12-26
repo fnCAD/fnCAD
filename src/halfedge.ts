@@ -23,21 +23,19 @@ export class HalfEdgeMesh {
     halfEdges: HalfEdge[] = [];
     private edgeMap = new Map<string, number>(); // vertex pair to half-edge index
 
-    lateSplitEdge(start: THREE.Vector3, end: THREE.Vector3, splitPoint: THREE.Vector3): number {
-        // Get or create vertices
-        const startIdx = this.getVertexIndex(start);
-        const endIdx = this.getVertexIndex(end);
-        const splitIdx = this.getVertexIndex(splitPoint);
-
+    lateSplitEdge(startIdx: number, endIdx: number, splitIdx: number): void {
         // Try to find existing edge
         const key = `${Math.min(startIdx, endIdx)},${Math.max(startIdx, endIdx)}`;
         const existingEdge = this.edgeMap.get(key);
         
-        if (existingEdge !== undefined) {
-            return this.splitEdge(existingEdge, splitPoint)[0];
+        if (existingEdge === undefined) {
+            return; // No edge to split
         }
 
-        // Edge doesn't exist, create new edges
+        // Remove the edge from the map since we're splitting it
+        this.edgeMap.delete(key);
+
+        // Create new edges and link them up
         const he1 = this.halfEdges.length;
         const he2 = he1 + 1;
         
@@ -46,7 +44,9 @@ export class HalfEdgeMesh {
             { vertexIndex: endIdx, nextIndex: -1, pairIndex: -1 }
         );
 
-        return he1;
+        // Link the new edges
+        this.linkPair(startIdx, splitIdx, existingEdge);
+        this.linkPair(splitIdx, endIdx, he1);
     }
 
     private getVertexIndex(pos: THREE.Vector3): number {
