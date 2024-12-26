@@ -18,8 +18,8 @@ function getColorForCell(node: OctreeNode, size: number): THREE.Color {
   
   if (node.state === CellState.Boundary) {
     return new THREE.Color(1, 1, 0); // Bright yellow for leaf boundary cells
-  } else if (node.state === CellState.BoundarySubdivided) {
-    // Darker yellow for subdivided boundary cells, gets darker with depth
+  } else if (node.children() !== null) {
+    // Darker yellow for subdivided cells, gets darker with depth
     const darkness = Math.max(0.2, t); // Limit darkness
     return new THREE.Color(darkness, darkness, 0);
   } else if (node.state === CellState.Inside) {
@@ -40,7 +40,7 @@ function createOctreeGeometry(node: OctreeNode, settings: OctreeRenderSettings, 
   // Skip based on cell state and settings
   if ((node.state === CellState.Outside && !settings.showOutside) ||
       (node.state === CellState.Inside && !settings.showInside) ||
-      ((node.state === CellState.Boundary || node.state === CellState.BoundarySubdivided) && !settings.showBoundary)) {
+      ((node.state === CellState.Boundary || node.children() !== null) && !settings.showBoundary)) {
     return null;
   }
 
@@ -99,10 +99,8 @@ export function visualizeOctree(root: OctreeNode | null, settings: OctreeRenderS
     }
 
     // Recurse into children
-    node.children.forEach((child, index) => {
-      if (child) {
-        addNodeToGroup(child, octreeChildCenter(index, center, half), half);
-      }
+    node.children()?.forEach((child, index) => {
+      addNodeToGroup(child, octreeChildCenter(index, center, half), half);
     });
   }
   

@@ -90,9 +90,8 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     // Ensure we send a proper OctreeNode instance with all required data
     const serializeNode = (node: OctreeNode): any => {
       return {
-        state: node.state,
+        state: Array.isArray(node.state) ? node.state.map(serializeNode) : node.state,
         octant: node.octant,
-        children: node.children.map(child => child ? serializeNode(child) : null)
       };
     };
 
@@ -115,25 +114,28 @@ async function processMeshTask(taskId: string, task: MeshTask) {
       if (!data) {
         throw new Error('Cannot reconstruct null octree data');
       }
-      
-      const node = Object.assign(new OctreeNode(
-        data.state,
-        parent,
-        data.octant
-      ), {
-        children: new Array(8).fill(null)
-      });
-      
-      if (Array.isArray(data.children)) {
-        node.children = data.children.map((child: any) => 
-          child ? reconstructOctree(child, node) : null
-        );
+
+      // TODO refactor out together with `OctreeManager.updateOctree`.
+      var state = data.state;
+      if (Array.isArray(data.state)) {
+        state = CellState.Boundary; // prep
       }
       
+      const node = new OctreeNode(
+        state,
+        parent,
+        data.octant
+      );
+
+      if (Array.isArray(data.state)) {
+        node.state = data.state.map((child: any) => reconstructOctree(child, node));
+      }
+
       return node;
     };
 
     const octree = reconstructOctree(task.octree);
+
     // Parse SDF from source
     const cadAst = parseCAD(task.source);
     const sdfExpr = moduleToSDF(cadAst);

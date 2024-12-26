@@ -6,7 +6,6 @@ export enum CellState {
   Inside,
   Outside,
   Boundary,
-  BoundarySubdivided
 }
 
 export enum Direction {
@@ -21,13 +20,16 @@ export enum Direction {
 export class OctreeNode {
   // (z << 2) | (y << 1) | x
   // [-1, 1]
-  children: (OctreeNode | null)[] = new Array(8).fill(null);
-
   constructor(
-    public state: CellState,
+    public state: CellState | OctreeNode[],
     public readonly parent: OctreeNode | null = null,
     public readonly octant: number = -1,
   ) { }
+
+  public children(): OctreeNode[] | null {
+    if (Array.isArray(this.state)) return this.state;
+    return null;
+  }
 
   private getMirrorOctant(direction: Direction): number {
     // Mirror the octant across the appropriate axis
@@ -71,18 +73,20 @@ export class OctreeNode {
     // If neighbor is in same parent, just return sibling
     if (this.isNeighborInSameParent(direction)) {
       const neighborOctant = this.getMirrorOctant(direction);
-      return this.parent.children[neighborOctant];
+      // TODO enforce in constructor/invariant?
+      if (!Array.isArray(this.parent.state)) throw new Error("Parent logic error.");
+      return this.parent.state[neighborOctant];
     }
 
     // Otherwise get parent's neighbor and traverse down
     const parentNeighbor = this.parent.getNeighborAtLevel(direction);
-    if (!parentNeighbor) {
-      return null;
+    if (!parentNeighbor || !Array.isArray(parentNeighbor.state)) {
+      return parentNeighbor;
     }
 
     // Return appropriate child of parent's neighbor
     const targetOctant = this.getMirrorOctant(direction);
-    return parentNeighbor.children[targetOctant] || parentNeighbor;
+    return parentNeighbor.state[targetOctant];
   }
 
   isSurfaceCell(): boolean {
@@ -100,8 +104,8 @@ export class OctreeNode {
 
   getCellCount(): number {
     let count = 1; // Count this node
-    for (const child of this.children) {
-      if (child) {
+    if (Array.isArray(this.state)) {
+      for (const child of this.state) {
         count += child.getCellCount();
       }
     }
@@ -111,8 +115,10 @@ export class OctreeNode {
   countInside(): number {
     if (this.state === CellState.Inside) return 1;
     let count = 0;
-    for (const child of this.children) {
-      if (child) count += child.countInside();
+    if (Array.isArray(this.state)) {
+      for (const child of this.state) {
+        count += child.countInside();
+      }
     }
     return count;
   }
@@ -120,8 +126,10 @@ export class OctreeNode {
   countOutside(): number {
     if (this.state === CellState.Outside) return 1;
     let count = 0;
-    for (const child of this.children) {
-      if (child) count += child.countOutside();
+    if (Array.isArray(this.state)) {
+      for (const child of this.state) {
+        count += child.countOutside();
+      }
     }
     return count;
   }
@@ -130,8 +138,10 @@ export class OctreeNode {
     // Only count leaf boundary cells, not subdivided ones
     if (this.state === CellState.Boundary) return 1;
     let count = 0;
-    for (const child of this.children) {
-      if (child) count += child.countBoundary();
+    if (Array.isArray(this.state)) {
+      for (const child of this.state) {
+        count += child.countBoundary();
+      }
     }
     return count;
   }
@@ -175,10 +185,9 @@ export function subdivideOctree(
   // Decrement budget for this cell
   cellBudget--;
 
-  // Mark boundary cells as subdivided before creating children
-  if (node.state === CellState.Boundary) {
-    node.state = CellState.BoundarySubdivided;
-  }
+  // Mark cell as subdivided before creating children
+  var children: OctreeNode[] = [];
+  node.state = children;
 
   const quart = half / 2;
   for (let i = 0; i < 8; i++) {
@@ -209,10 +218,11 @@ export function subdivideOctree(
         case 'edge': state = CellState.Boundary; break;
       }
     }
-    node.children[i] = new OctreeNode(state, node, i);
+    const child = new OctreeNode(state, node, i);
+    children.push(child);
 
     // Try to subdivide child with current budget
-    const cellsCreated = subdivideOctree(node.children[i]!, sdf, childCenter, half, minSize, cellBudget);
+    const cellsCreated = subdivideOctree(child, sdf, childCenter, half, minSize, cellBudget);
     totalCells += cellsCreated;
     cellBudget -= cellsCreated;
 

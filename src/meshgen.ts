@@ -85,13 +85,14 @@ export class MeshGenerator {
             this.addCellFaces(node, mesh, center, size);
             return;
         }
+        if (node.state == CellState.Outside || node.state == CellState.Inside) {
+            return;
+        }
 
         // Recurse into children for subdivided nodes
         const half = size / 2;
-        node.children.forEach((child, index) => {
-            if (child) {
-                this.extractMeshFromOctree(child, mesh, octreeChildCenter(index, center, half), half);
-            }
+        node.state.forEach((child, index) => {
+            this.extractMeshFromOctree(child, mesh, octreeChildCenter(index, center, half), half);
         });
     }
 
@@ -155,7 +156,7 @@ export class MeshGenerator {
         if (!neighbor || neighbor.state === CellState.Outside) {
             mesh.addFace(vertices[0], vertices[1], vertices[2]);
             mesh.addFace(vertices[2], vertices[1], vertices[3]);
-        } else if (neighbor.state === CellState.BoundarySubdivided) {
+        } else if (Array.isArray(neighbor.state)) {
             this.addSubdividedFace(neighbor, vertices, size, direction, mesh);
         }
     }
@@ -167,12 +168,13 @@ export class MeshGenerator {
         direction: Direction,
         mesh: HalfEdgeMesh
     ) {
+        if (!Array.isArray(neighbor.state)) throw new Error("logic error");
         const childIndices = this.getAdjacentChildIndices(direction);
         const quadVertices = this.getQuadrantVertices(vertices, mesh);
 
         // For each quadrant of the face
         for (let i = 0; i < 4; i++) {
-            const childNeighbor = neighbor.children[childIndices[i]];
+            const childNeighbor = neighbor.state[childIndices[i]];
             this.considerNeighborFace(childNeighbor, quadVertices[i], size / 2, direction, mesh);
         }
     }

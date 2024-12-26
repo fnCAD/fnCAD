@@ -1,4 +1,4 @@
-import { OctreeNode } from '../octree';
+import { OctreeNode, CellState } from '../octree';
 import { TaskProgress } from '../workers/task_types';
 import { StateManager } from './state';
 import { RendererManager } from './renderer';
@@ -50,31 +50,28 @@ export class OctreeManager {
           }
           
           // Detailed validation with specific error messages
-          if (typeof data.state !== 'number') {
-            throw new Error('Invalid octree data: state must be a number');
+          if (typeof data.state !== 'number' && !Array.isArray(data.state)) {
+            throw new Error('Invalid octree data: state must be number or array');
           }
           if (typeof data.octant !== 'number') {
             throw new Error('Invalid octree data: octant must be a number');
           }
 
+          // TODO refactor out together with `processMeshTask`.
+          var state = data.state;
+          if (Array.isArray(data.state)) {
+            state = CellState.Boundary; // prep
+          }
           // Create node with proper prototype chain
-          const node = Object.assign(new OctreeNode(
-            data.state,
+          const node = new OctreeNode(
+            state,
             parent,
             data.octant
-          ), {
-            // Restore any additional properties from serialized data
-            children: new Array(8).fill(null)
-          });
-          
-          if (!Array.isArray(data.children)) {
-            throw new Error('Invalid children array in octree data');
-          }
-
-          // Recursively reconstruct children
-          node.children = data.children.map((child: any) => 
-            child ? reconstructOctree(child, node) : null
           );
+
+          if (Array.isArray(data.state)) {
+            node.state = data.state.map((child: any) => reconstructOctree(child, node));
+          }
           
           return node;
         };
