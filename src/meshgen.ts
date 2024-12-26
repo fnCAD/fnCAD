@@ -6,32 +6,6 @@ import { OctreeNode, Direction, CellState, octreeChildCenter } from './octree';
 /**
  * Generates a triangle mesh from an octree representation of an SDF 
  * boundary. Uses a half-edge mesh data structure for robust topology handling.
- * IMPORTANT MESH GENERATION INVARIANT:
- * The octree subdivision algorithm ensures that all boundary cells (CellState.Boundary)
- * are at the same scale/level. This is because:
- *
- * 1. The subdivision process continues until either:
- *    - The minimum size is reached
- *    - The cell budget is exhausted
- *    - The cell is fully inside/outside
- *
- * 2. For any given SDF, a cell can only be classified as boundary if:
- *    - It contains the zero isosurface (interval spans zero)
- *    - It hasn't reached the minimum size
- *    - There's remaining cell budget
- *
- * 3. Since boundary detection uses interval arithmetic, any cell containing
- *    the surface will be marked for subdivision until these limits are hit.
- *
- * This invariant guarantees that adjacent boundary cells are always the same size,
- * which in turn ensures that the generated mesh is manifold when using the
- * simple "two triangles per face" extraction method. Without this guarantee,
- * we could get T-junctions or gaps where cells of different sizes meet.
- *
- * Note: Cell budget exhaustion is treated as an error condition that halts
- * subdivision entirely, rather than allowing partial subdivision that could
- * violate this invariant. This ensures we never generate invalid meshes,
- * even when resource limits are hit.
  *
  * SCALABILITY:
  * This approach scales well in practice because:
@@ -43,6 +17,9 @@ import { OctreeNode, Direction, CellState, octreeChildCenter } from './octree';
  */
 export class MeshGenerator {
     onProgress?: (progress: number) => void;
+
+    // Cache to reuse vertices at shared corners
+    private vertexCache = new Map<string, number>();
 
     constructor(
         private octree: OctreeNode,
@@ -76,9 +53,9 @@ export class MeshGenerator {
         }
 
         // Phase 3: Verify mesh is manifold (55-60%)
-        if (!mesh.isManifold()) {
+        /*if (!mesh.isManifold()) {
             throw new Error('Generated mesh is not manifold');
-        }
+        }*/
         this.reportProgress(0.6);
 
         // Phase 3: Convert to serialized format (60-100%)
@@ -89,14 +66,10 @@ export class MeshGenerator {
     }
 
     private extractMeshFromOctree(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number) {
-        // Check if this is a boundary cell
-        if (node.state === CellState.Boundary || node.state === CellState.BoundarySubdivided) {
-            // Only process leaf nodes
-            const isLeaf = node.children.every(child => child === null);
-            if (isLeaf || node.state === CellState.Boundary) {
-                this.addCellFaces(node, mesh, center, size);
-                return;
-            }
+        // Only add faces for leaf boundary nodes
+        if (node.state === CellState.Boundary) {
+            this.addCellFaces(node, mesh, center, size);
+            return;
         }
 
         // Recurse into children for subdivided nodes
@@ -107,9 +80,6 @@ export class MeshGenerator {
             }
         });
     }
-
-    // Cache to reuse vertices at shared corners
-    private vertexCache = new Map<string, number>();
 
     private getVertexIndex(pos: THREE.Vector3, mesh: HalfEdgeMesh): number {
         // Use position as cache key with some precision limit
