@@ -188,9 +188,10 @@ export function subdivideOctree(
     const childCenter = octreeChildCenter(i, center, half);
 
     // Evaluate content over the cube bounds to determine initial state
-    const rangeX = new Interval(childCenter.x - quart, childCenter.x + quart);
-    const rangeY = new Interval(childCenter.y - quart, childCenter.y + quart);
-    const rangeZ = new Interval(childCenter.z - quart, childCenter.z + quart);
+    const contentRange = quart * 1.1; // scale up by 10% to catch edge cases
+    const rangeX = new Interval(childCenter.x - contentRange, childCenter.x + contentRange);
+    const rangeY = new Interval(childCenter.y - contentRange, childCenter.y + contentRange);
+    const rangeZ = new Interval(childCenter.z - contentRange, childCenter.z + contentRange);
     const content = sdf.evaluateContent(rangeX, rangeY, rangeZ);
 
     // Determine cell state based on content category
