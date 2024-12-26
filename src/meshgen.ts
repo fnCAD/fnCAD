@@ -23,8 +23,9 @@ export class MeshGenerator {
     
     // Queue of edges that need splitting
     private splitQueue: Array<{
-        edgeIndex: number,
-        position: THREE.Vector3
+        start: THREE.Vector3,
+        end: THREE.Vector3,
+        split: THREE.Vector3
     }> = [];
 
     constructor(
@@ -50,8 +51,8 @@ export class MeshGenerator {
 
         // Phase 2: Process edge splits (40-50%)
         this.reportProgress(0.4);
-        for (const {edgeIndex, position} of this.splitQueue) {
-            mesh.splitEdge(edgeIndex, position);
+        for (const {start, end, split} of this.splitQueue) {
+            mesh.lateSplitEdge(start, end, split);
         }
         this.reportProgress(0.5);
 
@@ -188,31 +189,63 @@ export class MeshGenerator {
         }
     }
 
-    private getQuadrantVertices(faceVertices: number[], quadrant: number, mesh: HalfEdgeMesh): number[] {
-        // Calculate vertices for each quadrant of the face
-        const quadrantOffsets = [
-            [0, 0], // Bottom left
-            [1, 0], // Bottom right
-            [0, 1], // Top left
-            [1, 1]  // Top right
-        ];
-
-        const [x, y] = quadrantOffsets[quadrant];
-
-        // Add vertices for the quadrant's triangles
-        // half-steps in each direction
+    private getQuadrantVertices(faceVertices: number[], mesh: HalfEdgeMesh): number[][] {
         const dx = mesh.vertices[faceVertices[1]].position.clone().sub(mesh.vertices[faceVertices[0]].position);
         const dy = mesh.vertices[faceVertices[2]].position.clone().sub(mesh.vertices[faceVertices[0]].position);
         const hdx = dx.clone().divideScalar(2);
         const hdy = dy.clone().divideScalar(2);
         const base = mesh.vertices[faceVertices[0]].position.clone();
-        if (x == 1) base.add(hdx);
-        if (y == 1) base.add(hdy);
+
+        // Calculate all vertices for the 2x2 grid
+        const vertices: THREE.Vector3[][] = [];
+        for (let y = 0; y < 2; y++) {
+            vertices[y] = [];
+            const rowBase = base.clone().addScaledVector(hdy, y);
+            for (let x = 0; x < 2; x++) {
+                vertices[y][x] = rowBase.clone().addScaledVector(hdx, x);
+            }
+        }
+
+        // Queue edge splits for internal edges
+        // Horizontal internal edge
+        this.splitQueue.push({
+            start: vertices[1][0],
+            end: vertices[1][1],
+            split: vertices[1][0].clone().add(hdx)
+        });
+        // Vertical internal edge
+        this.splitQueue.push({
+            start: vertices[0][1],
+            end: vertices[1][1],
+            split: vertices[0][1].clone().add(hdy)
+        });
+
+        // Return vertices for each quadrant
         return [
-            this.getVertexIndex(base, mesh),
-            this.getVertexIndex(base.clone().add(hdx), mesh),
-            this.getVertexIndex(base.clone().add(hdy), mesh),
-            this.getVertexIndex(base.clone().add(hdx).add(hdy), mesh),
+            [
+                this.getVertexIndex(vertices[0][0], mesh),
+                this.getVertexIndex(vertices[0][1], mesh),
+                this.getVertexIndex(vertices[1][0], mesh),
+                this.getVertexIndex(vertices[1][1], mesh)
+            ],
+            [
+                this.getVertexIndex(vertices[0][1], mesh),
+                this.getVertexIndex(vertices[0][2], mesh),
+                this.getVertexIndex(vertices[1][1], mesh),
+                this.getVertexIndex(vertices[1][2], mesh)
+            ],
+            [
+                this.getVertexIndex(vertices[1][0], mesh),
+                this.getVertexIndex(vertices[1][1], mesh),
+                this.getVertexIndex(vertices[2][0], mesh),
+                this.getVertexIndex(vertices[2][1], mesh)
+            ],
+            [
+                this.getVertexIndex(vertices[1][1], mesh),
+                this.getVertexIndex(vertices[1][2], mesh),
+                this.getVertexIndex(vertices[2][1], mesh),
+                this.getVertexIndex(vertices[2][2], mesh)
+            ]
         ];
     }
 }

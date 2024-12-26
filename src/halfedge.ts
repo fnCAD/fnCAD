@@ -23,6 +23,45 @@ export class HalfEdgeMesh {
     halfEdges: HalfEdge[] = [];
     private edgeMap = new Map<string, number>(); // vertex pair to half-edge index
 
+    lateSplitEdge(start: THREE.Vector3, end: THREE.Vector3, splitPoint: THREE.Vector3): number {
+        // Get or create vertices
+        const startIdx = this.getVertexIndex(start);
+        const endIdx = this.getVertexIndex(end);
+        const splitIdx = this.getVertexIndex(splitPoint);
+
+        // Try to find existing edge
+        const key = `${Math.min(startIdx, endIdx)},${Math.max(startIdx, endIdx)}`;
+        const existingEdge = this.edgeMap.get(key);
+        
+        if (existingEdge !== undefined) {
+            return this.splitEdge(existingEdge, splitPoint)[0];
+        }
+
+        // Edge doesn't exist, create new edges
+        const he1 = this.halfEdges.length;
+        const he2 = he1 + 1;
+        
+        this.halfEdges.push(
+            { vertexIndex: splitIdx, nextIndex: -1, pairIndex: -1 },
+            { vertexIndex: endIdx, nextIndex: -1, pairIndex: -1 }
+        );
+
+        return he1;
+    }
+
+    private getVertexIndex(pos: THREE.Vector3): number {
+        const key = `${pos.x.toFixed(6)},${pos.y.toFixed(6)},${pos.z.toFixed(6)}`;
+        
+        for (let i = 0; i < this.vertices.length; i++) {
+            const v = this.vertices[i].position;
+            if (v.distanceTo(pos) < 1e-5) {
+                return i;
+            }
+        }
+
+        return this.addVertex(pos.clone());
+    }
+
     addVertex(position: THREE.Vector3): number {
         const idx = this.vertices.length;
         this.vertices.push({ position });
