@@ -30,6 +30,12 @@ export class HalfEdgeMesh {
     }
 
     addFace(v1: number, v2: number, v3: number): number {
+        if (v1 < 0 || v1 >= this.vertices.length)
+            throw new Error(`v1 ${v1} out of bounds 0 .. ${this.vertices.length}`);
+        if (v2 < 0 || v2 >= this.vertices.length)
+            throw new Error(`v2 ${v2} out of bounds 0 .. ${this.vertices.length}`);
+        if (v3 < 0 || v3 >= this.vertices.length)
+            throw new Error(`v3 ${v3} out of bounds 0 .. ${this.vertices.length}`);
         const startIndex = this.halfEdges.length;
         
         // Create three half-edges for this face

@@ -151,41 +151,11 @@ export class MeshGenerator {
         direction: Direction,
         mesh: HalfEdgeMesh)
     {
-        // Always add the basic face triangles
-        const face1 = mesh.addFace(vertices[0], vertices[1], vertices[2]);
-        const face2 = mesh.addFace(vertices[2], vertices[1], vertices[3]);
-
-        // If neighbor is subdivided, queue edge splits
-        if (neighbor?.state === CellState.BoundarySubdivided) {
-            // Calculate midpoints for the four edges
-            const midpoints = [
-                new THREE.Vector3().addVectors(
-                    mesh.vertices[vertices[0]].position,
-                    mesh.vertices[vertices[1]].position
-                ).multiplyScalar(0.5),
-                new THREE.Vector3().addVectors(
-                    mesh.vertices[vertices[1]].position,
-                    mesh.vertices[vertices[3]].position
-                ).multiplyScalar(0.5),
-                new THREE.Vector3().addVectors(
-                    mesh.vertices[vertices[3]].position,
-                    mesh.vertices[vertices[2]].position
-                ).multiplyScalar(0.5),
-                new THREE.Vector3().addVectors(
-                    mesh.vertices[vertices[2]].position,
-                    mesh.vertices[vertices[0]].position
-                ).multiplyScalar(0.5)
-            ];
-
-            // Queue splits for all edges of both triangles
-            this.splitQueue.push(
-                { edgeIndex: face1, position: midpoints[0] },
-                { edgeIndex: face1 + 1, position: midpoints[1] },
-                { edgeIndex: face1 + 2, position: midpoints[3] },
-                { edgeIndex: face2, position: midpoints[1] },
-                { edgeIndex: face2 + 1, position: midpoints[2] },
-                { edgeIndex: face2 + 2, position: midpoints[3] }
-            );
+        if (!neighbor || neighbor.state === CellState.Outside) {
+            mesh.addFace(vertices[0], vertices[1], vertices[2]);
+            mesh.addFace(vertices[2], vertices[1], vertices[3]);
+        } else if (neighbor.state === CellState.BoundarySubdivided) {
+            this.addSubdividedFace(neighbor, vertices, size, direction, mesh);
         }
     }
 
