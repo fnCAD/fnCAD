@@ -59,7 +59,7 @@ export class StateManager {
     if (this.currentMesh instanceof THREE.Mesh) {
       this.currentMesh.geometry.dispose();
       if (Array.isArray(this.currentMesh.material)) {
-        this.currentMesh.material.forEach(m => m.dispose());
+        this.currentMesh.material.forEach((m) => m.dispose());
       } else {
         this.currentMesh.material.dispose();
       }
@@ -71,14 +71,14 @@ export class StateManager {
       const geometry = mesh.geometry;
       const position = geometry.attributes.position;
       const index = geometry.index;
-      
+
       if (!index) {
         throw new Error('Geometry must be indexed');
       }
-      
+
       const serialized: SerializedMesh = {
         vertices: Array.from(position.array),
-        indices: Array.from(index.array)
+        indices: Array.from(index.array),
       };
       this.rendererManager.updateMesh(serialized);
     } else {
@@ -88,13 +88,13 @@ export class StateManager {
 
   setCellCount(count: number) {
     this.cellCount = count;
-    
+
     // Update detailed stats if octree exists
     if (this.currentOctree) {
       const insideCount = this.currentOctree.countInside();
       const outsideCount = this.currentOctree.countOutside();
       const boundaryCount = this.currentOctree.countBoundary();
-      
+
       document.getElementById('inside-cells')!.textContent = insideCount.toString();
       document.getElementById('outside-cells')!.textContent = outsideCount.toString();
       document.getElementById('boundary-cells')!.textContent = boundaryCount.toString();
@@ -112,29 +112,39 @@ export class StateManager {
       const cadAst = parseCAD(this.editorContent);
       const sdfExpr = moduleToSDF(cadAst);
       const sdfNode = parseSDF(sdfExpr);
-      
+
       // Clear any existing error decorations
       if (window._editor) {
         window._editor.dispatch({
-          effects: [errorDecorationFacet.of([])]
+          effects: [errorDecorationFacet.of([])],
         });
       }
-      
+
       return sdfNode;
     } catch (err) {
       // Only handle ParseError instances
       if (err instanceof ParseError) {
         if (window._editor) {
           try {
-            const from = window._editor.state.doc.line(err.location.start.line).from + err.location.start.column - 1;
-            const to = window._editor.state.doc.line(err.location.end.line).from + err.location.end.column - 1;
-            
+            const from =
+              window._editor.state.doc.line(err.location.start.line).from +
+              err.location.start.column -
+              1;
+            const to =
+              window._editor.state.doc.line(err.location.end.line).from +
+              err.location.end.column -
+              1;
+
             window._editor.dispatch({
-              effects: [errorDecorationFacet.of([{
-                from,
-                to,
-                error: err.message
-              }])]
+              effects: [
+                errorDecorationFacet.of([
+                  {
+                    from,
+                    to,
+                    error: err.message,
+                  },
+                ]),
+              ],
             });
           } catch (e) {
             console.error('Error while setting error decoration:', e);
@@ -155,14 +165,15 @@ export class StateManager {
   updateShader(ast: SdfNode) {
     const fragmentShader = generateShader(ast);
     const isVisible = this.settingsManager.isRaymarchedVisible();
-    
+
     // When invisible, modify the scene() function to return inf
-    const modifiedShader = isVisible ? fragmentShader : 
-      fragmentShader.replace(
-        /float scene\(vec3 pos\) {/s,
-        'float scene(vec3 pos) {\n  return 1.0e10;\n'
-      );
-    
+    const modifiedShader = isVisible
+      ? fragmentShader
+      : fragmentShader.replace(
+          /float scene\(vec3 pos\) {/s,
+          'float scene(vec3 pos) {\n  return 1.0e10;\n'
+        );
+
     this.setCurrentShader(modifiedShader);
   }
 
@@ -181,7 +192,7 @@ export class StateManager {
       currentMesh: this.currentMesh,
       editorContent: this.editorContent,
       cellCount: this.cellCount,
-      currentShader: this.currentShader
+      currentShader: this.currentShader,
     };
   }
 }

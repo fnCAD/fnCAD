@@ -10,36 +10,36 @@ describe('Mesh generation', () => {
   it('generates correct points for a simple sphere', () => {
     // Start with CAD code for a unit sphere
     const cadCode = `sphere(1);`;
-    
+
     // Parse CAD to AST
     const cadAst = parse(cadCode);
-    
+
     // Convert to SDF expression
     const sdfExpr = moduleToSDF(cadAst);
-    
+
     // Parse SDF to evaluatable AST
     const sdfAst = parseSDF(sdfExpr);
-    
+
     // Create full octree
     const octree = new OctreeNode(CellState.Boundary);
-    
+
     // Subdivide octree with reasonable settings
     const minSize = 2;
     const cellBudget = 10000;
     subdivideOctree(octree, sdfAst, new Vector3(0, 0, 0), 65536, minSize, cellBudget);
-    
+
     // Generate mesh
     const meshGen = new MeshGenerator(octree, sdfAst, true);
     const mesh = meshGen.generate(minSize);
-    
+
     expect(mesh.indices.length / 3).toBe(336);
-    
+
     // Verify all vertices lie approximately on unit sphere
     for (const index of mesh.indices) {
       const x = mesh.vertices[index * 3];
       const y = mesh.vertices[index * 3 + 1];
       const z = mesh.vertices[index * 3 + 2];
-      const radius = Math.sqrt(x*x + y*y + z*z);
+      const radius = Math.sqrt(x * x + y * y + z * z);
       expect(radius).toBeCloseTo(1, 2); // Within 0.01 of unit radius
     }
   });

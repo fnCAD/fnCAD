@@ -8,7 +8,7 @@ export class TaskQueue {
 
   constructor() {
     this.worker = new Worker(new URL('./worker.ts', import.meta.url), {
-      type: 'module'
+      type: 'module',
     });
 
     this.worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
@@ -17,7 +17,6 @@ export class TaskQueue {
   }
 
   private handleWorkerMessage(message: WorkerMessage) {
-    
     const task = this.tasks.get(message.taskId);
     if (!task) {
       return;
@@ -43,25 +42,25 @@ export class TaskQueue {
   }
 
   private notifyListeners(task: TaskProgress) {
-    this.listeners.forEach(listener => listener(task));
+    this.listeners.forEach((listener) => listener(task));
   }
 
   addTask(task: WorkerTask): string {
     const taskId = `task-${++this.taskCounter}`;
-    
+
     const progress: TaskProgress = {
       taskId,
       type: task.type,
       progress: 0,
-      status: 'queued'
+      status: 'queued',
     };
 
     this.tasks.set(taskId, progress);
-    
+
     this.worker.postMessage({
       type: 'start',
       taskId,
-      data: task
+      data: task,
     });
 
     return taskId;

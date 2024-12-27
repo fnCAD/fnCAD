@@ -19,9 +19,9 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'radius',
         description: 'Radius of the sphere',
-        type: 'number'
-      }
-    ]
+        type: 'number',
+      },
+    ],
   },
   {
     name: 'cube',
@@ -30,9 +30,9 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'size',
         description: 'Length of cube sides',
-        type: 'number'
-      }
-    ]
+        type: 'number',
+      },
+    ],
   },
   {
     name: 'cylinder',
@@ -41,14 +41,14 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'radius',
         description: 'Radius of the cylinder',
-        type: 'number'
+        type: 'number',
       },
       {
         name: 'height',
         description: 'Height of the cylinder',
-        type: 'number'
-      }
-    ]
+        type: 'number',
+      },
+    ],
   },
   {
     name: 'translate',
@@ -57,9 +57,9 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'vec',
         description: 'Translation vector [x,y,z]',
-        type: 'vector'
-      }
-    ]
+        type: 'vector',
+      },
+    ],
   },
   {
     name: 'smooth_union',
@@ -68,12 +68,12 @@ export const builtinDocs: ModuleDoc[] = [
       {
         name: 'radius',
         description: 'Blend radius',
-        type: 'number'
-      }
-    ]
-  }
+        type: 'number',
+      },
+    ],
+  },
 ];
 
 export function getModuleDoc(name: string): ModuleDoc | undefined {
-  return builtinDocs.find(doc => doc.name === name);
+  return builtinDocs.find((doc) => doc.name === name);
 }

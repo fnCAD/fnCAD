@@ -1,8 +1,8 @@
 import { OctreeNode } from './octree';
 
 export interface SerializedMesh {
-  vertices: number[];  // Flat array of vertex positions [x,y,z, x,y,z, ...]
-  indices: number[];   // Triangle indices
+  vertices: number[]; // Flat array of vertex positions [x,y,z, x,y,z, ...]
+  indices: number[]; // Triangle indices
 }
 
 export interface OctreeTask {
@@ -17,5 +17,5 @@ export interface MeshTask {
   optimize: boolean;
   octree: OctreeNode;
   minSize: number;
-  source: string;  // Source code to parse SDF from
+  source: string; // Source code to parse SDF from
 }

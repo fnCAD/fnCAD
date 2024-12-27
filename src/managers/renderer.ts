@@ -28,7 +28,7 @@ export class RendererManager {
     this.taskInfo = document.querySelector('.task-info')!;
     this.taskProgress = document.querySelector('.task-progress')!;
     this.progressBar = this.createProgressBar();
-    
+
     // Initialize task progress bar
     const bar = document.createElement('div');
     bar.className = 'bar';
@@ -83,7 +83,7 @@ export class RendererManager {
         customCameraPosition: { value: this.camera.position },
         fov: { value: this.FOV },
         previewSceneBuffer: { value: this.previewRenderTarget.texture },
-        previewSceneDepth: { value: this.previewRenderTarget.depthTexture }
+        previewSceneDepth: { value: this.previewRenderTarget.depthTexture },
       },
       vertexShader: `
         void main() {
@@ -94,7 +94,7 @@ export class RendererManager {
         void main() {
           gl_FragColor = vec4(0.2, 0.2, 0.2, 1.0);
         }
-      ` // Default shader until real one is provided
+      `, // Default shader until real one is provided
     });
     this.quad = new THREE.Mesh(geometry, this.material);
     this.scene.add(this.quad);
@@ -116,10 +116,10 @@ export class RendererManager {
 
   updateProgress(progress: TaskProgress) {
     const bar = this.taskProgress.querySelector('.bar') as HTMLDivElement;
-    
+
     // Always ensure progress elements are in the DOM
     this.taskProgress.style.display = 'block';
-    
+
     if (progress.status === 'running') {
       const taskType = progress.type === 'octree' ? 'Building Octree' : 'Generating Mesh';
       const percent = Math.round(progress.progress * 100);
@@ -158,7 +158,7 @@ export class RendererManager {
     this.controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
+      RIGHT: THREE.MOUSE.PAN,
     };
     this.controls.update();
   }
@@ -179,7 +179,7 @@ export class RendererManager {
           THREE.FloatType
         ),
         stencilBuffer: false,
-        colorSpace: THREE.LinearSRGBColorSpace
+        colorSpace: THREE.LinearSRGBColorSpace,
       }
     );
   }
@@ -187,11 +187,11 @@ export class RendererManager {
   private handleResize() {
     const width = this.previewPane.clientWidth;
     const height = this.previewPane.clientHeight;
-    
+
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
-    
+
     // Update render target size
     this.previewRenderTarget.dispose();
     this.previewRenderTarget = this.createRenderTarget();
@@ -206,7 +206,7 @@ export class RendererManager {
     // Update all uniforms every frame
     const width = this.previewPane.clientWidth;
     const height = this.previewPane.clientHeight;
-    
+
     this.material.uniforms.resolution.value.set(width, height);
     this.material.uniforms.customViewMatrix.value.copy(this.camera.matrixWorldInverse);
     this.material.uniforms.projectionMatrix.value.copy(this.camera.projectionMatrix);
@@ -219,7 +219,7 @@ export class RendererManager {
     this.renderer.setRenderTarget(this.previewRenderTarget);
     this.renderer.clear();
     this.renderer.render(this.previewOverlayScene, this.camera);
-    
+
     // Only render raymarching if enabled
     if (this.quad.visible) {
       this.renderer.setRenderTarget(null);
@@ -232,10 +232,10 @@ export class RendererManager {
     // Update shader code
     this.material.fragmentShader = fragmentShader;
     this.material.needsUpdate = true;
-    
+
     // Force recompilation
     this.material.uniformsNeedUpdate = true;
-    
+
     // Check for shader compilation errors
     const gl = this.renderer.getContext();
     const program = (this.material as any).program;
@@ -255,10 +255,9 @@ export class RendererManager {
   }
 
   updateOctreeVisualization(octree: OctreeNode, visible: boolean = true) {
-
     // Remove existing octree visualization
-    this.previewOverlayScene.children = this.previewOverlayScene.children.filter(child => 
-      !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
+    this.previewOverlayScene.children = this.previewOverlayScene.children.filter(
+      (child) => !(child instanceof THREE.Group && child.userData.isOctreeVisualization)
     );
 
     // Create new visualization only if visible
@@ -276,13 +275,13 @@ export class RendererManager {
   updateMesh(meshData: SerializedMesh | null) {
     // Remove existing mesh
     const existingMesh = this.previewOverlayScene.children.find(
-      child => child instanceof THREE.Mesh && child.userData.isSdfMesh
+      (child) => child instanceof THREE.Mesh && child.userData.isSdfMesh
     ) as THREE.Mesh | undefined;
-    
+
     if (existingMesh) {
       existingMesh.geometry.dispose();
       if (Array.isArray(existingMesh.material)) {
-        existingMesh.material.forEach(m => m.dispose());
+        existingMesh.material.forEach((m) => m.dispose());
       } else {
         existingMesh.material.dispose();
       }
@@ -294,7 +293,7 @@ export class RendererManager {
       const geometry = new THREE.BufferGeometry();
       const positions: number[] = [];
       const colors: number[] = [];
-      
+
       // For each triangle
       for (let i = 0; i < meshData.indices.length; i += 3) {
         // Get the three vertices of this triangle
@@ -309,11 +308,11 @@ export class RendererManager {
           colors.push(1.0, 1.0, 1.0);
         }
       }
-      
+
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
       geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
       geometry.computeVertexNormals();
-      
+
       const material = new THREE.MeshPhongMaterial({
         vertexColors: true,
         side: THREE.DoubleSide,
@@ -321,9 +320,9 @@ export class RendererManager {
         emissive: 0x222222,
         shininess: 30,
         transparent: true,
-        opacity: this.settingsManager.getMeshOpacity()
+        opacity: this.settingsManager.getMeshOpacity(),
       });
-      
+
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isSdfMesh = true;
       this.previewOverlayScene.add(mesh);

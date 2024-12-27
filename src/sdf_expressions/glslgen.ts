@@ -31,7 +31,7 @@ export class GLSLContext {
 
   constructor(
     public readonly generator: GLSLGenerator,
-    initialPoint: string = "pos"
+    initialPoint: string = 'pos'
   ) {
     this.currentPoint = initialPoint;
   }
@@ -50,14 +50,16 @@ export class GLSLContext {
   // Core transformation functions that return new contexts
   translate(dx: number, dy: number, dz: number): GLSLContext {
     const newPoint = this.generator.save(
-      `${this.currentPoint} - vec3(${dx}, ${dy}, ${dz})`, 'vec3'
+      `${this.currentPoint} - vec3(${dx}, ${dy}, ${dz})`,
+      'vec3'
     );
     return this.withPoint(newPoint);
   }
 
   scale(sx: number, sy: number, sz: number): GLSLContext {
     const newPoint = this.generator.save(
-      `${this.currentPoint} / vec3(${sx}, ${sy}, ${sz})`, 'vec3'
+      `${this.currentPoint} / vec3(${sx}, ${sy}, ${sz})`,
+      'vec3'
     );
     return this.withPoint(newPoint);
   }
@@ -66,7 +68,7 @@ export class GLSLContext {
     // Create rotation matrix using THREE.js
     const rotMatrix = new THREE.Matrix4();
     // We use 'ZYX' order for matrix construction because matrix multiplication
-    // applies transforms from right to left. This results in the same point 
+    // applies transforms from right to left. This results in the same point
     // transformations as applying rotations in XYZ order.
     rotMatrix.makeRotationFromEuler(new THREE.Euler(ax, ay, az, 'ZYX'));
     const m = rotMatrix.elements;

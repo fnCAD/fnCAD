@@ -8,7 +8,7 @@ describe('HalfEdgeMesh', () => {
 
     beforeEach(() => {
       mesh = new HalfEdgeMesh();
-      
+
       // Create a simple two-triangle mesh sharing an edge
       // Triangle 1: (0,0,0) - (1,0,0) - (0,1,0)
       // Triangle 2: (1,0,0) - (1,1,0) - (0,1,0)
@@ -24,20 +24,21 @@ describe('HalfEdgeMesh', () => {
 
     test('splits shared edge correctly', () => {
       // Find the edge to split (v1->v2)
-      const edgeToSplit = mesh.halfEdges.findIndex(he => 
-        he.vertexIndex === 2 && // Points to v2
-        mesh.halfEdges[he.nextIndex].vertexIndex === 0 // Next points to v0
+      const edgeToSplit = mesh.halfEdges.findIndex(
+        (he) =>
+          he.vertexIndex === 2 && // Points to v2
+          mesh.halfEdges[he.nextIndex].vertexIndex === 0 // Next points to v0
       );
 
       // Split the edge
       const newEdges = mesh.splitEdge(edgeToSplit, new THREE.Vector3(1, 2, 3));
-      
+
       // Should return 4 unique edges
       expect(newEdges).toHaveLength(4);
-      
+
       // Check that we have the expected number of vertices (original 4 + 1 new)
       expect(mesh.vertices).toHaveLength(5);
-      
+
       // Verify the new vertex is at the midpoint
       const midpoint = mesh.vertices[4].position;
       expect(midpoint.x).toBe(1);
@@ -60,7 +61,9 @@ describe('HalfEdgeMesh', () => {
       const face = m2.addFace(a, b, c);
 
       // Attempt to split unpaired edge should throw
-      expect(() => m2.splitEdge(face, new THREE.Vector3(0, 0, 0))).toThrow('Cannot split unpaired edge');
+      expect(() => m2.splitEdge(face, new THREE.Vector3(0, 0, 0))).toThrow(
+        'Cannot split unpaired edge'
+      );
     });
 
     test('edge split preserves manifoldness', () => {
@@ -69,11 +72,11 @@ describe('HalfEdgeMesh', () => {
       const a = mesh.addVertex(new THREE.Vector3(0, 0, 0));
       const b = mesh.addVertex(new THREE.Vector3(1, 0, 0));
       const c = mesh.addVertex(new THREE.Vector3(0, 1, 0));
-      
+
       // Add two faces sharing all vertices
-      mesh.addFace(a, b, c);  // ABC
-      mesh.addFace(c, b, a);  // CBA - same vertices, opposite winding
-      
+      mesh.addFace(a, b, c); // ABC
+      mesh.addFace(c, b, a); // CBA - same vertices, opposite winding
+
       // This mesh is trivially manifold
       expect(mesh.isManifold()).toBe(true);
 
@@ -86,12 +89,12 @@ describe('HalfEdgeMesh', () => {
 
     test('optimizes vertices to lie on surface', () => {
       const mesh = new HalfEdgeMesh();
-      
+
       // Create a simple triangle slightly off a sphere surface
-      const v1 = mesh.addVertex(new THREE.Vector3(1.1, 0, 0));  // Slightly outside
-      const v2 = mesh.addVertex(new THREE.Vector3(0, 0.9, 0));  // Slightly inside
+      const v1 = mesh.addVertex(new THREE.Vector3(1.1, 0, 0)); // Slightly outside
+      const v2 = mesh.addVertex(new THREE.Vector3(0, 0.9, 0)); // Slightly inside
       const v3 = mesh.addVertex(new THREE.Vector3(0, 0, 1.05)); // Slightly outside
-      
+
       mesh.addFace(v1, v2, v3);
 
       // SDF for a unit sphere
@@ -99,10 +102,10 @@ describe('HalfEdgeMesh', () => {
 
       // Optimize vertices
       const maxMove = HalfEdgeMesh.testing.optimizeVertices(mesh, sphereSDF);
-      
+
       // Verify vertices moved
       expect(maxMove).toBeGreaterThan(0);
-      
+
       // Verify vertices are now (approximately) on surface
       for (const vertex of mesh.vertices) {
         const distance = sphereSDF(vertex.position);

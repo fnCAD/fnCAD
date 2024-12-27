@@ -32,16 +32,16 @@ async function processTask(taskId: string, task: WorkerTask) {
     taskId,
     type: task.type,
     progress: 0,
-    status: 'running'
+    status: 'running',
   };
   activeTasks.set(taskId, progress);
-  
+
   // Send initial progress update
   self.postMessage({
     type: 'progress',
     taskId,
     progress: 0,
-    status: 'running'
+    status: 'running',
   });
 
   try {
@@ -64,9 +64,9 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     const cadAst = parseCAD(task.source);
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
-    
+
     const octree = new OctreeNode(CellState.Boundary);
-    
+
     // Track subdivision progress
     let totalCells = 0;
     const onProgress = (cells: number) => {
@@ -74,7 +74,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       const progress = Math.min(totalCells / task.cellBudget, 0.99);
       updateProgress(taskId, progress);
     };
-    
+
     // Subdivide with progress tracking
     subdivideOctree(
       octree,
@@ -85,8 +85,7 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
       task.cellBudget,
       onProgress
     );
-    
-    
+
     // Ensure we send a proper OctreeNode instance with all required data
     const serializeNode = (node: OctreeNode): any => {
       return {
@@ -96,10 +95,10 @@ async function processOctreeTask(taskId: string, task: OctreeTask) {
     };
 
     const serializedOctree = serializeNode(octree);
-    
+
     const result = {
       result: serializedOctree,
-      cellCount: totalCells
+      cellCount: totalCells,
     };
     sendComplete(taskId, result);
   } catch (err) {
@@ -120,12 +119,8 @@ async function processMeshTask(taskId: string, task: MeshTask) {
       if (Array.isArray(data.state)) {
         state = CellState.Boundary; // prep
       }
-      
-      const node = new OctreeNode(
-        state,
-        parent,
-        data.octant
-      );
+
+      const node = new OctreeNode(state, parent, data.octant);
 
       if (Array.isArray(data.state)) {
         node.state = data.state.map((child: any) => reconstructOctree(child, node));
@@ -140,18 +135,14 @@ async function processMeshTask(taskId: string, task: MeshTask) {
     const cadAst = parseCAD(task.source);
     const sdfExpr = moduleToSDF(cadAst);
     const sdf = parseSDF(sdfExpr);
-    
-    const meshGen = new MeshGenerator(
-      octree,
-      sdf,
-      task.optimize
-    );
-    
+
+    const meshGen = new MeshGenerator(octree, sdf, task.optimize);
+
     // Add progress tracking to mesh generation
     meshGen.onProgress = (progress: number) => {
       updateProgress(taskId, progress);
     };
-    
+
     const serializedMesh = meshGen.generate(task.minSize);
     sendComplete(taskId, { result: serializedMesh });
   } catch (err) {
@@ -166,7 +157,7 @@ function updateProgress(taskId: string, progress: number) {
     self.postMessage({
       type: 'progress',
       taskId,
-      progress
+      progress,
     });
   } else {
   }
@@ -180,7 +171,7 @@ function sendComplete(taskId: string, data: any) {
     self.postMessage({
       type: 'complete',
       taskId,
-      data
+      data,
     });
     activeTasks.delete(taskId);
   }
@@ -194,7 +185,7 @@ function sendError(taskId: string, error: string) {
     self.postMessage({
       type: 'error',
       taskId,
-      error
+      error,
     });
     activeTasks.delete(taskId);
   }

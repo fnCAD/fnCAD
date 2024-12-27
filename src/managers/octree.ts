@@ -14,15 +14,15 @@ export class OctreeManager {
   async updateOctree() {
     const startTime = performance.now();
     const source = this.stateManager.getEditorContent();
-    
+
     // Create octree task
     const taskId = this.stateManager.taskQueue.addTask({
       type: 'octree',
       minSize: this.settingsManager.getMinSize(),
       cellBudget: this.settingsManager.getCellBudget(),
-      source
+      source,
     });
-    
+
     // Set this as the active task
     this.stateManager.setActiveTaskId(taskId);
 
@@ -30,8 +30,10 @@ export class OctreeManager {
       // Wait for task completion
       const task = await new Promise<TaskProgress>((resolve, reject) => {
         const unsubscribe = this.stateManager.taskQueue.onProgress((progress) => {
-          if (progress.taskId === taskId && 
-             (progress.status === 'completed' || progress.status === 'failed')) {
+          if (
+            progress.taskId === taskId &&
+            (progress.status === 'completed' || progress.status === 'failed')
+          ) {
             unsubscribe();
             if (progress.status === 'failed') {
               reject(new Error(progress.error));
@@ -48,7 +50,7 @@ export class OctreeManager {
           if (!data) {
             throw new Error('Cannot reconstruct null octree data');
           }
-          
+
           // Detailed validation with specific error messages
           if (typeof data.state !== 'number' && !Array.isArray(data.state)) {
             throw new Error('Invalid octree data: state must be number or array');
@@ -63,21 +65,17 @@ export class OctreeManager {
             state = CellState.Boundary; // prep
           }
           // Create node with proper prototype chain
-          const node = new OctreeNode(
-            state,
-            parent,
-            data.octant
-          );
+          const node = new OctreeNode(state, parent, data.octant);
 
           if (Array.isArray(data.state)) {
             node.state = data.state.map((child: any) => reconstructOctree(child, node));
           }
-          
+
           return node;
         };
 
         const octree = reconstructOctree(task.result);
-        
+
         // Update state
         this.stateManager.setCurrentOctree(octree);
         this.stateManager.setCellCount(octree.getCellCount());

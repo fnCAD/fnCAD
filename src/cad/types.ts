@@ -3,7 +3,7 @@ import { evalExpression, wrapUnion, flattenScope } from './builtins';
 export interface Position {
   line: number;
   column: number;
-  offset: number;  // Absolute document position
+  offset: number; // Absolute document position
 }
 
 export interface SourceLocation {
@@ -11,7 +11,6 @@ export interface SourceLocation {
   end: Position;
   source: string;
 }
-
 
 export interface ModuleCallLocation {
   moduleName: string;
@@ -54,10 +53,10 @@ export class ScopedModuleDeclaration {
   call(args: Record<string, Expression>, callContext: Context): SDFExpression {
     // Create new context that inherits from the module's lexical scope
     const moduleContext = this.lexicalContext.child();
-    
+
     // Track which parameters have been set
     const setParams = new Set<string>();
-    
+
     // First, assign positional parameters in order
     let posIndex = 0;
     while (args[posIndex.toString()]) {
@@ -69,12 +68,12 @@ export class ScopedModuleDeclaration {
       setParams.add(param.name);
       posIndex++;
     }
-    
+
     // Then handle named parameters
     for (const [key, value] of Object.entries(args)) {
       if (!isNaN(Number(key))) continue; // Skip positional args we already handled
-      
-      const param = this.declaration.parameters.find(p => p.name === key);
+
+      const param = this.declaration.parameters.find((p) => p.name === key);
       if (!param) {
         throw new Error(`Unknown parameter: ${key}`);
       }
@@ -84,7 +83,7 @@ export class ScopedModuleDeclaration {
       moduleContext.set(param.name, evalExpression(value, callContext));
       setParams.add(param.name);
     }
-    
+
     // Fill in any remaining parameters with defaults
     for (const param of this.declaration.parameters) {
       if (!setParams.has(param.name)) {
@@ -155,9 +154,7 @@ export class Context {
 }
 
 export abstract class Node {
-  constructor(
-    public location: SourceLocation
-  ) {}
+  constructor(public location: SourceLocation) {}
 }
 
 export abstract class Statement extends Node {}
@@ -196,7 +193,7 @@ export class IfStatement extends Statement {
 export class ForLoop extends Statement {
   constructor(
     public variable: string,
-    public range: { start: Expression, end: Expression, step?: Expression },
+    public range: { start: Expression; end: Expression; step?: Expression },
     public body: Statement[],
     location: SourceLocation
   ) {
@@ -235,7 +232,6 @@ export interface Parameter {
 }
 
 export class ModuleCall extends Statement {
-
   constructor(
     public name: string,
     public args: Record<string, Expression>,
@@ -258,8 +254,6 @@ export class NumberLiteral extends Expression {
     super(location);
   }
 }
-
-
 
 export class BinaryExpression extends Expression {
   constructor(
@@ -290,7 +284,7 @@ export class VectorLiteral extends Expression {
   }
 
   evaluate(context: Context): number[] {
-    return this.components.map(expr => {
+    return this.components.map((expr) => {
       const val = evalExpression(expr, context);
       if (typeof val !== 'number') {
         throw new Error('Vector components must evaluate to numbers');
@@ -309,4 +303,3 @@ export class IndexExpression extends Expression {
     super(location);
   }
 }
-

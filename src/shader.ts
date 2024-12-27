@@ -5,7 +5,7 @@ export function generateShader(ast: Node): string {
   const generator = new GLSLGenerator();
   const context = new GLSLContext(generator);
   const result = ast.toGLSL(context);
-  
+
   return `
     uniform vec2 resolution;
     uniform mat4 customViewMatrix;
@@ -172,4 +172,3 @@ export function generateShader(ast: Node): string {
     }
   `;
 }
-

@@ -14,7 +14,7 @@ export enum Direction {
   PosY,
   NegY,
   PosZ,
-  NegZ
+  NegZ,
 }
 
 export class OctreeNode {
@@ -23,8 +23,8 @@ export class OctreeNode {
   constructor(
     public state: CellState | OctreeNode[],
     public readonly parent: OctreeNode | null = null,
-    public readonly octant: number = -1,
-  ) { }
+    public readonly octant: number = -1
+  ) {}
 
   public children(): OctreeNode[] | null {
     if (Array.isArray(this.state)) return this.state;
@@ -78,7 +78,7 @@ export class OctreeNode {
     if (this.isNeighborInSameParent(direction)) {
       const neighborOctant = this.getMirrorOctant(direction);
       // TODO enforce in constructor/invariant?
-      if (!Array.isArray(this.parent.state)) throw new Error("Parent logic error.");
+      if (!Array.isArray(this.parent.state)) throw new Error('Parent logic error.');
       return this.parent.state[neighborOctant];
     }
 
@@ -151,12 +151,20 @@ export class OctreeNode {
   }
 }
 
-export function octreeChildCenter(index: number, center: THREE.Vector3, half: number): THREE.Vector3 {
+export function octreeChildCenter(
+  index: number,
+  center: THREE.Vector3,
+  half: number
+): THREE.Vector3 {
   const quart = half / 2;
   const xDir = (index & 1) !== 0 ? 1 : -1;
   const yDir = (index & 2) !== 0 ? 1 : -1;
   const zDir = (index & 4) !== 0 ? 1 : -1;
-  return new THREE.Vector3(center.x + xDir * quart, center.y + yDir * quart, center.z + zDir * quart);
+  return new THREE.Vector3(
+    center.x + xDir * quart,
+    center.y + yDir * quart,
+    center.z + zDir * quart
+  );
 }
 
 export function subdivideOctree(
@@ -202,14 +210,23 @@ export function subdivideOctree(
       // for now just fall back to interval evaluation.
       const interval = sdf.evaluateInterval(rangeX, rangeY, rangeZ);
 
-      state = interval.max < 0 ? CellState.Inside :
-              interval.min > 0 ? CellState.Outside :
-              CellState.Boundary;
+      state =
+        interval.max < 0
+          ? CellState.Inside
+          : interval.min > 0
+            ? CellState.Outside
+            : CellState.Boundary;
     } else {
       switch (content.category) {
-        case 'inside': state = CellState.Inside; break;
-        case 'outside': state = CellState.Outside; break;
-        case 'face': state = CellState.Boundary; break;
+        case 'inside':
+          state = CellState.Inside;
+          break;
+        case 'outside':
+          state = CellState.Outside;
+          break;
+        case 'face':
+          state = CellState.Boundary;
+          break;
         // boundary of special interest, mark for extended subdivision.
         case 'edge':
           state = CellState.Boundary;
@@ -219,8 +236,7 @@ export function subdivideOctree(
     }
     children.push(new OctreeNode(state, node, i));
 
-    if (state !== CellState.Boundary || quart < adjMinSize)
-    {
+    if (state !== CellState.Boundary || quart < adjMinSize) {
       continue;
     }
 
@@ -234,7 +250,6 @@ export function subdivideOctree(
       break;
     }
   }
-
 
   // Report progress if callback provided
   if (onProgress) {

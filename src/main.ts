@@ -1,20 +1,20 @@
-import './style.css'
-import Split from 'split.js'
-import { getRuntimeBasePath } from './utils/runtime-base'
-import { downloadSTL } from './stlexporter'
-import { StateManager } from './managers/state'
-import { TaskProgress } from './workers/task_types'
-import { OctreeManager } from './managers/octree'
-import { SettingsManager } from './managers/settings'
-import { RendererManager } from './managers/renderer'
-import { EditorView, ViewUpdate, Decoration, DecorationSet, WidgetType } from '@codemirror/view'
-import { EditorState, StateEffect, StateField } from '@codemirror/state'
-import { javascript } from '@codemirror/lang-javascript'
-import { Parser } from './cad/parser'
-import { ParseError } from './cad/errors'
-import { getModuleDoc } from './cad/docs'
-import { basicSetup } from 'codemirror'
-import { oneDark } from '@codemirror/theme-one-dark'
+import './style.css';
+import Split from 'split.js';
+import { getRuntimeBasePath } from './utils/runtime-base';
+import { downloadSTL } from './stlexporter';
+import { StateManager } from './managers/state';
+import { TaskProgress } from './workers/task_types';
+import { OctreeManager } from './managers/octree';
+import { SettingsManager } from './managers/settings';
+import { RendererManager } from './managers/renderer';
+import { EditorView, ViewUpdate, Decoration, DecorationSet, WidgetType } from '@codemirror/view';
+import { EditorState, StateEffect, StateField } from '@codemirror/state';
+import { javascript } from '@codemirror/lang-javascript';
+import { Parser } from './cad/parser';
+import { ParseError } from './cad/errors';
+import { getModuleDoc } from './cad/docs';
+import { basicSetup } from 'codemirror';
+import { oneDark } from '@codemirror/theme-one-dark';
 
 // Error decoration setup
 interface ErrorDecoration {
@@ -24,7 +24,7 @@ interface ErrorDecoration {
 }
 
 export const errorDecorationFacet = StateEffect.define<ErrorDecoration[]>();
-export const callHighlightEffect = StateEffect.define<{from: number, to: number} | null>();
+export const callHighlightEffect = StateEffect.define<{ from: number; to: number } | null>();
 
 const callHighlightField = StateField.define<DecorationSet>({
   create() {
@@ -39,15 +39,15 @@ const callHighlightField = StateField.define<DecorationSet>({
         } else {
           decorations = Decoration.set([
             Decoration.mark({
-              class: "cm-active-call"
-            }).range(effect.value.from, effect.value.to)
+              class: 'cm-active-call',
+            }).range(effect.value.from, effect.value.to),
           ]);
         }
       }
     }
     return decorations;
   },
-  provide: f => EditorView.decorations.from(f)
+  provide: (f) => EditorView.decorations.from(f),
 });
 
 // Create help popup element
@@ -75,13 +75,13 @@ function updateHelpPopup(view: EditorView) {
     // Continue with partial locations if parsing fails
   }
   const locations = parser.getLocations();
-  
+
   // Show help for any call where we're in the parameter list
   for (const call of locations) {
     if (pos >= call.paramRange.start.offset && pos <= call.paramRange.end.offset) {
       // Get documentation
       const doc = getModuleDoc(call.moduleName);
-      
+
       // Find current parameter
       let currentParamIndex = -1;
       console.log('Checking parameters for position:', pos);
@@ -91,7 +91,7 @@ function updateHelpPopup(view: EditorView) {
           start: param.range.start.offset,
           end: param.range.end.offset,
           name: param.name,
-          value: param.value
+          value: param.value,
         });
         if (pos >= param.range.start.offset && pos <= param.range.end.offset) {
           console.log('Found matching parameter:', i);
@@ -103,28 +103,33 @@ function updateHelpPopup(view: EditorView) {
       // Build help content
       let content = `<strong>${call.moduleName}</strong>(`;
       if (doc) {
-        content += doc.parameters.map((p, i) => {
-          const className = i === currentParamIndex ? 'current' : '';
-          const param = call.parameters[i];
-          const value = param?.value ? ` = ${param.value}` : '';
-          return `<span class="${className}">${p.name}: ${p.type}${value}</span>`;
-        }).join(', ');
+        content += doc.parameters
+          .map((p, i) => {
+            const className = i === currentParamIndex ? 'current' : '';
+            const param = call.parameters[i];
+            const value = param?.value ? ` = ${param.value}` : '';
+            return `<span class="${className}">${p.name}: ${p.type}${value}</span>`;
+          })
+          .join(', ');
         content += ')<br/>';
         content += `<small>${doc.description}</small>`;
-        
+
         if (currentParamIndex >= 0 && currentParamIndex < doc.parameters.length) {
           content += `<br/><small>${doc.parameters[currentParamIndex].description}</small>`;
         }
       } else {
-        content += call.parameters.map((p, i) => {
-          const className = i === currentParamIndex ? 'current' : '';
-          const value = p.value ? ` = ${p.value}` : '';
-          return `<span class="${className}">${p.name || `arg${i}`}${value}</span>`;
-        }).join(', ') + ')';
+        content +=
+          call.parameters
+            .map((p, i) => {
+              const className = i === currentParamIndex ? 'current' : '';
+              const value = p.value ? ` = ${p.value}` : '';
+              return `<span class="${className}">${p.name || `arg${i}`}${value}</span>`;
+            })
+            .join(', ') + ')';
       }
-      
+
       helpPopup.innerHTML = content;
-      
+
       // Build parameter descriptions
       let paramDescriptions = '';
       if (doc) {
@@ -139,41 +144,43 @@ function updateHelpPopup(view: EditorView) {
       // Update content
       helpPopup.innerHTML = `
         <strong>${call.moduleName}</strong>(${
-          doc?.parameters.map((p, i) => {
-            const param = call.parameters[i];
-            const value = param?.value ? ` = ${param.value}` : '';
-            return `<span class="${i === currentParamIndex ? 'current' : ''}">${p.name}: ${p.type}${value}</span>`;
-          }).join(', ') || ''
+          doc?.parameters
+            .map((p, i) => {
+              const param = call.parameters[i];
+              const value = param?.value ? ` = ${param.value}` : '';
+              return `<span class="${i === currentParamIndex ? 'current' : ''}">${p.name}: ${p.type}${value}</span>`;
+            })
+            .join(', ') || ''
         })
         ${paramDescriptions}
       `;
-      
+
       // Position below current line
       const line = view.lineBlockAt(pos);
       const lineRect = view.coordsAtPos(line.from)!;
-      
+
       helpPopup.style.display = 'block';
       helpPopup.style.top = `${lineRect.bottom + window.scrollY}px`;
       helpPopup.style.left = `${lineRect.left + window.scrollX}px`;
       helpPopup.classList.add('visible');
-      
+
       // Update call highlighting
       view.dispatch({
         effects: callHighlightEffect.of({
           from: call.fullRange.start.offset,
-          to: call.fullRange.end.offset
-        })
+          to: call.fullRange.end.offset,
+        }),
       });
       return;
     }
   }
-  
+
   helpPopup.style.display = 'none';
   helpPopup.classList.remove('visible');
-      
+
   // Clear call highlighting
   view.dispatch({
-    effects: callHighlightEffect.of(null)
+    effects: callHighlightEffect.of(null),
   });
 }
 
@@ -183,20 +190,19 @@ const errorDecorationField = StateField.define<DecorationSet>({
   },
   update(decorations, tr) {
     decorations = decorations.map(tr.changes);
-    
+
     // Log current decorations before applying effects
     // Log current decorations in a more readable format
     for (const effect of tr.effects) {
       if (effect.is(errorDecorationFacet)) {
-        
         // Log the decorations we're about to create
-        const newDecorations = effect.value.flatMap(error => [
+        const newDecorations = effect.value.flatMap((error) => [
           Decoration.widget({
-            widget: new class extends WidgetType {
+            widget: new (class extends WidgetType {
               toDOM() {
                 const span = document.createElement('span');
                 span.className = 'error-message';
-                span.textContent = "⚠️ " + error.error.split('at line')[0].trim();
+                span.textContent = '⚠️ ' + error.error.split('at line')[0].trim();
                 // Always position at the end of the first line containing the error
                 requestAnimationFrame(() => {
                   const firstErrorLine = window._editor?.state.doc.lineAt(error.from);
@@ -222,34 +228,36 @@ const errorDecorationField = StateField.define<DecorationSet>({
                     const leftPos = textWidth + 40 - editorLeft;
                     span.style.left = `${leftPos}px`;
                     // Position vertically at the first error line
-                    const lineElement = editor.querySelector(`[data-line="${firstErrorLine.number}"]`);
+                    const lineElement = editor.querySelector(
+                      `[data-line="${firstErrorLine.number}"]`
+                    );
                     if (lineElement) {
                       const lineRect = lineElement.getBoundingClientRect();
                       span.style.top = `${lineRect.top}px`;
                     }
                   }
                 });
-                
+
                 return span;
               }
-            },
-            side: 1
+            })(),
+            side: 1,
           }).range(error.from, error.from),
           Decoration.mark({
             attributes: {
-              "data-error": "true",
-              title: error.error
+              'data-error': 'true',
+              title: error.error,
             },
-            class: "cm-error-mark"
+            class: 'cm-error-mark',
           }).range(error.from, error.to),
         ]);
-        
+
         decorations = Decoration.set(newDecorations);
       }
     }
     return decorations;
   },
-  provide: f => EditorView.decorations.from(f)
+  provide: (f) => EditorView.decorations.from(f),
 });
 
 // Set runtime base path for assets
@@ -291,7 +299,7 @@ smooth_difference(0.03) {
         if (update.docChanged) {
           stateManager.updateEditorContent(update.state.doc.toString());
           updateOctree();
-          
+
           if (settingsManager.isMeshVisible()) {
             await regenerateMesh();
           }
@@ -310,23 +318,23 @@ smooth_difference(0.03) {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 0,  /* Important for nested flex! */
-          overflow: 'hidden'
+          minHeight: 0 /* Important for nested flex! */,
+          overflow: 'hidden',
         },
         '.cm-scroller': {
           overflow: 'auto',
           flex: 1,
-          minHeight: 0  /* Important for nested flex! */
+          minHeight: 0 /* Important for nested flex! */,
         },
         '.cm-content': {
-          minHeight: '100%'
+          minHeight: '100%',
         },
-        '.cm-gutters': {backgroundColor: 'transparent'},
-        '.cm-lineNumbers': {color: '#666'}
-      })
-    ]
+        '.cm-gutters': { backgroundColor: 'transparent' },
+        '.cm-lineNumbers': { color: '#666' },
+      }),
+    ],
   }),
-  parent: document.getElementById('editor-pane')!
+  parent: document.getElementById('editor-pane')!,
 });
 
 // Store editor instance for later use
@@ -357,9 +365,9 @@ async function regenerateMesh() {
     optimize: settingsManager.isMeshOptimizationEnabled(),
     octree: state.currentOctree,
     minSize: settingsManager.getMinSize(),
-    source: stateManager.getEditorContent()
+    source: stateManager.getEditorContent(),
   });
-  
+
   // Set this as the active task
   stateManager.setActiveTaskId(taskId);
 

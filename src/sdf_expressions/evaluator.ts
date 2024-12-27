@@ -12,7 +12,7 @@ export class NumberNode implements Node {
   constructor(public readonly value: number) {}
 
   evaluateStr(_xname: string, _yname: string, _zname: string, _depth: number): string {
-    return this.value.toString(); 
+    return this.value.toString();
   }
 
   toGLSL(context: GLSLContext): string {
@@ -25,7 +25,9 @@ export class NumberNode implements Node {
     return Interval.from(this.value);
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 export class VariableNode implements Node {
@@ -33,19 +35,27 @@ export class VariableNode implements Node {
 
   evaluateStr(xname: string, yname: string, zname: string, _depth: number): string {
     switch (this.name) {
-      case 'x': return xname;
-      case 'y': return yname;
-      case 'z': return zname;
-      default: throw new Error(`Unknown variable: ${this.name}`);
+      case 'x':
+        return xname;
+      case 'y':
+        return yname;
+      case 'z':
+        return zname;
+      default:
+        throw new Error(`Unknown variable: ${this.name}`);
     }
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     switch (this.name) {
-      case 'x': return x;
-      case 'y': return y;
-      case 'z': return z;
-      default: throw new Error(`Unknown variable: ${this.name}`);
+      case 'x':
+        return x;
+      case 'y':
+        return y;
+      case 'z':
+        return z;
+      default:
+        throw new Error(`Unknown variable: ${this.name}`);
     }
   }
 
@@ -57,7 +67,9 @@ export class VariableNode implements Node {
     return context.generator.save(this.name, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 export class BinaryOpNode implements Node {
@@ -81,14 +93,20 @@ export class BinaryOpNode implements Node {
     const lval = this.left.evaluateInterval(x, y, z);
     const rval = this.right.evaluateInterval(x, y, z);
     switch (this.operator) {
-      case '+': return lval.add(rval);
-      case '-': return lval.subtract(rval);
-      case '*': return lval.multiply(rval);
-      case '/': return lval.divide(rval);
+      case '+':
+        return lval.add(rval);
+      case '-':
+        return lval.subtract(rval);
+      case '*':
+        return lval.multiply(rval);
+      case '/':
+        return lval.divide(rval);
     }
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 export class UnaryOpNode implements Node {
@@ -116,10 +134,14 @@ export class UnaryOpNode implements Node {
     if (!content) return null;
 
     switch (content.category) {
-      case 'inside': return { category: 'outside' };
-      case 'outside': return { category: 'inside' };
-      case 'face': return { category: 'face' };
-      case 'edge': return { category: 'edge' };
+      case 'inside':
+        return { category: 'outside' };
+      case 'outside':
+        return { category: 'inside' };
+      case 'face':
+        return { category: 'face' };
+      case 'edge':
+        return { category: 'edge' };
     }
   }
 }
@@ -134,7 +156,7 @@ abstract class FunctionCallNode implements Node {
   constructor(
     public readonly name: string,
     public readonly args: Node[]
-  ) { }
+  ) {}
 
   abstract evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
   abstract evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
@@ -144,22 +166,38 @@ abstract class FunctionCallNode implements Node {
 
 export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode {
   switch (name) {
-    case 'sin': return new SinFunctionCall(args);
-    case 'cos': return new CosFunctionCall(args);
-    case 'sqrt': return new SqrtFunctionCall(args);
-    case 'sqr': return new SqrFunctionCall(args);
-    case 'log': return new LogFunctionCall(args);
-    case 'min': return new MinFunctionCall(args);
-    case 'max': return new MaxFunctionCall(args);
-    case 'smooth_union': return new SmoothUnionFunctionCall(args);
-    case 'exp': return new ExpFunctionCall(args);
-    case 'abs': return new AbsFunctionCall(args);
-    case 'rotate': return new RotateFunctionCall(args);
-    case 'scale': return new ScaleFunctionCall(args);
-    case 'translate': return new TranslateFunctionCall(args);
-    case 'aabb': return new AABBFunctionCall(args);
-    case 'face': return new FaceFunctionCall(args);
-    default: throw new Error(`Unknown function: ${name}`);
+    case 'sin':
+      return new SinFunctionCall(args);
+    case 'cos':
+      return new CosFunctionCall(args);
+    case 'sqrt':
+      return new SqrtFunctionCall(args);
+    case 'sqr':
+      return new SqrFunctionCall(args);
+    case 'log':
+      return new LogFunctionCall(args);
+    case 'min':
+      return new MinFunctionCall(args);
+    case 'max':
+      return new MaxFunctionCall(args);
+    case 'smooth_union':
+      return new SmoothUnionFunctionCall(args);
+    case 'exp':
+      return new ExpFunctionCall(args);
+    case 'abs':
+      return new AbsFunctionCall(args);
+    case 'rotate':
+      return new RotateFunctionCall(args);
+    case 'scale':
+      return new ScaleFunctionCall(args);
+    case 'translate':
+      return new TranslateFunctionCall(args);
+    case 'aabb':
+      return new AABBFunctionCall(args);
+    case 'face':
+      return new FaceFunctionCall(args);
+    default:
+      throw new Error(`Unknown function: ${name}`);
   }
 }
 
@@ -181,7 +219,9 @@ class SinFunctionCall extends FunctionCallNode {
     return context.generator.save(`sin(${this.args[0].toGLSL(context)})`, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 class CosFunctionCall extends FunctionCallNode {
@@ -202,7 +242,9 @@ class CosFunctionCall extends FunctionCallNode {
     return context.generator.save(`cos(${this.args[0].toGLSL(context)})`, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 class SqrtFunctionCall extends FunctionCallNode {
@@ -223,7 +265,9 @@ class SqrtFunctionCall extends FunctionCallNode {
     return context.generator.save(`sqrt(${this.args[0].toGLSL(context)})`, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 class SqrFunctionCall extends FunctionCallNode {
@@ -247,7 +291,9 @@ class SqrFunctionCall extends FunctionCallNode {
     return context.generator.save(`(${val} * ${val})`, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 class LogFunctionCall extends FunctionCallNode {
@@ -268,7 +314,9 @@ class LogFunctionCall extends FunctionCallNode {
     return context.generator.save(`log(${this.args[0].toGLSL(context)})`, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 class MinFunctionCall extends FunctionCallNode {
@@ -278,20 +326,20 @@ class MinFunctionCall extends FunctionCallNode {
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    const intervals = this.args.map(arg => arg.evaluateInterval(x, y, z));
+    const intervals = this.args.map((arg) => arg.evaluateInterval(x, y, z));
     if (intervals.length === 1) return intervals[0];
-    return intervals.reduce((acc, interval) => new Interval(
-      Math.min(acc.min, interval.min),
-      Math.min(acc.max, interval.max)
-    ));
+    return intervals.reduce(
+      (acc, interval) =>
+        new Interval(Math.min(acc.min, interval.min), Math.min(acc.max, interval.max))
+    );
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    return `Math.min(${this.args.map(arg => arg.evaluateStr(xname, yname, zname, depth)).join(', ')})`;
+    return `Math.min(${this.args.map((arg) => arg.evaluateStr(xname, yname, zname, depth)).join(', ')})`;
   }
 
   toGLSL(context: GLSLContext): string {
-    const evalArgs = this.args.map(arg => arg.toGLSL(context));
+    const evalArgs = this.args.map((arg) => arg.toGLSL(context));
     if (evalArgs.length === 1) return evalArgs[0];
     return evalArgs.reduce((acc, arg, i) => {
       if (i === 0) return arg;
@@ -301,25 +349,25 @@ class MinFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     // Get content evaluations for all children
-    const contents = this.args.map(arg => arg.evaluateContent(x, y, z));
+    const contents = this.args.map((arg) => arg.evaluateContent(x, y, z));
 
     // If any child is inside, the union is inside
-    if (contents.some(c => c?.category === 'inside')) {
+    if (contents.some((c) => c?.category === 'inside')) {
       return { category: 'inside' };
     }
 
     // If any child is edge, the union is edge
-    if (contents.some(c => c?.category === 'edge')) {
+    if (contents.some((c) => c?.category === 'edge')) {
       return { category: 'edge' };
     }
 
     // Propagate invalid materials so we can exclude the case going forward.
-    if (contents.some(c => c === null)) {
+    if (contents.some((c) => c === null)) {
       return null;
     }
 
     // Count faces
-    const faceCount = contents.filter(c => c?.category === 'face').length;
+    const faceCount = contents.filter((c) => c?.category === 'face').length;
     if (faceCount > 1) {
       return { category: 'edge' };
     }
@@ -339,20 +387,20 @@ class MaxFunctionCall extends FunctionCallNode {
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    const intervals = this.args.map(arg => arg.evaluateInterval(x, y, z));
+    const intervals = this.args.map((arg) => arg.evaluateInterval(x, y, z));
     if (intervals.length === 1) return intervals[0];
-    return intervals.reduce((acc, interval) => new Interval(
-      Math.max(acc.min, interval.min),
-      Math.max(acc.max, interval.max)
-    ));
+    return intervals.reduce(
+      (acc, interval) =>
+        new Interval(Math.max(acc.min, interval.min), Math.max(acc.max, interval.max))
+    );
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    return `Math.max(${this.args.map(arg => arg.evaluateStr(xname, yname, zname, depth)).join(', ')})`;
+    return `Math.max(${this.args.map((arg) => arg.evaluateStr(xname, yname, zname, depth)).join(', ')})`;
   }
 
   toGLSL(context: GLSLContext): string {
-    const evalArgs = this.args.map(arg => arg.toGLSL(context));
+    const evalArgs = this.args.map((arg) => arg.toGLSL(context));
     if (evalArgs.length === 1) return evalArgs[0];
     return evalArgs.reduce((acc, arg, i) => {
       if (i === 0) return arg;
@@ -362,20 +410,20 @@ class MaxFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     // Get content evaluations for all children
-    const contents = this.args.map(arg => arg.evaluateContent(x, y, z));
+    const contents = this.args.map((arg) => arg.evaluateContent(x, y, z));
 
     // If any child is outside, the intersection is outside
-    if (contents.some(c => c?.category === 'outside')) {
+    if (contents.some((c) => c?.category === 'outside')) {
       return { category: 'outside' };
     }
 
     // If any child is edge, the intersection is edge
-    if (contents.some(c => c?.category === 'edge')) {
+    if (contents.some((c) => c?.category === 'edge')) {
       return { category: 'edge' };
     }
 
     // Count faces
-    const faceCount = contents.filter(c => c?.category === 'face').length;
+    const faceCount = contents.filter((c) => c?.category === 'face').length;
     if (faceCount > 1) {
       return { category: 'edge' };
     }
@@ -384,7 +432,7 @@ class MaxFunctionCall extends FunctionCallNode {
     }
 
     // If any child is null, result is null
-    if (contents.some(c => c === null)) {
+    if (contents.some((c) => c === null)) {
       return null;
     }
 
@@ -404,10 +452,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     const d2 = this.args[1].evaluateInterval(x, y, z);
     // For now, use a conservative approximation.
     // We know that we have to land *somewhere* between d1 and d2.
-    return new Interval(
-      Math.min(d1.min, d2.min),
-      Math.min(d1.max, d2.max)
-    );
+    return new Interval(Math.min(d1.min, d2.min), Math.min(d1.max, d2.max));
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -427,7 +472,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    const evalArgs = this.args.map(arg => arg.toGLSL(context));
+    const evalArgs = this.args.map((arg) => arg.toGLSL(context));
     return context.generator.save(`smooth_union(${evalArgs.join(', ')})`, 'float');
   }
 
@@ -459,7 +504,9 @@ class ExpFunctionCall extends FunctionCallNode {
     return context.generator.save(`exp(${this.args[0].toGLSL(context)})`, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 class AbsFunctionCall extends FunctionCallNode {
@@ -487,7 +534,9 @@ class AbsFunctionCall extends FunctionCallNode {
     return context.generator.save(`abs(${this.args[0].toGLSL(context)})`, 'float');
   }
 
-  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content { return null; }
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
+  }
 }
 
 class ScaleFunctionCall extends FunctionCallNode {
@@ -516,7 +565,9 @@ class ScaleFunctionCall extends FunctionCallNode {
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    const newx = `x${depth}`, newy = `y${depth}`, newz = `z${depth}`;
+    const newx = `x${depth}`,
+      newy = `y${depth}`,
+      newz = `z${depth}`;
     const scaleX = constantValue(this.#sx);
     const scaleY = constantValue(this.#sy);
     const scaleZ = constantValue(this.#sz);
@@ -572,7 +623,9 @@ class TranslateFunctionCall extends FunctionCallNode {
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    const newx = `x${depth}`, newy = `y${depth}`, newz = `z${depth}`;
+    const newx = `x${depth}`,
+      newy = `y${depth}`,
+      newz = `z${depth}`;
     const tx = constantValue(this.#dx);
     const ty = constantValue(this.#dy);
     const tz = constantValue(this.#dz);
@@ -652,9 +705,14 @@ class AABBFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     // Quick check - if the interval box is completely outside our AABB, return 'outside'
-    if (x.min > this.#aabb.max.x || x.max < this.#aabb.min.x ||
-        y.min > this.#aabb.max.y || y.max < this.#aabb.min.y ||
-        z.min > this.#aabb.max.z || z.max < this.#aabb.min.z) {
+    if (
+      x.min > this.#aabb.max.x ||
+      x.max < this.#aabb.min.x ||
+      y.min > this.#aabb.max.y ||
+      y.max < this.#aabb.min.y ||
+      z.min > this.#aabb.max.z ||
+      z.max < this.#aabb.min.z
+    ) {
       return { category: 'outside' };
     }
 
@@ -670,8 +728,8 @@ class AABBFunctionCall extends FunctionCallNode {
     // Generate AABB check (`aabb_check` does its own expansion)
     context.generator.addRaw(
       `if (aabb_check(vec3(${this.#aabb.min.x}, ${this.#aabb.min.y}, ${this.#aabb.min.z}), ` +
-      `vec3(${this.#aabb.max.x}, ${this.#aabb.max.y}, ${this.#aabb.max.z}), ` +
-      `${context.getPoint()}, ${resultVar})) {`
+        `vec3(${this.#aabb.max.x}, ${this.#aabb.max.y}, ${this.#aabb.max.z}), ` +
+        `${context.getPoint()}, ${resultVar})) {`
     );
 
     // Inside AABB - evaluate actual function
@@ -721,18 +779,25 @@ class RotateFunctionCall extends FunctionCallNode {
   #body: Node;
 
   // Helper to compute rotated intervals
-  #rotateInterval(x: Interval, y: Interval, z: Interval): { x: Interval, y: Interval, z: Interval } {
-    let minX = Number.MAX_VALUE, maxX = -Number.MAX_VALUE;
-    let minY = Number.MAX_VALUE, maxY = -Number.MAX_VALUE;
-    let minZ = Number.MAX_VALUE, maxZ = -Number.MAX_VALUE;
+  #rotateInterval(
+    x: Interval,
+    y: Interval,
+    z: Interval
+  ): { x: Interval; y: Interval; z: Interval } {
+    let minX = Number.MAX_VALUE,
+      maxX = -Number.MAX_VALUE;
+    let minY = Number.MAX_VALUE,
+      maxY = -Number.MAX_VALUE;
+    let minZ = Number.MAX_VALUE,
+      maxZ = -Number.MAX_VALUE;
 
     // Transform each corner of the box
     for (let iz = 0; iz < 2; iz++) {
       for (let iy = 0; iy < 2; iy++) {
         for (let ix = 0; ix < 2; ix++) {
-          const px = (ix === 0) ? x.min : x.max;
-          const py = (iy === 0) ? y.min : y.max;
-          const pz = (iz === 0) ? z.min : z.max;
+          const px = ix === 0 ? x.min : x.max;
+          const py = iy === 0 ? y.min : y.max;
+          const pz = iz === 0 ? z.min : z.max;
 
           // First rotate around X
           const rx1 = px;
@@ -762,7 +827,7 @@ class RotateFunctionCall extends FunctionCallNode {
     return {
       x: new Interval(minX, maxX),
       y: new Interval(minY, maxY),
-      z: new Interval(minZ, maxZ)
+      z: new Interval(minZ, maxZ),
     };
   }
 
@@ -793,7 +858,9 @@ class RotateFunctionCall extends FunctionCallNode {
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    const newx = `x${depth + 1}`, newy = `y${depth + 1}`, newz = `z${depth + 1}`;
+    const newx = `x${depth + 1}`,
+      newy = `y${depth + 1}`,
+      newz = `z${depth + 1}`;
     return `(() => {
       const ax = ${this.args[0].evaluateStr(xname, yname, zname, depth)};
       const ay = ${this.args[1].evaluateStr(xname, yname, zname, depth)};

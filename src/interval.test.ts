@@ -39,7 +39,7 @@ describe('Interval', () => {
   it('handles division', () => {
     const a = new Interval(1, 2);
     const b = new Interval(2, 4);
-    
+
     const quot = a.divide(b);
     expect(quot.min).toBe(0.25);
     expect(quot.max).toBe(1);
@@ -72,7 +72,7 @@ describe('Interval', () => {
     const a = new Interval(0, 2);
     const b = new Interval(1, 3);
     const c = new Interval(3, 4);
-    
+
     expect(a.intersects(b)).toBe(true);
     expect(a.intersects(c)).toBe(false);
   });
@@ -82,7 +82,7 @@ describe('Interval', () => {
     const x = new Interval(1.9, 2.1); // Around x=2
     const y = new Interval(-0.1, 0.1); // Around y=0
     const z = new Interval(-0.1, 0.1); // Around z=0
-    
+
     const result = ast.evaluateInterval(x, y, z);
     expect(result.contains(0)).toBe(true); // Should contain surface point
   });
@@ -93,7 +93,7 @@ describe('Interval', () => {
     const x = new Interval(0.9, 1.1);
     const y = new Interval(-0.1, 0.1);
     const z = new Interval(-0.1, 0.1);
-    
+
     const result = ast.evaluateInterval(x, y, z);
     expect(result.contains(0)).toBe(true); // Should contain surface point
   });

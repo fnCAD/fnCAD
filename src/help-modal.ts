@@ -9,20 +9,20 @@ modal.style.display = 'none';
 // Show modal when help button is clicked
 btn.onclick = () => {
   modal.style.display = 'block';
-}
+};
 
 // Close when X is clicked
 span.onclick = (e) => {
   e.stopPropagation();
   modal.style.display = 'none';
-}
+};
 
 // Close when clicking outside modal
 modal.onclick = (event) => {
   if (event.target === modal) {
     modal.style.display = 'none';
   }
-}
+};
 
 // Close on Escape key
 document.addEventListener('keydown', (event) => {

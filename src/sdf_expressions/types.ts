@@ -2,7 +2,7 @@ import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
 
 export type Content = null | {
-  category: 'face' | 'edge' | 'outside' | 'inside',
+  category: 'face' | 'edge' | 'outside' | 'inside';
 };
 
 export interface Node {

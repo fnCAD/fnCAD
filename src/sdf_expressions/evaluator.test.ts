@@ -11,13 +11,12 @@ function evaluateNode(ast: Node, p: Vector3) {
 }
 
 describe('Expression Evaluation', () => {
-  function evaluate(expr: string, coords: Partial<{x: number, y: number, z: number}> = {}): number {
+  function evaluate(
+    expr: string,
+    coords: Partial<{ x: number; y: number; z: number }> = {}
+  ): number {
     const ast = parse(expr);
-    return evaluateNode(ast, new Vector3(
-      coords.x ?? 0,
-      coords.y ?? 0,
-      coords.z ?? 0
-    ));
+    return evaluateNode(ast, new Vector3(coords.x ?? 0, coords.y ?? 0, coords.z ?? 0));
   }
 
   it('evaluates numbers', () => {
@@ -84,7 +83,7 @@ describe('Expression Evaluation', () => {
 
   it('handles expressions starting with unary minus', () => {
     expect(evaluate('-1')).toBe(-1);
-    expect(evaluate('-x', {x: 2})).toBe(-2);
+    expect(evaluate('-x', { x: 2 })).toBe(-2);
     expect(evaluate('-(1 + 2)')).toBe(-3);
     expect(evaluate('-min(1, 2)')).toBe(-1);
   });
@@ -105,10 +104,10 @@ describe('Expression Evaluation', () => {
 
   it('handles aabb optimization', () => {
     const ast = parse('aabb(-1, -1, -1, 1, 1, 1, sqrt(x*x + y*y + z*z) - 1)');
-    
+
     // Test point inside AABB - should use exact SDF
     expect(evaluateNode(ast, new Vector3(0, 0, 0))).toBe(-1);
-    
+
     // Test point far from AABB in x - should use AABB approximation
     expect(evaluateNode(ast, new Vector3(10, 0, 0))).toBeCloseTo(9, 5);
 

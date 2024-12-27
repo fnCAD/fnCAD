@@ -25,17 +25,11 @@ export class Interval {
 
   // Basic arithmetic operations
   add(other: Interval): Interval {
-    return new Interval(
-      this.min + other.min,
-      this.max + other.max
-    );
+    return new Interval(this.min + other.min, this.max + other.max);
   }
 
   subtract(other: Interval): Interval {
-    return new Interval(
-      this.min - other.max,
-      this.max - other.min
-    );
+    return new Interval(this.min - other.max, this.max - other.min);
   }
 
   multiply(other: Interval): Interval {
@@ -43,12 +37,9 @@ export class Interval {
       this.min * other.min,
       this.min * other.max,
       this.max * other.min,
-      this.max * other.max
+      this.max * other.max,
     ];
-    return new Interval(
-      Math.min(...products),
-      Math.max(...products)
-    );
+    return new Interval(Math.min(...products), Math.max(...products));
   }
 
   divide(other: Interval): Interval {
@@ -59,12 +50,9 @@ export class Interval {
       this.min / other.min,
       this.min / other.max,
       this.max / other.min,
-      this.max / other.max
+      this.max / other.max,
     ];
-    return new Interval(
-      Math.min(...quotients),
-      Math.max(...quotients)
-    );
+    return new Interval(Math.min(...quotients), Math.max(...quotients));
   }
 
   // Unary operations
@@ -77,14 +65,11 @@ export class Interval {
     // For points far from both shapes (> 10*radius), just use regular min
     const minDist = Math.min(this.min, other.min);
     if (minDist > radius * 10.0) {
-      return new Interval(
-        Math.min(this.min, other.min),
-        Math.min(this.max, other.max)
-      );
+      return new Interval(Math.min(this.min, other.min), Math.min(this.max, other.max));
     }
 
     // Otherwise compute the smooth union
-    const k = 1.0/radius;
+    const k = 1.0 / radius;
     const e1min = Math.exp(-k * this.min);
     const e1max = Math.exp(-k * this.max);
     const e2min = Math.exp(-k * other.min);
@@ -100,10 +85,7 @@ export class Interval {
   sqrt(): Interval {
     // Clamp negative values to 0 for SDF operations
     const clampedMin = Math.max(0, this.min);
-    return new Interval(
-      Math.sqrt(clampedMin),
-      Math.sqrt(Math.max(0, this.max))
-    );
+    return new Interval(Math.sqrt(clampedMin), Math.sqrt(Math.max(0, this.max)));
   }
 
   sin(): Interval {
@@ -113,14 +95,14 @@ export class Interval {
     const step = (this.max - this.min) / samples;
     let min = Infinity;
     let max = -Infinity;
-    
+
     for (let i = 0; i <= samples; i++) {
       const x = this.min + i * step;
       const value = Math.sin(x);
       min = Math.min(min, value);
       max = Math.max(max, value);
     }
-    
+
     return new Interval(min, max);
   }
 
@@ -131,14 +113,14 @@ export class Interval {
     const step = (this.max - this.min) / samples;
     let min = Infinity;
     let max = -Infinity;
-    
+
     for (let i = 0; i <= samples; i++) {
       const x = this.min + i * step;
       const value = Math.cos(x);
       min = Math.min(min, value);
       max = Math.max(max, value);
     }
-    
+
     return new Interval(min, max);
   }
 
@@ -146,17 +128,11 @@ export class Interval {
     if (this.min <= 0) {
       throw new Error('Log of interval containing zero or negative numbers');
     }
-    return new Interval(
-      Math.log(this.min),
-      Math.log(this.max)
-    );
+    return new Interval(Math.log(this.min), Math.log(this.max));
   }
 
   exp(): Interval {
-    return new Interval(
-      Math.exp(this.min),
-      Math.exp(this.max)
-    );
+    return new Interval(Math.exp(this.min), Math.exp(this.max));
   }
 
   // Utility methods
@@ -167,9 +143,6 @@ export class Interval {
   // Helper to compute bounds of a set of numbers
   static bound(values: number[]): Interval {
     if (values.length === 0) throw new Error('Cannot compute bounds of empty set');
-    return new Interval(
-      Math.min(...values),
-      Math.max(...values)
-    );
+    return new Interval(Math.min(...values), Math.max(...values));
   }
 }

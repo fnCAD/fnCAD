@@ -7,12 +7,26 @@
  * - Nested blocks for CSG operations
  */
 
-import { 
-  Node, ModuleDeclaration, ModuleCall, Expression, 
-  Parameter, Statement, BinaryExpression, NumberLiteral,
-  Identifier, SourceLocation, ModuleCallLocation,
-  ParameterLocation, VectorLiteral, IndexExpression,
-  VariableDeclaration, ForLoop, AssignmentStatement, IfStatement, AssertStatement,
+import {
+  Node,
+  ModuleDeclaration,
+  ModuleCall,
+  Expression,
+  Parameter,
+  Statement,
+  BinaryExpression,
+  NumberLiteral,
+  Identifier,
+  SourceLocation,
+  ModuleCallLocation,
+  ParameterLocation,
+  VectorLiteral,
+  IndexExpression,
+  VariableDeclaration,
+  ForLoop,
+  AssignmentStatement,
+  IfStatement,
+  AssertStatement,
 } from './types';
 import { parseError } from './errors';
 
@@ -46,23 +60,22 @@ export class Parser {
     const call: ModuleCallLocation = {
       moduleName: name,
       nameRange: nameToken.location,
-      fullRange: { 
+      fullRange: {
         start: nameToken.location.start,
         end: nameToken.location.end, // Will be updated when call ends
-        source: this.source
+        source: this.source,
       },
       paramRange: {
         start: { line: 0, column: 0, offset: 0 }, // Will be updated in parseArguments
         end: { line: 0, column: 0, offset: 0 },
-        source: this.source
+        source: this.source,
       },
       parameters: [],
-      complete: false
+      complete: false,
     };
     this.locations.push(call);
     this.callStack.push(call);
   }
-
 
   private endModuleCall(endToken: Token) {
     const call = this.callStack.pop();
@@ -126,16 +139,12 @@ export class Parser {
     const nameToken = this.expectIdentifier('Expected variable name');
     this.expect('=', 'Expected = after variable name');
     const initializer = this.parseExpression();
-    
-    return new VariableDeclaration(
-      nameToken.value,
-      initializer,
-      {
-        start: nameToken.location.start,
-        end: this.previous().location.end,
-        source: this.source
-      }
-    );
+
+    return new VariableDeclaration(nameToken.value, initializer, {
+      start: nameToken.location.start,
+      end: this.previous().location.end,
+      source: this.source,
+    });
   }
 
   private tokenize() {
@@ -181,7 +190,11 @@ export class Parser {
   }
 
   private isCommentStart(char: string, current: number): boolean {
-    return char === '/' && (current + 1 < this.source.length && (this.source[current + 1] === '/' || this.source[current + 1] === '*'));
+    return (
+      char === '/' &&
+      current + 1 < this.source.length &&
+      (this.source[current + 1] === '/' || this.source[current + 1] === '*')
+    );
   }
 
   private handleComment(start: number): number {
@@ -214,9 +227,10 @@ export class Parser {
   }
 
   private isNumberStart(char: string, pos: number = 0): boolean {
-    return /[0-9-]/.test(char) && (
-      char !== '-' || // Regular digit
-      (pos + 1 < this.source.length && /[0-9]/.test(this.source[pos + 1])) // Negative number
+    return (
+      /[0-9-]/.test(char) &&
+      (char !== '-' || // Regular digit
+        (pos + 1 < this.source.length && /[0-9]/.test(this.source[pos + 1]))) // Negative number
     );
   }
 
@@ -225,14 +239,14 @@ export class Parser {
     let value = '';
     const startColumn = this.column;
     const startOffset = current;
-    
+
     // Handle negative sign
     if (this.source[current] === '-') {
       value += '-';
       current++;
       this.column++;
     }
-    
+
     while (current < this.source.length && /[0-9.]/.test(this.source[current])) {
       value += this.source[current];
       current++;
@@ -244,8 +258,8 @@ export class Parser {
       location: {
         start: { line: this.line, column: startColumn, offset: startOffset },
         end: { line: this.line, column: this.column, offset: current },
-        source: this.source
-      }
+        source: this.source,
+      },
     });
     return current;
   }
@@ -270,8 +284,8 @@ export class Parser {
       location: {
         start: { line: this.line, column: startColumn, offset: startOffset },
         end: { line: this.line, column: this.column, offset: current },
-        source: this.source
-      }
+        source: this.source,
+      },
     });
     return current;
   }
@@ -285,7 +299,7 @@ export class Parser {
     let value = '';
     const startColumn = this.column;
     const startOffset = start;
-    
+
     while (current < this.source.length && this.source[current] !== '"') {
       if (this.source[current] === '\\') {
         current++;
@@ -298,23 +312,23 @@ export class Parser {
       current++;
       this.column++;
     }
-    
+
     if (current >= this.source.length) {
       throw parseError('Unterminated string literal', this.getTokenLocation(start));
     }
-    
+
     // Skip closing quote
     current++;
     this.column++;
-    
+
     this.tokens.push({
       type: 'string',
       value,
       location: {
         start: { line: this.line, column: startColumn, offset: startOffset },
         end: { line: this.line, column: this.column, offset: current },
-        source: this.source
-      }
+        source: this.source,
+      },
     });
     return current;
   }
@@ -342,8 +356,8 @@ export class Parser {
       location: {
         start: { line: this.line, column: this.column, offset: current },
         end: { line: this.line, column: this.column + length, offset: current + length },
-        source: this.source
-      }
+        source: this.source,
+      },
     });
     current += length;
     this.column += length;
@@ -354,7 +368,7 @@ export class Parser {
     return {
       start: { line: this.line, column: this.column, offset },
       end: { line: this.line, column: this.column + 1, offset: offset + 1 },
-      source: this.source
+      source: this.source,
     };
   }
 
@@ -364,7 +378,7 @@ export class Parser {
    */
   parse(): Node[] {
     const nodes: Node[] = [];
-    
+
     // Skip any remaining tokens (whitespace/comments were already handled in tokenizer)
     while (!this.isAtEnd()) {
       nodes.push(this.parseStatement());
@@ -396,25 +410,25 @@ export class Parser {
         this.advance(); // consume 'assert'
         this.expect('(', 'Expected ( after assert');
         const condition = this.parseExpression();
-        
+
         let message: string | undefined;
         if (this.match(',')) {
           message = this.parseStringLiteral();
         }
-        
+
         this.expect(')', 'Expected )');
         this.expect(';', 'Expected ; after assert statement');
-        
+
         return new AssertStatement(condition, message, {
           start: token.location.start,
           end: this.previous().location.end,
-          source: this.source
+          source: this.source,
         });
       }
-      
+
       // Parse as expression first to handle array indexing
       const expr = this.parseExpression();
-      
+
       // Check for assignment
       if (this.check('=')) {
         if (!(expr instanceof Identifier)) {
@@ -426,10 +440,10 @@ export class Parser {
         return new AssignmentStatement(expr.name, value, {
           start: expr.location.start,
           end: this.previous().location.end,
-          source: this.source
+          source: this.source,
         });
       }
-      
+
       if (this.match(';')) {
         return expr;
       }
@@ -439,7 +453,7 @@ export class Parser {
       }
       throw parseError(`Expected ; after expression`, this.previous().location);
     }
-    
+
     if (token.type === 'number') {
       const num = this.advance();
       if (this.match(';')) {
@@ -462,7 +476,7 @@ export class Parser {
     return new ModuleDeclaration(name, parameters, body, {
       start: nameToken.location.start,
       end: this.previous().location.end,
-      source: this.source
+      source: this.source,
     });
   }
 
@@ -510,7 +524,7 @@ export class Parser {
     const args = this.parseArguments();
 
     let children: Statement[] | undefined;
-    
+
     // Case 1: Block with braces
     if (this.check('{')) {
       this.peek(); // Consume the opening brace
@@ -519,10 +533,10 @@ export class Parser {
       return new ModuleCall(name, args, children, {
         start: location.start,
         end: this.previous().location.end,
-        source: this.source
+        source: this.source,
       });
     }
-    
+
     // Case 2: Empty call with semicolon
     if (this.check(';')) {
       const semicolon = this.advance();
@@ -530,16 +544,16 @@ export class Parser {
       return new ModuleCall(name, args, [], {
         start: location.start,
         end: semicolon.location.end,
-        source: this.source
+        source: this.source,
       });
     }
-    
+
     // Case 3: Single child without braces
     const child = this.parseStatement();
     return new ModuleCall(name, args, [child], {
       start: location.start,
       end: child.location.end,
-      source: this.source
+      source: this.source,
     });
   }
 
@@ -553,7 +567,7 @@ export class Parser {
       currentCall.paramRange.start = {
         line: openParen.location.start.line,
         column: openParen.location.start.column + 1,
-        offset: openParen.location.start.offset + 1
+        offset: openParen.location.start.offset + 1,
       };
     }
 
@@ -564,14 +578,13 @@ export class Parser {
       }
       firstArg = false;
       // python comma
-      if (!this.isAtEnd() && this.peek().value === ')')
-        break;
+      if (!this.isAtEnd() && this.peek().value === ')') break;
 
       const startToken = this.tokens[this.current];
       let name = '';
       let nameRange: SourceLocation | undefined;
       let value: Expression;
-      
+
       // Check if we have a named argument
       if (this.current + 1 < this.tokens.length && this.tokens[this.current + 1].value === '=') {
         if (startToken.type !== 'identifier') {
@@ -584,7 +597,7 @@ export class Parser {
 
       // Add to current module call's parameters if we're tracking one
       // default to end of line in case parseExpression fails
-      let currentParameter : ParameterLocation | undefined;
+      let currentParameter: ParameterLocation | undefined;
       const paramStartPos = startToken.location.start;
       if (this.callStack.length > 0) {
         // Find end of current line for speculative parameter range
@@ -594,20 +607,20 @@ export class Parser {
         endOfLine = {
           line: paramStartPos.line,
           column: paramStartPos.column + (lineEnd - paramStartPos.offset),
-          offset: lineEnd
+          offset: lineEnd,
         };
-        
+
         // Update the current call's paramRange.end as a fallback
         this.callStack[this.callStack.length - 1].paramRange.end = endOfLine;
-      
+
         currentParameter = {
           name: name || String(Object.keys(args).length),
           range: {
             start: paramStartPos,
             end: endOfLine,
-            source: this.source
+            source: this.source,
           },
-          nameRange
+          nameRange,
         };
         // make the typecheck happy
         if (!currentParameter) throw 'wtf';
@@ -620,10 +633,7 @@ export class Parser {
       // now fill in parameter properly
       if (currentParameter) {
         currentParameter.range.end = valueEndPos;
-        currentParameter.value = this.source.substring(
-          paramStartPos.offset,
-          valueEndPos.offset
-        );
+        currentParameter.value = this.source.substring(paramStartPos.offset, valueEndPos.offset);
       }
 
       args[name || String(Object.keys(args).length)] = value;
@@ -636,7 +646,7 @@ export class Parser {
       currentCall.paramRange.end = {
         line: closeParen.location.end.line,
         column: closeParen.location.end.column - 1,
-        offset: closeParen.location.end.offset - 1
+        offset: closeParen.location.end.offset - 1,
       };
     }
 
@@ -657,11 +667,14 @@ export class Parser {
 
     while (true) {
       const operatorToken = this.peek();
-      const { associativity, precedence: currentPrecedence } = getOperatorPrecedence(operatorToken.value);
-      if (currentPrecedence < precedence
-        || (associativity === 'left' && currentPrecedence <= precedence)
-        || (associativity === 'right' && currentPrecedence < precedence))
-      {
+      const { associativity, precedence: currentPrecedence } = getOperatorPrecedence(
+        operatorToken.value
+      );
+      if (
+        currentPrecedence < precedence ||
+        (associativity === 'left' && currentPrecedence <= precedence) ||
+        (associativity === 'right' && currentPrecedence < precedence)
+      ) {
         break;
       }
       this.advance();
@@ -669,7 +682,7 @@ export class Parser {
       left = new BinaryExpression(operatorToken.value as '+' | '-' | '*' | '/', left, right, {
         start: left.location.start,
         end: right.location.end,
-        source: this.source
+        source: this.source,
       });
     }
 
@@ -684,12 +697,12 @@ export class Parser {
     // Start with base expression
     let expr: Expression;
     const token = this.advance();
-    
+
     switch (token.type) {
       case 'number':
         expr = new NumberLiteral(parseFloat(token.value), token.location);
         break;
-    case 'string':
+      case 'string':
         throw parseError('Unexpected string literal', token.location);
       case 'identifier':
         const name = token.value;
@@ -714,7 +727,7 @@ export class Parser {
       expr = new IndexExpression(expr, index, {
         start: startLoc.start,
         end: endToken.location.end,
-        source: this.source
+        source: this.source,
       });
     }
 
@@ -724,62 +737,52 @@ export class Parser {
   private parseIfStatement(): IfStatement {
     const startLocation = this.peek().location;
     this.advance(); // consume 'if'
-    
+
     this.expect('(', 'Expected ( after if');
     const condition = this.parseExpression();
     this.expect(')', 'Expected ) after condition');
-    
+
     const thenBranch = this.parseBlock();
-    
+
     let elseBranch = null;
     if (this.check('else')) {
       this.advance(); // consume 'else'
       elseBranch = this.parseBlock();
     }
-    
-    return new IfStatement(
-      condition,
-      thenBranch,
-      elseBranch,
-      {
-        start: startLocation.start,
-        end: this.previous().location.end,
-        source: this.source
-      }
-    );
+
+    return new IfStatement(condition, thenBranch, elseBranch, {
+      start: startLocation.start,
+      end: this.previous().location.end,
+      source: this.source,
+    });
   }
 
   private parseForLoop(): ForLoop {
     const startLocation = this.peek().location;
     this.advance(); // consume 'for'
-    
+
     this.expect('(', 'Expected ( after for');
     this.expect('var', 'Expected var declaration in for loop');
-    
+
     const varName = this.expectIdentifier('Expected variable name').value;
     this.expect('=', 'Expected = after variable name');
-    
+
     // Parse range expression [start:end]
     this.expect('[', 'Expected [ for range');
     const start = this.parseExpression();
     this.expect(':', 'Expected : in range');
     const end = this.parseExpression();
     this.expect(']', 'Expected ] after range');
-    
+
     this.expect(')', 'Expected ) after for header');
-    
+
     const body = this.parseBlock();
-    
-    return new ForLoop(
-      varName,
-      { start, end },
-      body,
-      {
-        start: startLocation.start,
-        end: this.previous().location.end,
-        source: this.source
-      }
-    );
+
+    return new ForLoop(varName, { start, end }, body, {
+      start: startLocation.start,
+      end: this.previous().location.end,
+      source: this.source,
+    });
   }
 
   private parseVectorLiteral(): VectorLiteral {
@@ -797,7 +800,7 @@ export class Parser {
     return new VectorLiteral(components, {
       start: startLocation.start,
       end: endToken.location.end,
-      source: this.source
+      source: this.source,
     });
   }
 }
@@ -827,7 +830,7 @@ const tokenTypes: { [key: string]: string } = {
   '>': 'operator',
   '!': 'operator',
   '&': 'operator',
-  '|': 'operator'
+  '|': 'operator',
 };
 
 interface OperatorPrecedence {
@@ -847,7 +850,7 @@ const operatorPrecedence: { [operator: string]: OperatorPrecedence } = {
   '+': { associativity: 'left', precedence: 5 },
   '-': { associativity: 'left', precedence: 5 },
   '*': { associativity: 'left', precedence: 6 },
-  '/': { associativity: 'left', precedence: 6 }
+  '/': { associativity: 'left', precedence: 6 },
 };
 
 function getOperatorPrecedence(value: string): OperatorPrecedence {

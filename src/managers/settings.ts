@@ -28,7 +28,7 @@ export class SettingsManager {
     settingsIcon.id = 'settings-icon';
     settingsIcon.className = 'control-icon';
     settingsIcon.innerHTML = '⚙️';
-    
+
     // Create settings panel
     this.settingsPanel = document.createElement('div');
     this.settingsPanel.id = 'settings-panel';
@@ -99,7 +99,7 @@ export class SettingsManager {
     infoIcon.id = 'info-icon';
     infoIcon.className = 'control-icon';
     infoIcon.innerHTML = 'ℹ️';
-    
+
     // Create info panel
     const infoPanel = document.createElement('div');
     infoPanel.id = 'info-panel';
@@ -183,10 +183,12 @@ export class SettingsManager {
     document.addEventListener('click', (event) => {
       if (!event.target) return;
       const target = event.target as HTMLElement;
-      if (!target.closest('#settings-panel') && 
-          !target.closest('#settings-icon') &&
-          !target.closest('#info-panel') &&
-          !target.closest('#info-icon')) {
+      if (
+        !target.closest('#settings-panel') &&
+        !target.closest('#settings-icon') &&
+        !target.closest('#info-panel') &&
+        !target.closest('#info-icon')
+      ) {
         this.settingsPanel.classList.remove('visible');
         infoPanel.classList.remove('visible');
       }
@@ -203,12 +205,12 @@ export class SettingsManager {
       const value = Math.pow(2, power);
       const display = this.minSizeSlider.nextElementSibling as HTMLSpanElement;
       display.textContent = value === 1 ? '1' : `1/${value}`;
-      
+
       // If mesh is visible, trigger mesh regeneration
       if (this.showMeshCheckbox.checked) {
         document.getElementById('show-mesh')?.dispatchEvent(new Event('change'));
       }
-      
+
       this.onSettingsChange();
     });
 
@@ -227,7 +229,6 @@ export class SettingsManager {
       this.onSettingsChange();
     });
 
-
     this.meshOpacitySlider.addEventListener('input', () => {
       const value = parseFloat(this.meshOpacitySlider.value);
       const display = this.meshOpacitySlider.nextElementSibling as HTMLSpanElement;
@@ -243,8 +244,8 @@ export class SettingsManager {
       this.showInsideCheckbox,
       this.showBoundaryCheckbox,
       this.showMeshCheckbox,
-      this.optimizeMeshCheckbox
-    ].forEach(checkbox => {
+      this.optimizeMeshCheckbox,
+    ].forEach((checkbox) => {
       checkbox.addEventListener('change', this.onSettingsChange);
     });
   }

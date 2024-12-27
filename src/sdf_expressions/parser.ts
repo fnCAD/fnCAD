@@ -1,5 +1,5 @@
 import { Node } from './types';
-import { 
+import {
   VariableNode,
   NumberNode,
   BinaryOpNode,
@@ -14,12 +14,13 @@ class Parser {
   constructor(expression: string) {
     // Remove single-line comments
     const noComments = expression.replace(/\/\/.*$/gm, '').trim();
-    
+
     // Tokenize keeping floating point numbers intact
-    this.tokens = noComments.replace(/([+\-*/(),])/g, ' $1 ')
+    this.tokens = noComments
+      .replace(/([+\-*/(),])/g, ' $1 ')
       .trim()
       .split(/\s+/)
-      .filter(t => t.length > 0);
+      .filter((t) => t.length > 0);
   }
 
   parse(): Node {
