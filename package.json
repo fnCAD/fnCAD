@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc && vite build", 
+    "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
-    "bench": "vitest bench"
+    "bench": "vitest bench",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "validate": "npm run typecheck && npm run format:check"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.2",
@@ -25,6 +28,7 @@
     "@types/split.js": "^1.4.7",
     "@types/three": "^0.159.0",
     "comlink": "^4.4.2",
+    "prettier": "^3.4.2",
     "typescript": "~5.6.2",
     "vite": "^5.4.10",
     "vitest": "^0.34.6"
