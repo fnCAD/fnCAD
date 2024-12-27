@@ -15,6 +15,13 @@ export interface Node {
   evaluate(point: Vector3): number;
 
   /**
+   * Returns a string that evaluates using the provided coordinate variable names.
+   * Each name will be suffixed with the depth number to avoid scope conflicts.
+   * Optimization of `evaluate()` for inlining.
+   */
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
+
+  /**
    * Interval arithmetic evaluation over a box-shaped region.
    * Returns guaranteed bounds on the SDF value within that region.
    * Can not take advantage of AABBs!

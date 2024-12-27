@@ -15,6 +15,10 @@ export class NumberNode implements Node {
     return this.value;
   }
 
+  evaluateStr(_xname: string, _yname: string, _zname: string, _depth: number): string {
+    return this.value.toString(); 
+  }
+
   toGLSL(context: GLSLContext): string {
     // Format number with at least one decimal place
     const glslNumber = Number.isInteger(this.value) ? `${this.value}.0` : this.value.toString();
@@ -36,6 +40,15 @@ export class VariableNode implements Node {
       case 'x': return point.x;
       case 'y': return point.y;
       case 'z': return point.z;
+      default: throw new Error(`Unknown variable: ${this.name}`);
+    }
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, _depth: number): string {
+    switch (this.name) {
+      case 'x': return xname;
+      case 'y': return yname;
+      case 'z': return zname;
       default: throw new Error(`Unknown variable: ${this.name}`);
     }
   }
@@ -80,6 +93,10 @@ export class BinaryOpNode implements Node {
     }
   }
 
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `(${this.left.evaluateStr(xname, yname, zname, depth)} ${this.operator} ${this.right.evaluateStr(xname, yname, zname, depth)})`;
+  }
+
   toGLSL(context: GLSLContext): string {
     const lval = this.left.toGLSL(context);
     const rval = this.right.toGLSL(context);
@@ -109,6 +126,10 @@ export class UnaryOpNode implements Node {
   evaluate(point: Vector3): number {
     const val = this.operand.evaluate(point);
     return -val;
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `(-${this.operand.evaluateStr(xname, yname, zname, depth)})`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -147,6 +168,7 @@ abstract class FunctionCallNode implements Node {
   ) { }
 
   abstract evaluate(point: Vector3): number;
+  abstract evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
   abstract evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
   abstract evaluateContent(x: Interval, y: Interval, z: Interval): Content;
   abstract toGLSL(context: GLSLContext): string;
@@ -187,6 +209,10 @@ class SinFunctionCall extends FunctionCallNode {
     return Math.sin(this.args[0].evaluate(point));
   }
 
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.sin(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
+  }
+
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`sin(${this.args[0].toGLSL(context)})`, 'float');
   }
@@ -208,6 +234,10 @@ class CosFunctionCall extends FunctionCallNode {
     return Math.cos(this.args[0].evaluate(point));
   }
 
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.cos(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
+  }
+
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`cos(${this.args[0].toGLSL(context)})`, 'float');
   }
@@ -227,6 +257,10 @@ class SqrtFunctionCall extends FunctionCallNode {
 
   evaluate(point: Vector3): number {
     return Math.sqrt(this.args[0].evaluate(point));
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.sqrt(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -252,6 +286,11 @@ class SqrFunctionCall extends FunctionCallNode {
     return val * val;
   }
 
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const arg = this.args[0].evaluateStr(xname, yname, zname, depth);
+    return `(${arg} * ${arg})`;
+  }
+
   toGLSL(context: GLSLContext): string {
     const val = this.args[0].toGLSL(context);
     return context.generator.save(`(${val} * ${val})`, 'float');
@@ -272,6 +311,10 @@ class LogFunctionCall extends FunctionCallNode {
 
   evaluate(point: Vector3): number {
     return Math.log(this.args[0].evaluate(point));
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.log(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -304,6 +347,10 @@ class MinFunctionCall extends FunctionCallNode {
       if (nextValue < value) value = nextValue;
     }
     return value;
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.min(${this.args.map(arg => arg.evaluateStr(xname, yname, zname, depth)).join(', ')})`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -370,6 +417,10 @@ class MaxFunctionCall extends FunctionCallNode {
       if (nextValue > value) value = nextValue;
     }
     return value;
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.max(${this.args.map(arg => arg.evaluateStr(xname, yname, zname, depth)).join(', ')})`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -447,6 +498,22 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
   }
 
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const d1 = this.args[0].evaluateStr(xname, yname, zname, depth);
+    const d2 = this.args[1].evaluateStr(xname, yname, zname, depth);
+    const r = this.args[2].evaluateStr(xname, yname, zname, depth);
+    // TODO move into shared helper
+    return `(() => {
+      const d1 = ${d1};
+      const d2 = ${d2};
+      const r = ${r};
+      const minDist = Math.min(d1, d2);
+      if (minDist > r * 10.0) return Math.min(d1, d2);
+      const k = 1.0/r;
+      return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
+    })()`;
+  }
+
   toGLSL(context: GLSLContext): string {
     const evalArgs = this.args.map(arg => arg.toGLSL(context));
     return context.generator.save(`smooth_union(${evalArgs.join(', ')})`, 'float');
@@ -476,6 +543,10 @@ class ExpFunctionCall extends FunctionCallNode {
     return Math.exp(this.args[0].evaluate(point));
   }
 
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.exp(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
+  }
+
   toGLSL(context: GLSLContext): string {
     return context.generator.save(`exp(${this.args[0].toGLSL(context)})`, 'float');
   }
@@ -502,6 +573,10 @@ class AbsFunctionCall extends FunctionCallNode {
 
   evaluate(point: Vector3): number {
     return Math.abs(this.args[0].evaluate(point));
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return `Math.abs(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -537,15 +612,28 @@ class ScaleFunctionCall extends FunctionCallNode {
   }
 
   evaluate(point: Vector3): number {
-    const scaleX = this.#sx.evaluate(point);
-    const scaleY = this.#sy.evaluate(point);
-    const scaleZ = this.#sz.evaluate(point);
+    const scaleX = constantValue(this.#sx);
+    const scaleY = constantValue(this.#sy);
+    const scaleZ = constantValue(this.#sz);
 
     return this.#body.evaluate(new Vector3(
       point.x / scaleX,
       point.y / scaleY,
       point.z / scaleZ
     ));
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const newx = `x${depth}`, newy = `y${depth}`, newz = `z${depth}`;
+    const scaleX = constantValue(this.#sx);
+    const scaleY = constantValue(this.#sy);
+    const scaleZ = constantValue(this.#sz);
+    return `(() => {
+      const ${newx} = ${xname} / ${scaleX};
+      const ${newy} = ${yname} / ${scaleY};
+      const ${newz} = ${zname} / ${scaleZ};
+      return ${this.#body.evaluateStr(newx, newy, newz, depth + 1)};
+    })()`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -597,6 +685,19 @@ class TranslateFunctionCall extends FunctionCallNode {
     const newZ = point.z - constantValue(this.#dz);
 
     return this.#body.evaluate(new Vector3(newX, newY, newZ));
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const newx = `x${depth}`, newy = `y${depth}`, newz = `z${depth}`;
+    const tx = constantValue(this.#dx);
+    const ty = constantValue(this.#dy);
+    const tz = constantValue(this.#dz);
+    return `(() => {
+      const ${newx} = ${xname} - ${tx};
+      const ${newy} = ${yname} - ${ty};
+      const ${newz} = ${zname} - ${tz};
+      return ${this.#body.evaluateStr(newx, newy, newz, depth + 1)};
+    })()`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -657,6 +758,24 @@ class AABBFunctionCall extends FunctionCallNode {
     return this.#aabb.distanceToPoint(point);
   }
 
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const min = this.#aabb.min;
+    const max = this.#aabb.max;
+    const emin = this.#expanded.min;
+    const emax = this.#expanded.max;
+    return `(() => {
+      if (${xname} >= ${emin.x} && ${xname} <= ${emax.x} &&
+          ${yname} >= ${emin.y} && ${yname} <= ${emax.y} &&
+          ${zname} >= ${emin.z} && ${zname} <= ${emax.z}) {
+        return ${this.#fn.evaluateStr(xname, yname, zname, depth)};
+      }
+      const dx = Math.max(${min.x} - ${xname}, 0, ${xname} - ${max.x});
+      const dy = Math.max(${min.y} - ${yname}, 0, ${yname} - ${max.y});
+      const dz = Math.max(${min.z} - ${zname}, 0, ${zname} - ${max.z});
+      return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    })()`;
+  }
+
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     // Quick check - if the interval box is completely outside our AABB, return 'outside'
     if (x.min > this.#aabb.max.x || x.max < this.#aabb.min.x ||
@@ -698,6 +817,10 @@ class FaceFunctionCall extends FunctionCallNode {
 
   evaluate(point: Vector3): number {
     return this.args[0].evaluate(point);
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return this.args[0].evaluateStr(xname, yname, zname, depth);
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -826,6 +949,29 @@ class RotateFunctionCall extends FunctionCallNode {
     const nz = z2;
 
     return this.#body.evaluate(new Vector3(nx, ny, nz));
+  }
+
+  // TODO move into shared helper
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const newx = `x${depth + 1}`, newy = `y${depth + 1}`, newz = `z${depth + 1}`;
+    return `(() => {
+      const ax = ${this.args[0].evaluateStr(xname, yname, zname, depth)};
+      const ay = ${this.args[1].evaluateStr(xname, yname, zname, depth)};
+      const az = ${this.args[2].evaluateStr(xname, yname, zname, depth)};
+      const cx = Math.cos(ax), sx = Math.sin(ax);
+      const cy = Math.cos(ay), sy = Math.sin(ay);
+      const cz = Math.cos(az), sz = Math.sin(az);
+      const x1 = ${xname};
+      const y1 = ${yname} * cx - ${zname} * sx;
+      const z1 = ${yname} * sx + ${zname} * cx;
+      const x2 = x1 * cy + z1 * sy;
+      const y2 = y1;
+      const z2 = -x1 * sy + z1 * cy;
+      const ${newx} = x2 * cz - y2 * sz;
+      const ${newy} = x2 * sz + y2 * cz;
+      const ${newz} = z2;
+      return ${this.#body.evaluateStr(newx, newy, newz, depth + 1)};
+    })()`;
   }
 
   toGLSL(context: GLSLContext): string {

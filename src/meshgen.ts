@@ -62,7 +62,8 @@ export class MeshGenerator {
 
         // Phase 3: Optimize vertices if enabled (50-55%)
         if (this.optimize) {
-            mesh.refineEdges((pos) => this.sdf.evaluate(pos), {
+            var fn = new Function('x', 'y', 'z', 'return ' + this.sdf.evaluateStr('x', 'y', 'z', 1) + ';');
+            mesh.refineEdges((pos) => fn(pos.x, pos.y, pos.z), {
                 errorThreshold: minSize / 100.0,
                 maxSubdivisions: mesh.halfEdges.length,
                 minEdgeLength: minSize / 100.0
