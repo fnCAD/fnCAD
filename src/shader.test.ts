@@ -23,7 +23,8 @@ function raymarch(
   
   for (let i = 0; i < MAX_STEPS; i++) {
     const p = new THREE.Vector3().copy(rayDir).multiplyScalar(t).add(rayOrigin);
-    const d = sdf.evaluate(p);
+    const fn = new Function('x', 'y', 'z', 'return ' + sdf.evaluateStr('x', 'y', 'z', 0) + ';');
+    const d = fn(p.x, p.y, p.z);
     
     if (logger) {
       logger(i, p, d);

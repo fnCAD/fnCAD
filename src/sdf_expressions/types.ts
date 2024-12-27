@@ -1,6 +1,5 @@
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
-import { Vector3 } from 'three';
 
 export type Content = null | {
   category: 'face' | 'edge' | 'outside' | 'inside',
@@ -11,13 +10,8 @@ export interface Node {
    * Direct SDF evaluation at a single point.
    * Returns the signed distance from the point to the surface.
    * Used to compute gradient during mesh optimization.
-   */
-  evaluate(point: Vector3): number;
-
-  /**
-   * Returns a string that evaluates using the provided coordinate variable names.
-   * Each name will be suffixed with the depth number to avoid scope conflicts.
-   * Optimization of `evaluate()` for inlining.
+   * As an inlining optimization, this returns a code string instead.
+   * It must be evaluated in a function defining `xname`, `yname`, `zname` as parameters.
    */
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
 

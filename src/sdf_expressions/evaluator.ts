@@ -11,10 +11,6 @@ function constantValue(node: Node): number {
 export class NumberNode implements Node {
   constructor(public readonly value: number) {}
 
-  evaluate(_point: Vector3): number {
-    return this.value;
-  }
-
   evaluateStr(_xname: string, _yname: string, _zname: string, _depth: number): string {
     return this.value.toString(); 
   }
@@ -34,15 +30,6 @@ export class NumberNode implements Node {
 
 export class VariableNode implements Node {
   constructor(public readonly name: string) {}
-
-  evaluate(point: Vector3): number {
-    switch (this.name) {
-      case 'x': return point.x;
-      case 'y': return point.y;
-      case 'z': return point.z;
-      default: throw new Error(`Unknown variable: ${this.name}`);
-    }
-  }
 
   evaluateStr(xname: string, yname: string, zname: string, _depth: number): string {
     switch (this.name) {
@@ -80,19 +67,6 @@ export class BinaryOpNode implements Node {
     public readonly right: Node
   ) {}
 
-  evaluate(point: Vector3): number {
-    const lval = this.left.evaluate(point);
-    const rval = this.right.evaluate(point);
-    switch (this.operator) {
-      case '+': return lval + rval;
-      case '-': return lval - rval;
-      case '*': return lval * rval;
-      case '/':
-        if (rval === 0) throw new Error('Division by zero');
-        return lval / rval;
-    }
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return `(${this.left.evaluateStr(xname, yname, zname, depth)} ${this.operator} ${this.right.evaluateStr(xname, yname, zname, depth)})`;
   }
@@ -122,11 +96,6 @@ export class UnaryOpNode implements Node {
     public readonly operator: '-',
     public readonly operand: Node
   ) {}
-
-  evaluate(point: Vector3): number {
-    const val = this.operand.evaluate(point);
-    return -val;
-  }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return `(-${this.operand.evaluateStr(xname, yname, zname, depth)})`;
@@ -167,7 +136,6 @@ abstract class FunctionCallNode implements Node {
     public readonly args: Node[]
   ) { }
 
-  abstract evaluate(point: Vector3): number;
   abstract evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
   abstract evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
   abstract evaluateContent(x: Interval, y: Interval, z: Interval): Content;
@@ -205,10 +173,6 @@ class SinFunctionCall extends FunctionCallNode {
     return this.args[0].evaluateInterval(x, y, z).sin();
   }
 
-  evaluate(point: Vector3): number {
-    return Math.sin(this.args[0].evaluate(point));
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return `Math.sin(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
   }
@@ -230,10 +194,6 @@ class CosFunctionCall extends FunctionCallNode {
     return this.args[0].evaluateInterval(x, y, z).cos();
   }
 
-  evaluate(point: Vector3): number {
-    return Math.cos(this.args[0].evaluate(point));
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return `Math.cos(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
   }
@@ -253,10 +213,6 @@ class SqrtFunctionCall extends FunctionCallNode {
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     return this.args[0].evaluateInterval(x, y, z).sqrt();
-  }
-
-  evaluate(point: Vector3): number {
-    return Math.sqrt(this.args[0].evaluate(point));
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -281,11 +237,6 @@ class SqrFunctionCall extends FunctionCallNode {
     return val.multiply(val);
   }
 
-  evaluate(point: Vector3): number {
-    const val = this.args[0].evaluate(point);
-    return val * val;
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const arg = this.args[0].evaluateStr(xname, yname, zname, depth);
     return `(${arg} * ${arg})`;
@@ -307,10 +258,6 @@ class LogFunctionCall extends FunctionCallNode {
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     return this.args[0].evaluateInterval(x, y, z).log();
-  }
-
-  evaluate(point: Vector3): number {
-    return Math.log(this.args[0].evaluate(point));
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -337,16 +284,6 @@ class MinFunctionCall extends FunctionCallNode {
       Math.min(acc.min, interval.min),
       Math.min(acc.max, interval.max)
     ));
-  }
-
-
-  evaluate(point: Vector3): number {
-    var value = this.args[0].evaluate(point);
-    for (var i = 1; i < this.args.length; i++) {
-      const nextValue = this.args[i].evaluate(point);
-      if (nextValue < value) value = nextValue;
-    }
-    return value;
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -408,15 +345,6 @@ class MaxFunctionCall extends FunctionCallNode {
       Math.max(acc.min, interval.min),
       Math.max(acc.max, interval.max)
     ));
-  }
-
-  evaluate(point: Vector3): number {
-    var value = this.args[0].evaluate(point);
-    for (var i = 1; i < this.args.length; i++) {
-      const nextValue = this.args[i].evaluate(point);
-      if (nextValue > value) value = nextValue;
-    }
-    return value;
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -482,22 +410,6 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     );
   }
 
-  evaluate(point: Vector3): number {
-    const d1 = this.args[0].evaluate(point);
-    const d2 = this.args[1].evaluate(point);
-    const r = constantValue(this.args[2]);
-
-    // For points far from both shapes (> 10*radius), just use regular min
-    const minDist = Math.min(d1, d2);
-    if (minDist > r * 10.0) {
-      return Math.min(d1, d2);
-    }
-
-    // Otherwise compute the smooth union
-    const k = 1.0/r;
-    return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const d1 = this.args[0].evaluateStr(xname, yname, zname, depth);
     const d2 = this.args[1].evaluateStr(xname, yname, zname, depth);
@@ -539,10 +451,6 @@ class ExpFunctionCall extends FunctionCallNode {
     return this.args[0].evaluateInterval(x, y, z).exp();
   }
 
-  evaluate(point: Vector3): number {
-    return Math.exp(this.args[0].evaluate(point));
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return `Math.exp(${this.args[0].evaluateStr(xname, yname, zname, depth)})`;
   }
@@ -569,10 +477,6 @@ class AbsFunctionCall extends FunctionCallNode {
     } else {
       return new Interval(0, Math.max(-val.min, val.max));
     }
-  }
-
-  evaluate(point: Vector3): number {
-    return Math.abs(this.args[0].evaluate(point));
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -609,18 +513,6 @@ class ScaleFunctionCall extends FunctionCallNode {
       y.divide(Interval.from(scaleY)),
       z.divide(Interval.from(scaleZ))
     );
-  }
-
-  evaluate(point: Vector3): number {
-    const scaleX = constantValue(this.#sx);
-    const scaleY = constantValue(this.#sy);
-    const scaleZ = constantValue(this.#sz);
-
-    return this.#body.evaluate(new Vector3(
-      point.x / scaleX,
-      point.y / scaleY,
-      point.z / scaleZ
-    ));
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -677,14 +569,6 @@ class TranslateFunctionCall extends FunctionCallNode {
       new Interval(y.min - ty, y.max - ty),
       new Interval(z.min - tz, z.max - tz)
     );
-  }
-
-  evaluate(point: Vector3): number {
-    const newX = point.x - constantValue(this.#dx);
-    const newY = point.y - constantValue(this.#dy);
-    const newZ = point.z - constantValue(this.#dz);
-
-    return this.#body.evaluate(new Vector3(newX, newY, newZ));
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -748,16 +632,6 @@ class AABBFunctionCall extends FunctionCallNode {
     return this.#fn.evaluateInterval(x, y, z);
   }
 
-  evaluate(point: Vector3): number {
-    // If point is inside expanded AABB, use exact SDF
-    if (this.#expanded.containsPoint(point)) {
-      return this.#fn.evaluate(point);
-    }
-
-    // Otherwise return distance to expanded AABB
-    return this.#aabb.distanceToPoint(point);
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const min = this.#aabb.min;
     const max = this.#aabb.max;
@@ -815,10 +689,6 @@ class FaceFunctionCall extends FunctionCallNode {
     enforceArgumentLength('face', args, 1);
   }
 
-  evaluate(point: Vector3): number {
-    return this.args[0].evaluate(point);
-  }
-
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return this.args[0].evaluateStr(xname, yname, zname, depth);
   }
@@ -865,26 +735,26 @@ class RotateFunctionCall extends FunctionCallNode {
           const pz = (iz === 0) ? z.min : z.max;
 
           // First rotate around X
-          const x1 = px;
-          const y1 = py * this.#cx - pz * this.#sx;
-          const z1 = py * this.#sx + pz * this.#cx;
+          const rx1 = px;
+          const ry1 = py * this.#cx - pz * this.#sx;
+          const rz1 = py * this.#sx + pz * this.#cx;
 
           // Then around Y
-          const x2 = x1 * this.#cy + z1 * this.#sy;
-          const y2 = y1;
-          const z2 = -x1 * this.#sy + z1 * this.#cy;
+          const rx2 = rx1 * this.#cy + rz1 * this.#sy;
+          const ry2 = ry1;
+          const rz2 = -rx1 * this.#sy + rz1 * this.#cy;
 
           // Finally around Z
-          const nx = x2 * this.#cz - y2 * this.#sz;
-          const ny = x2 * this.#sz + y2 * this.#cz;
-          const nz = z2;
+          const rx3 = rx2 * this.#cz - ry2 * this.#sz;
+          const ry3 = rx2 * this.#sz + ry2 * this.#cz;
+          const rz3 = rz2;
 
-          minX = nx < minX ? nx : minX;
-          minY = ny < minY ? ny : minY;
-          minZ = nz < minZ ? nz : minZ;
-          maxX = nx > maxX ? nx : maxX;
-          maxY = ny > maxY ? ny : maxY;
-          maxZ = nz > maxZ ? nz : maxZ;
+          minX = rx3 < minX ? rx3 : minX;
+          minY = ry3 < minY ? ry3 : minY;
+          minZ = rz3 < minZ ? rz3 : minZ;
+          maxX = rx3 > maxX ? rx3 : maxX;
+          maxY = ry3 > maxY ? ry3 : maxY;
+          maxZ = rz3 > maxZ ? rz3 : maxZ;
         }
       }
     }
@@ -922,36 +792,6 @@ class RotateFunctionCall extends FunctionCallNode {
     return this.#body.evaluateInterval(rotated.x, rotated.y, rotated.z);
   }
 
-  evaluate(point: Vector3): number {
-    const [rx, ry, rz] = this.args;
-    const ax = rx.evaluate(point);
-    const ay = ry.evaluate(point);
-    const az = rz.evaluate(point);
-
-    // Compute trig values
-    const cx = Math.cos(ax), sx = Math.sin(ax);
-    const cy = Math.cos(ay), sy = Math.sin(ay);
-    const cz = Math.cos(az), sz = Math.sin(az);
-
-    // First rotate around X
-    const x1 = point.x;
-    const y1 = point.y * cx - point.z * sx;
-    const z1 = point.y * sx + point.z * cx;
-
-    // Then around Y
-    const x2 = x1 * cy + z1 * sy;
-    const y2 = y1;
-    const z2 = -x1 * sy + z1 * cy;
-
-    // Finally around Z
-    const nx = x2 * cz - y2 * sz;
-    const ny = x2 * sz + y2 * cz;
-    const nz = z2;
-
-    return this.#body.evaluate(new Vector3(nx, ny, nz));
-  }
-
-  // TODO move into shared helper
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const newx = `x${depth + 1}`, newy = `y${depth + 1}`, newz = `z${depth + 1}`;
     return `(() => {
@@ -961,15 +801,15 @@ class RotateFunctionCall extends FunctionCallNode {
       const cx = Math.cos(ax), sx = Math.sin(ax);
       const cy = Math.cos(ay), sy = Math.sin(ay);
       const cz = Math.cos(az), sz = Math.sin(az);
-      const x1 = ${xname};
-      const y1 = ${yname} * cx - ${zname} * sx;
-      const z1 = ${yname} * sx + ${zname} * cx;
-      const x2 = x1 * cy + z1 * sy;
-      const y2 = y1;
-      const z2 = -x1 * sy + z1 * cy;
-      const ${newx} = x2 * cz - y2 * sz;
-      const ${newy} = x2 * sz + y2 * cz;
-      const ${newz} = z2;
+      const rx1 = ${xname};
+      const ry1 = ${yname} * cx - ${zname} * sx;
+      const rz1 = ${yname} * sx + ${zname} * cx;
+      const rx2 = rx1 * cy + rz1 * sy;
+      const ry2 = ry1;
+      const rz2 = -rx1 * sy + rz1 * cy;
+      const ${newx} = rx2 * cz - ry2 * sz;
+      const ${newy} = rx2 * sz + ry2 * cz;
+      const ${newz} = rz2;
       return ${this.#body.evaluateStr(newx, newy, newz, depth + 1)};
     })()`;
   }
