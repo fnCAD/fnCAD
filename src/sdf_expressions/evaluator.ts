@@ -1,4 +1,4 @@
-import { Node, Content } from './ast';
+import { Node, Content } from './types';
 import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
 import { Box3, Vector3 } from 'three';

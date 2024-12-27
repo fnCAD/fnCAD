@@ -1,4 +1,4 @@
-import { Node } from './ast';
+import { Node } from './types';
 import { 
   VariableNode,
   NumberNode,

@@ -1,4 +1,4 @@
-import { Node } from './sdf_expressions/ast';
+import { Node } from './sdf_expressions/types';
 import { GLSLContext, GLSLGenerator } from './sdf_expressions/glslgen';
 
 export function generateShader(ast: Node): string {

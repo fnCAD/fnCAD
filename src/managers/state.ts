@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OctreeNode } from '../octree';
 import { SerializedMesh } from '../workers/mesh_types';
-import { Node as SdfNode } from '../sdf_expressions/ast';
+import { Node as SdfNode } from '../sdf_expressions/types';
 import { TaskQueue } from '../workers/tasks';
 import { errorDecorationFacet } from '../main';
 import { TaskProgress } from '../workers/messages';

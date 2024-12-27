@@ -4,7 +4,7 @@ import { parse } from './cad/parser';
 import { moduleToSDF } from './cad/builtins';
 import { parse as parseSDF } from './sdf_expressions/parser';
 import { generateShader } from './shader';
-import { Node } from './sdf_expressions/ast';
+import { Node } from './sdf_expressions/types';
 
 // Software raymarcher for testing
 type RaymarchLogger = (step: number, point: THREE.Vector3, distance: number) => void;

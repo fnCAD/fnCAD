@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SerializedMesh } from './workers/mesh_types';
 import { HalfEdgeMesh } from './halfedge';
 import { OctreeNode, Direction, CellState, octreeChildCenter } from './octree';
+import { Node } from './sdf_expressions/types';
 
 /**
  * Generates a triangle mesh from an octree representation of an SDF 
@@ -30,7 +31,7 @@ export class MeshGenerator {
 
     constructor(
         private octree: OctreeNode,
-        private sdf: import('./sdf_expressions/ast').Node,
+        private sdf: Node,
         private optimize: boolean = false
     ) {}
 
