@@ -128,12 +128,20 @@ export class MeshGenerator {
   private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number) {
     const half = size / 2;
     const self = this;
+    const indexes: (number | null)[] = Array(8).fill(null);
     function vertexIndex(corner: number): number {
-      const x = (corner & 1) !== 0 ? 1 : -1;
-      const y = (corner & 2) !== 0 ? 1 : -1;
-      const z = (corner & 4) !== 0 ? 1 : -1;
-      const pos = new THREE.Vector3(center.x + x * half, center.y + y * half, center.z + z * half);
-      return self.getVertexIndex(pos, mesh);
+      if (indexes[corner] === null) {
+        const x = (corner & 1) !== 0 ? 1 : -1;
+        const y = (corner & 2) !== 0 ? 1 : -1;
+        const z = (corner & 4) !== 0 ? 1 : -1;
+        const pos = new THREE.Vector3(
+          center.x + x * half,
+          center.y + y * half,
+          center.z + z * half
+        );
+        indexes[corner] = self.getVertexIndex(pos, mesh);
+      }
+      return indexes[corner];
     }
 
     // Define faces with their normal directions
