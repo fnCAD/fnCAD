@@ -116,7 +116,13 @@ export class Context {
     private parent?: Context,
     private vars: Map<string, Value> = new Map(),
     private modules: Map<string, ScopedModuleDeclaration> = new Map()
-  ) {}
+  ) {
+    // Initialize default variables if this is the root context
+    if (!parent) {
+      this.vars.set('$minerror', 0.01);
+      this.vars.set('$minsize', 0.1);
+    }
+  }
 
   get(name: string): Value | undefined {
     return this.vars.get(name) ?? this.parent?.get(name);

@@ -265,7 +265,7 @@ export class Parser {
   }
 
   private isIdentifierStart(char: string): boolean {
-    return /[a-zA-Z_]/.test(char);
+    return /[a-zA-Z_$]/.test(char);
   }
 
   private handleIdentifier(start: number): number {
@@ -273,7 +273,7 @@ export class Parser {
     let value = '';
     const startColumn = this.column;
     const startOffset = current;
-    while (current < this.source.length && /[a-zA-Z0-9_]/.test(this.source[current])) {
+    while (current < this.source.length && /[a-zA-Z0-9_$]/.test(this.source[current])) {
       value += this.source[current];
       current++;
       this.column++;
