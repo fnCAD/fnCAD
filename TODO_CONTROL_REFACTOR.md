@@ -13,8 +13,8 @@ The UI which made sense for testing also needs to be rethought.
 ### UI Simplification 
 - [x] Remove all settings panels and overlays
 - [x] Replace with simple keyboard shortcuts:
-  - F5: Render and show mesh (like openscad)
-  - F6: Render and show mesh at higher default detail
+  - Ctrl+5: Render and show mesh (like openscad)
+  - Ctrl+6: Render and show mesh at higher default detail
   - Esc: Cancel current operation
 - [ ] Low Priority: move visualization settings into CAD language:
   ```

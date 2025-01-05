@@ -350,10 +350,12 @@ appState.updateEditorContent(editor.state.doc.toString());
 
 // Add keyboard handlers
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'F5') {
+  if (event.key === '5' && event.ctrlKey) {
+    event.preventDefault();
     appState.setViewMode(ViewMode.Mesh);
     regenerateMesh(false); // Normal detail
-  } else if (event.key === 'F6') {
+  } else if (event.key === '6' && event.ctrlKey) {
+    event.preventDefault();
     appState.setViewMode(ViewMode.Mesh);
     regenerateMesh(true);  // High detail
   } else if (event.key === 'Escape') {
