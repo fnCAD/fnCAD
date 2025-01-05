@@ -197,14 +197,22 @@ export class AppState {
       console.log("Added background plane with material:", planeMaterial);
 
       // Add mesh with proper material
+      console.log("Creating mesh material");
       const material = new THREE.MeshStandardMaterial({ 
         color: 0x808080,
         roughness: 0.7,
-        metalness: 0.0
+        metalness: 0.0,
+        side: THREE.DoubleSide, // Render both sides
+        depthWrite: true,
+        depthTest: true
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isMeshObject = true;
       mesh.renderOrder = 1; // Ensure mesh renders after background
+      mesh.position.z = 0.01; // Slight offset to avoid z-fighting
+      console.log("Mesh material:", material);
+      console.log("Mesh geometry:", geometry);
+      console.log("Mesh position:", mesh.position);
       this.scene.add(mesh);
       console.log("Added mesh to scene, total children:", this.scene.children.length);
     }
