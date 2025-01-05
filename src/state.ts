@@ -31,13 +31,6 @@ export class AppState {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);
     
-    // Add lighting
-    const ambientLight = new THREE.AmbientLight(0x404040);
-    this.scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(1, 1, 1);
-    this.scene.add(directionalLight);
-    
     // Set up initial size
     this.updateSize();
     
@@ -58,6 +51,21 @@ export class AppState {
 
   private animate = () => {
     requestAnimationFrame(this.animate);
+    
+    // Update shader uniforms if in preview mode
+    if (this.viewMode === ViewMode.Preview) {
+      const previewMaterial = this.scene.children[0]?.material as THREE.ShaderMaterial;
+      if (previewMaterial?.uniforms) {
+        previewMaterial.uniforms.resolution.value.set(
+          this.previewPane.clientWidth,
+          this.previewPane.clientHeight
+        );
+        previewMaterial.uniforms.customCameraPosition.value.copy(this.camera.position);
+        previewMaterial.uniforms.customViewMatrix.value.copy(this.camera.matrixWorldInverse);
+        previewMaterial.uniforms.projectionMatrix.value.copy(this.camera.projectionMatrix);
+      }
+    }
+
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -75,11 +83,11 @@ export class AppState {
       planeGeometry.translate(0, 0, -1); // Move plane in front of camera
       const planeMaterial = new THREE.ShaderMaterial({
         uniforms: {
-          resolution: { value: new THREE.Vector2() },
+          resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
           fov: { value: 75.0 },
-          customCameraPosition: { value: new THREE.Vector3() },
-          customViewMatrix: { value: new THREE.Matrix4() },
-          projectionMatrix: { value: new THREE.Matrix4() }
+          customCameraPosition: { value: this.camera.position },
+          customViewMatrix: { value: this.camera.matrixWorldInverse },
+          projectionMatrix: { value: this.camera.projectionMatrix }
         },
         vertexShader: `
           void main() {
