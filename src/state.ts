@@ -31,6 +31,13 @@ export class AppState {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);
     
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    this.scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 1, 1);
+    this.scene.add(directionalLight);
+    
     // Set up initial size
     this.updateSize();
     
@@ -63,7 +70,9 @@ export class AppState {
     
     // Set up scene based on mode
     if (mode === ViewMode.Preview) {
+      // Create a full-screen quad for raymarching
       const planeGeometry = new THREE.PlaneGeometry(2, 2);
+      planeGeometry.translate(0, 0, -1); // Move plane in front of camera
       const planeMaterial = new THREE.ShaderMaterial({
         uniforms: {
           resolution: { value: new THREE.Vector2() },
