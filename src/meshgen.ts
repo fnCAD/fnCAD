@@ -176,12 +176,34 @@ export class MeshGenerator {
     mesh: HalfEdgeMesh
   ) {
     if (!neighbor || neighbor.state === CellState.Outside) {
+      // Debug logging for face normal direction
+      const debugNormal = (v1: number, v2: number, v3: number) => {
+        const p1 = mesh.vertices[v1].position;
+        const p2 = mesh.vertices[v2].position;
+        const p3 = mesh.vertices[v3].position;
+        const normal = new THREE.Vector3()
+          .crossVectors(
+            new THREE.Vector3().subVectors(p2, p1),
+            new THREE.Vector3().subVectors(p3, p1)
+          )
+          .normalize();
+        console.log(`Face normal for direction ${Direction[direction]}:`, 
+                    `\n  v1: ${p1.toArray()}`,
+                    `\n  v2: ${p2.toArray()}`,
+                    `\n  v3: ${p3.toArray()}`,
+                    `\n  normal: ${normal.toArray()}`);
+      };
+
       // Flip triangle order based on face direction to ensure correct normals
       if (direction === Direction.PosX || direction === Direction.PosY || direction === Direction.PosZ) {
+        debugNormal(vertices[0], vertices[2], vertices[1]);
         mesh.addFace(vertices[0], vertices[2], vertices[1]);
+        debugNormal(vertices[2], vertices[3], vertices[1]);
         mesh.addFace(vertices[2], vertices[3], vertices[1]);
       } else {
+        debugNormal(vertices[0], vertices[1], vertices[2]);
         mesh.addFace(vertices[0], vertices[1], vertices[2]);
+        debugNormal(vertices[2], vertices[1], vertices[3]);
         mesh.addFace(vertices[2], vertices[1], vertices[3]);
       }
     } else if (Array.isArray(neighbor.state)) {
