@@ -176,41 +176,13 @@ export class MeshGenerator {
     mesh: HalfEdgeMesh
   ) {
     if (!neighbor || neighbor.state === CellState.Outside) {
-      // Get face normal direction vector based on the Direction enum
-      const normalVector = new THREE.Vector3();
-      switch (direction) {
-        case Direction.PosX: normalVector.set(1, 0, 0); break;
-        case Direction.NegX: normalVector.set(-1, 0, 0); break;
-        case Direction.PosY: normalVector.set(0, 1, 0); break;
-        case Direction.NegY: normalVector.set(0, -1, 0); break;
-        case Direction.PosZ: normalVector.set(0, 0, 1); break;
-        case Direction.NegZ: normalVector.set(0, 0, -1); break;
-      }
-
-      // Add triangles with correct winding order to match the desired normal
-      const v0 = mesh.vertices[vertices[0]].position;
-      const v1 = mesh.vertices[vertices[1]].position;
-      const v2 = mesh.vertices[vertices[2]].position;
-      
-      // Calculate the normal of triangle with default winding (0,1,2)
-      const computedNormal = new THREE.Vector3()
-        .crossVectors(
-          new THREE.Vector3().subVectors(v1, v0),
-          new THREE.Vector3().subVectors(v2, v0)
-        )
-        .normalize();
-
-      // If computed normal points in same direction as desired normal, keep winding
-      // otherwise flip it
-      const dotProduct = computedNormal.dot(normalVector);
-      console.log(`Face direction ${Direction[direction]}: computed normal ${computedNormal.toArray()}, desired ${normalVector.toArray()}, dot ${dotProduct}`);
-      if (dotProduct > 0) {
-        mesh.addFace(vertices[0], vertices[1], vertices[2]);
-        mesh.addFace(vertices[2], vertices[1], vertices[3]);
-      } else {
-        console.log(`Flipping face for direction ${Direction[direction]}`);
+      // Flip winding for NegX, PosY, and NegZ faces (empirically determined)
+      if (direction === Direction.NegX || direction === Direction.PosY || direction === Direction.NegZ) {
         mesh.addFace(vertices[0], vertices[2], vertices[1]);
         mesh.addFace(vertices[2], vertices[3], vertices[1]);
+      } else {
+        mesh.addFace(vertices[0], vertices[1], vertices[2]);
+        mesh.addFace(vertices[2], vertices[1], vertices[3]);
       }
     } else if (Array.isArray(neighbor.state)) {
       const childIndices = this.getAdjacentChildIndices(direction);
