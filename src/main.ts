@@ -1,4 +1,21 @@
 import './style.css';
+
+// Add dynamic styles for mesh progress
+const style = document.createElement('style');
+style.textContent = `
+  .mesh-progress {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: monospace;
+    z-index: 1000;
+  }
+`;
+document.head.appendChild(style);
 import Split from 'split.js';
 import { getRuntimeBasePath } from './utils/runtime-base';
 import { downloadSTL } from './stlexporter';

@@ -173,9 +173,24 @@ export class AppState {
       if (taskId !== this.currentTaskId) return;
 
       if (e.data.type === 'progress') {
-        // Update progress UI (TODO)
-        console.log(`${e.data.phase} progress: ${e.data.progress * 100}%`);
+        const percent = Math.round(e.data.progress * 100);
+        const progressElement = document.createElement('div');
+        progressElement.className = 'mesh-progress';
+        progressElement.textContent = `${e.data.phase}: ${percent}%`;
+        
+        // Remove any existing progress element
+        const existing = this.previewPane.querySelector('.mesh-progress');
+        if (existing) {
+          existing.remove();
+        }
+        
+        this.previewPane.appendChild(progressElement);
       } else if (e.data.type === 'complete') {
+        // Remove progress indicator
+        const progressElement = this.previewPane.querySelector('.mesh-progress');
+        if (progressElement) {
+          progressElement.remove();
+        }
         this.setCurrentMesh(e.data.mesh);
         this.meshGenerationInProgress = false;
         this.worker = null;
@@ -183,11 +198,27 @@ export class AppState {
     };
 
     // Start mesh generation
-    this.worker.postMessage({
-      type: 'start',
-      code: this.editorContent,
-      highDetail
-    });
+    try {
+      this.worker.postMessage({
+        type: 'start',
+        code: this.editorContent,
+        highDetail
+      });
+    } catch (error) {
+      console.error('Failed to start mesh generation:', error);
+      this.cancelCurrentOperation();
+      throw error;
+    }
+
+    // Add error handler
+    this.worker.onerror = (error) => {
+      console.error('Mesh generation worker error:', error);
+      this.cancelCurrentOperation();
+      const progressElement = this.previewPane.querySelector('.mesh-progress');
+      if (progressElement) {
+        progressElement.remove();
+      }
+    };
   }
 
   cancelCurrentOperation(): void {
