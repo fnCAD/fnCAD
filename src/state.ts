@@ -139,7 +139,60 @@ export class AppState {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
       geometry.setIndex(this.currentMesh.indices);
-      const material = new THREE.MeshStandardMaterial({ color: 0x808080 });
+      // Add lighting for mesh view
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      this.scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(1, 1, 1);
+      this.scene.add(directionalLight);
+
+      // Create background plane with same shader as preview mode
+      const planeGeometry = new THREE.PlaneGeometry(2, 2);
+      const planeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
+          customCameraPosition: { value: this.camera.position },
+          customViewMatrix: { value: this.camera.matrixWorldInverse },
+          projectionMatrix: { value: this.camera.projectionMatrix }
+        },
+        vertexShader: `
+          void main() {
+            gl_Position = vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec2 resolution;
+          uniform vec3 customCameraPosition;
+          uniform mat4 customViewMatrix;
+          uniform mat4 projectionMatrix;
+
+          vec3 getRayDirection(vec2 uv, vec3 camPos, mat4 viewMatrix) {
+            vec2 ndc = (uv * 2.0 - 1.0);
+            float aspect = resolution.x / resolution.y;
+            vec3 rayView = vec3(ndc.x * aspect, ndc.y, -1.0);
+            mat3 viewToWorld = mat3(inverse(viewMatrix));
+            return normalize(viewToWorld * rayView);
+          }
+
+          void main() {
+            vec2 uv = gl_FragCoord.xy / resolution.xy;
+            vec3 rd = getRayDirection(uv, customCameraPosition, customViewMatrix);
+            vec3 background = normalize(rd) * 0.5 + 0.5;
+            background *= background;
+            gl_FragColor = vec4(background, 1.0);
+          }
+        `
+      });
+      const backgroundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+      backgroundPlane.frustumCulled = false;
+      this.scene.add(backgroundPlane);
+
+      // Add mesh with proper material
+      const material = new THREE.MeshStandardMaterial({ 
+        color: 0x808080,
+        roughness: 0.7,
+        metalness: 0.0
+      });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isMeshObject = true;
       this.scene.add(mesh);
