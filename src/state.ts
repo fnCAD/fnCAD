@@ -148,6 +148,57 @@ export class AppState {
     return this.currentMesh;
   }
 
+  private worker: Worker | null = null;
+
+  async generateMesh(highDetail: boolean = false): Promise<void> {
+    if (this.meshGenerationInProgress) {
+      return;
+    }
+
+    this.meshGenerationInProgress = true;
+    this.setViewMode(ViewMode.Mesh);
+
+    try {
+      // Create new worker
+      if (!this.worker) {
+        this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
+          type: 'module'
+        });
+      }
+
+      // Set up message handling
+      this.worker.onmessage = (e) => {
+        if (e.data.type === 'progress') {
+          // Update progress UI (TODO)
+          console.log(`${e.data.phase} progress: ${e.data.progress * 100}%`);
+        } else if (e.data.type === 'complete') {
+          this.setCurrentMesh(e.data.mesh);
+          this.meshGenerationInProgress = false;
+        }
+      };
+
+      // Start mesh generation
+      this.worker.postMessage({
+        type: 'start',
+        code: this.editorContent,
+        highDetail
+      });
+    } catch (error) {
+      console.error('Mesh generation error:', error);
+      this.meshGenerationInProgress = false;
+      throw error;
+    }
+  }
+
+  cancelCurrentOperation(): void {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+    this.meshGenerationInProgress = false;
+    this.setViewMode(ViewMode.Preview);
+  }
+
   setMeshGenerationInProgress(inProgress: boolean) {
     this.meshGenerationInProgress = inProgress;
   }

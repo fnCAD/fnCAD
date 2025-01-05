@@ -350,9 +350,12 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-async function regenerateMesh() {
-  // TODO: Implement new mesh generation
-  console.log('Mesh generation not yet implemented');
+async function regenerateMesh(highDetail: boolean = false) {
+  try {
+    await appState.generateMesh(highDetail);
+  } catch (error) {
+    console.error('Error generating mesh:', error);
+  }
 }
 
 // Add STL export handler
