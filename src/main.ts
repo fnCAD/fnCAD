@@ -268,13 +268,11 @@ Split(['#editor-pane', '#preview-pane'], {
 // Get preview pane element
 const previewPane = document.getElementById('preview-pane')!;
 
-// Initialize managers
-const settingsManager = new SettingsManager(previewPane, () => {
-  updateOctree();
-});
-const rendererManager = new RendererManager(previewPane, settingsManager);
-const stateManager = new StateManager(rendererManager, settingsManager);
-const octreeManager = new OctreeManager(stateManager, rendererManager, settingsManager);
+// Initialize renderer and state
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+previewPane.appendChild(renderer.domElement);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const appState = new AppState(renderer, camera);
 
 // Initialize CodeMirror editor
 const editor = new EditorView({
@@ -350,44 +348,8 @@ function updateOctree() {
 document.getElementById('show-mesh')?.addEventListener('change', regenerateMesh);
 
 async function regenerateMesh() {
-  const state = stateManager.getState();
-  if (!state.currentOctree) {
-    console.warn('No octree available for mesh generation');
-    return;
-  }
-  const taskId = stateManager.taskQueue.addTask({
-    type: 'mesh',
-    optimize: settingsManager.isMeshOptimizationEnabled(),
-    octree: state.currentOctree,
-    minSize: settingsManager.getMinSize(),
-    source: stateManager.getEditorContent(),
-  });
-
-  // Set this as the active task
-  stateManager.setActiveTaskId(taskId);
-
-  try {
-    const task = await new Promise<TaskProgress>((resolve, reject) => {
-      const unsubscribe = stateManager.taskQueue.onProgress((progress) => {
-        if (progress.taskId === taskId) {
-          if (progress.status === 'completed') {
-            unsubscribe();
-            resolve(progress);
-          } else if (progress.status === 'failed') {
-            unsubscribe();
-            reject(new Error(progress.error));
-          }
-        }
-      });
-    });
-
-    if (task.result && 'vertices' in task.result) {
-      stateManager.setCurrentMesh(task.result);
-      rendererManager.updateMesh(task.result);
-    }
-  } catch (error) {
-    console.error('Mesh generation failed:', error);
-  }
+  // TODO: Implement new mesh generation
+  console.log('Mesh generation not yet implemented');
 }
 
 // Add STL export handler
