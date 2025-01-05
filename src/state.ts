@@ -99,27 +99,6 @@ export class AppState {
   }
 
   private setupMeshView() {
-    if (!this.currentMesh) {
-      console.warn("No mesh data available");
-      return;
-    }
-
-    console.log("Setting up mesh mode with vertices:", this.currentMesh.vertices.length / 3);
-    console.log("First few vertices:", this.currentMesh.vertices.slice(0, 9));
-    console.log("First few indices:", this.currentMesh.indices.slice(0, 9));
-    
-    // Add mesh to scene
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
-    geometry.setIndex(this.currentMesh.indices);
-    
-    // Compute vertex normals for proper lighting
-    geometry.computeVertexNormals();
-    
-    console.log("Created geometry with attributes:", geometry.attributes);
-    console.log("Index count:", geometry.index?.count);
-    console.log("Normal attribute created:", geometry.attributes.normal !== undefined);
-
     // Add lighting to match preview shader
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2); // 0.2 ambient term from shader
     this.scene.add(ambientLight);
@@ -172,29 +151,33 @@ export class AppState {
     backgroundPlane.frustumCulled = false;
     backgroundPlane.renderOrder = -1; // Ensure background renders first
     this.scene.add(backgroundPlane);
-    console.log("Added background plane with material:", planeMaterial);
 
-    // Add mesh with proper material
-    console.log("Creating mesh material");
-    const material = new THREE.MeshStandardMaterial({ 
-      color: 0xffffff, // Full white to match shader
-      roughness: 1.0, // Perfectly diffuse
-      metalness: 0.0, // No metallic reflections
-      side: THREE.DoubleSide,
-      depthWrite: true,
-      depthTest: true,
-      transparent: false,
-      flatShading: false // Enable smooth shading
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.userData.isMeshObject = true;
-    mesh.renderOrder = 1; // Ensure mesh renders after background
-    mesh.position.z = 0.01; // Slight offset to avoid z-fighting
-    console.log("Mesh material:", material);
-    console.log("Mesh geometry:", geometry);
-    console.log("Mesh position:", mesh.position);
-    this.scene.add(mesh);
-    console.log("Added mesh to scene, total children:", this.scene.children.length);
+    if (this.currentMesh) {
+      // Add mesh to scene
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
+      geometry.setIndex(this.currentMesh.indices);
+
+      // Compute vertex normals for proper lighting
+      geometry.computeVertexNormals();
+
+      // Add mesh with proper material
+      const material = new THREE.MeshStandardMaterial({
+        color: 0xffffff, // Full white to match shader
+        roughness: 1.0, // Perfectly diffuse
+        metalness: 0.0, // No metallic reflections
+        side: THREE.DoubleSide,
+        depthWrite: true,
+        depthTest: true,
+        transparent: false,
+        flatShading: false // Enable smooth shading
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.userData.isMeshObject = true;
+      mesh.renderOrder = 1; // Ensure mesh renders after background
+      mesh.position.z = 0.01; // Slight offset to avoid z-fighting
+      this.scene.add(mesh);
+    }
   }
 
   setViewMode(mode: ViewMode) {
@@ -210,7 +193,6 @@ export class AppState {
     if (mode === ViewMode.Preview) {
       // Create a full-screen quad for raymarching
       const planeGeometry = new THREE.PlaneGeometry(2, 2);
-      console.log("Creating preview plane material with shader:", this.currentShader?.substring(0, 100) + "...");
       // Create or update preview material
       this.previewMaterial = new THREE.ShaderMaterial({
         uniforms: {
@@ -230,7 +212,6 @@ export class AppState {
       const previewPlane = new THREE.Mesh(planeGeometry, this.previewMaterial);
       previewPlane.frustumCulled = false; // Ensure plane is always rendered
       this.scene.add(previewPlane);
-      console.log("Added preview plane to scene, children:", this.scene.children.length);
     } else if (mode === ViewMode.Mesh) {
       this.setupMeshView();
     }
