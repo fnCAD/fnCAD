@@ -121,7 +121,7 @@ export class AppState {
     console.log("Normal attribute created:", geometry.attributes.normal !== undefined);
 
     // Add lighting to match preview shader
-    const ambientLight = new THREE.AmbientLight(0x333333); // 0.2 ambient term from shader
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2); // 0.2 ambient term from shader
     this.scene.add(ambientLight);
 
     // Main directional light matching shader's vec3(1,1,1) direction
