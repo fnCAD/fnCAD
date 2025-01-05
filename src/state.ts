@@ -26,6 +26,9 @@ export class AppState {
   private previewMaterial: THREE.ShaderMaterial | null = null;
   private controls: OrbitControls;
 
+  private worker: Worker;
+  private currentTaskId: number = 0;
+
   constructor(
     private camera: THREE.PerspectiveCamera
   ) {
@@ -33,6 +36,55 @@ export class AppState {
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);
+
+    // Initialize worker
+    this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
+      type: 'module'
+    });
+
+    // Set up generic message handler
+    this.worker.onmessage = (e: MessageEvent) => {
+      // Ignore messages from old tasks
+      if (e.data.taskId !== this.currentTaskId) return;
+
+      if (e.data.type === 'progress') {
+        const percent = Math.round(e.data.progress * 100);
+        const progressElement = document.createElement('div');
+        progressElement.className = 'mesh-progress';
+        progressElement.textContent = `${e.data.phase}: ${percent}%`;
+
+        // Remove any existing progress element
+        const existing = this.previewPane.querySelector('.mesh-progress');
+        if (existing) {
+          existing.remove();
+        }
+
+        this.previewPane.appendChild(progressElement);
+      } else if (e.data.type === 'complete') {
+        // Remove progress indicator
+        const progressElement = this.previewPane.querySelector('.mesh-progress');
+        if (progressElement) {
+          progressElement.remove();
+        }
+        this.setCurrentMesh(e.data.mesh);
+        this.meshGenerationInProgress = false;
+
+        // Update the view with the new mesh if we're in mesh mode
+        if (this.viewMode === ViewMode.Mesh) {
+          this.setViewMode(ViewMode.Mesh);
+        }
+      }
+    };
+
+    // Set up generic error handler
+    this.worker.onerror = (error: ErrorEvent) => {
+      console.error('Mesh generation worker error:', error);
+      this.cancelCurrentOperation();
+      const progressElement = this.previewPane.querySelector('.mesh-progress');
+      if (progressElement) {
+        progressElement.remove();
+      }
+    };
 
     // Initialize OrbitControls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -283,84 +335,17 @@ export class AppState {
     return this.currentMesh;
   }
 
-  private worker?: Worker;
-  private currentTaskId: number = 0;
-
   generateMesh(highDetail: boolean = false): void {
     this.meshGenerationInProgress = true;
     this.setViewMode(ViewMode.Mesh);
     const taskId = ++this.currentTaskId;
 
-    // Create worker if it doesn't exist
-    if (!this.worker) {
-      this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
-        type: 'module'
-      });
-    }
-
-    // Remove any existing handlers
-    this.worker.onmessage = null;
-    this.worker.onerror = null;
-
-    // Add new handlers
-    this.worker.onmessage = messageHandler;
-    this.worker.onerror = errorHandler;
-
-    // Set up message handling
-    const messageHandler = (e: MessageEvent) => {
-      // Ignore messages from old tasks
-      if (taskId !== this.currentTaskId) return;
-
-      if (e.data.type === 'progress') {
-        const percent = Math.round(e.data.progress * 100);
-        const progressElement = document.createElement('div');
-        progressElement.className = 'mesh-progress';
-        progressElement.textContent = `${e.data.phase}: ${percent}%`;
-        
-        // Remove any existing progress element
-        const existing = this.previewPane.querySelector('.mesh-progress');
-        if (existing) {
-          existing.remove();
-        }
-        
-        this.previewPane.appendChild(progressElement);
-      } else if (e.data.type === 'complete') {
-        // Remove progress indicator
-        const progressElement = this.previewPane.querySelector('.mesh-progress');
-        if (progressElement) {
-          progressElement.remove();
-        }
-        this.setCurrentMesh(e.data.mesh);
-        this.meshGenerationInProgress = false;
-        this.worker = null;
-        
-        // Update the view with the new mesh if we're in mesh mode
-        if (this.viewMode === ViewMode.Mesh) {
-          this.setViewMode(ViewMode.Mesh);
-        }
-      }
-    };
-
-    // Start mesh generation
-    // Remove any existing handlers
-    this.worker.onmessage = null;
-    this.worker.onerror = null;
-
-    // Add new handlers
-    this.worker.onmessage = messageHandler;
-    this.worker.onerror = errorHandler;
-
-    try {
-      this.worker.postMessage({
-        type: 'start',
-        code: this.editorContent,
-        highDetail
-      });
-    } catch (error) {
-      console.error('Failed to start mesh generation:', error);
-      this.cancelCurrentOperation();
-      throw error;
-    }
+    this.worker.postMessage({
+      type: 'start',
+      taskId: taskId,
+      code: this.editorContent,
+      highDetail
+    });
   }
 
   cancelCurrentOperation(): void {
