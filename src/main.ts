@@ -336,18 +336,14 @@ smooth_difference(0.03) {
 window._editor = editor;
 
 // Initial state update
-stateManager.updateEditorContent(editor.state.doc.toString());
-updateOctree();
-
-// Function to update octree based on current settings
-function updateOctree() {
-  const ast = stateManager.parseContent();
-  stateManager.updateShader(ast);
-  octreeManager.updateOctree();
-}
+appState.updateEditorContent(editor.state.doc.toString());
 
 // Add mesh generation handler
-document.getElementById('show-mesh')?.addEventListener('change', regenerateMesh);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'F5') {
+    regenerateMesh();
+  }
+});
 
 async function regenerateMesh() {
   // TODO: Implement new mesh generation
@@ -368,6 +364,6 @@ saveStlButton.addEventListener('click', () => {
 // Start animation loop
 function animate() {
   requestAnimationFrame(animate);
-  rendererManager.render();
+  renderer.render(scene, camera);
 }
 animate();

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SerializedMesh } from './workers/mesh_types';
+import { SerializedMesh } from './types';
 import { HalfEdgeMesh } from './halfedge';
 import { OctreeNode, Direction, CellState, octreeChildCenter } from './octree';
 import { Node } from './sdf_expressions/types';

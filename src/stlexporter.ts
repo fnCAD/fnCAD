@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SerializedMesh } from './workers/mesh_types';
+import { SerializedMesh } from './types';
 
 export interface STLExportOptions {
   scale?: number; // Scale factor for output (default: 1)
