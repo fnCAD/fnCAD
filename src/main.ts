@@ -267,17 +267,12 @@ Split(['#editor-pane', '#preview-pane'], {
   gutterSize: 8,
 });
 
-// Get preview pane element
-const previewPane = document.getElementById('preview-pane')!;
-
-// Initialize THREE.js scene
-const scene = new THREE.Scene();
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-previewPane.appendChild(renderer.domElement);
+// Initialize camera
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 5;
 
-const appState = new AppState(renderer, camera, scene);
+// Initialize app state
+const appState = new AppState(camera, 'preview-pane');
 
 // Initialize CodeMirror editor
 const editor = new EditorView({
@@ -371,32 +366,3 @@ saveStlButton.addEventListener('click', () => {
   }
 });
 
-// Start animation loop
-function animate() {
-  requestAnimationFrame(animate);
-  
-  // Update shader uniforms
-  if (planeMaterial.uniforms) {
-    planeMaterial.uniforms.resolution.value.set(
-      renderer.domElement.width,
-      renderer.domElement.height
-    );
-    planeMaterial.uniforms.customCameraPosition.value.copy(camera.position);
-    planeMaterial.uniforms.customViewMatrix.value.copy(camera.matrixWorldInverse);
-    planeMaterial.uniforms.projectionMatrix.value.copy(camera.projectionMatrix);
-  }
-  
-  renderer.render(scene, camera);
-}
-animate();
-
-// Handle window resize
-window.addEventListener('resize', () => {
-  const width = previewPane.clientWidth;
-  const height = previewPane.clientHeight;
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
-});
-// Initial size
-renderer.setSize(previewPane.clientWidth, previewPane.clientHeight);

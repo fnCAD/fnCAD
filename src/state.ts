@@ -19,11 +19,41 @@ export class AppState {
   private meshGenerationInProgress = false;
   private viewMode: ViewMode = ViewMode.Preview;
 
+  private renderer: THREE.WebGLRenderer;
+  private scene: THREE.Scene;
+  private previewPane: HTMLElement;
+
   constructor(
-    private renderer: THREE.WebGLRenderer,
     private camera: THREE.PerspectiveCamera,
-    private scene: THREE.Scene
-  ) {}
+    containerId: string
+  ) {
+    this.previewPane = document.getElementById(containerId)!;
+    this.scene = new THREE.Scene();
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.previewPane.appendChild(this.renderer.domElement);
+    
+    // Set up initial size
+    this.updateSize();
+    
+    // Handle window resize
+    window.addEventListener('resize', () => this.updateSize());
+    
+    // Start render loop
+    this.animate();
+  }
+
+  private updateSize() {
+    const width = this.previewPane.clientWidth;
+    const height = this.previewPane.clientHeight;
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+  }
+
+  private animate = () => {
+    requestAnimationFrame(this.animate);
+    this.renderer.render(this.scene, this.camera);
+  }
 
   setViewMode(mode: ViewMode) {
     this.viewMode = mode;
