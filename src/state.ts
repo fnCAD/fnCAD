@@ -199,16 +199,18 @@ export class AppState {
       // Add test triangle
       const testGeometry = new THREE.BufferGeometry();
       const vertices = new Float32Array([
-        -1.0, -1.0, 2.0,  // Move triangle forward in z
-         1.0, -1.0, 2.0,
-         0.0,  1.0, 2.0
+        -0.5,  0.5, 1.0,  // Smaller triangle closer to camera
+         0.5,  0.5, 1.0,
+         0.0, -0.5, 1.0
       ]);
       testGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
       const testMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xff0000,
         side: THREE.DoubleSide,
-        depthTest: true,
-        depthWrite: true
+        depthTest: false,  // Ensure it's always visible
+        depthWrite: false,
+        transparent: true,
+        opacity: 0.8
       });
       const testMesh = new THREE.Mesh(testGeometry, testMaterial);
       this.scene.add(testMesh);
