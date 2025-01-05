@@ -28,7 +28,7 @@ import { getModuleDoc } from './cad/docs';
 import { basicSetup } from 'codemirror';
 import { oneDark } from '@codemirror/theme-one-dark';
 import * as THREE from 'three';
-import { AppState } from './state';
+import { AppState, ViewMode } from './state';
 
 // Error decoration setup
 interface ErrorDecoration {
