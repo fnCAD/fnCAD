@@ -12,9 +12,6 @@ export function generateShader(ast: Node): string {
     uniform mat4 projectionMatrix;
     uniform vec3 customCameraPosition;
     uniform float fov;
-    uniform sampler2D previewSceneBuffer;
-    uniform sampler2D previewSceneDepth;
-
     float sqr(float x) {
       return x * x;
     }
@@ -102,9 +99,6 @@ export function generateShader(ast: Node): string {
       float t = 0.0;
       float tmax = 1000.0; // Match camera far plane
 
-      // Sample preview scene at current position
-      vec4 previewSceneData = texture2D(previewSceneBuffer, uv);
-
       const int MAX_STEPS = 256;
       for(int i = 0; i < MAX_STEPS; i++) {
         vec3 p = ro + rd * t;
@@ -120,37 +114,7 @@ export function generateShader(ast: Node): string {
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
           vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
 
-          // Convert hit point to view space
-          vec4 clipPos = customViewMatrix * vec4(ro + rd * t, 1.0);
-          float viewSpaceDepth = -clipPos.z; // View space depth is negative of z in view space
-          
-          // Get depth from preview scene depth buffer [0,1]
-          float previewSceneDepth = texture2D(previewSceneDepth, uv).r;
-          
-          // Convert raymarched hit point to clip space using view and projection matrices
-          vec4 rayWorldPos = vec4(ro + rd * t, 1.0);
-          vec4 rayViewPos = customViewMatrix * rayWorldPos;
-          vec4 rayClipPos = projectionMatrix * rayViewPos;
-          
-          // Perspective divide to get NDC coordinates
-          vec3 rayNDC = rayClipPos.xyz / rayClipPos.w;
-          
-          // Convert to depth buffer space [0,1]
-          float rayDepth = rayNDC.z * 0.5 + 0.5;
-          
-          // Mix in preview scene if visible and closer
-          if(previewSceneData.a > 0.0) {
-            vec3 previewSceneColor = previewSceneData.rgb;
-
-            // Compare depths in [0,1] space
-            // Smaller depth values are closer to camera
-            if (previewSceneDepth < rayDepth) {
-              gl_FragColor = vec4(previewSceneColor, previewSceneData.a);
-              return;
-            }
-          }
-
-          gl_FragColor = vec4(col, 1.0);
+          gl_FragColor = vec4(col, 1.0); 
           return;
         }
         // Missed or too far
@@ -160,12 +124,6 @@ export function generateShader(ast: Node): string {
 
         // Adaptive step size for better performance
         t += d * 0.9; // Slightly conservative step for stability
-      }
-
-      // If no hit but preview scene is visible, show visualization as if unoccluded
-      if(previewSceneData.a > 0.0) {
-        gl_FragColor = vec4(mix(background, previewSceneData.rgb, 1.0), 1.0);
-        return;
       }
 
       gl_FragColor = vec4(background, 1.0);
