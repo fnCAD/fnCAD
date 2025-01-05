@@ -196,6 +196,22 @@ export class AppState {
       this.scene.add(backgroundPlane);
       console.log("Added background plane with material:", planeMaterial);
 
+      // Add test triangle
+      const testGeometry = new THREE.BufferGeometry();
+      const vertices = new Float32Array([
+        -1.0, -1.0, 0.0,
+         1.0, -1.0, 0.0,
+         0.0,  1.0, 0.0
+      ]);
+      testGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      const testMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xff0000,
+        side: THREE.DoubleSide
+      });
+      const testMesh = new THREE.Mesh(testGeometry, testMaterial);
+      this.scene.add(testMesh);
+      console.log("Added test triangle");
+
       // Add mesh with proper material
       console.log("Creating mesh material");
       const material = new THREE.MeshStandardMaterial({ 
