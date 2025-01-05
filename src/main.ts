@@ -297,7 +297,7 @@ const planeMaterial = new THREE.ShaderMaterial({
 const previewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
 scene.add(previewPlane);
 
-const appState = new AppState(renderer, camera);
+const appState = new AppState(renderer, camera, previewPlane, scene);
 
 // Initialize CodeMirror editor
 const editor = new EditorView({
@@ -364,10 +364,13 @@ appState.updateEditorContent(editor.state.doc.toString());
 // Add keyboard handlers
 document.addEventListener('keydown', (event) => {
   if (event.key === 'F5') {
+    appState.setViewMode(ViewMode.Mesh);
     regenerateMesh(false); // Normal detail
   } else if (event.key === 'F6') {
+    appState.setViewMode(ViewMode.Mesh);
     regenerateMesh(true);  // High detail
   } else if (event.key === 'Escape') {
+    appState.setViewMode(ViewMode.Preview);
     appState.cancelCurrentOperation();
   }
 });
