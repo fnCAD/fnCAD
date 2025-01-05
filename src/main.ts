@@ -338,10 +338,14 @@ window._editor = editor;
 // Initial state update
 appState.updateEditorContent(editor.state.doc.toString());
 
-// Add mesh generation handler
+// Add keyboard handlers
 document.addEventListener('keydown', (event) => {
   if (event.key === 'F5') {
-    regenerateMesh();
+    regenerateMesh(false); // Normal detail
+  } else if (event.key === 'F6') {
+    regenerateMesh(true);  // High detail
+  } else if (event.key === 'Escape') {
+    appState.cancelCurrentOperation();
   }
 });
 
