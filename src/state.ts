@@ -22,6 +22,7 @@ export class AppState {
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
   private previewPane: HTMLElement;
+  private previewMaterial: THREE.ShaderMaterial | null = null;
 
   constructor(
     private camera: THREE.PerspectiveCamera
@@ -89,7 +90,9 @@ export class AppState {
       // Create a full-screen quad for raymarching
       const planeGeometry = new THREE.PlaneGeometry(2, 2);
       console.log("Creating preview plane material with shader:", this.currentShader?.substring(0, 100) + "...");
-      const planeMaterial = new THREE.ShaderMaterial({
+      // Create or update preview material
+      if (!this.previewMaterial) {
+        this.previewMaterial = new THREE.ShaderMaterial({
         uniforms: {
           resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
           fov: { value: 75.0 },
@@ -104,7 +107,12 @@ export class AppState {
         `,
         fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); }'
       });
-      const previewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+      } else {
+        // Update existing material's shader
+        this.previewMaterial.fragmentShader = this.currentShader || 'void main() { gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); }';
+        this.previewMaterial.needsUpdate = true;
+      }
+      const previewPlane = new THREE.Mesh(planeGeometry, this.previewMaterial);
       previewPlane.frustumCulled = false; // Ensure plane is always rendered
       this.scene.add(previewPlane);
       console.log("Added preview plane to scene, children:", this.scene.children.length);
