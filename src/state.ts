@@ -162,6 +162,8 @@ export class AppState {
           customViewMatrix: { value: this.camera.matrixWorldInverse },
           projectionMatrix: { value: this.camera.projectionMatrix }
         },
+        depthWrite: false,
+        depthTest: false,
         vertexShader: `
           void main() {
             gl_Position = vec4(position, 1.0);
@@ -224,7 +226,8 @@ export class AppState {
         metalness: 0.0,
         side: THREE.DoubleSide, // Render both sides
         depthWrite: true,
-        depthTest: true
+        depthTest: true,
+        transparent: false
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isMeshObject = true;
