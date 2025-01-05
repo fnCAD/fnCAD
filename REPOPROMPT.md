@@ -1,3 +1,9 @@
+# Repo use guidelines
+
+The details of current tasks and ongoing projects are summarized in md files in the toplevel, such as this one.
+When you finish a task from a TODO, remember to check it off in the file in the same response.
+If it turns out to need more work, add subtasks in the same response.
+
 # Code Style Guidelines
 
 1. Prefer early returns over nested if blocks
@@ -27,10 +33,11 @@
 
 5. Error handling
    - Don't swallow errors silently
-   - Limit try/catch to specific scopes with known errors
+   - Only use try/catch in specific scopes with known errors
    - Prefer `assert` over `return null` if you're not sure
      if a condition may hold - let the runtime tell you.
-   - Don't be afraid of throwing all the way.
+   - Don't overcatch - it's not a problem to throw all the way to the browser/console.
+     Backtraces are **more** valuable than functioning code.
 
 6. Testing
    - Test behavior (end-to-end), not content (returned object properties).
