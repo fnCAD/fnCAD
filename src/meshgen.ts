@@ -176,8 +176,14 @@ export class MeshGenerator {
     mesh: HalfEdgeMesh
   ) {
     if (!neighbor || neighbor.state === CellState.Outside) {
-      mesh.addFace(vertices[0], vertices[1], vertices[2]);
-      mesh.addFace(vertices[2], vertices[1], vertices[3]);
+      // Flip triangle order based on face direction to ensure correct normals
+      if (direction === Direction.PosX || direction === Direction.PosY || direction === Direction.PosZ) {
+        mesh.addFace(vertices[0], vertices[2], vertices[1]);
+        mesh.addFace(vertices[2], vertices[3], vertices[1]);
+      } else {
+        mesh.addFace(vertices[0], vertices[1], vertices[2]);
+        mesh.addFace(vertices[2], vertices[1], vertices[3]);
+      }
     } else if (Array.isArray(neighbor.state)) {
       const childIndices = this.getAdjacentChildIndices(direction);
       const quadVertices = this.getQuadrantVertices(vertices, mesh);
