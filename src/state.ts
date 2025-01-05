@@ -177,7 +177,7 @@ export class AppState {
     // Add mesh with proper material
     console.log("Creating mesh material");
     const material = new THREE.MeshStandardMaterial({ 
-      color: 0xcccccc, // Lighter gray
+      color: 0xffffff, // Full white to match shader
       roughness: 0.5,
       metalness: 0.1,
       side: THREE.DoubleSide,
