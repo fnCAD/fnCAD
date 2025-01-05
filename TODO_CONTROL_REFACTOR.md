@@ -6,7 +6,7 @@ The UI which made sense for testing also needs to be rethought.
 ## 1. Remove Existing Control Systems
 
 ### Task Management
-- [ ] Remove TaskQueue and all task-related code - in progress!
+- [x] Remove TaskQueue and all task-related code.
 - [ ] Replace with simple async callback operations (not await, we need explicit state control)
 - [ ] Add task cancellation support for octree gen and mesh gen (chunk tasks smaller, see below)
 
