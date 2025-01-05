@@ -202,10 +202,13 @@ export class MeshGenerator {
 
       // If computed normal points in same direction as desired normal, keep winding
       // otherwise flip it
-      if (computedNormal.dot(normalVector) > 0) {
+      const dotProduct = computedNormal.dot(normalVector);
+      console.log(`Face direction ${Direction[direction]}: computed normal ${computedNormal.toArray()}, desired ${normalVector.toArray()}, dot ${dotProduct}`);
+      if (dotProduct > 0) {
         mesh.addFace(vertices[0], vertices[1], vertices[2]);
         mesh.addFace(vertices[2], vertices[1], vertices[3]);
       } else {
+        console.log(`Flipping face for direction ${Direction[direction]}`);
         mesh.addFace(vertices[0], vertices[2], vertices[1]);
         mesh.addFace(vertices[2], vertices[3], vertices[1]);
       }
