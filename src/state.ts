@@ -55,6 +55,10 @@ export class AppState {
     // Update shader uniforms if in preview mode
     if (this.viewMode === ViewMode.Preview) {
       const previewMaterial = this.scene.children[0]?.material as THREE.ShaderMaterial;
+      if (!previewMaterial) {
+        console.warn("No preview material found in scene");
+        return;
+      }
       if (previewMaterial?.uniforms) {
         previewMaterial.uniforms.resolution.value.set(
           this.previewPane.clientWidth,
@@ -82,6 +86,7 @@ export class AppState {
       console.log("Creating preview plane");
       const planeGeometry = new THREE.PlaneGeometry(2, 2);
       // Keep plane at z=0 since we're using normalized device coordinates
+      console.log("Creating shader material with shader:", this.currentShader || '(default)');
       const planeMaterial = new THREE.ShaderMaterial({
         uniforms: {
           resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
@@ -95,7 +100,7 @@ export class AppState {
             gl_Position = vec4(position, 1.0);
           }
         `,
-        fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); }'
+        fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); }'
       });
       const previewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
       this.scene.add(previewPlane);
@@ -123,6 +128,7 @@ export class AppState {
   }
 
   private updateShader() {
+    console.log("Updating shader from editor content");
     try {
       const cadAst = parseCAD(this.editorContent);
       const sdfExpr = moduleToSDF(cadAst);
