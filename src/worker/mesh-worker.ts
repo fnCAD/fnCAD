@@ -8,34 +8,35 @@ import { SerializedMesh } from '../types';
 
 interface WorkerMessage {
   type: 'start';
+  taskId: number;
   code: string;
   highDetail: boolean;
 }
 
-interface ProgressMessage {
+export interface ProgressMessage {
   type: 'progress';
+  taskId: number;
   phase: 'octree' | 'mesh';
   progress: number;
 }
 
-interface CompleteMessage {
+export interface CompleteMessage {
   type: 'complete';
+  taskId: number;
   mesh: SerializedMesh;
 }
-
-type OutMessage = ProgressMessage | CompleteMessage;
 
 self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
   if (e.data.type === 'start') {
     // Parse CAD code
     const cadAst = parseCAD(e.data.code);
     const taskId = e.data.taskId;
-    const sdfExpr = moduleToSDF(cadAst);
-    const sdfNode = parseSDF(sdfExpr);
+    const sdfScene = moduleToSDF(cadAst);
+    const sdfNode = parseSDF(sdfScene.expr);
 
     // Generate octree
     const octree = new OctreeNode(CellState.Boundary);
-    const minSize = e.data.highDetail ? 0.1 : 0.5;
+    const minSize = e.data.highDetail ? sdfScene.minSize / 8 : sdfScene.minSize;
     const cellBudget = e.data.highDetail ? 100000 : 10000;
 
     // Report octree progress periodically

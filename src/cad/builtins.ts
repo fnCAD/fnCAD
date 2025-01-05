@@ -19,6 +19,7 @@ import {
   IfStatement,
   AABB,
   AssertStatement,
+  SDFScene,
 } from './types';
 
 export type EvalResult = number | number[];
@@ -273,14 +274,23 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
   throw new Error(`Cannot evaluate node type: ${node.constructor.name}`);
 }
 
-export function moduleToSDF(nodes: Node[]): string {
-  return wrapUnion(
-    flattenScope(nodes, new Context(), 'toplevel', {
+export function moduleToSDF(nodes: Node[]): SDFScene {
+  const context = new Context();
+  context.set('$maxerror', 0.01);
+  context.set('$minsize', 0.1);
+  const result = wrapUnion(
+    flattenScope(nodes, context, 'toplevel', {
       start: { line: 1, column: 1, offset: 0 },
       end: { line: 1, column: 1, offset: 0 },
       source: '',
     })
-  ).expr;
+  );
+
+  // Get mesh settings from context, defaulting if not set
+  const maxError = context.get('$maxerror') as number;
+  const minSize = context.get('$minsize') as number;
+
+  return new SDFScene(result.expr, maxError, minSize);
 }
 
 function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {

@@ -6,7 +6,7 @@ import { generateShader } from './shader';
 import { ParseError } from './cad/errors';
 import { errorDecorationFacet } from './main';
 import { SerializedMesh } from './types';
-import { OrbitControls } from 'three/addons/controls/OrbitControls';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export enum ViewMode {
   Preview,  // GLSL raymarching preview
@@ -288,8 +288,8 @@ export class AppState {
     console.log("Updating shader from editor content:", this.editorContent.substring(0, 100) + "...");
     try {
       const cadAst = parseCAD(this.editorContent);
-      const sdfExpr = moduleToSDF(cadAst);
-      const sdfNode = parseSDF(sdfExpr);
+      const sdfScene = moduleToSDF(cadAst);
+      const sdfNode = parseSDF(sdfScene.expr);
       this.currentShader = generateShader(sdfNode);
 
       // Update preview material if it exists
