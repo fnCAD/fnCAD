@@ -135,10 +135,17 @@ export class AppState {
       this.scene.add(previewPlane);
       console.log("Added preview plane to scene, children:", this.scene.children.length);
     } else if (mode === ViewMode.Mesh && this.currentMesh) {
+      console.log("Setting up mesh mode with vertices:", this.currentMesh.vertices.length / 3);
+      console.log("First few vertices:", this.currentMesh.vertices.slice(0, 9));
+      console.log("First few indices:", this.currentMesh.indices.slice(0, 9));
+      
       // Add mesh to scene
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
       geometry.setIndex(this.currentMesh.indices);
+      
+      console.log("Created geometry with attributes:", geometry.attributes);
+      console.log("Index count:", geometry.index?.count);
       // Add lighting for mesh view
       const ambientLight = new THREE.AmbientLight(0x404040);
       this.scene.add(ambientLight);
@@ -185,7 +192,9 @@ export class AppState {
       });
       const backgroundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
       backgroundPlane.frustumCulled = false;
+      backgroundPlane.renderOrder = -1; // Ensure background renders first
       this.scene.add(backgroundPlane);
+      console.log("Added background plane with material:", planeMaterial);
 
       // Add mesh with proper material
       const material = new THREE.MeshStandardMaterial({ 
@@ -195,7 +204,9 @@ export class AppState {
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isMeshObject = true;
+      mesh.renderOrder = 1; // Ensure mesh renders after background
       this.scene.add(mesh);
+      console.log("Added mesh to scene, total children:", this.scene.children.length);
     }
   }
 
