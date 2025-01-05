@@ -144,6 +144,12 @@ export class AppState {
       const sdfNode = parseSDF(sdfExpr);
       this.currentShader = generateShader(sdfNode);
 
+      // Update preview material if it exists
+      if (this.previewMaterial) {
+        this.previewMaterial.fragmentShader = this.currentShader;
+        this.previewMaterial.needsUpdate = true;
+      }
+
       // Clear any existing error decorations
       if (window._editor) {
         window._editor.dispatch({
