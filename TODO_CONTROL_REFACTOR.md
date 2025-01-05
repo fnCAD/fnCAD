@@ -13,8 +13,8 @@ The UI which made sense for testing also needs to be rethought.
 ### UI Simplification 
 - [ ] Remove all settings panels and overlays
 - [ ] Replace with simple keyboard shortcuts:
-  - F5: Render out octree and mesh (like openscad)
-  - F6: Render octree and mesh at higher default detail
+  - F5: Render and show mesh (like openscad)
+  - F6: Render and show mesh at higher default detail
   - Esc: Cancel current operation
 - [ ] Low Priority: move visualization settings into CAD language:
   ```
@@ -45,6 +45,7 @@ The UI which made sense for testing also needs to be rethought.
 - Single worker instance
 - Clear cancellation protocol
 - If we mesh in the worker, we only need to send the mesh back.
+  - Meaning the octree becomes a pure worker implementation detail.
 - No progress updates, just chunk the tasks smaller (keep state in `self`)
   - Ie. for octree, two commands: 1. "do enough steps to have 100 leaves" 2. "do each leaf"
   - main thread just sends "do the next task".
