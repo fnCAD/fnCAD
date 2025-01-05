@@ -120,24 +120,14 @@ export class AppState {
     console.log("Index count:", geometry.index?.count);
     console.log("Normal attribute created:", geometry.attributes.normal !== undefined);
 
-    // Add lighting for mesh view
-    const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient
+    // Add lighting to match preview shader
+    const ambientLight = new THREE.AmbientLight(0x333333); // 0.2 ambient term from shader
     this.scene.add(ambientLight);
 
-    // Key light
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    keyLight.position.set(1, 2, 3);
-    this.scene.add(keyLight);
-
-    // Fill light
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
-    fillLight.position.set(-2, 1, -1);
-    this.scene.add(fillLight);
-
-    // Back light for rim highlighting
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
-    backLight.position.set(0, 3, -3);
-    this.scene.add(backLight);
+    // Main directional light matching shader's vec3(1,1,1) direction
+    const mainLight = new THREE.DirectionalLight(0xcccccc, 0.8); // 0.8 diffuse term from shader
+    mainLight.position.set(1, 1, 1);
+    this.scene.add(mainLight);
 
     // Create background plane with same shader as preview mode
     const planeGeometry = new THREE.PlaneGeometry(2, 2);
