@@ -24,10 +24,9 @@ export class AppState {
   private previewPane: HTMLElement;
 
   constructor(
-    private camera: THREE.PerspectiveCamera,
-    containerId: string
+    private camera: THREE.PerspectiveCamera
   ) {
-    this.previewPane = document.getElementById(containerId)!;
+    this.previewPane = document.getElementById('preview-pane')!;
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);

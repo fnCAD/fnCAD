@@ -272,7 +272,7 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 camera.position.z = 5;
 
 // Initialize app state
-const appState = new AppState(camera, 'preview-pane');
+const appState = new AppState(camera);
 
 // Initialize CodeMirror editor
 const editor = new EditorView({
