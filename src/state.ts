@@ -149,45 +149,45 @@ export class AppState {
   }
 
   private worker: Worker | null = null;
+  private currentTaskId: number = 0;
 
-  async generateMesh(highDetail: boolean = false): Promise<void> {
-    if (this.meshGenerationInProgress) {
-      return;
+  generateMesh(highDetail: boolean = false): void {
+    // Cancel any existing task
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
     }
 
     this.meshGenerationInProgress = true;
     this.setViewMode(ViewMode.Mesh);
+    const taskId = ++this.currentTaskId;
 
-    try {
-      // Create new worker
-      if (!this.worker) {
-        this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
-          type: 'module'
-        });
+    // Create new worker
+    this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
+      type: 'module'
+    });
+
+    // Set up message handling
+    this.worker.onmessage = (e) => {
+      // Ignore messages from old tasks
+      if (taskId !== this.currentTaskId) return;
+
+      if (e.data.type === 'progress') {
+        // Update progress UI (TODO)
+        console.log(`${e.data.phase} progress: ${e.data.progress * 100}%`);
+      } else if (e.data.type === 'complete') {
+        this.setCurrentMesh(e.data.mesh);
+        this.meshGenerationInProgress = false;
+        this.worker = null;
       }
+    };
 
-      // Set up message handling
-      this.worker.onmessage = (e) => {
-        if (e.data.type === 'progress') {
-          // Update progress UI (TODO)
-          console.log(`${e.data.phase} progress: ${e.data.progress * 100}%`);
-        } else if (e.data.type === 'complete') {
-          this.setCurrentMesh(e.data.mesh);
-          this.meshGenerationInProgress = false;
-        }
-      };
-
-      // Start mesh generation
-      this.worker.postMessage({
-        type: 'start',
-        code: this.editorContent,
-        highDetail
-      });
-    } catch (error) {
-      console.error('Mesh generation error:', error);
-      this.meshGenerationInProgress = false;
-      throw error;
-    }
+    // Start mesh generation
+    this.worker.postMessage({
+      type: 'start',
+      code: this.editorContent,
+      highDetail
+    });
   }
 
   cancelCurrentOperation(): void {
