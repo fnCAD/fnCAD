@@ -329,6 +329,11 @@ export class AppState {
         this.setCurrentMesh(e.data.mesh);
         this.meshGenerationInProgress = false;
         this.worker = null;
+        
+        // Update the view with the new mesh if we're in mesh mode
+        if (this.viewMode === ViewMode.Mesh) {
+          this.setViewMode(ViewMode.Mesh);
+        }
       }
     };
 
