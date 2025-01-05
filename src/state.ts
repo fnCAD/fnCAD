@@ -113,8 +113,12 @@ export class AppState {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
     geometry.setIndex(this.currentMesh.indices);
     
+    // Compute vertex normals for proper lighting
+    geometry.computeVertexNormals();
+    
     console.log("Created geometry with attributes:", geometry.attributes);
     console.log("Index count:", geometry.index?.count);
+    console.log("Normal attribute created:", geometry.attributes.normal !== undefined);
 
     // Add lighting for mesh view
     const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient
