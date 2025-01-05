@@ -55,7 +55,7 @@ export class AppState {
     
     // Update shader uniforms if in preview mode
     if (this.viewMode === ViewMode.Preview) {
-      const previewMaterial = this.scene.children[0]?.material as THREE.ShaderMaterial;
+      const previewMaterial = this.previewMaterial;
       if (!previewMaterial) {
         console.warn("No preview material found in scene");
         return;
@@ -91,8 +91,7 @@ export class AppState {
       const planeGeometry = new THREE.PlaneGeometry(2, 2);
       console.log("Creating preview plane material with shader:", this.currentShader?.substring(0, 100) + "...");
       // Create or update preview material
-      if (!this.previewMaterial) {
-        this.previewMaterial = new THREE.ShaderMaterial({
+      this.previewMaterial = new THREE.ShaderMaterial({
         uniforms: {
           resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
           fov: { value: 75.0 },
@@ -107,11 +106,6 @@ export class AppState {
         `,
         fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); }'
       });
-      } else {
-        // Update existing material's shader
-        this.previewMaterial.fragmentShader = this.currentShader || 'void main() { gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); }';
-        this.previewMaterial.needsUpdate = true;
-      }
       const previewPlane = new THREE.Mesh(planeGeometry, this.previewMaterial);
       previewPlane.frustumCulled = false; // Ensure plane is always rendered
       this.scene.add(previewPlane);
