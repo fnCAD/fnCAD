@@ -277,27 +277,7 @@ previewPane.appendChild(renderer.domElement);
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 5;
 
-// Initialize preview plane for raymarching
-const planeGeometry = new THREE.PlaneGeometry(2, 2);
-const planeMaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    resolution: { value: new THREE.Vector2() },
-    fov: { value: 75.0 },
-    customCameraPosition: { value: new THREE.Vector3() },
-    customViewMatrix: { value: new THREE.Matrix4() },
-    projectionMatrix: { value: new THREE.Matrix4() }
-  },
-  vertexShader: `
-    void main() {
-      gl_Position = vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: 'void main() { gl_FragColor = vec4(0.0); }' // Will be updated by AppState
-});
-const previewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
-scene.add(previewPlane);
-
-const appState = new AppState(renderer, camera, previewPlane, scene);
+const appState = new AppState(renderer, camera, scene);
 
 // Initialize CodeMirror editor
 const editor = new EditorView({

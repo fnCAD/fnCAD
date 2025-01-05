@@ -22,22 +22,45 @@ export class AppState {
   constructor(
     private renderer: THREE.WebGLRenderer,
     private camera: THREE.PerspectiveCamera,
-    private previewPlane: THREE.Mesh,
     private scene: THREE.Scene
   ) {}
 
   setViewMode(mode: ViewMode) {
     this.viewMode = mode;
-    // Toggle visibility based on mode
-    this.previewPlane.visible = (mode === ViewMode.Preview);
+    // Clear scene
+    while(this.scene.children.length > 0) {
+      this.scene.remove(this.scene.children[0]);
+    }
     
-    // Clear any existing mesh when switching to preview
-    if (mode === ViewMode.Preview && this.currentMesh) {
-      // Remove existing mesh from scene
-      const meshObject = this.scene.children.find(child => child.userData.isMeshObject);
-      if (meshObject) {
-        this.scene.remove(meshObject);
-      }
+    // Set up scene based on mode
+    if (mode === ViewMode.Preview) {
+      const planeGeometry = new THREE.PlaneGeometry(2, 2);
+      const planeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          resolution: { value: new THREE.Vector2() },
+          fov: { value: 75.0 },
+          customCameraPosition: { value: new THREE.Vector3() },
+          customViewMatrix: { value: new THREE.Matrix4() },
+          projectionMatrix: { value: new THREE.Matrix4() }
+        },
+        vertexShader: `
+          void main() {
+            gl_Position = vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(0.0); }'
+      });
+      const previewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+      this.scene.add(previewPlane);
+    } else if (mode === ViewMode.Mesh && this.currentMesh) {
+      // Add mesh to scene
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
+      geometry.setIndex(this.currentMesh.indices);
+      const material = new THREE.MeshStandardMaterial({ color: 0x808080 });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.userData.isMeshObject = true;
+      this.scene.add(mesh);
     }
   }
 
