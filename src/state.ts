@@ -5,7 +5,6 @@ import { parse as parseSDF } from './sdf_expressions/parser';
 import { generateShader } from './shader';
 import { ParseError } from './cad/errors';
 import { errorDecorationFacet } from './main';
-import { OctreeNode } from './octree';
 import { SerializedMesh } from './types';
 
 export class AppState {
