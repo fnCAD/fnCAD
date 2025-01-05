@@ -178,8 +178,8 @@ export class AppState {
     console.log("Creating mesh material");
     const material = new THREE.MeshStandardMaterial({ 
       color: 0xffffff, // Full white to match shader
-      roughness: 0.5,
-      metalness: 0.1,
+      roughness: 1.0, // Perfectly diffuse
+      metalness: 0.0, // No metallic reflections
       side: THREE.DoubleSide,
       depthWrite: true,
       depthTest: true,
