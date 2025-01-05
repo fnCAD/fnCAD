@@ -225,6 +225,10 @@ export class AppState {
     if (content !== this.editorContent) {
       this.editorContent = content;
       this.updateShader();
+      // Switch back to preview mode when content changes
+      if (this.viewMode === ViewMode.Mesh) {
+        this.setViewMode(ViewMode.Preview);
+      }
     }
   }
 
