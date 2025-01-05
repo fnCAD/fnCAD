@@ -6,6 +6,7 @@ import { generateShader } from './shader';
 import { ParseError } from './cad/errors';
 import { errorDecorationFacet } from './main';
 import { SerializedMesh } from './types';
+import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
 export enum ViewMode {
   Preview,  // GLSL raymarching preview
@@ -23,6 +24,7 @@ export class AppState {
   private scene: THREE.Scene;
   private previewPane: HTMLElement;
   private previewMaterial: THREE.ShaderMaterial | null = null;
+  private controls: OrbitControls;
 
   constructor(
     private camera: THREE.PerspectiveCamera
@@ -31,6 +33,22 @@ export class AppState {
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);
+
+    // Initialize OrbitControls
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.screenSpacePanning = false;
+    this.controls.minDistance = 0.1;
+    this.controls.maxDistance = 1000.0;
+    this.controls.target.set(0, 0, 0);
+    this.controls.enablePan = true;
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN
+    };
+    this.controls.update();
 
     // Set up initial size
     this.updateSize();
@@ -55,6 +73,9 @@ export class AppState {
 
   private animate = () => {
     requestAnimationFrame(this.animate);
+    
+    // Update controls
+    this.controls.update();
     
     // Update shader uniforms if in preview mode
     if (this.viewMode === ViewMode.Preview) {
