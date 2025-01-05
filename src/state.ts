@@ -79,8 +79,9 @@ export class AppState {
     // Set up scene based on mode
     if (mode === ViewMode.Preview) {
       // Create a full-screen quad for raymarching
+      console.log("Creating preview plane");
       const planeGeometry = new THREE.PlaneGeometry(2, 2);
-      planeGeometry.translate(0, 0, -1); // Move plane in front of camera
+      // Keep plane at z=0 since we're using normalized device coordinates
       const planeMaterial = new THREE.ShaderMaterial({
         uniforms: {
           resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
@@ -94,7 +95,7 @@ export class AppState {
             gl_Position = vec4(position, 1.0);
           }
         `,
-        fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(0.0); }'
+        fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); }'
       });
       const previewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
       this.scene.add(previewPlane);
