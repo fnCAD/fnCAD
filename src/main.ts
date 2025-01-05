@@ -270,10 +270,33 @@ Split(['#editor-pane', '#preview-pane'], {
 // Get preview pane element
 const previewPane = document.getElementById('preview-pane')!;
 
-// Initialize renderer and state
+// Initialize THREE.js scene
+const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 previewPane.appendChild(renderer.domElement);
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
+
+// Initialize preview plane for raymarching
+const planeGeometry = new THREE.PlaneGeometry(2, 2);
+const planeMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    resolution: { value: new THREE.Vector2() },
+    fov: { value: 75.0 },
+    customCameraPosition: { value: new THREE.Vector3() },
+    customViewMatrix: { value: new THREE.Matrix4() },
+    projectionMatrix: { value: new THREE.Matrix4() }
+  },
+  vertexShader: `
+    void main() {
+      gl_Position = vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: 'void main() { gl_FragColor = vec4(0.0); }' // Will be updated by AppState
+});
+const previewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+scene.add(previewPlane);
+
 const appState = new AppState(renderer, camera);
 
 // Initialize CodeMirror editor
@@ -368,6 +391,29 @@ saveStlButton.addEventListener('click', () => {
 // Start animation loop
 function animate() {
   requestAnimationFrame(animate);
+  
+  // Update shader uniforms
+  if (planeMaterial.uniforms) {
+    planeMaterial.uniforms.resolution.value.set(
+      renderer.domElement.width,
+      renderer.domElement.height
+    );
+    planeMaterial.uniforms.customCameraPosition.value.copy(camera.position);
+    planeMaterial.uniforms.customViewMatrix.value.copy(camera.matrixWorldInverse);
+    planeMaterial.uniforms.projectionMatrix.value.copy(camera.projectionMatrix);
+  }
+  
   renderer.render(scene, camera);
 }
 animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  const width = previewPane.clientWidth;
+  const height = previewPane.clientHeight;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+});
+// Initial size
+renderer.setSize(previewPane.clientWidth, previewPane.clientHeight);
