@@ -125,7 +125,7 @@ export class AppState {
     this.scene.add(ambientLight);
 
     // Main directional light matching shader's vec3(1,1,1) direction
-    const mainLight = new THREE.DirectionalLight(0xcccccc, 0.8); // 0.8 diffuse term from shader
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8); // 0.8 diffuse term from shader
     mainLight.position.set(1, 1, 1);
     this.scene.add(mainLight);
 
