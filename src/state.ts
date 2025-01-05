@@ -74,16 +74,21 @@ export class AppState {
   }
 
   setViewMode(mode: ViewMode) {
+    console.log("Setting view mode to:", mode);
     this.viewMode = mode;
+    
+    console.log("Clearing scene, current children:", this.scene.children.length);
     // Clear scene
     while(this.scene.children.length > 0) {
       this.scene.remove(this.scene.children[0]);
     }
+    console.log("Scene cleared, remaining children:", this.scene.children.length);
     
     // Set up scene based on mode
     if (mode === ViewMode.Preview) {
       // Create a full-screen quad for raymarching
       const planeGeometry = new THREE.PlaneGeometry(2, 2);
+      console.log("Creating preview plane material with shader:", this.currentShader?.substring(0, 100) + "...");
       const planeMaterial = new THREE.ShaderMaterial({
         uniforms: {
           resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
@@ -127,7 +132,7 @@ export class AppState {
   }
 
   private updateShader() {
-    console.log("Updating shader from editor content");
+    console.log("Updating shader from editor content:", this.editorContent.substring(0, 100) + "...");
     try {
       const cadAst = parseCAD(this.editorContent);
       const sdfExpr = moduleToSDF(cadAst);
