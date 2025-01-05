@@ -177,7 +177,7 @@ export class MeshGenerator {
   ) {
     if (!neighbor || neighbor.state === CellState.Outside) {
       // Flip triangle order based on face direction to ensure correct normals
-      if (direction === Direction.PosX || direction === Direction.PosY || direction === Direction.PosZ) {
+      if (direction === Direction.NegX || direction === Direction.NegY || direction === Direction.NegZ) {
         mesh.addFace(vertices[0], vertices[2], vertices[1]);
         mesh.addFace(vertices[2], vertices[3], vertices[1]);
       } else {
