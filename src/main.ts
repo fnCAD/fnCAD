@@ -307,12 +307,7 @@ smooth_difference(0.03) {
       javascript(),
       EditorView.updateListener.of(async (update: ViewUpdate) => {
         if (update.docChanged) {
-          stateManager.updateEditorContent(update.state.doc.toString());
-          updateOctree();
-
-          if (settingsManager.isMeshVisible()) {
-            await regenerateMesh();
-          }
+          appState.updateEditorContent(update.state.doc.toString());
         }
       }),
       oneDark,
@@ -374,9 +369,9 @@ function regenerateMesh(highDetail: boolean = false) {
 // Add STL export handler
 const saveStlButton = document.getElementById('save-stl') as HTMLButtonElement;
 saveStlButton.addEventListener('click', () => {
-  const state = stateManager.getState();
-  if (state.currentMesh) {
-    downloadSTL(state.currentMesh, 'model.stl');
+  const currentMesh = appState.getCurrentMesh();
+  if (currentMesh) {
+    downloadSTL(currentMesh, 'model.stl');
   } else {
     alert('Please generate a mesh first');
   }
