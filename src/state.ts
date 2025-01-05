@@ -102,12 +102,10 @@ export class AppState {
     console.log("Setting view mode to:", mode);
     this.viewMode = mode;
     
-    console.log("Clearing scene, current children:", this.scene.children.length);
     // Clear scene
     while(this.scene.children.length > 0) {
       this.scene.remove(this.scene.children[0]);
     }
-    console.log("Scene cleared, remaining children:", this.scene.children.length);
     
     // Set up scene based on mode
     if (mode === ViewMode.Preview) {
@@ -198,36 +196,18 @@ export class AppState {
       this.scene.add(backgroundPlane);
       console.log("Added background plane with material:", planeMaterial);
 
-      // Add test triangle
-      const testGeometry = new THREE.BufferGeometry();
-      const vertices = new Float32Array([
-        -0.5,  0.5, 1.0,  // Smaller triangle closer to camera
-         0.5,  0.5, 1.0,
-         0.0, -0.5, 1.0
-      ]);
-      testGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-      const testMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xff0000,
-        side: THREE.DoubleSide,
-        depthTest: false,  // Ensure it's always visible
-        depthWrite: false,
-        transparent: true,
-        opacity: 0.8
-      });
-      const testMesh = new THREE.Mesh(testGeometry, testMaterial);
-      this.scene.add(testMesh);
-      console.log("Added test triangle");
 
       // Add mesh with proper material
       console.log("Creating mesh material");
       const material = new THREE.MeshStandardMaterial({ 
-        color: 0x808080,
-        roughness: 0.7,
-        metalness: 0.0,
-        side: THREE.DoubleSide, // Render both sides
+        color: 0xcccccc, // Lighter gray
+        roughness: 0.5,
+        metalness: 0.1,
+        side: THREE.DoubleSide,
         depthWrite: true,
         depthTest: true,
-        transparent: false
+        transparent: false,
+        flatShading: false // Enable smooth shading
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isMeshObject = true;
