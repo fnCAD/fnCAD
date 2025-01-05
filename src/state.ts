@@ -98,6 +98,99 @@ export class AppState {
     this.renderer.render(this.scene, this.camera);
   }
 
+  private setupMeshView() {
+    if (!this.currentMesh) {
+      console.warn("No mesh data available");
+      return;
+    }
+
+    console.log("Setting up mesh mode with vertices:", this.currentMesh.vertices.length / 3);
+    console.log("First few vertices:", this.currentMesh.vertices.slice(0, 9));
+    console.log("First few indices:", this.currentMesh.indices.slice(0, 9));
+    
+    // Add mesh to scene
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
+    geometry.setIndex(this.currentMesh.indices);
+    
+    console.log("Created geometry with attributes:", geometry.attributes);
+    console.log("Index count:", geometry.index?.count);
+
+    // Add lighting for mesh view
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    this.scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 1, 1);
+    this.scene.add(directionalLight);
+
+    // Create background plane with same shader as preview mode
+    const planeGeometry = new THREE.PlaneGeometry(2, 2);
+    const planeMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
+        customCameraPosition: { value: this.camera.position },
+        customViewMatrix: { value: this.camera.matrixWorldInverse },
+        projectionMatrix: { value: this.camera.projectionMatrix }
+      },
+      depthWrite: false,
+      depthTest: false,
+      vertexShader: `
+        void main() {
+          gl_Position = vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec2 resolution;
+        uniform vec3 customCameraPosition;
+        uniform mat4 customViewMatrix;
+        uniform mat4 projectionMatrix;
+
+        vec3 getRayDirection(vec2 uv, vec3 camPos, mat4 viewMatrix) {
+          vec2 ndc = (uv * 2.0 - 1.0);
+          float aspect = resolution.x / resolution.y;
+          vec3 rayView = vec3(ndc.x * aspect, ndc.y, -1.0);
+          mat3 viewToWorld = mat3(inverse(viewMatrix));
+          return normalize(viewToWorld * rayView);
+        }
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / resolution.xy;
+          vec3 rd = getRayDirection(uv, customCameraPosition, customViewMatrix);
+          vec3 background = normalize(rd) * 0.5 + 0.5;
+          background *= background;
+          gl_FragColor = vec4(background, 1.0);
+        }
+      `
+    });
+    const backgroundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+    backgroundPlane.frustumCulled = false;
+    backgroundPlane.renderOrder = -1; // Ensure background renders first
+    this.scene.add(backgroundPlane);
+    console.log("Added background plane with material:", planeMaterial);
+
+    // Add mesh with proper material
+    console.log("Creating mesh material");
+    const material = new THREE.MeshStandardMaterial({ 
+      color: 0xcccccc, // Lighter gray
+      roughness: 0.5,
+      metalness: 0.1,
+      side: THREE.DoubleSide,
+      depthWrite: true,
+      depthTest: true,
+      transparent: false,
+      flatShading: false // Enable smooth shading
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.userData.isMeshObject = true;
+    mesh.renderOrder = 1; // Ensure mesh renders after background
+    mesh.position.z = 0.01; // Slight offset to avoid z-fighting
+    console.log("Mesh material:", material);
+    console.log("Mesh geometry:", geometry);
+    console.log("Mesh position:", mesh.position);
+    this.scene.add(mesh);
+    console.log("Added mesh to scene, total children:", this.scene.children.length);
+  }
+
   setViewMode(mode: ViewMode) {
     console.log("Setting view mode to:", mode);
     this.viewMode = mode;
@@ -132,92 +225,8 @@ export class AppState {
       previewPlane.frustumCulled = false; // Ensure plane is always rendered
       this.scene.add(previewPlane);
       console.log("Added preview plane to scene, children:", this.scene.children.length);
-    } else if (mode === ViewMode.Mesh && this.currentMesh) {
-      console.log("Setting up mesh mode with vertices:", this.currentMesh.vertices.length / 3);
-      console.log("First few vertices:", this.currentMesh.vertices.slice(0, 9));
-      console.log("First few indices:", this.currentMesh.indices.slice(0, 9));
-      
-      // Add mesh to scene
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
-      geometry.setIndex(this.currentMesh.indices);
-      
-      console.log("Created geometry with attributes:", geometry.attributes);
-      console.log("Index count:", geometry.index?.count);
-      // Add lighting for mesh view
-      const ambientLight = new THREE.AmbientLight(0x404040);
-      this.scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(1, 1, 1);
-      this.scene.add(directionalLight);
-
-      // Create background plane with same shader as preview mode
-      const planeGeometry = new THREE.PlaneGeometry(2, 2);
-      const planeMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
-          customCameraPosition: { value: this.camera.position },
-          customViewMatrix: { value: this.camera.matrixWorldInverse },
-          projectionMatrix: { value: this.camera.projectionMatrix }
-        },
-        depthWrite: false,
-        depthTest: false,
-        vertexShader: `
-          void main() {
-            gl_Position = vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform vec2 resolution;
-          uniform vec3 customCameraPosition;
-          uniform mat4 customViewMatrix;
-          uniform mat4 projectionMatrix;
-
-          vec3 getRayDirection(vec2 uv, vec3 camPos, mat4 viewMatrix) {
-            vec2 ndc = (uv * 2.0 - 1.0);
-            float aspect = resolution.x / resolution.y;
-            vec3 rayView = vec3(ndc.x * aspect, ndc.y, -1.0);
-            mat3 viewToWorld = mat3(inverse(viewMatrix));
-            return normalize(viewToWorld * rayView);
-          }
-
-          void main() {
-            vec2 uv = gl_FragCoord.xy / resolution.xy;
-            vec3 rd = getRayDirection(uv, customCameraPosition, customViewMatrix);
-            vec3 background = normalize(rd) * 0.5 + 0.5;
-            background *= background;
-            gl_FragColor = vec4(background, 1.0);
-          }
-        `
-      });
-      const backgroundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
-      backgroundPlane.frustumCulled = false;
-      backgroundPlane.renderOrder = -1; // Ensure background renders first
-      this.scene.add(backgroundPlane);
-      console.log("Added background plane with material:", planeMaterial);
-
-
-      // Add mesh with proper material
-      console.log("Creating mesh material");
-      const material = new THREE.MeshStandardMaterial({ 
-        color: 0xcccccc, // Lighter gray
-        roughness: 0.5,
-        metalness: 0.1,
-        side: THREE.DoubleSide,
-        depthWrite: true,
-        depthTest: true,
-        transparent: false,
-        flatShading: false // Enable smooth shading
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.userData.isMeshObject = true;
-      mesh.renderOrder = 1; // Ensure mesh renders after background
-      mesh.position.z = 0.01; // Slight offset to avoid z-fighting
-      console.log("Mesh material:", material);
-      console.log("Mesh geometry:", geometry);
-      console.log("Mesh position:", mesh.position);
-      this.scene.add(mesh);
-      console.log("Added mesh to scene, total children:", this.scene.children.length);
+    } else if (mode === ViewMode.Mesh) {
+      this.setupMeshView();
     }
   }
 
