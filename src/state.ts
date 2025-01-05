@@ -31,15 +31,18 @@ export class AppState {
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);
-    
+
     // Set up initial size
     this.updateSize();
-    
+
     // Handle window resize
     window.addEventListener('resize', () => this.updateSize());
-    
+
     // Start render loop
     this.animate();
+
+    // Set initial view mode
+    this.setViewMode(ViewMode.Preview);
   }
 
   private updateSize() {
