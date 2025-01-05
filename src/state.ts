@@ -283,27 +283,23 @@ export class AppState {
     return this.currentMesh;
   }
 
-  private worker: Worker | null = null;
+  private worker?: Worker;
   private currentTaskId: number = 0;
 
   generateMesh(highDetail: boolean = false): void {
-    // Cancel any existing task
-    if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
-    }
-
     this.meshGenerationInProgress = true;
     this.setViewMode(ViewMode.Mesh);
     const taskId = ++this.currentTaskId;
 
-    // Create new worker
-    this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
-      type: 'module'
-    });
+    // Create worker if it doesn't exist
+    if (!this.worker) {
+      this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
+        type: 'module'
+      });
+    }
 
     // Set up message handling
-    this.worker.onmessage = (e) => {
+    const messageHandler = (e: MessageEvent) => {
       // Ignore messages from old tasks
       if (taskId !== this.currentTaskId) return;
 
@@ -350,8 +346,8 @@ export class AppState {
       throw error;
     }
 
-    // Add error handler
-    this.worker.onerror = (error) => {
+    // Set up error handler
+    const errorHandler = (error: ErrorEvent) => {
       console.error('Mesh generation worker error:', error);
       this.cancelCurrentOperation();
       const progressElement = this.previewPane.querySelector('.mesh-progress');
@@ -362,10 +358,8 @@ export class AppState {
   }
 
   cancelCurrentOperation(): void {
-    if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
-    }
+    // Don't terminate the worker, just increment the task ID to ignore old messages
+    ++this.currentTaskId;
     this.meshGenerationInProgress = false;
     this.setViewMode(ViewMode.Preview);
   }
