@@ -298,6 +298,14 @@ export class AppState {
       });
     }
 
+    // Remove any existing handlers
+    this.worker.onmessage = null;
+    this.worker.onerror = null;
+
+    // Add new handlers
+    this.worker.onmessage = messageHandler;
+    this.worker.onerror = errorHandler;
+
     // Set up message handling
     const messageHandler = (e: MessageEvent) => {
       // Ignore messages from old tasks
@@ -334,6 +342,14 @@ export class AppState {
     };
 
     // Start mesh generation
+    // Remove any existing handlers
+    this.worker.onmessage = null;
+    this.worker.onerror = null;
+
+    // Add new handlers
+    this.worker.onmessage = messageHandler;
+    this.worker.onerror = errorHandler;
+
     try {
       this.worker.postMessage({
         type: 'start',
@@ -345,16 +361,6 @@ export class AppState {
       this.cancelCurrentOperation();
       throw error;
     }
-
-    // Set up error handler
-    const errorHandler = (error: ErrorEvent) => {
-      console.error('Mesh generation worker error:', error);
-      this.cancelCurrentOperation();
-      const progressElement = this.previewPane.querySelector('.mesh-progress');
-      if (progressElement) {
-        progressElement.remove();
-      }
-    };
   }
 
   cancelCurrentOperation(): void {
