@@ -82,7 +82,7 @@ describe('Shader Generation and Raymarching', () => {
       }
     `;
     const ast = parse(cadCode);
-    const sdfExpr = moduleToSDF(ast);
+    const sdfExpr = moduleToSDF(ast).expr;
     testRaymarchFromAllAngles(sdfExpr);
   });
 
@@ -96,7 +96,7 @@ describe('Shader Generation and Raymarching', () => {
       }
     `;
     const ast = parse(cadCode);
-    const sdfExpr = moduleToSDF(ast);
+    const sdfExpr = moduleToSDF(ast).expr;
     testRaymarchFromAllAngles(sdfExpr);
   });
 

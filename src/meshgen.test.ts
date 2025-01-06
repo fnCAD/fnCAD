@@ -15,7 +15,7 @@ describe('Mesh generation', () => {
     const cadAst = parse(cadCode);
 
     // Convert to SDF expression
-    const sdfExpr = moduleToSDF(cadAst);
+    const sdfExpr = moduleToSDF(cadAst).expr;
 
     // Parse SDF to evaluatable AST
     const sdfAst = parseSDF(sdfExpr);

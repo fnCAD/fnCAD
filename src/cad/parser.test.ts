@@ -353,7 +353,7 @@ describe('CAD Parser', () => {
 describe('OpenSCAD-like Syntax', () => {
   function compileToSDF(input: string): string {
     const ast = parse(input);
-    return moduleToSDF(ast);
+    return moduleToSDF(ast).expr;
   }
 
   it('handles module definitions', () => {
