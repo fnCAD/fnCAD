@@ -10,6 +10,7 @@ export interface HalfEdge {
   vertexIndex: number; // Index of vertex this points TO
   nextIndex: number; // Next half-edge in face loop
   pairIndex: number; // Opposite half-edge
+  content?: Content; // Surface content from SDF evaluation
 }
 
 interface SplitEdges {
@@ -61,7 +62,7 @@ export class HalfEdgeMesh {
     return idx;
   }
 
-  addFace(v1: number, v2: number, v3: number): number {
+  addFace(v1: number, v2: number, v3: number, content: Content): number { // Returns starting index of created half-edges
     if (v1 < 0 || v1 >= this.vertices.length)
       throw new Error(`v1 ${v1} out of bounds 0 .. ${this.vertices.length}`);
     if (v2 < 0 || v2 >= this.vertices.length)
@@ -76,9 +77,9 @@ export class HalfEdgeMesh {
     const he3Index = startIndex + 2;
 
     this.halfEdges.push(
-      { vertexIndex: v2, nextIndex: he2Index, pairIndex: -1 },
-      { vertexIndex: v3, nextIndex: he3Index, pairIndex: -1 },
-      { vertexIndex: v1, nextIndex: he1Index, pairIndex: -1 }
+      { vertexIndex: v2, nextIndex: he2Index, pairIndex: -1, content: content },
+      { vertexIndex: v3, nextIndex: he3Index, pairIndex: -1, content: content },
+      { vertexIndex: v1, nextIndex: he1Index, pairIndex: -1, content: content }
     );
 
     // Link up pairs
@@ -136,9 +137,9 @@ export class HalfEdgeMesh {
 
     // Add new half-edges
     this.halfEdges.push(
-      { vertexIndex: vertexC, nextIndex: indCA, pairIndex: indCX },
-      { vertexIndex: vertexX, nextIndex: indXB, pairIndex: indXC },
-      { vertexIndex: vertexB, nextIndex: indBC, pairIndex: -1 }
+      { vertexIndex: vertexC, nextIndex: indCA, pairIndex: indCX, content: AB.content },
+      { vertexIndex: vertexX, nextIndex: indXB, pairIndex: indXC, content: AB.content },
+      { vertexIndex: vertexB, nextIndex: indBC, pairIndex: -1, content: AB.content }
     );
 
     // AB becomes AX.

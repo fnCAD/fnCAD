@@ -163,7 +163,8 @@ export class MeshGenerator {
         face.vertices.map((a) => vertexIndex(a)),
         size,
         face.direction,
-        mesh
+        mesh,
+        node.content
       );
     });
   }
@@ -173,16 +174,17 @@ export class MeshGenerator {
     vertices: number[],
     size: number,
     direction: Direction,
-    mesh: HalfEdgeMesh
+    mesh: HalfEdgeMesh,
+    content: Content
   ) {
     if (!neighbor || neighbor.state === CellState.Outside) {
       // Flip winding for NegX, PosY, and NegZ faces (empirically determined)
       if (direction === Direction.NegX || direction === Direction.PosY || direction === Direction.NegZ) {
-        mesh.addFace(vertices[0], vertices[2], vertices[1]);
-        mesh.addFace(vertices[2], vertices[3], vertices[1]);
+        mesh.addFace(vertices[0], vertices[2], vertices[1], content);
+        mesh.addFace(vertices[2], vertices[3], vertices[1], content);
       } else {
-        mesh.addFace(vertices[0], vertices[1], vertices[2]);
-        mesh.addFace(vertices[2], vertices[1], vertices[3]);
+        mesh.addFace(vertices[0], vertices[1], vertices[2], content);
+        mesh.addFace(vertices[2], vertices[1], vertices[3], content);
       }
     } else if (Array.isArray(neighbor.state)) {
       const childIndices = this.getAdjacentChildIndices(direction);
