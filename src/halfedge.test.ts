@@ -18,8 +18,8 @@ describe('HalfEdgeMesh', () => {
       const v3 = mesh.addVertex(new THREE.Vector3(1, 1, 0));
 
       // Add triangles - this also creates and pairs the half-edges
-      mesh.addFace(v0, v1, v2); // First triangle
-      mesh.addFace(v1, v3, v2); // Second triangle
+      mesh.addFace(v0, v1, v2, { category: 'edge' }); // First triangle
+      mesh.addFace(v1, v3, v2, { category: 'edge' }); // Second triangle
     });
 
     test('splits shared edge correctly', () => {
@@ -58,7 +58,7 @@ describe('HalfEdgeMesh', () => {
       const a = m2.addVertex(new THREE.Vector3(0, 0, 0));
       const b = m2.addVertex(new THREE.Vector3(1, 0, 0));
       const c = m2.addVertex(new THREE.Vector3(0, 1, 0));
-      const face = m2.addFace(a, b, c);
+      const face = m2.addFace(a, b, c, { category: 'edge' });
 
       // Attempt to split unpaired edge should throw
       expect(() => m2.splitEdge(face, new THREE.Vector3(0, 0, 0))).toThrow(
@@ -74,8 +74,8 @@ describe('HalfEdgeMesh', () => {
       const c = mesh.addVertex(new THREE.Vector3(0, 1, 0));
 
       // Add two faces sharing all vertices
-      mesh.addFace(a, b, c); // ABC
-      mesh.addFace(c, b, a); // CBA - same vertices, opposite winding
+      mesh.addFace(a, b, c, { category: 'edge' }); // ABC
+      mesh.addFace(c, b, a, { category: 'edge' }); // CBA - same vertices, opposite winding
 
       // This mesh is trivially manifold
       expect(mesh.isManifold()).toBe(true);
@@ -95,7 +95,7 @@ describe('HalfEdgeMesh', () => {
       const v2 = mesh.addVertex(new THREE.Vector3(0, 0.9, 0)); // Slightly inside
       const v3 = mesh.addVertex(new THREE.Vector3(0, 0, 1.05)); // Slightly outside
 
-      mesh.addFace(v1, v2, v3);
+      mesh.addFace(v1, v2, v3, { category: 'edge' });
 
       // SDF for a unit sphere
       const sphereSDF = (p: THREE.Vector3) => p.length() - 1;

@@ -1,4 +1,4 @@
-import { Node } from './sdf_expressions/types';
+import { Node, Content } from './sdf_expressions/types';
 import { Interval } from './interval';
 import * as THREE from 'three';
 
@@ -23,7 +23,8 @@ export class OctreeNode {
   constructor(
     public state: CellState | OctreeNode[],
     public readonly parent: OctreeNode | null = null,
-    public readonly octant: number = -1
+    public readonly octant: number = -1,
+    public readonly content: Content | null = null,
   ) {}
 
   public children(): OctreeNode[] | null {
@@ -234,7 +235,7 @@ export function subdivideOctree(
           break;
       }
     }
-    children.push(new OctreeNode(state, node, i));
+    children.push(new OctreeNode(state, node, i, content));
 
     if (state !== CellState.Boundary || quart < adjMinSize) {
       continue;

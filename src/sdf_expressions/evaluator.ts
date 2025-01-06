@@ -372,7 +372,7 @@ class MinFunctionCall extends FunctionCallNode {
       return { category: 'edge', node: this };
     }
     if (faces.length === 1) {
-      return { category: 'face', node: faces[0].node };
+      return { category: 'face', node: faces[0]!.node };
     }
 
     // All remaining children must be 'outside'

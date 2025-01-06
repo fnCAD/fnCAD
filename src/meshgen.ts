@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { SerializedMesh } from './types';
 import { HalfEdgeMesh } from './halfedge';
 import { OctreeNode, Direction, CellState, octreeChildCenter } from './octree';
-import { Node } from './sdf_expressions/types';
+import { Node, Content } from './sdf_expressions/types';
 
 /**
  * Generates a triangle mesh from an octree representation of an SDF
@@ -193,7 +193,7 @@ export class MeshGenerator {
       // For each quadrant of the face
       for (let i = 0; i < 4; i++) {
         const childNeighbor = neighbor.state[childIndices[i]];
-        this.considerNeighborFace(childNeighbor, quadVertices[i], size / 2, direction, mesh);
+        this.considerNeighborFace(childNeighbor, quadVertices[i], size / 2, direction, mesh, content);
       }
     }
   }

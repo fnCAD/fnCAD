@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MaxHeap } from '@datastructures-js/heap';
 import { SerializedMesh } from './types';
+import { Content } from './sdf_expressions/types';
 
 export interface Vertex {
   position: THREE.Vector3;
