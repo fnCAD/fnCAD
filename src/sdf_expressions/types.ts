@@ -3,6 +3,7 @@ import { GLSLContext } from './glslgen';
 
 export type Content = null | {
   category: 'face' | 'edge' | 'outside' | 'inside';
+  node?: Node;  // Only set for 'face' and 'edge' categories
 };
 
 export interface Node {

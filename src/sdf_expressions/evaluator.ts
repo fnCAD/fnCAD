@@ -139,9 +139,9 @@ export class UnaryOpNode implements Node {
       case 'outside':
         return { category: 'inside' };
       case 'face':
-        return { category: 'face' };
+        return { category: 'face', node: content.node };
       case 'edge':
-        return { category: 'edge' };
+        return { category: 'edge', node: content.node };
     }
   }
 }
@@ -367,12 +367,12 @@ class MinFunctionCall extends FunctionCallNode {
     }
 
     // Count faces
-    const faceCount = contents.filter((c) => c?.category === 'face').length;
-    if (faceCount > 1) {
-      return { category: 'edge' };
+    const faces = contents.filter((c) => c?.category === 'face');
+    if (faces.length > 1) {
+      return { category: 'edge', node: this };
     }
-    if (faceCount === 1) {
-      return { category: 'face' };
+    if (faces.length === 1) {
+      return { category: 'face', node: faces[0].node };
     }
 
     // All remaining children must be 'outside'
@@ -480,7 +480,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     // Use our own evaluateInterval to determine if we contain a potential face
     const interval = this.evaluateInterval(x, y, z);
     if (interval.contains(0)) {
-      return { category: 'face' };
+      return { category: 'face', node: this };
     }
     return interval.max < 0 ? { category: 'inside' } : { category: 'outside' };
   }
@@ -762,7 +762,7 @@ class FaceFunctionCall extends FunctionCallNode {
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const interval = this.args[0].evaluateInterval(x, y, z);
     if (interval.contains(0)) {
-      return { category: 'face' };
+      return { category: 'face', node: this };
     }
     return interval.max < 0 ? { category: 'inside' } : { category: 'outside' };
   }
