@@ -24,7 +24,7 @@ export class OctreeNode {
     public state: CellState | OctreeNode[],
     public readonly parent: OctreeNode | null = null,
     public readonly octant: number = -1,
-    public readonly content: Content | null = null,
+    public readonly content: Content = null,
   ) {}
 
   public children(): OctreeNode[] | null {

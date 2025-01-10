@@ -8,8 +8,13 @@ function constantValue(node: Node): number {
   throw new Error(`Expected constant numeric value, but got ${node}`);
 }
 
-export class NumberNode implements Node {
-  constructor(public readonly value: number) {}
+export class NumberNode extends Node {
+  evaluate: (x: number, y: number, z: number) => number;
+
+  constructor(public readonly value: number) {
+    super();
+    this.evaluate = this.compileEvaluate();
+  }
 
   evaluateStr(_xname: string, _yname: string, _zname: string, _depth: number): string {
     return this.value.toString();
@@ -30,8 +35,13 @@ export class NumberNode implements Node {
   }
 }
 
-export class VariableNode implements Node {
-  constructor(public readonly name: string) {}
+export class VariableNode extends Node {
+  evaluate: (x: number, y: number, z: number) => number;
+
+  constructor(public readonly name: string) {
+    super();
+    this.evaluate = this.compileEvaluate();
+  }
 
   evaluateStr(xname: string, yname: string, zname: string, _depth: number): string {
     switch (this.name) {
@@ -72,12 +82,17 @@ export class VariableNode implements Node {
   }
 }
 
-export class BinaryOpNode implements Node {
+export class BinaryOpNode extends Node {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(
     public readonly operator: '+' | '-' | '*' | '/',
     public readonly left: Node,
     public readonly right: Node
-  ) {}
+  ) {
+    super();
+    this.evaluate = this.compileEvaluate();
+  }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return `(${this.left.evaluateStr(xname, yname, zname, depth)} ${this.operator} ${this.right.evaluateStr(xname, yname, zname, depth)})`;
@@ -109,11 +124,16 @@ export class BinaryOpNode implements Node {
   }
 }
 
-export class UnaryOpNode implements Node {
+export class UnaryOpNode extends Node {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(
     public readonly operator: '-',
     public readonly operand: Node
-  ) {}
+  ) {
+    super();
+    this.evaluate = this.compileEvaluate();
+  }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     return `(-${this.operand.evaluateStr(xname, yname, zname, depth)})`;
@@ -152,11 +172,13 @@ function enforceArgumentLength(name: string, args: Node[], expected: number) {
   }
 }
 
-abstract class FunctionCallNode implements Node {
+abstract class FunctionCallNode extends Node {
   constructor(
     public readonly name: string,
     public readonly args: Node[]
-  ) {}
+  ) {
+    super();
+  }
 
   abstract evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
   abstract evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
@@ -202,9 +224,12 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
 }
 
 class SinFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('sin', args);
     enforceArgumentLength('sin', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -225,9 +250,12 @@ class SinFunctionCall extends FunctionCallNode {
 }
 
 class CosFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('cos', args);
     enforceArgumentLength('cos', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -248,9 +276,12 @@ class CosFunctionCall extends FunctionCallNode {
 }
 
 class SqrtFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('sqrt', args);
     enforceArgumentLength('sqrt', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -271,9 +302,12 @@ class SqrtFunctionCall extends FunctionCallNode {
 }
 
 class SqrFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('sqr', args);
     enforceArgumentLength('sqr', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -297,9 +331,12 @@ class SqrFunctionCall extends FunctionCallNode {
 }
 
 class LogFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('log', args);
     enforceArgumentLength('log', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -320,9 +357,12 @@ class LogFunctionCall extends FunctionCallNode {
 }
 
 class MinFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('min', args);
     if (args.length < 1) throw new Error('min requires at least 1 argument');
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -358,7 +398,7 @@ class MinFunctionCall extends FunctionCallNode {
 
     // If any child is edge, the union is edge
     if (contents.some((c) => c?.category === 'edge')) {
-      return { category: 'edge' };
+      return { category: 'edge', node: this };
     }
 
     // Propagate invalid materials so we can exclude the case going forward.
@@ -381,9 +421,12 @@ class MinFunctionCall extends FunctionCallNode {
 }
 
 class MaxFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('max', args);
     if (args.length < 1) throw new Error('max requires at least 1 argument');
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -419,16 +462,16 @@ class MaxFunctionCall extends FunctionCallNode {
 
     // If any child is edge, the intersection is edge
     if (contents.some((c) => c?.category === 'edge')) {
-      return { category: 'edge' };
+      return { category: 'edge', node: this };
     }
 
     // Count faces
     const faceCount = contents.filter((c) => c?.category === 'face').length;
     if (faceCount > 1) {
-      return { category: 'edge' };
+      return { category: 'edge', node: this };
     }
     if (faceCount === 1) {
-      return { category: 'face' };
+      return { category: 'face', node: this.args[contents.findIndex((c) => c?.category === 'face')] };
     }
 
     // If any child is null, result is null
@@ -442,9 +485,12 @@ class MaxFunctionCall extends FunctionCallNode {
 }
 
 class SmoothUnionFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('smooth_union', args);
     enforceArgumentLength('smooth_union', args, 3);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -487,9 +533,12 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 }
 
 class ExpFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('exp', args);
     enforceArgumentLength('exp', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -510,9 +559,12 @@ class ExpFunctionCall extends FunctionCallNode {
 }
 
 class AbsFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('abs', args);
     enforceArgumentLength('abs', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -540,6 +592,7 @@ class AbsFunctionCall extends FunctionCallNode {
 }
 
 class ScaleFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
   #body: Node;
   #sx: Node;
   #sy: Node;
@@ -549,6 +602,7 @@ class ScaleFunctionCall extends FunctionCallNode {
     super('scale', args);
     enforceArgumentLength('scale', args, 4);
     [this.#sx, this.#sy, this.#sz, this.#body] = args;
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -597,6 +651,7 @@ class ScaleFunctionCall extends FunctionCallNode {
 }
 
 class TranslateFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
   #body: Node;
   #dx: Node;
   #dy: Node;
@@ -606,6 +661,7 @@ class TranslateFunctionCall extends FunctionCallNode {
     super('translate', args);
     enforceArgumentLength('translate', args, 4);
     [this.#dx, this.#dy, this.#dz, this.#body] = args;
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -656,6 +712,7 @@ class TranslateFunctionCall extends FunctionCallNode {
 }
 
 class AABBFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
   #fn: Node;
   #aabb: Box3;
   #expanded: Box3;
@@ -677,6 +734,7 @@ class AABBFunctionCall extends FunctionCallNode {
     const size = new Vector3();
     this.#expanded.getSize(size);
     this.#expanded.expandByVector(size.multiplyScalar(0.2));
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -742,9 +800,12 @@ class AABBFunctionCall extends FunctionCallNode {
 }
 
 class FaceFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   constructor(args: Node[]) {
     super('face', args);
     enforceArgumentLength('face', args, 1);
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -769,6 +830,8 @@ class FaceFunctionCall extends FunctionCallNode {
 }
 
 class RotateFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
   // Cache trig values for evaluateInterval
   #cx: number;
   #sx: number;
@@ -850,6 +913,7 @@ class RotateFunctionCall extends FunctionCallNode {
     this.#cz = Math.cos(az);
     this.#sz = Math.sin(az);
     this.#body = body;
+    this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {

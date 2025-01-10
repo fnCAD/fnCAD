@@ -6,7 +6,14 @@ export type Content = null | {
   node?: Node;  // Only set for 'face' and 'edge' categories
 };
 
-export interface Node {
+export abstract class Node {
+  abstract evaluate: (x: number, y: number, z: number) => number;
+
+  // must be set in leaf child constructor
+  compileEvaluate(): (x: number, y: number, z: number) => number {
+    return new Function('x', 'y', 'z', `return ${this.evaluateStr('x', 'y', 'z', 0)};`) as (x: number, y: number, z: number) => number;
+  }
+
   /**
    * Direct SDF evaluation at a single point.
    * Returns the signed distance from the point to the surface.
@@ -14,7 +21,7 @@ export interface Node {
    * As an inlining optimization, this returns a code string instead.
    * It must be evaluated in a function defining `xname`, `yname`, `zname` as parameters.
    */
-  evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
+  abstract evaluateStr(xname: string, yname: string, zname: string, depth: number): string;
 
   /**
    * Interval arithmetic evaluation over a box-shaped region.
@@ -24,7 +31,7 @@ export interface Node {
    * - Octree subdivision (old approach)
    * - Ground truth for `evaluateContent`.
    */
-  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
+  abstract evaluateInterval(x: Interval, y: Interval, z: Interval): Interval;
 
   /**
    * Semantic evaluation of a region's relationship to object boundaries.
@@ -36,12 +43,12 @@ export interface Node {
    * - 'inside': Completely inside the node
    * Used to subdivide the octree (new approach).
    */
-  evaluateContent(x: Interval, y: Interval, z: Interval): Content;
+  abstract evaluateContent(x: Interval, y: Interval, z: Interval): Content;
 
   /**
    * Generates GLSL code for evaluating this node in a shader.
    * Returns a string containing the variable name holding the result.
    * Used for the real-time ray marching shader.
    */
-  toGLSL(context: GLSLContext): string;
+  abstract toGLSL(context: GLSLContext): string;
 }

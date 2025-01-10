@@ -5,13 +5,13 @@ import { Content } from './sdf_expressions/types';
 
 export interface Vertex {
   position: THREE.Vector3;
+  content?: Content; // Surface content from SDF evaluation
 }
 
 export interface HalfEdge {
   vertexIndex: number; // Index of vertex this points TO
   nextIndex: number; // Next half-edge in face loop
   pairIndex: number; // Opposite half-edge
-  content?: Content; // Surface content from SDF evaluation
 }
 
 interface SplitEdges {
@@ -63,7 +63,15 @@ export class HalfEdgeMesh {
     return idx;
   }
 
-  addFace(v1: number, v2: number, v3: number, content: Content): number { // Returns starting index of created half-edges
+  updateVertexContent(index: number, content: Content) {
+    if (this.vertices[index].content === undefined || this.vertices[index].content === null ||
+      this.vertices[index].content.category == 'face' && content?.category == 'edge'
+    ) {
+      this.vertices[index].content = content;
+    }
+  }
+
+  addFace(v1: number, v2: number, v3: number): number { // Returns starting index of created half-edges
     if (v1 < 0 || v1 >= this.vertices.length)
       throw new Error(`v1 ${v1} out of bounds 0 .. ${this.vertices.length}`);
     if (v2 < 0 || v2 >= this.vertices.length)
@@ -78,9 +86,9 @@ export class HalfEdgeMesh {
     const he3Index = startIndex + 2;
 
     this.halfEdges.push(
-      { vertexIndex: v2, nextIndex: he2Index, pairIndex: -1, content: content },
-      { vertexIndex: v3, nextIndex: he3Index, pairIndex: -1, content: content },
-      { vertexIndex: v1, nextIndex: he1Index, pairIndex: -1, content: content }
+      { vertexIndex: v2, nextIndex: he2Index, pairIndex: -1 },
+      { vertexIndex: v3, nextIndex: he3Index, pairIndex: -1 },
+      { vertexIndex: v1, nextIndex: he1Index, pairIndex: -1 }
     );
 
     // Link up pairs
@@ -138,9 +146,9 @@ export class HalfEdgeMesh {
 
     // Add new half-edges
     this.halfEdges.push(
-      { vertexIndex: vertexC, nextIndex: indCA, pairIndex: indCX, content: AB.content },
-      { vertexIndex: vertexX, nextIndex: indXB, pairIndex: indXC, content: AB.content },
-      { vertexIndex: vertexB, nextIndex: indBC, pairIndex: -1, content: AB.content }
+      { vertexIndex: vertexC, nextIndex: indCA, pairIndex: indCX },
+      { vertexIndex: vertexX, nextIndex: indXB, pairIndex: indXC },
+      { vertexIndex: vertexB, nextIndex: indBC, pairIndex: -1 }
     );
 
     // AB becomes AX.
@@ -216,20 +224,22 @@ export class HalfEdgeMesh {
 
     for (let iter = 0; iter < maxIterations; iter++) {
       // Evaluate SDF at vertex position
-      const distance = sdf(vertex.position);
+      const evaluate = vertex.content?.node?.evaluate;
+      const localSdf = evaluate ? (p: THREE.Vector3) => evaluate(p.x, p.y, p.z) : sdf;
+      const distance = localSdf(vertex.position);
 
       // Calculate gradient using finite differences
       const h = 0.0001; // Small offset for gradient calculation
       const pos = vertex.position;
       const gradient = new THREE.Vector3(
-        (sdf(new THREE.Vector3(pos.x + h, pos.y, pos.z)) -
-          sdf(new THREE.Vector3(pos.x - h, pos.y, pos.z))) /
+        (localSdf(new THREE.Vector3(pos.x + h, pos.y, pos.z)) -
+          localSdf(new THREE.Vector3(pos.x - h, pos.y, pos.z))) /
           (2 * h),
-        (sdf(new THREE.Vector3(pos.x, pos.y + h, pos.z)) -
-          sdf(new THREE.Vector3(pos.x, pos.y - h, pos.z))) /
+        (localSdf(new THREE.Vector3(pos.x, pos.y + h, pos.z)) -
+          localSdf(new THREE.Vector3(pos.x, pos.y - h, pos.z))) /
           (2 * h),
-        (sdf(new THREE.Vector3(pos.x, pos.y, pos.z + h)) -
-          sdf(new THREE.Vector3(pos.x, pos.y, pos.z - h))) /
+        (localSdf(new THREE.Vector3(pos.x, pos.y, pos.z + h)) -
+          localSdf(new THREE.Vector3(pos.x, pos.y, pos.z - h))) /
           (2 * h)
       );
       gradient.normalize();

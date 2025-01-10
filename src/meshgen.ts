@@ -27,6 +27,7 @@ export class MeshGenerator {
     start: THREE.Vector3;
     end: THREE.Vector3;
     split: THREE.Vector3;
+    content: Content;
   }> = [];
 
   constructor(
@@ -52,10 +53,10 @@ export class MeshGenerator {
 
     // Phase 2: Process edge splits (40-50%)
     this.reportProgress(0.4);
-    for (const { start, end, split } of this.splitQueue) {
-      const startIdx = this.getVertexIndex(start, mesh);
-      const endIdx = this.getVertexIndex(end, mesh);
-      const splitIdx = this.getVertexIndex(split, mesh);
+    for (const { start, end, split, content } of this.splitQueue) {
+      const startIdx = this.getVertexIndex(start, mesh, content);
+      const endIdx = this.getVertexIndex(end, mesh, content);
+      const splitIdx = this.getVertexIndex(split, mesh, content);
       mesh.lateSplitEdge(startIdx, endIdx, splitIdx);
     }
     this.reportProgress(0.5);
@@ -97,7 +98,7 @@ export class MeshGenerator {
   ) {
     // Only add faces for leaf boundary nodes
     if (node.state === CellState.Boundary) {
-      this.addCellFaces(node, mesh, center, size);
+      this.addCellFaces(node, mesh, center, size, node.content);
       return;
     }
     if (node.state == CellState.Outside || node.state == CellState.Inside) {
@@ -111,21 +112,23 @@ export class MeshGenerator {
     });
   }
 
-  private getVertexIndex(pos: THREE.Vector3, mesh: HalfEdgeMesh): number {
+  private getVertexIndex(pos: THREE.Vector3, mesh: HalfEdgeMesh, content: Content): number {
     // Use position as cache key with some precision limit
     const key = `${pos.x.toFixed(6)},${pos.y.toFixed(6)},${pos.z.toFixed(6)}`;
 
     const cached = this.vertexCache.get(key);
     if (cached !== undefined) {
+      mesh.updateVertexContent(cached, content);
       return cached;
     }
 
     const index = mesh.addVertex(pos);
     this.vertexCache.set(key, index);
+    mesh.updateVertexContent(index, content);
     return index;
   }
 
-  private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number) {
+  private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number, content: Content) {
     const half = size / 2;
     const self = this;
     const indexes: (number | null)[] = Array(8).fill(null);
@@ -139,7 +142,7 @@ export class MeshGenerator {
           center.y + y * half,
           center.z + z * half
         );
-        indexes[corner] = self.getVertexIndex(pos, mesh);
+        indexes[corner] = self.getVertexIndex(pos, mesh, content);
       }
       return indexes[corner];
     }
@@ -180,15 +183,15 @@ export class MeshGenerator {
     if (!neighbor || neighbor.state === CellState.Outside) {
       // Flip winding for NegX, PosY, and NegZ faces (empirically determined)
       if (direction === Direction.NegX || direction === Direction.PosY || direction === Direction.NegZ) {
-        mesh.addFace(vertices[0], vertices[2], vertices[1], content);
-        mesh.addFace(vertices[2], vertices[3], vertices[1], content);
+        mesh.addFace(vertices[0], vertices[2], vertices[1]);
+        mesh.addFace(vertices[2], vertices[3], vertices[1]);
       } else {
-        mesh.addFace(vertices[0], vertices[1], vertices[2], content);
-        mesh.addFace(vertices[2], vertices[1], vertices[3], content);
+        mesh.addFace(vertices[0], vertices[1], vertices[2]);
+        mesh.addFace(vertices[2], vertices[1], vertices[3]);
       }
     } else if (Array.isArray(neighbor.state)) {
       const childIndices = this.getAdjacentChildIndices(direction);
-      const quadVertices = this.getQuadrantVertices(vertices, mesh);
+      const quadVertices = this.getQuadrantVertices(vertices, mesh, content);
 
       // For each quadrant of the face
       for (let i = 0; i < 4; i++) {
@@ -215,7 +218,7 @@ export class MeshGenerator {
     }
   }
 
-  private getQuadrantVertices(faceVertices: number[], mesh: HalfEdgeMesh): number[][] {
+  private getQuadrantVertices(faceVertices: number[], mesh: HalfEdgeMesh, content: Content): number[][] {
     // Calculate vertices for each quadrant of the face
     const quadrantOffsets = [
       [0, 0], // Bottom left
@@ -248,30 +251,34 @@ export class MeshGenerator {
       start: vertices[0],
       split: vertices[1],
       end: vertices[2],
+      content: content,
     });
     this.splitQueue.push({
       start: vertices[6],
       split: vertices[7],
       end: vertices[8],
+      content: content,
     });
     // vertical
     this.splitQueue.push({
       start: vertices[0],
       split: vertices[3],
       end: vertices[6],
+      content: content,
     });
     this.splitQueue.push({
       start: vertices[2],
       split: vertices[5],
       end: vertices[8],
+      content: content,
     });
 
     return quadrantOffsets.map(([x, y]) => {
       return [
-        this.getVertexIndex(vertices[y * 3 + x], mesh),
-        this.getVertexIndex(vertices[y * 3 + (x + 1)], mesh),
-        this.getVertexIndex(vertices[(y + 1) * 3 + x], mesh),
-        this.getVertexIndex(vertices[(y + 1) * 3 + (x + 1)], mesh),
+        this.getVertexIndex(vertices[y * 3 + x], mesh, content),
+        this.getVertexIndex(vertices[y * 3 + (x + 1)], mesh, content),
+        this.getVertexIndex(vertices[(y + 1) * 3 + x], mesh, content),
+        this.getVertexIndex(vertices[(y + 1) * 3 + (x + 1)], mesh, content),
       ];
     });
   }
