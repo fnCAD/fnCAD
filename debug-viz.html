@@ -90,7 +90,7 @@
             ctx.stroke();
         }
 
-        function updateViz() {
+        window.updateViz = function() {
             // Wrap the expression in a module to make it valid CAD code
             const cadCode = `
                 $minsize = 0.05;
@@ -144,7 +144,7 @@
         }
 
         // Initial draw
-        updateViz();
+        window.updateViz();
     </script>
 </body>
 </html>
