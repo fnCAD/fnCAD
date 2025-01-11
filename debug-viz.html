@@ -18,6 +18,8 @@
     </div>
     <canvas id="canvas" width="800" height="800"></canvas>
     <script type="module">
+        import { parse } from './cad/parser';
+        import { moduleToSDF } from './cad/builtins';
         import { parse as parseSDF } from './sdf_expressions/parser';
         
         const canvas = document.getElementById('canvas');
@@ -87,7 +89,16 @@
 
         function updateViz() {
             const exprText = document.getElementById('expr').value;
-            const ast = parseSDF(exprText);
+            // Wrap the expression in a module to make it valid CAD code
+            const cadCode = `
+                module main() {
+                    ${exprText}
+                }
+                main();
+            `;
+            const cadAst = parse(cadCode);
+            const sdfExpr = moduleToSDF(cadAst);
+            const ast = parseSDF(sdfExpr.expr);
             ctx.clearRect(0, 0, width, height);
 
             // Draw contour lines
