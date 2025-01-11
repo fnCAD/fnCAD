@@ -18,9 +18,9 @@
     </div>
     <canvas id="canvas" width="800" height="800"></canvas>
     <script type="module">
-        import { parse } from './cad/parser';
-        import { moduleToSDF } from './cad/builtins';
-        import { parse as parseSDF } from './sdf_expressions/parser';
+        import { parse } from './src/cad/parser';
+        import { moduleToSDF } from './src/cad/builtins';
+        import { parse as parseSDF } from './src/sdf_expressions/parser';
         
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
