@@ -17,7 +17,9 @@
         <button onclick="updateViz()">Update</button>
     </div>
     <canvas id="canvas" width="800" height="800"></canvas>
-    <script>
+    <script type="module">
+        import { parse as parseSDF } from './sdf_expressions/parser';
+        
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
@@ -40,10 +42,10 @@
             };
         }
 
-        // Evaluate SDF at a point
-        function evalSDF(expr, x, y) {
+        // Evaluate SDF at a point using the compiled AST
+        function evalSDF(ast, x, y) {
             try {
-                return new Function('x', 'y', `return ${expr};`)(x, y);
+                return ast.evaluate(x, y, 0);
             } catch (e) {
                 console.error('Error evaluating expression:', e);
                 return 0;
@@ -51,10 +53,10 @@
         }
 
         // Calculate gradient using finite differences
-        function getGradient(expr, x, y) {
+        function getGradient(ast, x, y) {
             const h = 0.001;
-            const dx = (evalSDF(expr, x + h, y) - evalSDF(expr, x - h, y)) / (2 * h);
-            const dy = (evalSDF(expr, x, y + h) - evalSDF(expr, x, y - h)) / (2 * h);
+            const dx = (evalSDF(ast, x + h, y) - evalSDF(ast, x - h, y)) / (2 * h);
+            const dy = (evalSDF(ast, x, y + h) - evalSDF(ast, x, y - h)) / (2 * h);
             return { dx, dy };
         }
 
@@ -84,7 +86,8 @@
         }
 
         function updateViz() {
-            const expr = document.getElementById('expr').value;
+            const exprText = document.getElementById('expr').value;
+            const ast = parseSDF(exprText);
             ctx.clearRect(0, 0, width, height);
 
             // Draw contour lines
@@ -94,7 +97,7 @@
             for (let y = 0; y < height; y += gridSize) {
                 for (let x = 0; x < width; x += gridSize) {
                     const p = canvasToWorld(x, y);
-                    const val = evalSDF(expr, p.x, p.y);
+                    const val = evalSDF(ast, p.x, p.y);
                     
                     // Find closest contour level
                     const closest = contourLevels.reduce((prev, curr) => 
@@ -115,7 +118,7 @@
             for (let y = arrowSpacing/2; y < height; y += arrowSpacing) {
                 for (let x = arrowSpacing/2; x < width; x += arrowSpacing) {
                     const p = canvasToWorld(x, y);
-                    const grad = getGradient(expr, p.x, p.y);
+                    const grad = getGradient(ast, p.x, p.y);
                     drawArrow(x, y, -grad.dx, -grad.dy); // Negative because gradient points uphill
                 }
             }
