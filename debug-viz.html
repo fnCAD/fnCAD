@@ -48,7 +48,7 @@
         }
 
         // Evaluate SDF at a point using the compiled AST
-        function evalSDF(ast, x, y) {
+        function evalSDF(ast, x, y, z) {
             try {
                 return ast.evaluate(x, y, z);
             } catch (e) {
