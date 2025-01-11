@@ -107,6 +107,10 @@
             const ast = parseSDF(sdfExpr.expr);
             ctx.clearRect(0, 0, width, height);
 
+            // Get current z-level
+            const zLevel = parseFloat(document.getElementById('zLevel').value);
+            document.getElementById('zValue').textContent = zLevel.toFixed(1);
+
             // Draw contour lines
             const contourLevels = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2];
             const gridSize = 4;
@@ -114,8 +118,6 @@
             for (let y = 0; y < height; y += gridSize) {
                 for (let x = 0; x < width; x += gridSize) {
                     const p = canvasToWorld(x, y);
-                    const zLevel = parseFloat(document.getElementById('zLevel').value);
-                    document.getElementById('zValue').textContent = zLevel.toFixed(1);
                     const val = evalSDF(ast, p.x, p.y, zLevel);
                     
                     // Find closest contour level
@@ -137,6 +139,7 @@
             for (let y = arrowSpacing/2; y < height; y += arrowSpacing) {
                 for (let x = arrowSpacing/2; x < width; x += arrowSpacing) {
                     const p = canvasToWorld(x, y);
+                    const zLevel = parseFloat(document.getElementById('zLevel').value);
                     const grad = getGradient(ast, p.x, p.y, zLevel);
                     drawArrow(x, y, -grad.dx, -grad.dy); // Negative because gradient points uphill
                 }
