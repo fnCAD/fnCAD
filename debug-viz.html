@@ -13,7 +13,6 @@
 </head>
 <body>
     <div id="controls">
-        <label>Expression: <input type="text" id="expr" value="sqrt(x*x + y*y) - 1" size="50"></label>
         <button onclick="updateViz()">Update</button>
     </div>
     <canvas id="canvas" width="800" height="800"></canvas>
@@ -88,13 +87,16 @@
         }
 
         function updateViz() {
-            const exprText = document.getElementById('expr').value;
             // Wrap the expression in a module to make it valid CAD code
             const cadCode = `
-                module main() {
-                    ${exprText}
+                $minsize = 0.05;
+                difference() {
+                    union() {
+                        translate([-0.25, -0.25, -0.25]) cube(1);
+                        translate([0.25, 0.25, 0.25]) cube(1);
+                    }
+                    sphere(0.39);
                 }
-                main();
             `;
             const cadAst = parse(cadCode);
             const sdfExpr = moduleToSDF(cadAst);
