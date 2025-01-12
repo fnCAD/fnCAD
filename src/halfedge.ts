@@ -5,7 +5,7 @@ import { Content } from './sdf_expressions/types';
 
 export interface Vertex {
   position: THREE.Vector3;
-  content?: Content; // Surface content from SDF evaluation
+  content: Content; // Surface content from SDF evaluation
 }
 
 export interface HalfEdge {
@@ -59,12 +59,12 @@ export class HalfEdgeMesh {
 
   addVertex(position: THREE.Vector3): number {
     const idx = this.vertices.length;
-    this.vertices.push({ position });
+    this.vertices.push({ position, content: null });
     return idx;
   }
 
   updateVertexContent(index: number, content: Content) {
-    if (this.vertices[index].content === undefined || this.vertices[index].content === null ||
+    if (this.vertices[index].content === null ||
       this.vertices[index].content.category == 'face' && content?.category == 'edge'
     ) {
       this.vertices[index].content = content;
@@ -182,6 +182,8 @@ export class HalfEdgeMesh {
 
     // Create new vertex at midpoint
     const newVertexIndex = this.addVertex(midpoint);
+
+    this.updateVertexContent(newVertexIndex, this.vertices[edge.vertexIndex].content);
 
     // Split both half-edges. Note that bx/xb and ax/xa are the same edges
     // from opposite sides - they form the split of the original edge
@@ -332,6 +334,8 @@ export class HalfEdgeMesh {
       // Get edge vertices
       const v1 = this.vertices[pair.vertexIndex].position;
       const v2 = this.vertices[edge.vertexIndex].position;
+      const evaluate = this.vertices[pair.vertexIndex].content?.node?.evaluate;
+      const localSdf = evaluate ? (p: THREE.Vector3) => evaluate(p.x, p.y, p.z) : sdf;
 
       // Calculate midpoint
       const midpoint = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
@@ -342,7 +346,7 @@ export class HalfEdgeMesh {
       }
 
       // Evaluate SDF at midpoint
-      const error = Math.abs(sdf(midpoint));
+      const error = Math.abs(localSdf(midpoint));
 
       return {
         index: heIndex,

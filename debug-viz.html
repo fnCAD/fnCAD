@@ -32,7 +32,7 @@
 
         // Convert canvas coordinates to world space
         function canvasToWorld(cx, cy) {
-            const scale = 4.0; // -2 to +2 in world space
+            const scale = 2.0; // -1 to +1 in world space
             return {
                 x: (cx / width - 0.5) * scale,
                 y: (cy / height - 0.5) * scale
