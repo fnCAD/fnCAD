@@ -83,3 +83,9 @@
 - [ ] SDF function reference
 - [ ] Example gallery
 - [ ] Tutorial content
+
+## 12. Optimizations
+- [ ] Optimize interval evaluation for AABBs in complex regions
+  - Current approach evaluates full SDF
+  - Could use geometric bounds/properties instead
+  - Balance between accuracy and performance

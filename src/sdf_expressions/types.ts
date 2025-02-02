@@ -4,6 +4,7 @@ import { GLSLContext } from './glslgen';
 export type Content = null | {
   category: 'face' | 'complex' | 'outside' | 'inside';
   node?: Node;  // Only set for 'face' and 'complex' categories
+  sdf?: Interval;  // The SDF value range in this region
 };
 
 export abstract class Node {
