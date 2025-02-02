@@ -82,6 +82,18 @@ export class Interval {
   }
 
   // Math functions
+  sqr(): Interval {
+    // If interval contains zero, minimum is 0
+    if (this.min <= 0 && this.max >= 0) {
+      return new Interval(0, Math.max(this.min * this.min, this.max * this.max));
+    }
+    // Otherwise min is the square of whichever endpoint is closer to zero
+    return new Interval(
+      Math.min(this.min * this.min, this.max * this.max),
+      Math.max(this.min * this.min, this.max * this.max)
+    );
+  }
+
   sqrt(): Interval {
     // Clamp negative values to 0 for SDF operations
     const clampedMin = Math.max(0, this.min);

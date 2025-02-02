@@ -773,40 +773,14 @@ class AABBFunctionCall extends FunctionCallNode {
   }
 
   private evaluateAABBDistance(x: Interval, y: Interval, z: Interval): Interval {
-    // Get corners of query box
-    const queryMin = new Vector3(x.min, y.min, z.min);
-    const queryMax = new Vector3(x.max, y.max, z.max);
+    // For each axis, compute distance interval
+    const aabb_x = new Interval(this.#aabb.min.x, this.#aabb.max.x);
+    const aabb_y = new Interval(this.#aabb.min.y, this.#aabb.max.y);
+    const aabb_z = new Interval(this.#aabb.min.z, this.#aabb.max.z);
+    const dx = aabb_x.sub(x), dy = aabb_y.sub(y), dz = aabb_z.sub(z);
 
-    // Initialize min/max squared distances
-    let minDistSq = 0;
-    let maxDistSq = 0;
-
-    // For each axis
-    for (let i = 0; i < 3; i++) {
-      const targetMin = i === 0 ? this.#aabb.min.x : i === 1 ? this.#aabb.min.y : this.#aabb.min.z;
-      const targetMax = i === 0 ? this.#aabb.max.x : i === 1 ? this.#aabb.max.y : this.#aabb.max.z;
-      const qmin = i === 0 ? queryMin.x : i === 1 ? queryMin.y : queryMin.z;
-      const qmax = i === 0 ? queryMax.x : i === 1 ? queryMax.y : queryMax.z;
-
-      // Compute axis contribution to min squared distance
-      if (qmax < targetMin) {
-        minDistSq += (targetMin - qmax) * (targetMin - qmax);
-      } else if (qmin > targetMax) {
-        minDistSq += (qmin - targetMax) * (qmin - targetMax);
-      }
-
-      // Compute axis contribution to max squared distance
-      const d1 = (qmin - targetMin) * (qmin - targetMin);
-      const d2 = (qmin - targetMax) * (qmin - targetMax);
-      const d3 = (qmax - targetMin) * (qmax - targetMin);
-      const d4 = (qmax - targetMax) * (qmax - targetMax);
-      maxDistSq += Math.max(d1, d2, d3, d4);
-    }
-
-    return new Interval(
-      Math.sqrt(minDistSq),
-      Math.sqrt(maxDistSq)
-    );
+    // Return sqrt(dx2 + dy2 + dz2)
+    return dx.sqr().add(dy.sqr()).add(dz.sqr()).sqrt();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
