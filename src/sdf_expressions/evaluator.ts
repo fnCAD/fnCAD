@@ -391,6 +391,11 @@ class MinFunctionCall extends FunctionCallNode {
     // Get content evaluations for all children
     const contents = this.args.map((arg) => arg.evaluateContent(x, y, z));
 
+    // Propagate invalid materials so we can exclude the case going forward.
+    if (contents.some((c) => c === null)) {
+      return null;
+    }
+
     // If any child is inside, the union is inside
     if (contents.some((c) => c?.category === 'inside')) {
       return { category: 'inside' };
@@ -399,11 +404,6 @@ class MinFunctionCall extends FunctionCallNode {
     // If any child is complex, the union is complex
     if (contents.some((c) => c?.category === 'complex')) {
       return { category: 'complex', node: this };
-    }
-
-    // Propagate invalid materials so we can exclude the case going forward.
-    if (contents.some((c) => c === null)) {
-      return null;
     }
 
     // Multiple faces (SDFs with zero transition) = complex
@@ -466,6 +466,11 @@ class MaxFunctionCall extends FunctionCallNode {
     // Get content evaluations for all children
     const contents = this.args.map((arg) => arg.evaluateContent(x, y, z));
 
+    // If any child is null, result is null
+    if (contents.some((c) => c === null)) {
+      return null;
+    }
+
     // If any child is outside, the intersection is outside
     if (contents.some((c) => c?.category === 'outside')) {
       return { category: 'outside' };
@@ -476,18 +481,23 @@ class MaxFunctionCall extends FunctionCallNode {
       return { category: 'complex', node: this };
     }
 
-    // Count faces
-    const faceCount = contents.filter((c) => c?.category === 'face').length;
-    if (faceCount > 1) {
+    // Multiple faces = complex
+    const faces = contents.filter((c) => c?.category === 'face');
+    if (faces.length > 1) {
       return { category: 'complex', node: this };
     }
-    if (faceCount === 1) {
-      return { category: 'face', node: this.args[contents.findIndex((c) => c?.category === 'face')] };
-    }
 
-    // If any child is null, result is null
-    if (contents.some((c) => c === null)) {
-      return null;
+    // One face, but another SDF overlaps = complex
+    if (faces.length === 1) {
+      const faceInterval = faces[0]!.sdfEstimate;
+      const otherIntervals = contents
+        .filter((c) => c?.category !== 'face')
+        .map((c) => c?.sdfEstimate);
+
+      if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
+        return { category: 'complex', node: this };
+      }
+      return { category: 'face', node: faces[0]!.node };
     }
 
     // All remaining children must be 'inside'
