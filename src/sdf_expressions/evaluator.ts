@@ -505,7 +505,9 @@ class MaxFunctionCall extends FunctionCallNode {
       if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
         return { category: 'complex', node: this, sdfEstimate };
       }
-      return { category: 'face', node: faces[0]!.node, sdfEstimate };
+      // why not faces[0]!.content? is it because this whole content thing is kinda bullshit?
+      const faceNode = this.args[contents.findIndex((c) => c!.category === 'face')];
+      return { category: 'face', node: faceNode, sdfEstimate };
     }
 
     // All remaining children must be 'inside'
@@ -818,8 +820,7 @@ class AABBFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     // Quick check - if the interval box is completely outside our AABB, return 'outside'
-    // TODO sdf estimate distance to interval box
-    /*if (
+    if (
       x.min > this.#aabb.max.x ||
       x.max < this.#aabb.min.x ||
       y.min > this.#aabb.max.y ||
@@ -827,8 +828,9 @@ class AABBFunctionCall extends FunctionCallNode {
       z.min > this.#aabb.max.z ||
       z.max < this.#aabb.min.z
     ) {
+      const sdfEstimate = this.evaluateAABBDistance(x, y, z);
       return { category: 'outside', sdfEstimate };
-    }*/
+    }
 
     // Otherwise, delegate to child node
     return this.#fn.evaluateContent(x, y, z);
