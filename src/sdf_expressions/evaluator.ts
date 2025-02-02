@@ -152,16 +152,17 @@ export class UnaryOpNode extends Node {
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const content = this.operand.evaluateContent(x, y, z);
     if (!content) return null;
+    const sdfEstimate = content.sdfEstimate.negate();
 
     switch (content.category) {
       case 'inside':
-        return { category: 'outside' };
+        return { category: 'outside', sdfEstimate };
       case 'outside':
-        return { category: 'inside' };
+        return { category: 'inside', sdfEstimate };
       case 'face':
-        return { category: 'face', node: content.node };
+        return { category: 'face', node: content.node, sdfEstimate };
       case 'complex':
-        return { category: 'complex', node: content.node };
+        return { category: 'complex', node: content.node, sdfEstimate };
     }
   }
 }
@@ -396,20 +397,23 @@ class MinFunctionCall extends FunctionCallNode {
       return null;
     }
 
+    // Compute SDF estimate from child intervals
+    const sdfEstimate = Interval.min(contents.map(c => c!.sdfEstimate));
+
     // If any child is inside, the union is inside
     if (contents.some((c) => c?.category === 'inside')) {
-      return { category: 'inside' };
+      return { category: 'inside', sdfEstimate };
     }
 
     // If any child is complex, the union is complex
     if (contents.some((c) => c?.category === 'complex')) {
-      return { category: 'complex', node: this };
+      return { category: 'complex', node: this, sdfEstimate };
     }
 
     // Multiple faces (SDFs with zero transition) = complex
     const faces = contents.filter((c) => c?.category === 'face');
     if (faces.length > 1) {
-      return { category: 'complex', node: this };
+      return { category: 'complex', node: this, sdfEstimate };
     }
 
     // One face, but another SDF is closer somewhere = complex
@@ -420,14 +424,14 @@ class MinFunctionCall extends FunctionCallNode {
         .map((c) => c?.sdfEstimate);
 
       if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
-        return { category: 'complex', node: this };
+        return { category: 'complex', node: this, sdfEstimate };
       }
       // One face, closest surface everywhere in the volume: face.
-      return { category: 'face', node: faces[0]!.node };
+      return { category: 'face', node: faces[0]!.node, sdfEstimate };
     }
 
     // All remaining children must be 'outside'
-    return { category: 'outside' };
+    return { category: 'outside', sdfEstimate };
   }
 }
 
@@ -471,20 +475,23 @@ class MaxFunctionCall extends FunctionCallNode {
       return null;
     }
 
+    // Compute SDF estimate from child intervals
+    const sdfEstimate = Interval.max(contents.map(c => c!.sdfEstimate));
+
     // If any child is outside, the intersection is outside
     if (contents.some((c) => c?.category === 'outside')) {
-      return { category: 'outside' };
+      return { category: 'outside', sdfEstimate };
     }
 
     // If any child is complex, the intersection is complex
     if (contents.some((c) => c?.category === 'complex')) {
-      return { category: 'complex', node: this };
+      return { category: 'complex', node: this, sdfEstimate };
     }
 
     // Multiple faces = complex
     const faces = contents.filter((c) => c?.category === 'face');
     if (faces.length > 1) {
-      return { category: 'complex', node: this };
+      return { category: 'complex', node: this, sdfEstimate };
     }
 
     // One face, but another SDF overlaps = complex
@@ -495,13 +502,13 @@ class MaxFunctionCall extends FunctionCallNode {
         .map((c) => c?.sdfEstimate);
 
       if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
-        return { category: 'complex', node: this };
+        return { category: 'complex', node: this, sdfEstimate };
       }
-      return { category: 'face', node: faces[0]!.node };
+      return { category: 'face', node: faces[0]!.node, sdfEstimate };
     }
 
     // All remaining children must be 'inside'
-    return { category: 'inside' };
+    return { category: 'inside', sdfEstimate };
   }
 }
 
@@ -547,7 +554,11 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     // Use our own evaluateInterval to determine if we contain a potential face
     const interval = this.evaluateInterval(x, y, z);
     if (interval.contains(0)) {
-      return { category: 'face', node: this, sdfEstimate: interval };
+      return {
+        category: 'face',
+        node: this,
+        sdfEstimate: interval,
+      };
     }
     return {
       category: interval.max < 0 ? 'inside' : 'outside',
@@ -787,7 +798,8 @@ class AABBFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     // Quick check - if the interval box is completely outside our AABB, return 'outside'
-    if (
+    // TODO sdf estimate distance to interval box
+    /*if (
       x.min > this.#aabb.max.x ||
       x.max < this.#aabb.min.x ||
       y.min > this.#aabb.max.y ||
@@ -795,8 +807,8 @@ class AABBFunctionCall extends FunctionCallNode {
       z.min > this.#aabb.max.z ||
       z.max < this.#aabb.min.z
     ) {
-      return { category: 'outside' };
-    }
+      return { category: 'outside', sdfEstimate };
+    }*/
 
     // Otherwise, delegate to child node
     return this.#fn.evaluateContent(x, y, z);
@@ -847,7 +859,11 @@ class FaceFunctionCall extends FunctionCallNode {
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const interval = this.args[0].evaluateInterval(x, y, z);
     if (interval.contains(0)) {
-      return { category: 'face', node: this, sdfEstimate: interval };
+      return {
+        category: 'face',
+        node: this,
+        sdfEstimate: interval,
+      };
     }
     return {
       category: interval.max < 0 ? 'inside' : 'outside',
