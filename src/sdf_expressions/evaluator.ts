@@ -160,9 +160,9 @@ export class UnaryOpNode extends Node {
       case 'outside':
         return { category: 'inside', sdfEstimate };
       case 'face':
-        return { category: 'face', node: content.node, sdfEstimate };
+        return { category: 'face', node: this, sdfEstimate };
       case 'complex':
-        return { category: 'complex', node: content.node, sdfEstimate };
+        return { category: 'complex', node: this, sdfEstimate };
     }
     throw new Error(`internal error: unknown content category ${content.category}`);
   }
@@ -505,9 +505,7 @@ class MaxFunctionCall extends FunctionCallNode {
       if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
         return { category: 'complex', node: this, sdfEstimate };
       }
-      // why not faces[0]!.content? is it because this whole content thing is kinda bullshit?
-      const faceNode = this.args[contents.findIndex((c) => c!.category === 'face')];
-      return { category: 'face', node: faceNode, sdfEstimate };
+      return { category: 'face', node: faces[0]!.node, sdfEstimate };
     }
 
     // All remaining children must be 'inside'
@@ -741,11 +739,17 @@ class TranslateFunctionCall extends FunctionCallNode {
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
-    return this.#body.evaluateContent(
+    const result = this.#body.evaluateContent(
       new Interval(x.min - constantValue(this.#dx), x.max - constantValue(this.#dx)),
       new Interval(y.min - constantValue(this.#dy), y.max - constantValue(this.#dy)),
       new Interval(z.min - constantValue(this.#dz), z.max - constantValue(this.#dz))
     );
+    if (!result) return null;
+    return {
+      category: result.category,
+      node: this,
+      sdfEstimate: result.sdfEstimate,
+    };
   }
 }
 
@@ -987,9 +991,9 @@ class RotateFunctionCall extends FunctionCallNode {
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    const newx = `x${depth + 1}`,
-      newy = `y${depth + 1}`,
-      newz = `z${depth + 1}`;
+    const newx = `x${depth}`,
+      newy = `y${depth}`,
+      newz = `z${depth}`;
     return `(() => {
       const ax = ${this.args[0].evaluateStr(xname, yname, zname, depth)};
       const ay = ${this.args[1].evaluateStr(xname, yname, zname, depth)};
@@ -1021,6 +1025,12 @@ class RotateFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const rotated = this.#rotateInterval(x, y, z);
-    return this.#body.evaluateContent(rotated.x, rotated.y, rotated.z);
+    const result = this.#body.evaluateContent(rotated.x, rotated.y, rotated.z);
+    if (!result) return null;
+    return {
+      category: result.category,
+      node: this,
+      sdfEstimate: result.sdfEstimate,
+    };
   }
 }
