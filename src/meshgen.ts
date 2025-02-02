@@ -128,7 +128,13 @@ export class MeshGenerator {
     return index;
   }
 
-  private addCellFaces(node: OctreeNode, mesh: HalfEdgeMesh, center: THREE.Vector3, size: number, content: Content) {
+  private addCellFaces(
+    node: OctreeNode,
+    mesh: HalfEdgeMesh,
+    center: THREE.Vector3,
+    size: number,
+    content: Content
+  ) {
     const half = size / 2;
     const self = this;
     const indexes: (number | null)[] = Array(8).fill(null);
@@ -182,7 +188,11 @@ export class MeshGenerator {
   ) {
     if (!neighbor || neighbor.state === CellState.Outside) {
       // Flip winding for NegX, PosY, and NegZ faces (empirically determined)
-      if (direction === Direction.NegX || direction === Direction.PosY || direction === Direction.NegZ) {
+      if (
+        direction === Direction.NegX ||
+        direction === Direction.PosY ||
+        direction === Direction.NegZ
+      ) {
         mesh.addFace(vertices[0], vertices[2], vertices[1]);
         mesh.addFace(vertices[2], vertices[3], vertices[1]);
       } else {
@@ -196,7 +206,14 @@ export class MeshGenerator {
       // For each quadrant of the face
       for (let i = 0; i < 4; i++) {
         const childNeighbor = neighbor.state[childIndices[i]];
-        this.considerNeighborFace(childNeighbor, quadVertices[i], size / 2, direction, mesh, content);
+        this.considerNeighborFace(
+          childNeighbor,
+          quadVertices[i],
+          size / 2,
+          direction,
+          mesh,
+          content
+        );
       }
     }
   }
@@ -218,7 +235,11 @@ export class MeshGenerator {
     }
   }
 
-  private getQuadrantVertices(faceVertices: number[], mesh: HalfEdgeMesh, content: Content): number[][] {
+  private getQuadrantVertices(
+    faceVertices: number[],
+    mesh: HalfEdgeMesh,
+    content: Content
+  ): number[][] {
     // Calculate vertices for each quadrant of the face
     const quadrantOffsets = [
       [0, 0], // Bottom left

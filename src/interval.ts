@@ -162,17 +162,17 @@ export class Interval {
   static min(intervals: Interval[]): Interval {
     if (intervals.length === 0) throw new Error('Cannot compute min of empty set');
     return new Interval(
-      Math.min(...intervals.map(i => i.min)),
-      Math.min(...intervals.map(i => i.max))
+      Math.min(...intervals.map((i) => i.min)),
+      Math.min(...intervals.map((i) => i.max))
     );
   }
 
-  // Helper to compute max of intervals  
+  // Helper to compute max of intervals
   static max(intervals: Interval[]): Interval {
     if (intervals.length === 0) throw new Error('Cannot compute max of empty set');
     return new Interval(
-      Math.max(...intervals.map(i => i.min)),
-      Math.max(...intervals.map(i => i.max))
+      Math.max(...intervals.map((i) => i.min)),
+      Math.max(...intervals.map((i) => i.max))
     );
   }
 }

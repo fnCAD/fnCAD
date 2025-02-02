@@ -9,8 +9,8 @@ import { SerializedMesh } from './types';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export enum ViewMode {
-  Preview,  // GLSL raymarching preview
-  Mesh      // Triangle mesh view
+  Preview, // GLSL raymarching preview
+  Mesh, // Triangle mesh view
 }
 
 export class AppState {
@@ -29,9 +29,7 @@ export class AppState {
   private worker: Worker;
   private currentTaskId: number = 0;
 
-  constructor(
-    private camera: THREE.PerspectiveCamera
-  ) {
+  constructor(private camera: THREE.PerspectiveCamera) {
     this.previewPane = document.getElementById('preview-pane')!;
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -39,7 +37,7 @@ export class AppState {
 
     // Initialize worker
     this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
-      type: 'module'
+      type: 'module',
     });
 
     // Set up generic message handler
@@ -98,7 +96,7 @@ export class AppState {
     this.controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
+      RIGHT: THREE.MOUSE.PAN,
     };
     this.controls.update();
 
@@ -125,15 +123,15 @@ export class AppState {
 
   private animate = () => {
     requestAnimationFrame(this.animate);
-    
+
     // Update controls
     this.controls.update();
-    
+
     // Update shader uniforms if in preview mode
     if (this.viewMode === ViewMode.Preview) {
       const previewMaterial = this.previewMaterial;
       if (!previewMaterial) {
-        console.warn("No preview material found in scene");
+        console.warn('No preview material found in scene');
         return;
       }
       if (previewMaterial?.uniforms) {
@@ -148,7 +146,7 @@ export class AppState {
     }
 
     this.renderer.render(this.scene, this.camera);
-  }
+  };
 
   private setupMeshView() {
     // Add lighting to match preview shader
@@ -164,10 +162,12 @@ export class AppState {
     const planeGeometry = new THREE.PlaneGeometry(2, 2);
     const planeMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
+        resolution: {
+          value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight),
+        },
         customCameraPosition: { value: this.camera.position },
         customViewMatrix: { value: this.camera.matrixWorldInverse },
-        projectionMatrix: { value: this.camera.projectionMatrix }
+        projectionMatrix: { value: this.camera.projectionMatrix },
       },
       depthWrite: false,
       depthTest: false,
@@ -197,7 +197,7 @@ export class AppState {
           background *= background;
           gl_FragColor = vec4(background, 1.0);
         }
-      `
+      `,
     });
     const backgroundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
     backgroundPlane.frustumCulled = false;
@@ -207,7 +207,10 @@ export class AppState {
     if (this.currentMesh) {
       // Add mesh to scene
       const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3));
+      geometry.setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(this.currentMesh.vertices, 3)
+      );
       geometry.setIndex(this.currentMesh.indices);
 
       // Compute vertex normals for proper lighting
@@ -222,7 +225,7 @@ export class AppState {
         depthWrite: true,
         depthTest: true,
         transparent: false,
-        flatShading: false // Enable smooth shading
+        flatShading: false, // Enable smooth shading
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.isMeshObject = true;
@@ -233,14 +236,14 @@ export class AppState {
   }
 
   setViewMode(mode: ViewMode) {
-    console.log("Setting view mode to:", mode);
+    console.log('Setting view mode to:', mode);
     this.viewMode = mode;
-    
+
     // Clear scene
-    while(this.scene.children.length > 0) {
+    while (this.scene.children.length > 0) {
       this.scene.remove(this.scene.children[0]);
     }
-    
+
     // Set up scene based on mode
     if (mode === ViewMode.Preview) {
       // Create a full-screen quad for raymarching
@@ -248,18 +251,21 @@ export class AppState {
       // Create or update preview material
       this.previewMaterial = new THREE.ShaderMaterial({
         uniforms: {
-          resolution: { value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight) },
+          resolution: {
+            value: new THREE.Vector2(this.previewPane.clientWidth, this.previewPane.clientHeight),
+          },
           fov: { value: 75.0 },
           customCameraPosition: { value: this.camera.position },
           customViewMatrix: { value: this.camera.matrixWorldInverse },
-          projectionMatrix: { value: this.camera.projectionMatrix }
+          projectionMatrix: { value: this.camera.projectionMatrix },
         },
         vertexShader: `
           void main() {
             gl_Position = vec4(position, 1.0);
           }
         `,
-        fragmentShader: this.currentShader || 'void main() { gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); }'
+        fragmentShader:
+          this.currentShader || 'void main() { gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); }',
       });
       const previewPlane = new THREE.Mesh(planeGeometry, this.previewMaterial);
       previewPlane.frustumCulled = false; // Ensure plane is always rendered
@@ -285,7 +291,10 @@ export class AppState {
   }
 
   private updateShader() {
-    console.log("Updating shader from editor content:", this.editorContent.substring(0, 100) + "...");
+    console.log(
+      'Updating shader from editor content:',
+      this.editorContent.substring(0, 100) + '...'
+    );
     try {
       const cadAst = parseCAD(this.editorContent);
       const sdfScene = moduleToSDF(cadAst);
@@ -301,22 +310,28 @@ export class AppState {
       // Clear any existing error decorations
       if (window._editor) {
         window._editor.dispatch({
-          effects: [errorDecorationFacet.of([])]
+          effects: [errorDecorationFacet.of([])],
         });
       }
     } catch (err) {
       if (err instanceof ParseError && window._editor) {
-        const from = window._editor.state.doc.line(err.location.start.line).from +
-                    err.location.start.column - 1;
-        const to = window._editor.state.doc.line(err.location.end.line).from +
-                  err.location.end.column - 1;
+        const from =
+          window._editor.state.doc.line(err.location.start.line).from +
+          err.location.start.column -
+          1;
+        const to =
+          window._editor.state.doc.line(err.location.end.line).from + err.location.end.column - 1;
 
         window._editor.dispatch({
-          effects: [errorDecorationFacet.of([{
-            from,
-            to,
-            error: err.message
-          }])]
+          effects: [
+            errorDecorationFacet.of([
+              {
+                from,
+                to,
+                error: err.message,
+              },
+            ]),
+          ],
         });
       }
       throw err;
@@ -344,7 +359,7 @@ export class AppState {
       type: 'start',
       taskId: taskId,
       code: this.editorContent,
-      highDetail
+      highDetail,
     });
   }
 

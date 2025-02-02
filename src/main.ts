@@ -357,7 +357,7 @@ document.addEventListener('keydown', (event) => {
   } else if (event.key === '6' && event.ctrlKey) {
     event.preventDefault();
     appState.setViewMode(ViewMode.Mesh);
-    regenerateMesh(true);  // High detail
+    regenerateMesh(true); // High detail
   } else if (event.key === 'Escape') {
     appState.setViewMode(ViewMode.Preview);
     appState.cancelCurrentOperation();
@@ -378,4 +378,3 @@ saveStlButton.addEventListener('click', () => {
     alert('Please generate a mesh first');
   }
 });
-

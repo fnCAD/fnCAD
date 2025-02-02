@@ -399,7 +399,7 @@ class MinFunctionCall extends FunctionCallNode {
     }
 
     // Compute SDF estimate from child intervals
-    const sdfEstimate = Interval.min(contents.map(c => c!.sdfEstimate));
+    const sdfEstimate = Interval.min(contents.map((c) => c!.sdfEstimate));
 
     // If any child is inside, the union is inside
     if (contents.some((c) => c?.category === 'inside')) {
@@ -424,7 +424,7 @@ class MinFunctionCall extends FunctionCallNode {
         .filter((c) => c!.category !== 'face')
         .map((c) => c!.sdfEstimate);
 
-      if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
+      if (otherIntervals.some((interval) => interval.intersects(faceInterval))) {
         return { category: 'complex', node: this, sdfEstimate };
       }
       // One face, closest surface everywhere in the volume: face.
@@ -477,7 +477,7 @@ class MaxFunctionCall extends FunctionCallNode {
     }
 
     // Compute SDF estimate from child intervals
-    const sdfEstimate = Interval.max(contents.map(c => c!.sdfEstimate));
+    const sdfEstimate = Interval.max(contents.map((c) => c!.sdfEstimate));
 
     // If any child is outside, the intersection is outside
     if (contents.some((c) => c!.category === 'outside')) {
@@ -502,7 +502,7 @@ class MaxFunctionCall extends FunctionCallNode {
         .filter((c) => c!.category !== 'face')
         .map((c) => c!.sdfEstimate);
 
-      if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
+      if (otherIntervals.some((interval) => interval.intersects(faceInterval))) {
         return { category: 'complex', node: this, sdfEstimate };
       }
       return { category: 'face', node: faces[0]!.node, sdfEstimate };
@@ -794,9 +794,14 @@ class AABBFunctionCall extends FunctionCallNode {
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     // If query box intersects expanded AABB, delegate to inner function
-    if (x.max >= this.#expanded.min.x && x.min <= this.#expanded.max.x &&
-        y.max >= this.#expanded.min.y && y.min <= this.#expanded.max.y &&
-        z.max >= this.#expanded.min.z && z.min <= this.#expanded.max.z) {
+    if (
+      x.max >= this.#expanded.min.x &&
+      x.min <= this.#expanded.max.x &&
+      y.max >= this.#expanded.min.y &&
+      y.min <= this.#expanded.max.y &&
+      z.max >= this.#expanded.min.z &&
+      z.min <= this.#expanded.max.z
+    ) {
       return this.#fn.evaluateInterval(x, y, z);
     }
 
@@ -893,7 +898,7 @@ class FaceFunctionCall extends FunctionCallNode {
     }
     return {
       category: interval.max < 0 ? 'inside' : 'outside',
-      sdfEstimate: interval
+      sdfEstimate: interval,
     };
   }
 }

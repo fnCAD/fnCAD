@@ -114,7 +114,7 @@ export class SDFScene {
   constructor(
     public expr: string,
     public maxError: number,
-    public minSize: number,
+    public minSize: number
   ) {}
 }
 

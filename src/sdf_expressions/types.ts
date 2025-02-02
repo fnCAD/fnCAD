@@ -3,8 +3,8 @@ import { GLSLContext } from './glslgen';
 
 export type Content = null | {
   category: 'face' | 'complex' | 'outside' | 'inside';
-  node?: Node;  // Only set for 'face' and 'complex' categories
-  sdfEstimate: Interval;  // The SDF value range in this region
+  node?: Node; // Only set for 'face' and 'complex' categories
+  sdfEstimate: Interval; // The SDF value range in this region
 };
 
 export abstract class Node {
@@ -12,7 +12,11 @@ export abstract class Node {
 
   // must be set in leaf child constructor
   compileEvaluate(): (x: number, y: number, z: number) => number {
-    return new Function('x', 'y', 'z', `return ${this.evaluateStr('x', 'y', 'z', 0)};`) as (x: number, y: number, z: number) => number;
+    return new Function('x', 'y', 'z', `return ${this.evaluateStr('x', 'y', 'z', 0)};`) as (
+      x: number,
+      y: number,
+      z: number
+    ) => number;
   }
 
   /**

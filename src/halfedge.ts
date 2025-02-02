@@ -64,14 +64,16 @@ export class HalfEdgeMesh {
   }
 
   updateVertexContent(index: number, content: Content) {
-    if (this.vertices[index].content === null ||
-      this.vertices[index].content.category == 'face' && content?.category == 'complex'
+    if (
+      this.vertices[index].content === null ||
+      (this.vertices[index].content.category == 'face' && content?.category == 'complex')
     ) {
       this.vertices[index].content = content;
     }
   }
 
-  addFace(v1: number, v2: number, v3: number): number { // Returns starting index of created half-edges
+  addFace(v1: number, v2: number, v3: number): number {
+    // Returns starting index of created half-edges
     if (v1 < 0 || v1 >= this.vertices.length)
       throw new Error(`v1 ${v1} out of bounds 0 .. ${this.vertices.length}`);
     if (v2 < 0 || v2 >= this.vertices.length)
