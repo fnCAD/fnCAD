@@ -772,10 +772,53 @@ class AABBFunctionCall extends FunctionCallNode {
     this.evaluate = this.compileEvaluate();
   }
 
+  private evaluateAABBDistance(x: Interval, y: Interval, z: Interval): Interval {
+    // Get corners of query box
+    const queryMin = new Vector3(x.min, y.min, z.min);
+    const queryMax = new Vector3(x.max, y.max, z.max);
+
+    // Initialize min/max squared distances
+    let minDistSq = 0;
+    let maxDistSq = 0;
+
+    // For each axis
+    for (let i = 0; i < 3; i++) {
+      const targetMin = i === 0 ? this.#aabb.min.x : i === 1 ? this.#aabb.min.y : this.#aabb.min.z;
+      const targetMax = i === 0 ? this.#aabb.max.x : i === 1 ? this.#aabb.max.y : this.#aabb.max.z;
+      const qmin = i === 0 ? queryMin.x : i === 1 ? queryMin.y : queryMin.z;
+      const qmax = i === 0 ? queryMax.x : i === 1 ? queryMax.y : queryMax.z;
+
+      // Compute axis contribution to min squared distance
+      if (qmax < targetMin) {
+        minDistSq += (targetMin - qmax) * (targetMin - qmax);
+      } else if (qmin > targetMax) {
+        minDistSq += (qmin - targetMax) * (qmin - targetMax);
+      }
+
+      // Compute axis contribution to max squared distance
+      const d1 = (qmin - targetMin) * (qmin - targetMin);
+      const d2 = (qmin - targetMax) * (qmin - targetMax);
+      const d3 = (qmax - targetMin) * (qmax - targetMin);
+      const d4 = (qmax - targetMax) * (qmax - targetMax);
+      maxDistSq += Math.max(d1, d2, d3, d4);
+    }
+
+    return new Interval(
+      Math.sqrt(minDistSq),
+      Math.sqrt(maxDistSq)
+    );
+  }
+
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    // TODO: Implement proper interval arithmetic for AABB distance
-    // For now, just evaluate the inner function
-    return this.#fn.evaluateInterval(x, y, z);
+    // If query box intersects expanded AABB, delegate to inner function
+    if (x.max >= this.#expanded.min.x && x.min <= this.#expanded.max.x &&
+        y.max >= this.#expanded.min.y && y.min <= this.#expanded.max.y &&
+        z.max >= this.#expanded.min.z && z.min <= this.#expanded.max.z) {
+      return this.#fn.evaluateInterval(x, y, z);
+    }
+
+    // Otherwise compute distance to AABB
+    return this.evaluateAABBDistance(x, y, z);
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
