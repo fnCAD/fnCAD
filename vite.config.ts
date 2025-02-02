@@ -27,20 +27,28 @@ export default defineConfig({
           'three': ['three'],
           'editor': ['codemirror', '@codemirror/lang-javascript'],
           'split': ['split.js'],
-          'core': [
-            './src/sdf_expressions/parser.ts',
-            './src/sdf_expressions/evaluator.ts',
-            './src/sdf_expressions/ast.ts',
-            './src/cad/parser.ts',
-            './src/cad/types.ts',
-            './src/cad/builtins.ts',
-            './src/cad/errors.ts'
-          ],
-          'rendering': [
-            './src/shader.ts',
-            './src/octree.ts',
-            './src/octreevis.ts',
-            './src/meshgen.ts'
+          'app': [
+            'src/stlexporter.ts',
+            'src/octree.ts',
+            'src/halfedge.ts',
+            'src/help-modal.ts',
+            'src/cad/errors.ts',
+            'src/cad/parser.ts',
+            'src/cad/builtins.ts',
+            'src/cad/docs.ts',
+            'src/cad/types.ts',
+            'src/main.ts',
+            'src/state.ts',
+            'src/interval.ts',
+            'src/worker/mesh-worker.ts',
+            'src/shader.ts',
+            'src/sdf_expressions/evaluator.ts',
+            'src/sdf_expressions/parser.ts',
+            'src/sdf_expressions/glslgen.ts',
+            'src/sdf_expressions/types.ts',
+            'src/utils/runtime-base.ts',
+            'src/meshgen.ts',
+            'src/types.ts'
           ]
         }
       }
