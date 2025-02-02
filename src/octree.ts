@@ -229,7 +229,7 @@ export function subdivideOctree(
           state = CellState.Boundary;
           break;
         // boundary of special interest, mark for extended subdivision.
-        case 'edge':
+        case 'complex':
           state = CellState.Boundary;
           adjMinSize /= 4;
           break;

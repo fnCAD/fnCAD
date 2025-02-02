@@ -2,8 +2,8 @@ import { Interval } from '../interval';
 import { GLSLContext } from './glslgen';
 
 export type Content = null | {
-  category: 'face' | 'edge' | 'outside' | 'inside';
-  node?: Node;  // Only set for 'face' and 'edge' categories
+  category: 'face' | 'complex' | 'outside' | 'inside';
+  node?: Node;  // Only set for 'face' and 'complex' categories
 };
 
 export abstract class Node {
@@ -38,7 +38,7 @@ export abstract class Node {
    * Returns a category describing how the region intersects with object surfaces:
    * - null: Plain arithmetic, no boundary information known
    * - 'face': Contains a single known boundary surface
-   * - 'edge': Contains multiple boundaries (to subdivide further)
+   * - 'complex': Contains multiple boundaries or ambiguous proximity (subdivide further)
    * - 'outside': Completely outside the node
    * - 'inside': Completely inside the node
    * Used to subdivide the octree (new approach).

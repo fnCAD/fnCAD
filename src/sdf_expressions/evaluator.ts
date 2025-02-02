@@ -160,8 +160,8 @@ export class UnaryOpNode extends Node {
         return { category: 'inside' };
       case 'face':
         return { category: 'face', node: content.node };
-      case 'edge':
-        return { category: 'edge', node: content.node };
+      case 'complex':
+        return { category: 'complex', node: content.node };
     }
   }
 }
@@ -396,9 +396,9 @@ class MinFunctionCall extends FunctionCallNode {
       return { category: 'inside' };
     }
 
-    // If any child is edge, the union is edge
-    if (contents.some((c) => c?.category === 'edge')) {
-      return { category: 'edge', node: this };
+    // If any child is complex, the union is complex
+    if (contents.some((c) => c?.category === 'complex')) {
+      return { category: 'complex', node: this };
     }
 
     // Propagate invalid materials so we can exclude the case going forward.
@@ -409,7 +409,7 @@ class MinFunctionCall extends FunctionCallNode {
     // Count faces
     const faces = contents.filter((c) => c?.category === 'face');
     if (faces.length > 1) {
-      return { category: 'edge', node: this };
+      return { category: 'complex', node: this };
     }
     if (faces.length === 1) {
       return { category: 'face', node: faces[0]!.node };
@@ -460,15 +460,15 @@ class MaxFunctionCall extends FunctionCallNode {
       return { category: 'outside' };
     }
 
-    // If any child is edge, the intersection is edge
-    if (contents.some((c) => c?.category === 'edge')) {
-      return { category: 'edge', node: this };
+    // If any child is complex, the intersection is complex
+    if (contents.some((c) => c?.category === 'complex')) {
+      return { category: 'complex', node: this };
     }
 
     // Count faces
     const faceCount = contents.filter((c) => c?.category === 'face').length;
     if (faceCount > 1) {
-      return { category: 'edge', node: this };
+      return { category: 'complex', node: this };
     }
     if (faceCount === 1) {
       return { category: 'face', node: this.args[contents.findIndex((c) => c?.category === 'face')] };

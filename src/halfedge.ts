@@ -65,7 +65,7 @@ export class HalfEdgeMesh {
 
   updateVertexContent(index: number, content: Content) {
     if (this.vertices[index].content === null ||
-      this.vertices[index].content.category == 'face' && content?.category == 'edge'
+      this.vertices[index].content.category == 'face' && content?.category == 'complex'
     ) {
       this.vertices[index].content = content;
     }
