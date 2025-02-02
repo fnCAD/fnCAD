@@ -201,7 +201,7 @@ export function subdivideOctree(
     const rangeX = new Interval(childCenter.x - contentRange, childCenter.x + contentRange);
     const rangeY = new Interval(childCenter.y - contentRange, childCenter.y + contentRange);
     const rangeZ = new Interval(childCenter.z - contentRange, childCenter.z + contentRange);
-    const content = sdf.evaluateContent(rangeX, rangeY, rangeZ);
+    var content = sdf.evaluateContent(rangeX, rangeY, rangeZ);
 
     // Determine cell state based on content category
     var adjMinSize = minSize;

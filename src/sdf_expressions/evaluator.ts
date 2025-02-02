@@ -164,6 +164,7 @@ export class UnaryOpNode extends Node {
       case 'complex':
         return { category: 'complex', node: content.node, sdfEstimate };
     }
+    throw new Error(`internal error: unknown content category ${content.category}`);
   }
 }
 
@@ -420,8 +421,8 @@ class MinFunctionCall extends FunctionCallNode {
     if (faces.length === 1) {
       const faceInterval = faces[0]!.sdfEstimate;
       const otherIntervals = contents
-        .filter((c) => c?.category !== 'face')
-        .map((c) => c?.sdfEstimate);
+        .filter((c) => c!.category !== 'face')
+        .map((c) => c!.sdfEstimate);
 
       if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
         return { category: 'complex', node: this, sdfEstimate };
@@ -479,17 +480,17 @@ class MaxFunctionCall extends FunctionCallNode {
     const sdfEstimate = Interval.max(contents.map(c => c!.sdfEstimate));
 
     // If any child is outside, the intersection is outside
-    if (contents.some((c) => c?.category === 'outside')) {
+    if (contents.some((c) => c!.category === 'outside')) {
       return { category: 'outside', sdfEstimate };
     }
 
     // If any child is complex, the intersection is complex
-    if (contents.some((c) => c?.category === 'complex')) {
+    if (contents.some((c) => c!.category === 'complex')) {
       return { category: 'complex', node: this, sdfEstimate };
     }
 
     // Multiple faces = complex
-    const faces = contents.filter((c) => c?.category === 'face');
+    const faces = contents.filter((c) => c!.category === 'face');
     if (faces.length > 1) {
       return { category: 'complex', node: this, sdfEstimate };
     }
@@ -498,8 +499,8 @@ class MaxFunctionCall extends FunctionCallNode {
     if (faces.length === 1) {
       const faceInterval = faces[0]!.sdfEstimate;
       const otherIntervals = contents
-        .filter((c) => c?.category !== 'face')
-        .map((c) => c?.sdfEstimate);
+        .filter((c) => c!.category !== 'face')
+        .map((c) => c!.sdfEstimate);
 
       if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
         return { category: 'complex', node: this, sdfEstimate };
@@ -777,7 +778,9 @@ class AABBFunctionCall extends FunctionCallNode {
     const aabb_x = new Interval(this.#aabb.min.x, this.#aabb.max.x);
     const aabb_y = new Interval(this.#aabb.min.y, this.#aabb.max.y);
     const aabb_z = new Interval(this.#aabb.min.z, this.#aabb.max.z);
-    const dx = aabb_x.sub(x), dy = aabb_y.sub(y), dz = aabb_z.sub(z);
+    const dx = aabb_x.subtract(x),
+      dy = aabb_y.subtract(y),
+      dz = aabb_z.subtract(z);
 
     // Return sqrt(dx2 + dy2 + dz2)
     return dx.sqr().add(dy.sqr()).add(dz.sqr()).sqrt();
