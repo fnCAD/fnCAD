@@ -547,9 +547,12 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     // Use our own evaluateInterval to determine if we contain a potential face
     const interval = this.evaluateInterval(x, y, z);
     if (interval.contains(0)) {
-      return { category: 'face', node: this };
+      return { category: 'face', node: this, sdfEstimate: interval };
     }
-    return interval.max < 0 ? { category: 'inside' } : { category: 'outside' };
+    return {
+      category: interval.max < 0 ? 'inside' : 'outside',
+      sdfEstimate: interval,
+    };
   }
 }
 
@@ -844,9 +847,12 @@ class FaceFunctionCall extends FunctionCallNode {
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const interval = this.args[0].evaluateInterval(x, y, z);
     if (interval.contains(0)) {
-      return { category: 'face', node: this };
+      return { category: 'face', node: this, sdfEstimate: interval };
     }
-    return interval.max < 0 ? { category: 'inside' } : { category: 'outside' };
+    return {
+      category: interval.max < 0 ? 'inside' : 'outside',
+      sdfEstimate: interval
+    };
   }
 }
 
