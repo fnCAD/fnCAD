@@ -37,7 +37,7 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
     // Generate octree
     const octree = new OctreeNode(CellState.Boundary);
     const minSize = e.data.highDetail ? sdfScene.minSize / 8 : sdfScene.minSize;
-    const cellBudget = e.data.highDetail ? 1000000 : 10000;
+    const cellBudget = e.data.highDetail ? 1000000 : 100000;
 
     // Report octree progress periodically
     let lastProgress = 0;
