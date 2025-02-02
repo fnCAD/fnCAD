@@ -406,12 +406,23 @@ class MinFunctionCall extends FunctionCallNode {
       return null;
     }
 
-    // Count faces
+    // Multiple faces (SDFs with zero transition) = complex
     const faces = contents.filter((c) => c?.category === 'face');
     if (faces.length > 1) {
       return { category: 'complex', node: this };
     }
+
+    // One face, but another SDF is closer somewhere = complex
     if (faces.length === 1) {
+      const faceInterval = faces[0]!.sdfEstimate;
+      const otherIntervals = contents
+        .filter((c) => c?.category !== 'face')
+        .map((c) => c?.sdfEstimate);
+
+      if (otherIntervals.some(interval => interval.intersects(faceInterval))) {
+        return { category: 'complex', node: this };
+      }
+      // One face, closest surface everywhere in the volume: face.
       return { category: 'face', node: faces[0]!.node };
     }
 
