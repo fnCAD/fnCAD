@@ -2,7 +2,9 @@ export interface ParameterDoc {
   name: string;
   description: string;
   defaultValue?: string | number;
-  type: 'number' | 'boolean' | 'string' | 'vector';
+  // number | vector is pretty common, so specialcased.
+  // TODO fix this
+  type: 'number' | 'boolean' | 'string' | 'vector' | 'number | vector';
 }
 
 export interface ModuleDoc {
@@ -29,8 +31,8 @@ export const builtinDocs: ModuleDoc[] = [
     parameters: [
       {
         name: 'size',
-        description: 'Length of cube sides',
-        type: 'number',
+        description: 'Length of cube sides (number) or [width,height,depth] vector',
+        type: 'number | vector',
       },
     ],
   },

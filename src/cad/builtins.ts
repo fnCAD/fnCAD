@@ -382,22 +382,28 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
     case 'cube': {
-      const size = evalArg(0, 1);
-      if (typeof size !== 'number') {
-        throw parseError('cube size must be a number', call.location);
+      const sizeArg = evalArg(0, 1);
+      let sizes: number[];
+
+      if (typeof sizeArg === 'number') {
+        sizes = [sizeArg, sizeArg, sizeArg];
+      } else if (Array.isArray(sizeArg) && sizeArg.length === 3) {
+        sizes = sizeArg;
+      } else {
+        throw parseError('cube size must be a number or [x,y,z] vector', call.location);
       }
 
       if (call.children?.length) {
         throw parseError('cube does not accept children', call.location);
       }
 
-      const halfSize = size / 2;
+      const halfSizes = sizes.map((s) => s / 2);
       return {
         type: 'sdf',
-        expr: `max(max(face(abs(x) - ${halfSize}), face(abs(y) - ${halfSize})), face(abs(z) - ${halfSize}))`,
+        expr: `max(max(face(abs(x) - ${halfSizes[0]}), face(abs(y) - ${halfSizes[1]})), face(abs(z) - ${halfSizes[2]}))`,
         bounds: {
-          min: [-halfSize, -halfSize, -halfSize],
-          max: [halfSize, halfSize, halfSize],
+          min: [-halfSizes[0], -halfSizes[1], -halfSizes[2]],
+          max: [halfSizes[0], halfSizes[1], halfSizes[2]],
         },
       };
     }
