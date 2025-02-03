@@ -35,6 +35,13 @@ export class AppState {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);
 
+    // Restore camera position from localStorage
+    const savedCamera = localStorage.getItem('cameraPosition');
+    if (savedCamera) {
+      const pos = JSON.parse(savedCamera);
+      this.camera.position.set(pos.x, pos.y, pos.z);
+    }
+
     // Initialize worker
     this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
       type: 'module',
@@ -98,6 +105,9 @@ export class AppState {
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT: THREE.MOUSE.PAN,
     };
+    this.controls.addEventListener('change', () => {
+      localStorage.setItem('cameraPosition', JSON.stringify(this.camera.position));
+    });
     this.controls.update();
 
     // Set up initial size
