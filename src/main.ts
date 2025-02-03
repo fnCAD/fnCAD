@@ -368,8 +368,11 @@ function regenerateMesh(highDetail: boolean = false) {
   appState.generateMesh(highDetail);
 }
 
-// Add STL export handler
+// Add button handlers
 const saveStlButton = document.getElementById('save-stl') as HTMLButtonElement;
+const generateMeshButton = document.getElementById('generate-mesh') as HTMLButtonElement;
+const generateMeshHDButton = document.getElementById('generate-mesh-hd') as HTMLButtonElement;
+
 saveStlButton.addEventListener('click', () => {
   const currentMesh = appState.getCurrentMesh();
   if (currentMesh) {
@@ -377,4 +380,14 @@ saveStlButton.addEventListener('click', () => {
   } else {
     alert('Please generate a mesh first');
   }
+});
+
+generateMeshButton.addEventListener('click', () => {
+  appState.setViewMode(ViewMode.Mesh);
+  regenerateMesh(false);
+});
+
+generateMeshHDButton.addEventListener('click', () => {
+  appState.setViewMode(ViewMode.Mesh);
+  regenerateMesh(true);
 });
