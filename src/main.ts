@@ -462,7 +462,8 @@ const generateMeshHDButton = document.getElementById('generate-mesh-hd') as HTML
 saveStlButton.addEventListener('click', () => {
   const currentMesh = appState.getCurrentMesh();
   if (currentMesh) {
-    downloadSTL(currentMesh, 'model.stl');
+    const activeDoc = appState.getActiveDocument();
+    downloadSTL(currentMesh, `${activeDoc.name}.stl`);
   } else {
     alert('Please generate a mesh first');
   }
