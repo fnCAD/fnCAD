@@ -306,6 +306,7 @@ function createTabElement(doc: { id: string; name: string }, isActive: boolean):
   title.addEventListener('click', (e) => {
     if (e.detail === 2) {
       // Double click
+      e.stopPropagation();
       title.contentEditable = 'true';
       title.focus();
     }
