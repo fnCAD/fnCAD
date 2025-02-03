@@ -388,14 +388,7 @@ document.querySelector('.new-tab-button')?.addEventListener('click', () => {
 // Initialize CodeMirror editor
 const editor = new EditorView({
   state: EditorState.create({
-    doc:
-      `smooth_difference(0.03) {
-  sphere(1);
-  translate([0, 1, 0]) {
-    sphere(0.7);
-  }
-  cylinder(0.3, 5);
-}`,
+    doc: appState.getActiveDocument().content,
     extensions: [
       basicSetup,
       javascript(),
