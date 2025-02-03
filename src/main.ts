@@ -291,6 +291,9 @@ camera.position.z = 5;
 // Initialize app state
 const appState = new AppState(camera);
 
+// Initial tab update
+updateTabs();
+
 // Create tab bar elements
 function createTabElement(doc: { id: string; name: string }, isActive: boolean): HTMLDivElement {
   const tab = document.createElement('div');
@@ -341,6 +344,7 @@ function createTabElement(doc: { id: string; name: string }, isActive: boolean):
         insert: appState.getActiveDocument().content,
       },
     });
+    appState.setViewMode(ViewMode.Preview);
   });
 
   return tab;
@@ -378,6 +382,7 @@ document.querySelector('.new-tab-button')?.addEventListener('click', () => {
       insert: appState.getActiveDocument().content,
     },
   });
+  appState.setViewMode(ViewMode.Preview);
 });
 
 // Initialize CodeMirror editor

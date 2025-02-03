@@ -149,8 +149,9 @@ export class AppState {
     // Start render loop
     this.animate();
 
-    // Set initial view mode
+    // Set initial view mode and update shader
     this.setViewMode(ViewMode.Preview);
+    this.updateShader();
   }
 
   private updateSize() {
@@ -392,10 +393,6 @@ export class AppState {
 
   private updateShader() {
     const editorContent = this.getActiveDocument().content;
-    console.log(
-      'Updating shader from editor content:',
-      editorContent.substring(0, 100) + '...'
-    );
     try {
       const cadAst = parseCAD(editorContent);
       const sdfScene = moduleToSDF(cadAst);
