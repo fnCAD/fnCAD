@@ -86,6 +86,25 @@ body {
   background: #2a2a2a;
 }
 
+.examples-select {
+  height: 30px;
+  background: #2d2d2d;
+  border: 1px solid #444;
+  color: #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.examples-select:hover {
+  background: #3d3d3d;
+}
+
+.examples-select option {
+  background: #2d2d2d;
+  color: #ddd;
+}
+
 #split-container {
   width: 100%;
   flex: 1;

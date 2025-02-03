@@ -288,11 +288,42 @@ Split(['#editor-pane', '#preview-pane'], {
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 5;
 
+import { examples } from './examples';
+
 // Initialize app state
 const appState = new AppState(camera);
 
 // Initial tab update
 updateTabs();
+
+// Initialize examples dropdown
+const examplesSelect = document.getElementById('examples') as HTMLSelectElement;
+examples.forEach((example, index) => {
+  const option = document.createElement('option');
+  option.value = index.toString();
+  option.textContent = example.name;
+  examplesSelect.appendChild(option);
+});
+
+examplesSelect.addEventListener('change', () => {
+  const selectedIndex = parseInt(examplesSelect.value);
+  const example = examples[selectedIndex];
+  if (example) {
+    const id = appState.createNewDocument();
+    appState.setActiveDocument(id);
+    appState.renameDocument(id, example.name);
+    editor.dispatch({
+      changes: {
+        from: 0,
+        to: editor.state.doc.length,
+        insert: example.content,
+      },
+    });
+    updateTabs();
+    // Reset select to placeholder
+    examplesSelect.selectedIndex = 0;
+  }
+});
 
 // Create tab bar elements
 function createTabElement(doc: { id: string; name: string }, isActive: boolean): HTMLDivElement {
