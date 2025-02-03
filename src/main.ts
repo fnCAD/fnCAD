@@ -19,7 +19,15 @@ document.head.appendChild(style);
 import Split from 'split.js';
 import { getRuntimeBasePath } from './utils/runtime-base';
 import { downloadSTL } from './stlexporter';
-import { EditorView, ViewUpdate, Decoration, DecorationSet, WidgetType } from '@codemirror/view';
+import { indentWithTab } from '@codemirror/commands';
+import {
+  EditorView,
+  keymap,
+  ViewUpdate,
+  Decoration,
+  DecorationSet,
+  WidgetType,
+} from '@codemirror/view';
 import { EditorState, StateEffect, StateField } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { Parser } from './cad/parser';
@@ -423,6 +431,7 @@ const editor = new EditorView({
     doc: appState.getActiveDocument().content,
     extensions: [
       basicSetup,
+      keymap.of([indentWithTab]),
       javascript(),
       EditorView.updateListener.of(async (update: ViewUpdate) => {
         if (update.docChanged) {
