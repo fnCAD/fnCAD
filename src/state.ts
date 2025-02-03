@@ -13,9 +13,16 @@ export enum ViewMode {
   Mesh, // Triangle mesh view
 }
 
+interface Document {
+  id: string;
+  name: string;
+  content: string;
+}
+
 export class AppState {
   private currentMesh: SerializedMesh | null = null;
-  private editorContent: string = '';
+  private documents: Document[] = [];
+  private activeDocumentId: string | null = null;
   private currentShader: string | null = null;
   private meshGenerationInProgress = false;
   private viewMode: ViewMode = ViewMode.Preview;
@@ -30,6 +37,29 @@ export class AppState {
   private currentTaskId: number = 0;
 
   constructor(private camera: THREE.PerspectiveCamera) {
+    // Load documents from localStorage
+    try {
+      const savedDocs = localStorage.getItem('documents');
+      if (savedDocs) {
+        this.documents = JSON.parse(savedDocs);
+      }
+      const activeId = localStorage.getItem('activeDocumentId');
+      if (activeId && this.documents.find((d) => d.id === activeId)) {
+        this.activeDocumentId = activeId;
+      }
+    } catch (e) {
+      console.error('Error loading documents:', e);
+    }
+
+    // Create default document if none exist
+    if (this.documents.length === 0) {
+      this.createNewDocument();
+    }
+
+    // Ensure we have an active document
+    if (!this.activeDocumentId || !this.documents.find((d) => d.id === this.activeDocumentId)) {
+      this.activeDocumentId = this.documents[0].id;
+    }
     this.previewPane = document.getElementById('preview-pane')!;
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -289,9 +319,69 @@ export class AppState {
     return this.viewMode;
   }
 
+  createNewDocument() {
+    const id = crypto.randomUUID();
+    const num = this.documents.length + 1;
+    const doc: Document = {
+      id,
+      name: `model${num}`,
+      content: `sphere(1);`,
+    };
+    this.documents.push(doc);
+    this.saveDocuments();
+    return id;
+  }
+
+  private saveDocuments() {
+    localStorage.setItem('documents', JSON.stringify(this.documents));
+    localStorage.setItem('activeDocumentId', this.activeDocumentId || '');
+  }
+
+  getDocuments(): Document[] {
+    return this.documents;
+  }
+
+  getActiveDocument(): Document {
+    const doc = this.documents.find((d) => d.id === this.activeDocumentId);
+    if (!doc) throw Error('we got into a situation with no active document!!');
+    return doc;
+  }
+
+  setActiveDocument(id: string) {
+    if (this.documents.find((d) => d.id === id)) {
+      this.activeDocumentId = id;
+      this.saveDocuments();
+      this.updateShader();
+    }
+  }
+
+  renameDocument(id: string, newName: string) {
+    const doc = this.documents.find((d) => d.id === id);
+    if (doc) {
+      doc.name = newName;
+      this.saveDocuments();
+    }
+  }
+
+  removeDocument(id: string) {
+    const index = this.documents.findIndex((d) => d.id === id);
+    if (index !== -1) {
+      this.documents.splice(index, 1);
+      if (this.activeDocumentId === id) {
+        this.activeDocumentId = this.documents[Math.max(0, index - 1)]?.id || null;
+      }
+      this.saveDocuments();
+      if (this.activeDocumentId) {
+        this.updateShader();
+      }
+    }
+  }
+
   updateEditorContent(content: string) {
-    if (content !== this.editorContent) {
-      this.editorContent = content;
+    const doc = this.getActiveDocument();
+    if (content !== doc.content) {
+      doc.content = content;
+      this.saveDocuments();
       this.updateShader();
       // Switch back to preview mode when content changes
       if (this.viewMode === ViewMode.Mesh) {
@@ -301,12 +391,13 @@ export class AppState {
   }
 
   private updateShader() {
+    const editorContent = this.getActiveDocument().content;
     console.log(
       'Updating shader from editor content:',
-      this.editorContent.substring(0, 100) + '...'
+      editorContent.substring(0, 100) + '...'
     );
     try {
-      const cadAst = parseCAD(this.editorContent);
+      const cadAst = parseCAD(editorContent);
       const sdfScene = moduleToSDF(cadAst);
       const sdfNode = parseSDF(sdfScene.expr);
       this.currentShader = generateShader(sdfNode);
@@ -368,7 +459,7 @@ export class AppState {
     this.worker.postMessage({
       type: 'start',
       taskId: taskId,
-      code: this.editorContent,
+      code: this.getActiveDocument().content,
       highDetail,
     });
   }
@@ -386,9 +477,5 @@ export class AppState {
 
   isMeshGenerationInProgress(): boolean {
     return this.meshGenerationInProgress;
-  }
-
-  getEditorContent(): string {
-    return this.editorContent;
   }
 }

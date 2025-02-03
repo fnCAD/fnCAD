@@ -291,13 +291,100 @@ camera.position.z = 5;
 // Initialize app state
 const appState = new AppState(camera);
 
+// Create tab bar elements
+function createTabElement(doc: { id: string; name: string }, isActive: boolean): HTMLDivElement {
+  const tab = document.createElement('div');
+  tab.className = `tab${isActive ? ' active' : ''}`;
+  tab.dataset.docId = doc.id;
+
+  const title = document.createElement('div');
+  title.className = 'tab-title';
+  title.textContent = doc.name;
+  title.addEventListener('click', (e) => {
+    if (e.detail === 2) {
+      // Double click
+      title.contentEditable = 'true';
+      title.focus();
+    }
+  });
+  title.addEventListener('blur', () => {
+    title.contentEditable = 'false';
+    appState.renameDocument(doc.id, title.textContent || doc.name);
+  });
+  title.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      title.blur();
+    }
+  });
+
+  const close = document.createElement('div');
+  close.className = 'tab-close';
+  close.textContent = '×';
+  close.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (appState.getDocuments().length > 1) {
+      appState.removeDocument(doc.id);
+      updateTabs();
+    }
+  });
+
+  tab.appendChild(title);
+  tab.appendChild(close);
+  tab.addEventListener('click', () => {
+    appState.setActiveDocument(doc.id);
+    updateTabs();
+    editor.dispatch({
+      changes: {
+        from: 0,
+        to: editor.state.doc.length,
+        insert: appState.getActiveDocument().content,
+      },
+    });
+  });
+
+  return tab;
+}
+
+function updateTabs() {
+  const tabBar = document.querySelector('.tab-bar')!;
+  const newTabButton = tabBar.querySelector('.new-tab-button')!;
+
+  // Remove all tabs but keep the new tab button
+  Array.from(tabBar.children).forEach((child) => {
+    if (!child.classList.contains('new-tab-button')) {
+      child.remove();
+    }
+  });
+
+  // Add tabs for all documents
+  const docs = appState.getDocuments();
+  const activeDoc = appState.getActiveDocument();
+  docs.forEach((doc) => {
+    const tab = createTabElement(doc, doc.id === activeDoc.id);
+    tabBar.insertBefore(tab, newTabButton);
+  });
+}
+
+// Add new tab button handler
+document.querySelector('.new-tab-button')?.addEventListener('click', () => {
+  const id = appState.createNewDocument();
+  appState.setActiveDocument(id);
+  updateTabs();
+  editor.dispatch({
+    changes: {
+      from: 0,
+      to: editor.state.doc.length,
+      insert: appState.getActiveDocument().content,
+    },
+  });
+});
+
 // Initialize CodeMirror editor
 const editor = new EditorView({
   state: EditorState.create({
     doc:
-      localStorage.getItem('editorContent') ||
-      `
-smooth_difference(0.03) {
+      `smooth_difference(0.03) {
   sphere(1);
   translate([0, 1, 0]) {
     sphere(0.7);
@@ -310,7 +397,6 @@ smooth_difference(0.03) {
       EditorView.updateListener.of(async (update: ViewUpdate) => {
         if (update.docChanged) {
           const content = update.state.doc.toString();
-          localStorage.setItem('editorContent', content);
           appState.updateEditorContent(content);
         }
       }),
