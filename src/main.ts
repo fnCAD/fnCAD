@@ -294,7 +294,9 @@ const appState = new AppState(camera);
 // Initialize CodeMirror editor
 const editor = new EditorView({
   state: EditorState.create({
-    doc: `
+    doc:
+      localStorage.getItem('editorContent') ||
+      `
 smooth_difference(0.03) {
   sphere(1);
   translate([0, 1, 0]) {
@@ -307,7 +309,9 @@ smooth_difference(0.03) {
       javascript(),
       EditorView.updateListener.of(async (update: ViewUpdate) => {
         if (update.docChanged) {
-          appState.updateEditorContent(update.state.doc.toString());
+          const content = update.state.doc.toString();
+          localStorage.setItem('editorContent', content);
+          appState.updateEditorContent(content);
         }
       }),
       oneDark,
