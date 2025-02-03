@@ -440,9 +440,6 @@ const editor = new EditorView({
 // Store editor instance for later use
 window._editor = editor;
 
-// Initial state update
-appState.updateEditorContent(editor.state.doc.toString());
-
 // Add keyboard handlers
 document.addEventListener('keydown', (event) => {
   if (event.key === '5' && event.ctrlKey) {
