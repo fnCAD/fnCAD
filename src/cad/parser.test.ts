@@ -503,10 +503,10 @@ describe('OpenSCAD-like Syntax', () => {
 
   it('compiles basic primitives', () => {
     expect(compileToSDF('cube(1);')).toBe(
-      'max(max(face(abs(x) - 0.5), face(abs(y) - 0.5)), face(abs(z) - 0.5))'
+      'max(max(face(abs(x) - 0.5, 0.25), face(abs(y) - 0.5, 0.25)), face(abs(z) - 0.5, 0.25))'
     );
 
-    expect(compileToSDF('sphere(1);')).toBe('face(sqrt(x*x + y*y + z*z) - 1)');
+    expect(compileToSDF('sphere(1);')).toBe('face(sqrt(x*x + y*y + z*z) - 1, 0.25)');
   });
 
   it('handles number literals in blocks', () => {
@@ -515,21 +515,21 @@ describe('OpenSCAD-like Syntax', () => {
 
   it('compiles transformations', () => {
     expect(compileToSDF('translate([1, 0, 0]) sphere(1);')).toBe(
-      'translate(1, 0, 0, face(sqrt(x*x + y*y + z*z) - 1))'
+      'translate(1, 0, 0, face(sqrt(x*x + y*y + z*z) - 1, 0.25))'
     );
 
     expect(compileToSDF('rotate([0, 90, 0]) { cube(1); }')).toBe(
-      'rotate(0, 1.5707963267948966, 0, max(max(face(abs(x) - 0.5), face(abs(y) - 0.5)), face(abs(z) - 0.5)))'
+      'rotate(0, 1.5707963267948966, 0, max(max(face(abs(x) - 0.5, 0.25), face(abs(y) - 0.5, 0.25)), face(abs(z) - 0.5, 0.25)))'
     );
   });
 
   it('compiles boolean operations', () => {
     expect(compileToSDF('union() { sphere(1); cube(1); }')).toBe(
-      'aabb(-1, -1, -1, 1, 1, 1, min(face(sqrt(x*x + y*y + z*z) - 1), max(max(face(abs(x) - 0.5), face(abs(y) - 0.5)), face(abs(z) - 0.5))))'
+      'aabb(-1, -1, -1, 1, 1, 1, min(face(sqrt(x*x + y*y + z*z) - 1, 0.25), max(max(face(abs(x) - 0.5, 0.25), face(abs(y) - 0.5, 0.25)), face(abs(z) - 0.5, 0.25))))'
     );
 
     expect(compileToSDF('difference() { cube(2); sphere(1); }')).toBe(
-      'aabb(-1, -1, -1, 1, 1, 1, max(max(max(face(abs(x) - 1), face(abs(y) - 1)), face(abs(z) - 1)), -(face(sqrt(x*x + y*y + z*z) - 1))))'
+      'aabb(-1, -1, -1, 1, 1, 1, max(max(max(face(abs(x) - 1, 0.5), face(abs(y) - 1, 0.5)), face(abs(z) - 1, 0.5)), -(face(sqrt(x*x + y*y + z*z) - 1, 0.25))))'
     );
   });
 
@@ -540,7 +540,7 @@ describe('OpenSCAD-like Syntax', () => {
           cube(1);
     `);
     expect(result).toBe(
-      'translate(1, 0, 0, rotate(0, 0.027401669256310976, 0, max(max(face(abs(x) - 0.5), face(abs(y) - 0.5)), face(abs(z) - 0.5))))'
+      'translate(1, 0, 0, rotate(0, 0.027401669256310976, 0, max(max(face(abs(x) - 0.5, 0.25), face(abs(y) - 0.5, 0.25)), face(abs(z) - 0.5, 0.25))))'
     );
   });
 
@@ -553,8 +553,8 @@ describe('OpenSCAD-like Syntax', () => {
       }
     `);
     expect(result).toBe(
-      'aabb(-1, -1, -1, 1, 1, 1, max(max(max(face(abs(x) - 1), face(abs(y) - 1)), face(abs(z) - 1)), ' +
-        '-(translate(0.5, 0.5, 0.5, face(sqrt(x*x + y*y + z*z) - 1)))))'
+      'aabb(-1, -1, -1, 1, 1, 1, max(max(max(face(abs(x) - 1, 0.5), face(abs(y) - 1, 0.5)), face(abs(z) - 1, 0.5)), ' +
+        '-(translate(0.5, 0.5, 0.5, face(sqrt(x*x + y*y + z*z) - 1, 0.25)))))'
     );
   });
 });
