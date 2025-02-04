@@ -277,7 +277,6 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
 export function moduleToSDF(nodes: Node[]): SDFScene {
   const context = new Context();
   context.set('$maxerror', 0.01);
-  context.set('$minsize', 0.1);
   const result = wrapUnion(
     flattenScope(nodes, context, 'toplevel', {
       start: { line: 1, column: 1, offset: 0 },
@@ -288,9 +287,8 @@ export function moduleToSDF(nodes: Node[]): SDFScene {
 
   // Get mesh settings from context, defaulting if not set
   const maxError = context.get('$maxerror') as number;
-  const minSize = context.get('$minsize') as number;
 
-  return new SDFScene(result.expr, maxError, minSize);
+  return new SDFScene(result.expr, maxError);
 }
 
 function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
@@ -398,9 +396,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
 
       const halfSizes = sizes.map((s) => s / 2);
+      // For flat surfaces, use 1/4 of the smallest dimension as minSize
+      const minSize = Math.min(...sizes) * 0.25;
       return {
         type: 'sdf',
-        expr: `max(max(face(abs(x) - ${halfSizes[0]}), face(abs(y) - ${halfSizes[1]})), face(abs(z) - ${halfSizes[2]}))`,
+        expr: `max(max(face(abs(x) - ${halfSizes[0]}, ${minSize}), face(abs(y) - ${halfSizes[1]}, ${minSize})), face(abs(z) - ${halfSizes[2]}, ${minSize}))`,
         bounds: {
           min: [-halfSizes[0], -halfSizes[1], -halfSizes[2]],
           max: [halfSizes[0], halfSizes[1], halfSizes[2]],
@@ -418,9 +418,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('sphere does not accept children', call.location);
       }
 
+      // For spherical surfaces, use 1/10 of the radius as minSize
+      const minSize = r * 0.1;
       return {
         type: 'sdf',
-        expr: `face(sqrt(x*x + y*y + z*z) - ${r})`,
+        expr: `face(sqrt(x*x + y*y + z*z) - ${r}, ${minSize})`,
         bounds: {
           min: [-r, -r, -r],
           max: [r, r, r],
@@ -440,9 +442,12 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
 
       const halfHeight = height / 2;
+      // For cylindrical surfaces, use 1/10 of radius for curved surface and 1/4 of height for flat ends
+      const curvedMinSize = radius * 0.1;
+      const flatMinSize = height * 0.25;
       return {
         type: 'sdf',
-        expr: `max(face(sqrt(x*x + z*z) - ${radius}), face(abs(y) - ${halfHeight}))`,
+        expr: `max(face(sqrt(x*x + z*z) - ${radius}, ${curvedMinSize}), face(abs(y) - ${halfHeight}, ${flatMinSize}))`,
         bounds: {
           min: [-radius, -halfHeight, -radius],
           max: [radius, halfHeight, radius],
