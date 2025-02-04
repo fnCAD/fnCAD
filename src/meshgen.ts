@@ -69,7 +69,7 @@ export class MeshGenerator {
         'z',
         'return ' + this.sdf.evaluateStr('x', 'y', 'z', 1) + ';'
       );
-      const maxSubdivisions = mesh.halfEdges.length;
+      const maxSubdivisions = mesh.halfEdges.length / 10;
       mesh.refineEdges((pos) => fn(pos.x, pos.y, pos.z), maxSubdivisions);
       this.reportProgress(0.55);
     }
