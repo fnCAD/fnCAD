@@ -304,10 +304,7 @@ export class HalfEdgeMesh {
    * @param maxSubdivisions Limit on number of edge splits
    * @returns Statistics about the refinement process
    */
-  refineEdges(
-    sdf: (point: THREE.Vector3) => number,
-    maxSubdivisions: number,
-  ): number {
+  refineEdges(sdf: (point: THREE.Vector3) => number, maxSubdivisions: number): number {
     console.log('Starting edge refinement with max ', maxSubdivisions);
 
     // Priority queue for edges to split

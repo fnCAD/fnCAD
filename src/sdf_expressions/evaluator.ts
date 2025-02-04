@@ -407,8 +407,12 @@ class MinFunctionCall extends FunctionCallNode {
     }
 
     // Get all face and complex contents to compute minimum feature size
-    const minSize = Math.min(65536.0,
-      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex').map!((c) => c!.minSize!));
+    const minSize = Math.min(
+      65536.0,
+      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex').map!(
+        (c) => c!.minSize!
+      )
+    );
 
     // If any child is complex, the union is complex
     if (contents.some((c) => c!.category === 'complex')) {
@@ -489,8 +493,12 @@ class MaxFunctionCall extends FunctionCallNode {
     }
 
     // Get all face and complex contents to compute minimum feature size
-    const minSize = Math.min(65536.0,
-      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex').map!((c) => c!.minSize!));
+    const minSize = Math.min(
+      65536.0,
+      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex').map!(
+        (c) => c!.minSize!
+      )
+    );
 
     // If any child is complex, the intersection is complex
     if (contents.some((c) => c!.category === 'complex')) {
@@ -570,8 +578,10 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
       };
     }
     const r = constantValue(this.args[2]);
-    const nearishC1 = c1.category === 'face' || c1.category === 'complex' || c1.sdfEstimate.minDist(0) < r * 5.0;
-    const nearishC2 = c2.category === 'face' || c2.category === 'complex' || c2.sdfEstimate.minDist(0) < r * 5.0;
+    const nearishC1 =
+      c1.category === 'face' || c1.category === 'complex' || c1.sdfEstimate.minDist(0) < r * 5.0;
+    const nearishC2 =
+      c2.category === 'face' || c2.category === 'complex' || c2.sdfEstimate.minDist(0) < r * 5.0;
     if (!nearishC1 && !nearishC2) {
       return {
         category: 'outside',
@@ -581,21 +591,23 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
     if (nearishC1 && nearishC2) {
       var minSize = r / 2.0;
-      if (c1.category == 'face' || c1.category == 'complex') minSize = Math.min(minSize, c1.minSize!);
-      if (c2.category == 'face' || c2.category == 'complex') minSize = Math.min(minSize, c2.minSize!);
+      if (c1.category == 'face' || c1.category == 'complex')
+        minSize = Math.min(minSize, c1.minSize!);
+      if (c2.category == 'face' || c2.category == 'complex')
+        minSize = Math.min(minSize, c2.minSize!);
       const interval = this.evaluateInterval(x, y, z);
       if (interval.contains(0)) {
         return {
           category: 'face',
           node: this,
           sdfEstimate: interval,
-          minSize: minSize
+          minSize: minSize,
         };
       }
       return {
         category: interval.max < 0 ? 'inside' : 'outside',
         sdfEstimate: interval,
-        minSize: minSize
+        minSize: minSize,
       };
     }
     if (nearishC1) return c1;
@@ -720,7 +732,7 @@ class ScaleFunctionCall extends FunctionCallNode {
       category: result.category,
       node: this,
       sdfEstimate: result.sdfEstimate,
-      minSize: result.minSize ? (result.minSize * minScale) : undefined
+      minSize: result.minSize ? result.minSize * minScale : undefined,
     };
   }
 }
@@ -935,7 +947,7 @@ class FaceFunctionCall extends FunctionCallNode {
         category: 'face',
         node: this,
         sdfEstimate: interval,
-        minSize
+        minSize,
       };
     }
     return {

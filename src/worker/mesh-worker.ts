@@ -40,19 +40,12 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 
     // Report octree progress periodically
     let lastProgress = 0;
-    subdivideOctree(
-      octree,
-      sdfNode,
-      new Vector3(0, 0, 0),
-      65536,
-      cellBudget,
-      (progress) => {
-        if (progress - lastProgress > 0.01) {
-          self.postMessage({ type: 'progress', phase: 'octree', taskId, progress });
-          lastProgress = progress;
-        }
+    subdivideOctree(octree, sdfNode, new Vector3(0, 0, 0), 65536, cellBudget, (progress) => {
+      if (progress - lastProgress > 0.01) {
+        self.postMessage({ type: 'progress', phase: 'octree', taskId, progress });
+        lastProgress = progress;
       }
-    );
+    });
 
     // Generate mesh
     const meshGen = new MeshGenerator(octree, sdfNode, true);
