@@ -81,7 +81,7 @@
 ### Basic Operations
 - [x] union()
 - [x] difference()
-- [ ] intersection()
+- [x] intersection()
 
 ## Standard Library
 - [ ] Math functions (sin, cos, etc)

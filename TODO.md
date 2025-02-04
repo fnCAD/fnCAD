@@ -64,7 +64,7 @@
 - [x] Error handling
 - [x] UI controls for all stages
 - [x] Performance settings
-- [ ] Filename field (applied on save)
+- [x] Filename field (applied on save)
 
 ## 9. Language Redesign
 - [x] Switch to OpenSCAD-like syntax (see TODO_OPENSCAD.md)
@@ -72,8 +72,8 @@
 - [ ] Preserve direct SDF function support as escape hatch
 
 ## 10. Advanced Features
-- [ ] Undo/redo
-- [ ] Localstorage
+- [x] Undo/redo
+- [x] Localstorage
 - [ ] Project save/load
 - [ ] Material/color support
 
@@ -81,11 +81,11 @@
 - [x] User guide
 - [x] OpenSCAD compatibility guide
 - [ ] SDF function reference
-- [ ] Example gallery
+- [x] Example gallery
 - [ ] Tutorial content
 
 ## 12. Optimizations
-- [ ] Optimize interval evaluation for AABBs in complex regions
+- [x] Optimize interval evaluation for AABBs in complex regions
   - Current approach evaluates full SDF
   - Could use geometric bounds/properties instead
   - Balance between accuracy and performance
