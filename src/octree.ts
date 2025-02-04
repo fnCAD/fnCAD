@@ -173,7 +173,6 @@ export function subdivideOctree(
   sdf: Node,
   center: THREE.Vector3,
   size: number,
-  minSize: number = 0.1,
   cellBudget: number = 100000,
   onProgress?: (cells: number) => void
 ): number {
@@ -204,7 +203,7 @@ export function subdivideOctree(
     var content = sdf.evaluateContent(rangeX, rangeY, rangeZ);
 
     // Determine cell state based on content category
-    var adjMinSize = minSize;
+    var adjMinSize = content?.minSize || 0.01;
     let state: CellState;
     if (!content) {
       // Null content (plain arithmetic). This should never happen, but
@@ -237,12 +236,13 @@ export function subdivideOctree(
     }
     children.push(new OctreeNode(state, node, i, content));
 
+    // Only subdivide boundary cells if above adjusted minimum size
     if (state !== CellState.Boundary || quart < adjMinSize) {
       continue;
     }
 
     // Try to subdivide child with current budget
-    const cellsCreated = subdivideOctree(children[i], sdf, childCenter, half, minSize, cellBudget);
+    const cellsCreated = subdivideOctree(children[i], sdf, childCenter, half, cellBudget);
     totalCells += cellsCreated;
     cellBudget -= cellsCreated;
 

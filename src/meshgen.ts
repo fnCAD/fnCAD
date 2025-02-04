@@ -42,7 +42,7 @@ export class MeshGenerator {
     }
   }
 
-  generate(minSize: number): SerializedMesh {
+  generate(): SerializedMesh {
     // Create half-edge mesh
     const mesh = new HalfEdgeMesh();
 
@@ -69,11 +69,8 @@ export class MeshGenerator {
         'z',
         'return ' + this.sdf.evaluateStr('x', 'y', 'z', 1) + ';'
       );
-      mesh.refineEdges((pos) => fn(pos.x, pos.y, pos.z), {
-        errorThreshold: minSize / 100.0,
-        maxSubdivisions: mesh.halfEdges.length,
-        minEdgeLength: minSize / 100.0,
-      });
+      const maxSubdivisions = mesh.halfEdges.length;
+      mesh.refineEdges((pos) => fn(pos.x, pos.y, pos.z), maxSubdivisions);
       this.reportProgress(0.55);
     }
 

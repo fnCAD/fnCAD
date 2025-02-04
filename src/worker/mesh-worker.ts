@@ -36,7 +36,6 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 
     // Generate octree
     const octree = new OctreeNode(CellState.Boundary);
-    const minSize = e.data.highDetail ? sdfScene.minSize / 8 : sdfScene.minSize;
     const cellBudget = e.data.highDetail ? 1000000 : 100000;
 
     // Report octree progress periodically
@@ -46,7 +45,6 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
       sdfNode,
       new Vector3(0, 0, 0),
       65536,
-      minSize,
       cellBudget,
       (progress) => {
         if (progress - lastProgress > 0.01) {
@@ -62,7 +60,7 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
       self.postMessage({ type: 'progress', phase: 'mesh', taskId, progress });
     };
 
-    const mesh = meshGen.generate(minSize);
+    const mesh = meshGen.generate();
     self.postMessage({ type: 'complete', taskId, mesh });
   }
 };

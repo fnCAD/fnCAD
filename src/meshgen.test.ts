@@ -24,13 +24,12 @@ describe('Mesh generation', () => {
     const octree = new OctreeNode(CellState.Boundary);
 
     // Subdivide octree with reasonable settings
-    const minSize = 2;
     const cellBudget = 10000;
-    subdivideOctree(octree, sdfAst, new Vector3(0, 0, 0), 65536, minSize, cellBudget);
+    subdivideOctree(octree, sdfAst, new Vector3(0, 0, 0), 65536, cellBudget);
 
     // Generate mesh
     const meshGen = new MeshGenerator(octree, sdfAst, true);
-    const mesh = meshGen.generate(minSize);
+    const mesh = meshGen.generate();
 
     expect(mesh.indices.length / 3).toBe(336);
 

@@ -301,22 +301,14 @@ export class HalfEdgeMesh {
    * - Return refinement statistics
    *
    * @param sdf The signed distance function to use for refinement
-   * @param options Configuration options including:
-   *   - errorThreshold: Maximum acceptable edge error
-   *   - maxSubdivisions: Limit on number of edge splits
-   *   - minEdgeLength: Minimum allowed edge length
+   * @param maxSubdivisions Limit on number of edge splits
    * @returns Statistics about the refinement process
    */
   refineEdges(
     sdf: (point: THREE.Vector3) => number,
-    options: {
-      errorThreshold: number;
-      maxSubdivisions: number;
-      minEdgeLength: number;
-    }
+    maxSubdivisions: number,
   ): number {
-    console.log('Starting edge refinement with options:', options);
-    const { errorThreshold, maxSubdivisions, minEdgeLength } = options;
+    console.log('Starting edge refinement with max ', maxSubdivisions);
 
     // Priority queue for edges to split
     type EdgeQuality = {
@@ -342,10 +334,11 @@ export class HalfEdgeMesh {
       // Calculate midpoint
       const midpoint = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
 
+      /*
       const length = v1.distanceTo(v2);
       if (length < minEdgeLength) {
         return null;
-      }
+      }*/
 
       // Evaluate SDF at midpoint
       const error = Math.abs(localSdf(midpoint));
@@ -367,7 +360,8 @@ export class HalfEdgeMesh {
       if (edge.pairIndex > i) continue;
 
       const quality = evaluateEdge(i);
-      if (quality && quality.error > errorThreshold) {
+      // if (quality && quality.error > errorThreshold) {
+      if (quality) {
         heap.insert(quality);
       }
     }
@@ -396,7 +390,8 @@ export class HalfEdgeMesh {
       // Evaluate new edges for potential refinement
       for (const newEdge of newEdges) {
         const quality = evaluateEdge(newEdge);
-        if (quality && quality.error > errorThreshold) {
+        // if (quality && quality.error > errorThreshold) {
+        if (quality) {
           // console.log(`reinsert new edge ${newEdge} with ${quality.error}`);
           heap.insert(quality);
         } else {

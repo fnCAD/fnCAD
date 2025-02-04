@@ -418,8 +418,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         throw parseError('sphere does not accept children', call.location);
       }
 
-      // For spherical surfaces, use 1/10 of the radius as minSize
-      const minSize = r * 0.1;
+      // For spherical surfaces, use 1/4 of the radius as minSize
+      const minSize = r * 0.25;
       return {
         type: 'sdf',
         expr: `face(sqrt(x*x + y*y + z*z) - ${r}, ${minSize})`,
@@ -442,8 +442,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
 
       const halfHeight = height / 2;
-      // For cylindrical surfaces, use 1/10 of radius for curved surface and 1/4 of height for flat ends
-      const curvedMinSize = radius * 0.1;
+      // For cylindrical surfaces, use 1/4 of radius for curved surface and 1/4 of height for flat ends
+      const curvedMinSize = radius * 0.25;
       const flatMinSize = height * 0.25;
       return {
         type: 'sdf',
