@@ -509,7 +509,7 @@ class MaxFunctionCall extends FunctionCallNode {
       if (otherIntervals.some((interval) => interval.intersects(faceInterval))) {
         return { category: 'complex', node: this, sdfEstimate };
       }
-      return { category: 'face', node: faces[0]!.node, sdfEstimate };
+      return { category: 'face', node: faces[0]!.node, sdfEstimate, minSize: faces[0]!.minSize };
     }
 
     // All remaining children must be 'inside'
@@ -910,6 +910,7 @@ class FaceFunctionCall extends FunctionCallNode {
         category: 'face',
         node: this,
         sdfEstimate: interval,
+        minSize: 0.01 // Default minimum feature size for primitive surfaces
       };
     }
     return {
