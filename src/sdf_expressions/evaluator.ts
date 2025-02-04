@@ -488,15 +488,19 @@ class MaxFunctionCall extends FunctionCallNode {
       return { category: 'outside', sdfEstimate };
     }
 
+    // Get all face and complex contents to compute minimum feature size
+    const minSize = Math.min(65536.0,
+      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex').map!((c) => c.minSize));
+
     // If any child is complex, the intersection is complex
     if (contents.some((c) => c!.category === 'complex')) {
-      return { category: 'complex', node: this, sdfEstimate };
+      return { category: 'complex', node: this, sdfEstimate, minSize };
     }
 
     // Multiple faces = complex
     const faces = contents.filter((c) => c!.category === 'face');
     if (faces.length > 1) {
-      return { category: 'complex', node: this, sdfEstimate };
+      return { category: 'complex', node: this, sdfEstimate, minSize };
     }
 
     // One face, but another SDF overlaps = complex
@@ -507,9 +511,9 @@ class MaxFunctionCall extends FunctionCallNode {
         .map((c) => c!.sdfEstimate);
 
       if (otherIntervals.some((interval) => interval.intersects(faceInterval))) {
-        return { category: 'complex', node: this, sdfEstimate };
+        return { category: 'complex', node: this, sdfEstimate, minSize };
       }
-      return { category: 'face', node: faces[0]!.node, sdfEstimate, minSize: faces[0]!.minSize };
+      return { category: 'face', node: faces[0]!.node, sdfEstimate, minSize: minSize };
     }
 
     // All remaining children must be 'inside'
