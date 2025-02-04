@@ -891,7 +891,7 @@ class FaceFunctionCall extends FunctionCallNode {
 
   constructor(args: Node[]) {
     super('face', args);
-    enforceArgumentLength('face', args, 1);
+    enforceArgumentLength('face', args, 2);
     this.evaluate = this.compileEvaluate();
   }
 
@@ -909,12 +909,13 @@ class FaceFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const interval = this.args[0].evaluateInterval(x, y, z);
+    const minSize = constantValue(this.args[1]);
     if (interval.contains(0)) {
       return {
         category: 'face',
         node: this,
         sdfEstimate: interval,
-        minSize: 0.01 // Default minimum feature size for primitive surfaces
+        minSize
       };
     }
     return {
