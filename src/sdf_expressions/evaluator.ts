@@ -160,9 +160,9 @@ export class UnaryOpNode extends Node {
       case 'outside':
         return { category: 'inside', sdfEstimate };
       case 'face':
-        return { category: 'face', node: this, sdfEstimate };
+        return { category: 'face', node: this, sdfEstimate, minSize: content.minSize };
       case 'complex':
-        return { category: 'complex', node: this, sdfEstimate };
+        return { category: 'complex', node: this, sdfEstimate, minSize: content.minSize };
     }
     throw new Error(`internal error: unknown content category ${content.category}`);
   }
@@ -402,19 +402,23 @@ class MinFunctionCall extends FunctionCallNode {
     const sdfEstimate = Interval.min(contents.map((c) => c!.sdfEstimate));
 
     // If any child is inside, the union is inside
-    if (contents.some((c) => c?.category === 'inside')) {
+    if (contents.some((c) => c!.category === 'inside')) {
       return { category: 'inside', sdfEstimate };
     }
 
+    // Get all face and complex contents to compute minimum feature size
+    const minSize = Math.min(65536.0,
+      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex'));
+
     // If any child is complex, the union is complex
-    if (contents.some((c) => c?.category === 'complex')) {
-      return { category: 'complex', node: this, sdfEstimate };
+    if (contents.some((c) => c!.category === 'complex')) {
+      return { category: 'complex', node: this, sdfEstimate, minSize };
     }
 
     // Multiple faces (SDFs with zero transition) = complex
-    const faces = contents.filter((c) => c?.category === 'face');
+    const faces = contents.filter((c) => c!.category === 'face');
     if (faces.length > 1) {
-      return { category: 'complex', node: this, sdfEstimate };
+      return { category: 'complex', node: this, sdfEstimate, minSize };
     }
 
     // One face, but another SDF is closer somewhere = complex
@@ -425,10 +429,10 @@ class MinFunctionCall extends FunctionCallNode {
         .map((c) => c!.sdfEstimate);
 
       if (otherIntervals.some((interval) => interval.intersects(faceInterval))) {
-        return { category: 'complex', node: this, sdfEstimate };
+        return { category: 'complex', node: this, sdfEstimate, minSize };
       }
       // One face, closest surface everywhere in the volume: face.
-      return { category: 'face', node: faces[0]!.node, sdfEstimate };
+      return { category: 'face', node: faces[0]!.node, sdfEstimate, minSize };
     }
 
     // All remaining children must be 'outside'

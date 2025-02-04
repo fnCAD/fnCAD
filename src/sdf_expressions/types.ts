@@ -5,6 +5,7 @@ export type Content = null | {
   category: 'face' | 'complex' | 'outside' | 'inside';
   node?: Node; // Only set for 'face' and 'complex' categories
   sdfEstimate: Interval; // The SDF value range in this region
+  minSize?: number; // Minimum feature size, required for 'face' and 'complex'
 };
 
 export abstract class Node {
