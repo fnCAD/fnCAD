@@ -408,7 +408,7 @@ class MinFunctionCall extends FunctionCallNode {
 
     // Get all face and complex contents to compute minimum feature size
     const minSize = Math.min(65536.0,
-      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex'));
+      ...contents.filter((c) => c!.category === 'face' || c!.category === 'complex').map!((c) => c.minSize));
 
     // If any child is complex, the union is complex
     if (contents.some((c) => c!.category === 'complex')) {
@@ -556,18 +556,26 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
-    // Use our own evaluateInterval to determine if we contain a potential face
-    const interval = this.evaluateInterval(x, y, z);
-    if (interval.contains(0)) {
+    const c1 = this.args[0].evaluateContent(x, y, z);
+    const c2 = this.args[1].evaluateContent(x, y, z);
+    const r = constantValue(this.args[2]);
+    const onC1 = c1.category === 'face' || c1.category === 'complex' || c1.sdfEstimate.minDist(0) < r;
+    const onC2 = c2.category === 'face' || c2.category === 'complex' || c2.sdfEstimate.minDist(0) < r;
+    if (!onC1 && !onC2) {
       return {
-        category: 'face',
-        node: this,
-        sdfEstimate: interval,
+        category: (c1.category === 'outside' || c2.category === 'outside') ? 'outside' : 'inside',
+        sdfEstimate: Interval.min(c1.sdfEstimate, c2.sdfEstimate),
       };
     }
+
+    var minSize = r;
+    if (c1.category == 'face' || c1.category == 'complex') minSize = Math.min(minSize, c1.minSize);
+    if (c2.category == 'face' || c2.category == 'complex') minSize = Math.min(minSize, c2.minSize);
     return {
-      category: interval.max < 0 ? 'inside' : 'outside',
-      sdfEstimate: interval,
+      category: 'face',
+      node: this,
+      sdfEstimate: Interval.min(c1.sdfEstimate, c2.sdfEstimate),
+      minSize: minSize
     };
   }
 }
@@ -634,27 +642,25 @@ class AbsFunctionCall extends FunctionCallNode {
 class ScaleFunctionCall extends FunctionCallNode {
   evaluate: (x: number, y: number, z: number) => number;
   #body: Node;
-  #sx: Node;
-  #sy: Node;
-  #sz: Node;
+  #sx: number;
+  #sy: number;
+  #sz: number;
 
   constructor(args: Node[]) {
     super('scale', args);
     enforceArgumentLength('scale', args, 4);
-    [this.#sx, this.#sy, this.#sz, this.#body] = args;
+    this.#sx = constantValue(args[0]);
+    this.#sy = constantValue(args[1]);
+    this.#sz = constantValue(args[2]);
+    this.#body = args[3];
     this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    // Get scale factors
-    const scaleX = constantValue(this.#sx);
-    const scaleY = constantValue(this.#sy);
-    const scaleZ = constantValue(this.#sz);
-
     return this.#body.evaluateInterval(
-      x.divide(Interval.from(scaleX)),
-      y.divide(Interval.from(scaleY)),
-      z.divide(Interval.from(scaleZ))
+      x.divide(Interval.from(this.#sx)),
+      y.divide(Interval.from(this.#sy)),
+      z.divide(Interval.from(this.#sz))
     );
   }
 
@@ -662,31 +668,36 @@ class ScaleFunctionCall extends FunctionCallNode {
     const newx = `x${depth}`,
       newy = `y${depth}`,
       newz = `z${depth}`;
-    const scaleX = constantValue(this.#sx);
-    const scaleY = constantValue(this.#sy);
-    const scaleZ = constantValue(this.#sz);
     return `(() => {
-      const ${newx} = ${xname} / ${scaleX};
-      const ${newy} = ${yname} / ${scaleY};
-      const ${newz} = ${zname} / ${scaleZ};
+      const ${newx} = ${xname} / ${this.#sx};
+      const ${newy} = ${yname} / ${this.#sy};
+      const ${newz} = ${zname} / ${this.#sz};
       return ${this.#body.evaluateStr(newx, newy, newz, depth + 1)};
     })()`;
   }
 
   toGLSL(context: GLSLContext): string {
-    const evalSx = constantValue(this.#sx);
-    const evalSy = constantValue(this.#sy);
-    const evalSz = constantValue(this.#sz);
-    const newContext = context.scale(evalSx, evalSy, evalSz);
+    const newContext = context.scale(this.#sx, this.#sy, this.#sz);
     return this.#body.toGLSL(newContext);
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
-    return this.#body.evaluateContent(
-      x.divide(Interval.from(constantValue(this.#sx))),
-      y.divide(Interval.from(constantValue(this.#sy))),
-      z.divide(Interval.from(constantValue(this.#sz)))
+    const result = this.#body.evaluateContent(
+      x.divide(Interval.from(this.#sx)),
+      y.divide(Interval.from(this.#sy)),
+      z.divide(Interval.from(this.#sz))
     );
+    if (!result) return null;
+
+    // Scale the minSize by the minimum scale factor
+    const minScale = Math.min(this.#sx, this.#sy, this.#sz);
+
+    return {
+      category: result.category,
+      node: this,
+      sdfEstimate: result.sdfEstimate,
+      minSize: result.minSize ? (result.minSize * minScale) : undefined
+    };
   }
 }
 
@@ -753,6 +764,7 @@ class TranslateFunctionCall extends FunctionCallNode {
       category: result.category,
       node: this,
       sdfEstimate: result.sdfEstimate,
+      minSize: result.minSize,
     };
   }
 }
@@ -1040,6 +1052,7 @@ class RotateFunctionCall extends FunctionCallNode {
       category: result.category,
       node: this,
       sdfEstimate: result.sdfEstimate,
+      minSize: result.minSize,
     };
   }
 }

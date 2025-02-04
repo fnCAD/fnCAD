@@ -81,6 +81,13 @@ export class Interval {
     );
   }
 
+  // minimum distance to number
+  minDist(value: number): number {
+    if (value < this.min) return this.min - value;
+    if (value > this.max) return value - this.max;
+    return 0;
+  }
+
   // Math functions
   sqr(): Interval {
     // If interval contains zero, minimum is 0
