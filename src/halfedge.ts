@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { MaxHeap } from '@datastructures-js/heap';
 import { SerializedMesh } from './types';
 import { Content } from './sdf_expressions/types';
 
@@ -263,7 +262,7 @@ export class HalfEdgeMesh {
     return maxMove;
   }
 
-  protected optimizeVertices(sdf: (point: THREE.Vector3) => number): number {
+  public optimizeVertices(sdf: (point: THREE.Vector3) => number): number {
     let maxMove = 0;
 
     for (const vertex of this.vertices) {
@@ -272,133 +271,6 @@ export class HalfEdgeMesh {
     }
 
     return maxMove;
-  }
-
-  /**
-   * Performs fine subdivision of the mesh using edge-based refinement.
-   *
-   * Algorithm steps (note, edited; may not match function signature)
-   *
-   * 1. PREP
-   * - Optimize every vertex to minimize |SDF| using gradient.
-   * - Create priority queue for edges based on error.
-   * - For each halfedge where index < pairIndex (so we only consider each pair once):
-   *   - Calculate midpoint position using pair
-   *   - Evaluate SDF at midpoint
-   *   - Compute error metric = |SDF(midpoint)| / edge_length
-   *   - If error > threshold, add to queue
-   *
-   * 2. REFINEMENT LOOP
-   * - While queue not empty, under subdivision limit:
-   *   - Pop edge with highest error
-   *   - Split edge using splitEdge()
-   *   - Optimize new vertex position as above
-   *   - Reconsider new edges created by split as above. Probably put that in a helper.
-   *   - Note that this may re-queue an existing edge; that's fine because its vertexes may have changed.
-   *
-   * 3. CLEANUP
-   * - Verify mesh is still manifold
-   * - Return refinement statistics
-   *
-   * @param sdf The signed distance function to use for refinement
-   * @param maxSubdivisions Limit on number of edge splits
-   * @returns Statistics about the refinement process
-   */
-  refineEdges(sdf: (point: THREE.Vector3) => number, maxSubdivisions: number): number {
-    console.log('Starting edge refinement with max ', maxSubdivisions);
-
-    // Priority queue for edges to split
-    type EdgeQuality = {
-      index: number;
-      error: number;
-      midpoint: THREE.Vector3;
-    };
-
-    // Initial vertex optimization
-    this.optimizeVertices(sdf);
-
-    // Helper to evaluate edge quality
-    const evaluateEdge = (heIndex: number): EdgeQuality | null => {
-      const edge = this.halfEdges[heIndex];
-      const pair = this.halfEdges[edge.pairIndex];
-
-      // Get edge vertices
-      const v1 = this.vertices[pair.vertexIndex].position;
-      const v2 = this.vertices[edge.vertexIndex].position;
-      const evaluate = this.vertices[pair.vertexIndex].content?.node?.evaluate;
-      const localSdf = evaluate ? (p: THREE.Vector3) => evaluate(p.x, p.y, p.z) : sdf;
-
-      // Calculate midpoint
-      const midpoint = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
-
-      /*
-      const length = v1.distanceTo(v2);
-      if (length < minEdgeLength) {
-        return null;
-      }*/
-
-      // Evaluate SDF at midpoint
-      const error = Math.abs(localSdf(midpoint));
-
-      return {
-        index: heIndex,
-        error,
-        midpoint,
-      };
-    };
-
-    // Create max heap (comparing by error)
-    const heap = new MaxHeap<EdgeQuality>((edge: EdgeQuality) => edge.error);
-
-    // Initialize queue with all edges
-    for (let i = 0; i < this.halfEdges.length; i++) {
-      const edge = this.halfEdges[i];
-      // We'll see it again at pairIndex.
-      if (edge.pairIndex > i) continue;
-
-      const quality = evaluateEdge(i);
-      // if (quality && quality.error > errorThreshold) {
-      if (quality) {
-        heap.insert(quality);
-      }
-    }
-
-    let edgesSplit = 0;
-
-    // Main refinement loop
-    while (!heap.isEmpty() && edgesSplit < maxSubdivisions) {
-      const worst = heap.extractRoot()!;
-      const reeval = evaluateEdge(worst.index);
-
-      if (!reeval || reeval.error < worst.error) {
-        continue; // we'll see it again
-      }
-
-      // Split the edge
-      const newEdges = this.splitEdge(worst.index, worst.midpoint);
-      edgesSplit++;
-
-      // Only optimize the new vertex (last vertex added)
-      const newVertex = this.vertices[this.vertices.length - 1];
-
-      this.optimizeVertex(newVertex, sdf);
-
-      // console.log(`optimized edge ${worst.index} error ${worst.error} moved by ${moveAmount}`);
-      // Evaluate new edges for potential refinement
-      for (const newEdge of newEdges) {
-        const quality = evaluateEdge(newEdge);
-        // if (quality && quality.error > errorThreshold) {
-        if (quality) {
-          // console.log(`reinsert new edge ${newEdge} with ${quality.error}`);
-          heap.insert(quality);
-        } else {
-          // console.log(`DON'T reinsert edge ${newEdge} with ${quality?.error}`);
-        }
-      }
-    }
-
-    console.log(`Split ${edgesSplit} edges.`);
-    return edgesSplit;
   }
 
   // Test-only method to access protected members

@@ -28,7 +28,7 @@ describe('Mesh generation', () => {
     subdivideOctree(octree, sdfAst, new Vector3(0, 0, 0), 65536, cellBudget);
 
     // Generate mesh
-    const meshGen = new MeshGenerator(octree, sdfAst, true);
+    const meshGen = new MeshGenerator(octree, sdfAst);
     const mesh = meshGen.generate();
 
     expect(mesh.indices.length / 3).toBe(336);

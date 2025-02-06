@@ -32,8 +32,7 @@ export class MeshGenerator {
 
   constructor(
     private octree: OctreeNode,
-    private sdf: Node,
-    private optimize: boolean = false
+      private sdf: Node
   ) {}
 
   private reportProgress(progress: number) {
@@ -61,26 +60,23 @@ export class MeshGenerator {
     }
     this.reportProgress(0.5);
 
-    // Phase 3: Optimize vertices if enabled (50-55%)
-    if (this.optimize) {
-      var fn = new Function(
-        'x',
-        'y',
-        'z',
-        'return ' + this.sdf.evaluateStr('x', 'y', 'z', 1) + ';'
-      );
-      const maxSubdivisions = mesh.halfEdges.length / 10;
-      mesh.refineEdges((pos) => fn(pos.x, pos.y, pos.z), maxSubdivisions);
-      this.reportProgress(0.55);
-    }
+    // Phase 3: Optimize vertices
+    var fn = new Function(
+      'x',
+      'y',
+      'z',
+      'return ' + this.sdf.evaluateStr('x', 'y', 'z', 1) + ';'
+    );
+    mesh.optimizeVertices((pos) => fn(pos.x, pos.y, pos.z));
+    this.reportProgress(0.55);
 
-    // Phase 3: Verify mesh is manifold (55-60%)
+    // Phase 4: Verify mesh is manifold (50-60%)
     if (!mesh.isManifold()) {
       throw new Error('Generated mesh is not manifold');
     }
     this.reportProgress(0.6);
 
-    // Phase 3: Convert to serialized format (60-100%)
+    // Phase 5: Convert to serialized format (60-100%)
     const serialized = mesh.toSerializedMesh();
     this.reportProgress(1.0);
 

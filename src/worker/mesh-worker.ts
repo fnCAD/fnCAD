@@ -48,7 +48,7 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
     });
 
     // Generate mesh
-    const meshGen = new MeshGenerator(octree, sdfNode, true);
+    const meshGen = new MeshGenerator(octree, sdfNode);
     meshGen.onProgress = (progress) => {
       self.postMessage({ type: 'progress', phase: 'mesh', taskId, progress });
     };
