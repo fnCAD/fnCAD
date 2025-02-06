@@ -257,8 +257,8 @@ export class AppState {
       // Compute vertex normals for proper lighting
       geometry.computeVertexNormals();
 
-      // Add mesh with proper material
-      const material = new THREE.MeshStandardMaterial({
+      // Create two meshes - one solid, one wireframe
+      const solidMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffff, // Full white to match shader
         roughness: 1.0, // Perfectly diffuse
         metalness: 0.0, // No metallic reflections
@@ -268,11 +268,25 @@ export class AppState {
         transparent: false,
         flatShading: false, // Enable smooth shading
       });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.userData.isMeshObject = true;
-      mesh.renderOrder = 1; // Ensure mesh renders after background
-      mesh.position.z = 0.01; // Slight offset to avoid z-fighting
-      this.scene.add(mesh);
+
+      const wireframeMaterial = new THREE.LineBasicMaterial({
+        color: 0x000000,
+        linewidth: 1,
+      });
+
+      // Create solid mesh
+      const solidMesh = new THREE.Mesh(geometry, solidMaterial);
+      solidMesh.userData.isMeshObject = true;
+      solidMesh.renderOrder = 1;
+      solidMesh.position.z = 0.01;
+      this.scene.add(solidMesh);
+
+      // Create wireframe mesh
+      const wireframe = new THREE.WireframeGeometry(geometry);
+      const wireframeMesh = new THREE.LineSegments(wireframe, wireframeMaterial);
+      wireframeMesh.renderOrder = 2; // Ensure wireframe renders on top
+      wireframeMesh.position.z = 0.01;
+      this.scene.add(wireframeMesh);
     }
   }
 
