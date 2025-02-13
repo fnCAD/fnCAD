@@ -168,25 +168,28 @@ export function octreeChildCenter(
   );
 }
 
+export class BudgetTracker {
+  constructor(private budget: number) {}
+
+  consume(): void {
+    if (--this.budget == 0) {
+      throw new Error('Cell budget exhausted');
+    }
+  }
+}
+
 export function subdivideOctree(
   node: OctreeNode,
   sdf: Node,
   center: THREE.Vector3,
   size: number,
-  cellBudget: number = 100000,
-  onProgress?: (cells: number) => void
-): number {
-  let totalCells = 1;
+  budgetTracker: BudgetTracker,
+): void {
   const half = size / 2;
   const quart = size / 4;
 
-  // If no budget left, throw
-  if (cellBudget <= 1) {
-    throw new Error('Cell budget exhausted');
-  }
-
-  // Decrement budget for this cell
-  cellBudget--;
+  // Consume budget.
+  budgetTracker.consume();
 
   // Mark cell as subdivided before creating children
   var children: OctreeNode[] = [];
@@ -242,21 +245,6 @@ export function subdivideOctree(
     }
 
     // Try to subdivide child with current budget
-    const cellsCreated = subdivideOctree(children[i], sdf, childCenter, half, cellBudget);
-    totalCells += cellsCreated;
-    cellBudget -= cellsCreated;
-
-    if (cellBudget <= 0) {
-      console.log('Cell budget exhausted during subdivision');
-      break;
-    }
+    subdivideOctree(children[i], content?.node || sdf, childCenter, half, budgetTracker);
   }
-
-  // Report progress if callback provided
-  if (onProgress) {
-    onProgress(totalCells);
-  }
-
-  // Return number of cells created
-  return totalCells;
 }

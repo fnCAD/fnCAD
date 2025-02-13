@@ -1,7 +1,7 @@
 import { parse as parseCAD } from '../cad/parser';
 import { moduleToSDF } from '../cad/builtins';
 import { parse as parseSDF } from '../sdf_expressions/parser';
-import { OctreeNode, CellState, subdivideOctree } from '../octree';
+import { BudgetTracker, OctreeNode, CellState, subdivideOctree } from '../octree';
 import { MeshGenerator } from '../meshgen';
 import { Vector3 } from 'three';
 import { SerializedMesh } from '../types';
@@ -39,13 +39,16 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
     const cellBudget = e.data.highDetail ? 1000000 : 100000;
 
     // Report octree progress periodically
-    let lastProgress = 0;
-    subdivideOctree(octree, sdfNode, new Vector3(0, 0, 0), 65536, cellBudget, (progress) => {
+    // TODO: get progress by subclassing BudgetTracker, rename to ProgressTracker??
+    // How would we best capture recursive progress?
+    // let lastProgress = 0;
+    subdivideOctree(octree, sdfNode, new Vector3(0, 0, 0), 65536, new BudgetTracker(cellBudget));
+    /*, (progress) => {
       if (progress - lastProgress > 0.01) {
         self.postMessage({ type: 'progress', phase: 'octree', taskId, progress });
         lastProgress = progress;
       }
-    });
+    });*/
 
     // Generate mesh
     const meshGen = new MeshGenerator(octree, sdfNode);

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parse } from './cad/parser';
 import { moduleToSDF } from './cad/builtins';
 import { parse as parseSDF } from './sdf_expressions/parser';
-import { OctreeNode, CellState, subdivideOctree } from './octree';
+import { BudgetTracker, OctreeNode, CellState, subdivideOctree } from './octree';
 import { MeshGenerator } from './meshgen';
 import { Vector3 } from 'three';
 
@@ -24,8 +24,7 @@ describe('Mesh generation', () => {
     const octree = new OctreeNode(CellState.Boundary);
 
     // Subdivide octree with reasonable settings
-    const cellBudget = 10000;
-    subdivideOctree(octree, sdfAst, new Vector3(0, 0, 0), 65536, cellBudget);
+    subdivideOctree(octree, sdfAst, new Vector3(0, 0, 0), 65536, new BudgetTracker(10000));
 
     // Generate mesh
     const meshGen = new MeshGenerator(octree, sdfAst);
