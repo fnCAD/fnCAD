@@ -32,7 +32,7 @@ export class MeshGenerator {
 
   constructor(
     private octree: OctreeNode,
-      private sdf: Node
+    private sdf: Node
   ) {}
 
   private reportProgress(progress: number) {
@@ -61,12 +61,7 @@ export class MeshGenerator {
     this.reportProgress(0.5);
 
     // Phase 3: Optimize vertices
-    var fn = new Function(
-      'x',
-      'y',
-      'z',
-      'return ' + this.sdf.evaluateStr('x', 'y', 'z', 1) + ';'
-    );
+    var fn = new Function('x', 'y', 'z', 'return ' + this.sdf.evaluateStr('x', 'y', 'z', 1) + ';');
     mesh.optimizeVertices((pos) => fn(pos.x, pos.y, pos.z));
     this.reportProgress(0.55);
 

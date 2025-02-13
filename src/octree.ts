@@ -183,7 +183,7 @@ export function subdivideOctree(
   sdf: Node,
   center: THREE.Vector3,
   size: number,
-  budgetTracker: BudgetTracker,
+  budgetTracker: BudgetTracker
 ): void {
   const half = size / 2;
   const quart = size / 4;

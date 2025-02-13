@@ -107,7 +107,10 @@ export class BinaryOpNode extends Node {
     const rvar = this.right.toGLSL(context);
     context.useVar(lvar);
     context.useVar(rvar);
-    return context.save('float', () => `(${context.varExpr(lvar)} ${this.operator} ${context.varExpr(rvar)})`);
+    return context.save(
+      'float',
+      () => `(${context.varExpr(lvar)} ${this.operator} ${context.varExpr(rvar)})`
+    );
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -588,7 +591,10 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     for (const arg of evalArgs) {
       context.useVar(arg);
     }
-    return context.save('float', () => `smooth_union(${evalArgs.map((arg) => context.varExpr(arg)).join(', ')})`);
+    return context.save(
+      'float',
+      () => `smooth_union(${evalArgs.map((arg) => context.varExpr(arg)).join(', ')})`
+    );
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {

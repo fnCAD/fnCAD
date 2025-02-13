@@ -10,7 +10,7 @@ interface PendingVar {
 export class GLSLGenerator {
   private varCounter = 0;
   private statements: string[] = [];
-  private pendingVars: Record<string, PendingVar> = {}
+  private pendingVars: Record<string, PendingVar> = {};
   private indent_: number = 0;
 
   constructor() {
@@ -116,25 +116,37 @@ export class GLSLContext {
     return this.currentPoint;
   }
 
-  save(type: 'float' | 'vec3', callback: () => string): string { return this.generator.save(type, callback); }
-  useVar(name: string): void { this.generator.useVar(name); }
-  addRaw(str: string): void { return this.generator.addRaw(str); }
-  varExpr(name: string): string { return this.generator.varExpr(name); }
-  reserveVar(): string { return this.generator.reserveVar(); }
+  save(type: 'float' | 'vec3', callback: () => string): string {
+    return this.generator.save(type, callback);
+  }
+  useVar(name: string): void {
+    this.generator.useVar(name);
+  }
+  addRaw(str: string): void {
+    return this.generator.addRaw(str);
+  }
+  varExpr(name: string): string {
+    return this.generator.varExpr(name);
+  }
+  reserveVar(): string {
+    return this.generator.reserveVar();
+  }
 
   // Core transformation functions that return new contexts
   translate(dx: number, dy: number, dz: number): GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
     return this.withPoint(
-      this.generator.save('vec3', () => `${self.currentPoint} - vec3(${dx}, ${dy}, ${dz})`));
+      this.generator.save('vec3', () => `${self.currentPoint} - vec3(${dx}, ${dy}, ${dz})`)
+    );
   }
 
   scale(sx: number, sy: number, sz: number): GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
     return this.withPoint(
-      this.generator.save('vec3', () => `${self.currentPoint} / vec3(${sx}, ${sy}, ${sz})`));
+      this.generator.save('vec3', () => `${self.currentPoint} / vec3(${sx}, ${sy}, ${sz})`)
+    );
   }
 
   rotate(ax: number, ay: number, az: number): GLSLContext {
@@ -159,6 +171,7 @@ export class GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
     return this.withPoint(
-      this.generator.save('vec3', () => `${glslMatrix} * ${self.varExpr(self.currentPoint)}`));
+      this.generator.save('vec3', () => `${glslMatrix} * ${self.varExpr(self.currentPoint)}`)
+    );
   }
 }
