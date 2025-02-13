@@ -15,6 +15,12 @@ export class GLSLGenerator {
 
   constructor() {
     this.pendingVars = {};
+    this.pendingVars['pos'] = {
+      type: 'vec3',
+      useCount: 0,
+      flushed: true,
+      callback: () => 'FAIL',
+    };
   }
 
   // Generate new unique variable name
@@ -47,7 +53,6 @@ export class GLSLGenerator {
 
   // Increment use count for a pending variable
   useVar(name: string): void {
-    if (name == 'pos') return; // parameter
     this.pendingVars[name].useCount++;
   }
 

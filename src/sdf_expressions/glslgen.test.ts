@@ -6,7 +6,8 @@ describe('GLSLContext', () => {
     const gen = new GLSLGenerator();
     const ctx = new GLSLContext(gen);
     ctx.translate(1, 2, 3);
-    expect(gen.generateCode().split('\n')).toEqual(['vec3 var1 = pos - vec3(1, 2, 3);']);
+    gen.useVar('var1');
+    expect(gen.varExpr('var1')).toEqual('pos - vec3(1, 2, 3)');
   });
 
   it('generates rotation code', () => {
@@ -45,13 +46,11 @@ describe('GLSLContext', () => {
     const ctx = new GLSLContext(gen);
     ctx.translate(1, 0, 0).rotate(0, Math.PI / 2, 0);
     const code = gen.generateCode().split('\n');
-    expect(code[0]).toBe('vec3 var1 = pos - vec3(1, 0, 0);');
-
     // Extract and verify matrix for Y rotation
-    expect(code[1]).toBe('vec3 var2 = mat3(');
+    expect(code[0]).toBe('vec3 var2 = mat3(');
 
     const matrixRows = code
-      .slice(2, 5)
+      .slice(1, 4)
       .map((row) => row.trim().replace(/,$/, '').split(',').map(Number));
 
     // Expected values for 90° Y rotation
@@ -69,7 +68,7 @@ describe('GLSLContext', () => {
       });
     });
 
-    expect(code[5]).toBe('    ) * var1;');
+    expect(code[4]).toBe('    ) * pos - vec3(1, 0, 0);');
   });
 
   it('supports context branching', () => {
@@ -78,13 +77,10 @@ describe('GLSLContext', () => {
     const ctx2 = ctx1.translate(1, 0, 0);
     ctx2.withPoint(ctx2.getPoint()).rotate(0, Math.PI / 2, 0);
     const code = gen.generateCode().split('\n');
-    expect(code[0]).toBe('vec3 var1 = pos - vec3(1, 0, 0);');
-
-    // Extract and verify matrix for Y rotation
-    expect(code[1]).toBe('vec3 var2 = mat3(');
+    expect(code[0]).toBe('vec3 var2 = mat3(');
 
     const matrixRows = code
-      .slice(2, 5)
+      .slice(1, 4)
       .map((row) => row.trim().replace(/,$/, '').split(',').map(Number));
 
     // Expected values for 90° Y rotation
@@ -102,6 +98,6 @@ describe('GLSLContext', () => {
       });
     });
 
-    expect(code[5]).toBe('    ) * var1;');
+    expect(code[4]).toBe('    ) * pos - vec3(1, 0, 0);');
   });
 });

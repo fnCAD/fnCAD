@@ -70,15 +70,17 @@ describe('Expression Evaluation', () => {
     const ast = parse('0.01');
     const gen = new GLSLGenerator();
     const context = new GLSLContext(gen);
-    ast.toGLSL(context);
-    expect(gen.generateCode()).toMatch(/float var\d+ = 0\.01;/);
+    const val = ast.toGLSL(context);
+    gen.useVar(val);
+    expect(gen.varExpr(val)).toMatch('0.01');
 
     // Test integer values get decimal point
     const intAst = parse('42');
     const intGen = new GLSLGenerator();
     const intContext = new GLSLContext(intGen);
-    intAst.toGLSL(intContext);
-    expect(intGen.generateCode()).toMatch(/float var\d+ = 42\.0;/);
+    const intVal = intAst.toGLSL(intContext);
+    intGen.useVar(intVal);
+    expect(intGen.varExpr(intVal)).toMatch('42.0');
   });
 
   it('handles expressions starting with unary minus', () => {

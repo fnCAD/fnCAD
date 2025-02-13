@@ -6,6 +6,8 @@ export function generateShader(ast: Node): string {
   const context = new GLSLContext(generator);
   const result = ast.toGLSL(context);
 
+  context.useVar(result);
+
   return `
     uniform vec2 resolution;
     uniform mat4 customViewMatrix;
@@ -48,7 +50,7 @@ export function generateShader(ast: Node): string {
 
     float scene(vec3 pos) {
       ${generator.generateCode()}
-      return ${result};
+      return ${generator.varExpr(result)};
     }
 
     vec3 calcNormal(vec3 p) {

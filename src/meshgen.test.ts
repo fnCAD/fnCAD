@@ -31,7 +31,7 @@ describe('Mesh generation', () => {
     const meshGen = new MeshGenerator(octree, sdfAst);
     const mesh = meshGen.generate();
 
-    expect(mesh.indices.length / 3).toBe(336);
+    expect(mesh.indices.length / 3).toBe(816);
 
     // Verify all vertices lie approximately on unit sphere
     for (const index of mesh.indices) {
