@@ -114,9 +114,12 @@ export function generateShader(ast: Node): string {
           vec3 n = calcNormal(p);
           // Enhanced lighting with ambient
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
-          vec3 col = vec3(0.2 + 0.8 * diff); // Add some ambient light
+          
+          // Create checkerboard pattern based on position
+          float checker = mod(floor(p.x) + floor(p.y) + floor(p.z), 2.0);
+          vec3 col = vec3(0.2 + 0.8 * diff * (1.0 - checker * 0.2));
 
-          gl_FragColor = vec4(col, 1.0); 
+          gl_FragColor = vec4(col, 1.0);
           return;
         }
         // Missed or too far
