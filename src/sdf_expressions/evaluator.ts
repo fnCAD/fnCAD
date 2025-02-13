@@ -23,7 +23,7 @@ export class NumberNode extends Node {
   toGLSL(context: GLSLContext): string {
     // Format number with at least one decimal place
     const glslNumber = Number.isInteger(this.value) ? `${this.value}.0` : this.value.toString();
-    return context.generator.save(glslNumber, 'float');
+    return context.save('float', () => glslNumber);
   }
 
   evaluateInterval(_x: Interval, _y: Interval, _z: Interval): Interval {
@@ -71,10 +71,14 @@ export class VariableNode extends Node {
 
   toGLSL(context: GLSLContext): string {
     // Map x,y,z to components of the current point
-    if (this.name === 'x') return context.generator.save(`${context.getPoint()}.x`, 'float');
-    if (this.name === 'y') return context.generator.save(`${context.getPoint()}.y`, 'float');
-    if (this.name === 'z') return context.generator.save(`${context.getPoint()}.z`, 'float');
-    return context.generator.save(this.name, 'float');
+    if (this.name === 'x' || this.name === 'y' || this.name === 'z') {
+      context.useVar(context.getPoint());
+    }
+    if (this.name === 'x') return context.save('float', () => `${context.getPoint()}.x`);
+    if (this.name === 'y') return context.save('float', () => `${context.getPoint()}.y`);
+    if (this.name === 'z') return context.save('float', () => `${context.getPoint()}.z`);
+    var self = this;
+    return context.save('float', () => self.name);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -99,9 +103,11 @@ export class BinaryOpNode extends Node {
   }
 
   toGLSL(context: GLSLContext): string {
-    const lval = this.left.toGLSL(context);
-    const rval = this.right.toGLSL(context);
-    return context.generator.save(`${lval} ${this.operator} ${rval}`, 'float');
+    const lvar = this.left.toGLSL(context);
+    const rvar = this.right.toGLSL(context);
+    context.useVar(lvar);
+    context.useVar(rvar);
+    return context.save('float', () => `${context.varExpr(lvar)} ${this.operator} ${context.varExpr(rvar)}`);
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -141,7 +147,8 @@ export class UnaryOpNode extends Node {
 
   toGLSL(context: GLSLContext): string {
     const val = this.operand.toGLSL(context);
-    return context.generator.save(`-${val}`, 'float');
+    context.useVar(val);
+    return context.save('float', () => `-${context.varExpr(val)}`);
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -243,7 +250,9 @@ class SinFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    return context.generator.save(`sin(${this.args[0].toGLSL(context)})`, 'float');
+    const arg = this.args[0].toGLSL(context);
+    context.useVar(arg);
+    return context.save('float', () => `sin(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -269,7 +278,9 @@ class CosFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    return context.generator.save(`cos(${this.args[0].toGLSL(context)})`, 'float');
+    const arg = this.args[0].toGLSL(context);
+    context.useVar(arg);
+    return context.save('float', () => `cos(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -295,7 +306,9 @@ class SqrtFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    return context.generator.save(`sqrt(${this.args[0].toGLSL(context)})`, 'float');
+    const arg = this.args[0].toGLSL(context);
+    context.useVar(arg);
+    return context.save('float', () => `sqrt(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -324,7 +337,9 @@ class SqrFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const val = this.args[0].toGLSL(context);
-    return context.generator.save(`(${val} * ${val})`, 'float');
+    context.useVar(val);
+    context.useVar(val); // Need to use twice since we multiply it by itself
+    return context.save('float', () => `(${context.varExpr(val)} * ${context.varExpr(val)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -350,7 +365,9 @@ class LogFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    return context.generator.save(`log(${this.args[0].toGLSL(context)})`, 'float');
+    const arg = this.args[0].toGLSL(context);
+    context.useVar(arg);
+    return context.save('float', () => `log(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -385,7 +402,9 @@ class MinFunctionCall extends FunctionCallNode {
     if (evalArgs.length === 1) return evalArgs[0];
     return evalArgs.reduce((acc, arg, i) => {
       if (i === 0) return arg;
-      return context.generator.save(`min(${acc}, ${arg})`, 'float');
+      context.useVar(acc);
+      context.useVar(arg);
+      return context.save('float', () => `min(${context.varExpr(acc)}, ${context.varExpr(arg)})`);
     });
   }
 
@@ -471,7 +490,9 @@ class MaxFunctionCall extends FunctionCallNode {
     if (evalArgs.length === 1) return evalArgs[0];
     return evalArgs.reduce((acc, arg, i) => {
       if (i === 0) return arg;
-      return context.generator.save(`max(${acc}, ${arg})`, 'float');
+      context.useVar(acc);
+      context.useVar(arg);
+      return context.save('float', () => `max(${context.varExpr(acc)}, ${context.varExpr(arg)})`);
     });
   }
 
@@ -564,7 +585,10 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const evalArgs = this.args.map((arg) => arg.toGLSL(context));
-    return context.generator.save(`smooth_union(${evalArgs.join(', ')})`, 'float');
+    for (const arg of evalArgs) {
+      context.useVar(arg);
+    }
+    return context.save('float', () => `smooth_union(${evalArgs.map((arg) => context.varExpr(arg)).join(', ')})`);
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
@@ -634,7 +658,9 @@ class ExpFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    return context.generator.save(`exp(${this.args[0].toGLSL(context)})`, 'float');
+    const arg = this.args[0].toGLSL(context);
+    context.useVar(arg);
+    return context.save('float', () => `exp(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -667,7 +693,9 @@ class AbsFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    return context.generator.save(`abs(${this.args[0].toGLSL(context)})`, 'float');
+    const arg = this.args[0].toGLSL(context);
+    context.useVar(arg);
+    return context.save('float', () => `abs(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -898,12 +926,12 @@ class AABBFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    const resultVar = context.generator.freshVar();
+    const resultVar = context.freshVar();
     // Initialize result variable
-    context.generator.addRaw(`float ${resultVar} = 0.0;`);
+    context.addRaw(`float ${resultVar} = 0.0;`);
 
     // Generate AABB check (`aabb_check` does its own expansion)
-    context.generator.addRaw(
+    context.addRaw(
       `if (aabb_check(vec3(${this.#aabb.min.x}, ${this.#aabb.min.y}, ${this.#aabb.min.z}), ` +
         `vec3(${this.#aabb.max.x}, ${this.#aabb.max.y}, ${this.#aabb.max.z}), ` +
         `${context.getPoint()}, ${resultVar})) {`
@@ -911,8 +939,10 @@ class AABBFunctionCall extends FunctionCallNode {
 
     // Inside AABB - evaluate actual function
     const innerResult = this.#fn.toGLSL(context);
-    context.generator.addRaw(`  ${resultVar} = ${innerResult};`);
-    context.generator.addRaw(`}`);
+    context.useVar(innerResult);
+    context.generator.flushVars();
+    context.addRaw(`  ${resultVar} = ${context.varExpr(innerResult)};`);
+    context.addRaw(`}`);
 
     return resultVar;
   }

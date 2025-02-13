@@ -1,27 +1,75 @@
 import * as THREE from 'three';
 
+interface PendingVar {
+  type: 'float' | 'vec3';
+  useCount: number;
+  flushed: boolean;
+  callback: () => string;
+}
+
 export class GLSLGenerator {
   private varCounter = 0;
   private statements: string[] = [];
+  private pendingVars: Record<string, PendingVar> = {}
+
+  constructor() {
+    this.pendingVars = {};
+  }
 
   // Generate new unique variable name
   freshVar(): string {
     return `var${++this.varCounter}`;
   }
 
-  // Save an expression to a new variable and return its name
-  save(expr: string, type: 'float' | 'vec3'): string {
+  save(type: 'float' | 'vec3', callback: () => string): string {
     const varName = this.freshVar();
-    this.statements.push(`${type} ${varName} = ${expr};`);
+    const flushed = false;
+    this.pendingVars[varName] = {
+      type,
+      useCount: 0,
+      flushed,
+      callback,
+    };
     return varName;
   }
 
+  // Increment use count for a pending variable
+  useVar(name: string): void {
+    if (name == 'pos') return; // parameter
+    this.pendingVars[name].useCount++;
+  }
+
+  varExpr(name: string): string {
+    if (this.pendingVars[name].flushed) {
+      return name;
+    } else {
+      return this.pendingVars[name].callback();
+    }
+  }
+
   addRaw(stmt: string) {
+    this.flushVars();
     this.statements.push(stmt);
+  }
+
+  flushVars() {
+    // Process pending variables
+    for (const [name, pending] of Object.entries(this.pendingVars)) {
+      if (pending.flushed) {
+        continue;
+      }
+      const expr = pending.callback();
+      if (pending.useCount > 1 || expr.length > 40) {
+        // Create variable if used multiple times
+        this.statements.push(`${pending.type} ${name} = ${expr};`);
+        this.pendingVars[name].flushed = true;
+      }
+    }
   }
 
   // Generate final GLSL code
   generateCode(): string {
+    this.flushVars();
     return this.statements.join('\n');
   }
 }
@@ -47,21 +95,25 @@ export class GLSLContext {
     return this.currentPoint;
   }
 
+  save(type: 'float' | 'vec3', callback: () => string): string { return this.generator.save(type, callback); }
+  useVar(name: string): void { this.generator.useVar(name); }
+  varExpr(name: string): string { return this.generator.varExpr(name); }
+  freshVar(): string { return this.generator.freshVar(); }
+  addRaw(str: string): void { return this.generator.addRaw(str); }
+
   // Core transformation functions that return new contexts
   translate(dx: number, dy: number, dz: number): GLSLContext {
-    const newPoint = this.generator.save(
-      `${this.currentPoint} - vec3(${dx}, ${dy}, ${dz})`,
-      'vec3'
-    );
-    return this.withPoint(newPoint);
+    this.useVar(this.currentPoint);
+    const self = this;
+    return this.withPoint(
+      this.generator.save('vec3', () => `${self.currentPoint} - vec3(${dx}, ${dy}, ${dz})`));
   }
 
   scale(sx: number, sy: number, sz: number): GLSLContext {
-    const newPoint = this.generator.save(
-      `${this.currentPoint} / vec3(${sx}, ${sy}, ${sz})`,
-      'vec3'
-    );
-    return this.withPoint(newPoint);
+    this.useVar(this.currentPoint);
+    const self = this;
+    return this.withPoint(
+      this.generator.save('vec3', () => `${self.currentPoint} / vec3(${sx}, ${sy}, ${sz})`));
   }
 
   rotate(ax: number, ay: number, az: number): GLSLContext {
@@ -83,7 +135,9 @@ export class GLSLContext {
       ${formatNum(m[8])}, ${formatNum(m[9])}, ${formatNum(m[10])}
     )`;
 
-    const newPoint = this.generator.save(`${glslMatrix} * ${this.currentPoint}`, 'vec3');
-    return this.withPoint(newPoint);
+    this.useVar(this.currentPoint);
+    const self = this;
+    return this.withPoint(
+      this.generator.save('vec3', () => `${glslMatrix} * ${self.varExpr(self.currentPoint)}`));
   }
 }
