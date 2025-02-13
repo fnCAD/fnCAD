@@ -926,7 +926,7 @@ class AABBFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    const resultVar = context.freshVar();
+    const resultVar = context.reserveVar();
     // Initialize result variable
     context.addRaw(`float ${resultVar} = 0.0;`);
 
@@ -936,12 +936,14 @@ class AABBFunctionCall extends FunctionCallNode {
         `vec3(${this.#aabb.max.x}, ${this.#aabb.max.y}, ${this.#aabb.max.z}), ` +
         `${context.getPoint()}, ${resultVar})) {`
     );
+    context.generator.indent(2);
 
     // Inside AABB - evaluate actual function
     const innerResult = this.#fn.toGLSL(context);
     context.useVar(innerResult);
     context.generator.flushVars();
-    context.addRaw(`  ${resultVar} = ${context.varExpr(innerResult)};`);
+    context.addRaw(`${resultVar} = ${context.varExpr(innerResult)};`);
+    context.generator.indent(-2);
     context.addRaw(`}`);
 
     return resultVar;

@@ -11,13 +11,14 @@ export class GLSLGenerator {
   private varCounter = 0;
   private statements: string[] = [];
   private pendingVars: Record<string, PendingVar> = {}
+  private indent_: number = 0;
 
   constructor() {
     this.pendingVars = {};
   }
 
   // Generate new unique variable name
-  freshVar(): string {
+  private freshVar(): string {
     return `var${++this.varCounter}`;
   }
 
@@ -29,6 +30,17 @@ export class GLSLGenerator {
       useCount: 0,
       flushed,
       callback,
+    };
+    return varName;
+  }
+
+  reserveVar(): string {
+    const varName = this.freshVar();
+    this.pendingVars[varName] = {
+      type: 'float',
+      useCount: 0,
+      flushed: true,
+      callback: () => 'FAIL',
     };
     return varName;
   }
@@ -47,9 +59,13 @@ export class GLSLGenerator {
     }
   }
 
+  indent(delta: number) {
+    this.indent_ += delta;
+  }
+
   addRaw(stmt: string) {
     this.flushVars();
-    this.statements.push(stmt);
+    this.statements.push(' '.repeat(this.indent_) + stmt);
   }
 
   flushVars() {
@@ -61,7 +77,7 @@ export class GLSLGenerator {
       const expr = pending.callback();
       if (pending.useCount > 1 || expr.length > 40) {
         // Create variable if used multiple times
-        this.statements.push(`${pending.type} ${name} = ${expr};`);
+        this.statements.push(' '.repeat(this.indent_) + `${pending.type} ${name} = ${expr};`);
         this.pendingVars[name].flushed = true;
       }
     }
@@ -97,9 +113,9 @@ export class GLSLContext {
 
   save(type: 'float' | 'vec3', callback: () => string): string { return this.generator.save(type, callback); }
   useVar(name: string): void { this.generator.useVar(name); }
-  varExpr(name: string): string { return this.generator.varExpr(name); }
-  freshVar(): string { return this.generator.freshVar(); }
   addRaw(str: string): void { return this.generator.addRaw(str); }
+  varExpr(name: string): string { return this.generator.varExpr(name); }
+  reserveVar(): string { return this.generator.reserveVar(); }
 
   // Core transformation functions that return new contexts
   translate(dx: number, dy: number, dz: number): GLSLContext {
