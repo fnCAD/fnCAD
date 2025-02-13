@@ -933,14 +933,15 @@ class AABBFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const resultVar = context.reserveVar();
+    context.useVar(context.getPoint());
+
     // Initialize result variable
     context.addRaw(`float ${resultVar} = 0.0;`);
-
     // Generate AABB check (`aabb_check` does its own expansion)
     context.addRaw(
       `if (aabb_check(vec3(${this.#aabb.min.x}, ${this.#aabb.min.y}, ${this.#aabb.min.z}), ` +
         `vec3(${this.#aabb.max.x}, ${this.#aabb.max.y}, ${this.#aabb.max.z}), ` +
-        `${context.getPoint()}, ${resultVar})) {`
+        `${context.varExpr(context.getPoint())}, ${resultVar})) {`
     );
     context.generator.indent(2);
 
