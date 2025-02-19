@@ -472,11 +472,20 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const flatMinSize = height * 0.25;
 
       // Cone SDF formula:
-      // 1. Calculate distance to cone surface: length(vec2(x,z)) * (h-y)/(2h) - r*(h-y)/(2h)
-      // 2. Constrain to height bounds: max(abs(y) - h/2)
+      // For a cone with radius r at y=-h/2 tapering to point at y=h/2:
+      // 1. q = vec2(length(vec2(x,z)), y+h/2) = distance from base center and height from base
+      // 2. n = vec2(r, h) = radius and height defining cone slope
+      // 3. d = length(q) * sin(atan(q.x/q.y) - atan(n.x/n.y))
       return {
         type: 'sdf',
-        expr: `max(face(sqrt(x*x + z*z) * (${height} - y)/(2*${height}) - ${radius} * (${height} - y)/(2*${height}), ${curvedMinSize}), face(abs(y) - ${halfHeight}, ${flatMinSize}))`,
+        expr: `
+          max(
+            face(
+              sqrt(x*x + z*z) * (${halfHeight} + y)/${height} - ${radius} * (${halfHeight} + y)/${height},
+              ${curvedMinSize}
+            ),
+            face(abs(y) - ${halfHeight}, ${flatMinSize})
+          )`,
         bounds: {
           min: [-radius, -halfHeight, -radius],
           max: [radius, halfHeight, radius],
