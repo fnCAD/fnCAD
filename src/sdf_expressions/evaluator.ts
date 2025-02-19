@@ -565,9 +565,8 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     const d1 = this.args[0].evaluateInterval(x, y, z);
     const d2 = this.args[1].evaluateInterval(x, y, z);
-    // For now, use a conservative approximation.
-    // We know that we have to land *somewhere* between d1 and d2.
-    return new Interval(Math.min(d1.min, d2.min), Math.min(d1.max, d2.max));
+    const r = constantValue(this.args[2]);
+    return d1.smooth_union(d2, r);
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
@@ -625,11 +624,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
         minSize = Math.min(minSize, c1.minSize!);
       if (c2.category === 'face' || c2.category === 'complex')
         minSize = Math.min(minSize, c2.minSize!);
-      const k = 1.0 / r;
-      const interval = new Interval(
-        -Math.log(Math.exp(-k * c1.sdfEstimate.min) + Math.exp(-k * c2.sdfEstimate.min)) * r,
-        -Math.log(Math.exp(-k * c1.sdfEstimate.max) + Math.exp(-k * c2.sdfEstimate.max)) * r
-      );
+      const interval = c1.sdfEstimate.smooth_union(c2.sdfEstimate, r);
       if (interval.contains(0)) {
         return {
           category: c1.category === 'complex' || c2.category === 'complex' ? 'complex' : 'face',
