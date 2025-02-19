@@ -115,9 +115,15 @@ export function generateShader(ast: Node): string {
           // Enhanced lighting with ambient
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
           
-          // Create checkerboard pattern based on position
-          float checker = mod(floor(p.x) + floor(p.y) + floor(p.z), 2.0);
-          vec3 col = vec3(0.2 + 0.8 * diff * (1.0 - checker * 0.2));
+          // Create two-level checkerboard pattern
+          // Fine grid at natural unit (1mm)
+          float fine_checker = mod(floor(p.x) + floor(p.y) + floor(p.z), 2.0);
+          // Coarse grid at centimeter scale (10mm)
+          float coarse_checker = mod(floor(p.x/10.0) + floor(p.y/10.0) + floor(p.z/10.0), 2.0);
+          
+          // Combine patterns with different intensities
+          float pattern = fine_checker * 0.05 + coarse_checker * 0.15;
+          vec3 col = vec3(0.2 + 0.8 * diff * (1.0 - pattern));
 
           gl_FragColor = vec4(col, 1.0);
           return;
