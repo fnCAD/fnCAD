@@ -79,7 +79,7 @@ export function generateShader(ast: Node): string {
       
       // Transform ray to world space
       mat3 viewToWorld = mat3(inverse(viewMatrix));
-      return viewToWorld * rayView;
+      return normalize(viewToWorld * rayView);
     }
 
     void main() {
@@ -94,7 +94,7 @@ export function generateShader(ast: Node): string {
       vec3 rd = getRayDirection(gl_FragCoord.xy / resolution.xy, ro, customViewMatrix);
 
       // Background visualization based on ray direction
-      vec3 background = normalize(rd) * 0.5 + 0.5; // Map from [-1,1] to [0,1]
+      vec3 background = rd * 0.5 + 0.5; // Map from [-1,1] to [0,1]
       background *= background; // Make colors more vibrant
 
       // Raymarching
@@ -137,8 +137,7 @@ export function generateShader(ast: Node): string {
           break;
         }
 
-        // Adaptive step size for better performance
-        t += d * 0.9; // Slightly conservative step for stability
+        t += d;
       }
 
       gl_FragColor = vec4(background, 1.0);
