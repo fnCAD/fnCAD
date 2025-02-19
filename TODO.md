@@ -43,6 +43,8 @@
 - [x] SDF boundary detection
 - [x] Visualization of octree structure
 - [x] Adaptive subdivision based on SDF complexity
+- [ ] Objects should be able to set "edge minsize" and "face minsize" separately.
+      Cubes must have pretty small edge minsize for instance.
 
 ## 6. Initial Mesh Generation ✓
 - [x] Octree to mesh conversion
