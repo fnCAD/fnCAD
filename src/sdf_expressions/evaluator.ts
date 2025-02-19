@@ -920,12 +920,12 @@ class AABBFunctionCall extends FunctionCallNode {
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     // Quick check - if the interval box is completely outside our AABB, return 'outside'
     if (
-      x.min > this.#aabb.max.x ||
-      x.max < this.#aabb.min.x ||
-      y.min > this.#aabb.max.y ||
-      y.max < this.#aabb.min.y ||
-      z.min > this.#aabb.max.z ||
-      z.max < this.#aabb.min.z
+      x.min > this.#expanded.max.x ||
+      x.max < this.#expanded.min.x ||
+      y.min > this.#expanded.max.y ||
+      y.max < this.#expanded.min.y ||
+      z.min > this.#expanded.max.z ||
+      z.max < this.#expanded.min.z
     ) {
       const sdfEstimate = this.evaluateAABBDistance(x, y, z);
       return { category: 'outside', sdfEstimate };
