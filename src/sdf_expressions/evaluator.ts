@@ -151,7 +151,7 @@ export class UnaryOpNode extends Node {
   toGLSL(context: GLSLContext): string {
     const val = this.operand.toGLSL(context);
     context.useVar(val);
-    return context.save('float', () => `-${context.varExpr(val)}`);
+    return context.save('float', () => `-(${context.varExpr(val)})`);
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {

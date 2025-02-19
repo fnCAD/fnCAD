@@ -83,9 +83,10 @@ export class Interval {
     // For points far from both shapes (> 5*radius), just use regular min.
     const limit = 5 * radius;
     // fully below -limit
-    if (this.max <= -limit) return Interval.min(this, other);
+    if (this.max <= -limit || other.max <= -limit) return Interval.min(this, other);
     // fully above +limit
-    if (this.min >= limit) return Interval.min(this, other);
+    if (this.min >= limit || other.min >= limit) return Interval.min(this, other);
+
     // has part below -limit
     if (this.min < -limit) {
       return this.below(-limit)
@@ -99,8 +100,6 @@ export class Interval {
         .merge(this.below(limit).smooth_union(other, radius));
     }
     // and the same for other
-    if (other.max <= -limit) return Interval.min(this, other);
-    if (other.min >= limit) return Interval.min(this, other);
     if (other.min < -limit) {
       return this.smooth_union(other.below(-limit), radius).merge(
         this.smooth_union(other.above(-limit), radius)
