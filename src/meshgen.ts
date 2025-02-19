@@ -67,7 +67,8 @@ export class MeshGenerator {
 
     // Phase 4: Verify mesh is manifold (50-60%)
     if (!mesh.isManifold()) {
-      throw new Error('Generated mesh is not manifold');
+      // TODO warning popup in the UI
+      console.log('WARN: Generated mesh is not manifold!');
     }
     this.reportProgress(0.6);
 
