@@ -233,7 +233,7 @@ export function subdivideOctree(
         // Complex region (multiple faces or overlapping SDFs), mark for extended subdivision
         case 'complex':
           state = CellState.Boundary;
-          adjMinSize /= 8;
+          adjMinSize = Math.min(1, adjMinSize / 8);
           break;
       }
     }
