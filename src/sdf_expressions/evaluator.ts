@@ -621,14 +621,18 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
     if (nearishC1 && nearishC2) {
       var minSize = r / 2.0;
-      if (c1.category == 'face' || c1.category == 'complex')
+      if (c1.category === 'face' || c1.category === 'complex')
         minSize = Math.min(minSize, c1.minSize!);
-      if (c2.category == 'face' || c2.category == 'complex')
+      if (c2.category === 'face' || c2.category === 'complex')
         minSize = Math.min(minSize, c2.minSize!);
-      const interval = this.evaluateInterval(x, y, z);
+      const k = 1.0/r;
+      const interval = new Interval(
+        -Math.log(Math.exp(-k * c1.sdfEstimate.min) + Math.exp(-k * c2.sdfEstimate.min)) * r,
+        -Math.log(Math.exp(-k * c1.sdfEstimate.max) + Math.exp(-k * c2.sdfEstimate.max)) * r,
+      );
       if (interval.contains(0)) {
         return {
-          category: 'face',
+          category: (c1.category === 'complex' || c2.category === 'complex') ? 'complex' : 'face',
           node: this,
           sdfEstimate: interval,
           minSize: minSize,
