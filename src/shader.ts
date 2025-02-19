@@ -113,8 +113,12 @@ export function generateShader(ast: Node): string {
           // Calculate normal
           vec3 n = calcNormal(p);
           // Enhanced lighting with ambient
-          float diff = max(dot(n, normalize(vec3(1,1,1))), 0.0);
+          float diff = max(dot(n, normalize(vec3(1,1,1))), 0.2);
           
+          // Get background color in normal's direction for ambient
+          vec3 bgColor = normalize(n) * 0.5 + 0.5;
+          bgColor *= bgColor; // Make colors more vibrant
+
           // Create two-level checkerboard pattern
           // Fine grid at natural unit (1mm)
           float fine_checker = mod(floor(p.x) + floor(p.y) + floor(p.z), 2.0);
@@ -122,8 +126,8 @@ export function generateShader(ast: Node): string {
           float coarse_checker = mod(floor(p.x/10.0) + floor(p.y/10.0) + floor(p.z/10.0), 2.0);
           
           // Combine patterns with different intensities
-          float pattern = fine_checker * 0.05 + coarse_checker * 0.15;
-          vec3 col = vec3(0.2 + 0.8 * diff * (1.0 - pattern));
+          float pattern = fine_checker * 0.1 + coarse_checker * 0.3;
+          vec3 col = mix(bgColor * 0.5, vec3(1.0), diff) * (1.0 - pattern);
 
           gl_FragColor = vec4(col, 1.0);
           return;
