@@ -620,7 +620,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     }
 
     if (nearishC1 && nearishC2) {
-      var minSize = r / 2.0;
+      var minSize = r / 10.0;
       if (c1.category === 'face' || c1.category === 'complex')
         minSize = Math.min(minSize, c1.minSize!);
       if (c2.category === 'face' || c2.category === 'complex')
