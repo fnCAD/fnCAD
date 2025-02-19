@@ -476,7 +476,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       // Add correction factor based on height/radius ratio to maintain precision
       const aspectRatio = height / (2 * radius);
       const correction = Math.min(1, Math.sqrt(aspectRatio));
-      
+
       return {
         type: 'sdf',
         expr: `max(
