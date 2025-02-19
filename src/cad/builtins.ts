@@ -471,21 +471,21 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const curvedMinSize = radius * 0.25;
       const flatMinSize = height * 0.25;
 
-      // Cone SDF formula:
-      // For a cone with radius r at y=-h/2 tapering to point at y=h/2:
-      // 1. q = vec2(length(vec2(x,z)), y+h/2) = distance from base center and height from base
-      // 2. n = vec2(r, h) = radius and height defining cone slope
-      // 3. d = length(q) * sin(atan(q.x/q.y) - atan(n.x/n.y))
+      // Cone SDF formula with aspect ratio correction:
+      // Basic cone formula: length(xz) * (h/2 + y)/h - r * (h/2 + y)/h
+      // Add correction factor based on height/radius ratio to maintain precision
+      const aspectRatio = height / (2 * radius);
+      const correction = Math.min(1, Math.sqrt(aspectRatio));
+      
       return {
         type: 'sdf',
-        expr: `
-          max(
-            face(
-              sqrt(x*x + z*z) * (${halfHeight} + y)/${height} - ${radius} * (${halfHeight} + y)/${height},
-              ${curvedMinSize}
-            ),
-            face(abs(y) - ${halfHeight}, ${flatMinSize})
-          )`,
+        expr: `max(
+          face(
+            ${correction} * (sqrt(x*x + z*z) - ${radius} * (${halfHeight} + y)/${height}),
+            ${curvedMinSize}
+          ),
+          face(abs(y) - ${halfHeight}, ${flatMinSize})
+        )`,
         bounds: {
           min: [-radius, -halfHeight, -radius],
           max: [radius, halfHeight, radius],
