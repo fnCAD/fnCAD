@@ -145,7 +145,7 @@ export class UnaryOpNode extends Node {
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    return `(-${this.operand.evaluateStr(xname, yname, zname, depth)})`;
+    return `-(${this.operand.evaluateStr(xname, yname, zname, depth)})`;
   }
 
   toGLSL(context: GLSLContext): string {
@@ -579,7 +579,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
       const d2 = ${d2};
       const r = ${r};
       const minDist = Math.min(d1, d2);
-      if (minDist > r * 10.0) return Math.min(d1, d2);
+      if (minDist > r * 10.0 || minDist < -r * 10.0) return Math.min(d1, d2);
       const k = 1.0/r;
       return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
     })()`;
@@ -599,14 +599,16 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const c1 = this.args[0].evaluateContent(x, y, z);
     const c2 = this.args[1].evaluateContent(x, y, z);
+    const r = constantValue(this.args[2]);
     if (!c1 || !c2) return null;
+
+    const interval = c1.sdfEstimate.smooth_union(c2.sdfEstimate, r);
     if (c1.category === 'inside' || c2.category === 'inside') {
       return {
         category: 'inside',
-        sdfEstimate: Interval.min(c1.sdfEstimate, c2.sdfEstimate),
+        sdfEstimate: interval,
       };
     }
-    const r = constantValue(this.args[2]);
     const nearishC1 =
       c1.category === 'face' || c1.category === 'complex' || c1.sdfEstimate.minDist(0) < r * 5.0;
     const nearishC2 =
@@ -614,7 +616,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     if (!nearishC1 && !nearishC2) {
       return {
         category: 'outside',
-        sdfEstimate: Interval.min(c1.sdfEstimate, c2.sdfEstimate),
+        sdfEstimate: interval,
       };
     }
 
@@ -624,7 +626,6 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
         minSize = Math.min(minSize, c1.minSize!);
       if (c2.category === 'face' || c2.category === 'complex')
         minSize = Math.min(minSize, c2.minSize!);
-      const interval = c1.sdfEstimate.smooth_union(c2.sdfEstimate, r);
       if (interval.contains(0)) {
         return {
           category: c1.category === 'complex' || c2.category === 'complex' ? 'complex' : 'face',
