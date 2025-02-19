@@ -1,17 +1,10 @@
 import * as THREE from 'three';
 import { SerializedMesh } from './types';
 
-export interface STLExportOptions {
-  scale?: number; // Scale factor for output (default: 1)
-  name?: string; // Model name for STL header
-}
-
-export function exportToSTL(
+function exportToSTL(
   mesh: SerializedMesh | THREE.Mesh,
-  options: STLExportOptions = {}
+  name: string = 'Binary STL file exported from fnCAD'
 ): ArrayBuffer {
-  const scale = options.scale || 1;
-  const name = options.name || 'Binary STL file exported from fnCAD';
   // Handle both SerializedMesh and THREE.Mesh
   let vertices: number[];
   let indices: number[];
@@ -101,27 +94,27 @@ export function exportToSTL(
     view.setFloat32(offset, normal.z, true);
     offset += 4;
 
-    // Write vertices with bounds checking, scaling to millimeters
+    // Write vertices with bounds checking
     if (offset + VERTEX_SIZE <= bufferSize) {
-      view.setFloat32(offset, v1.x * scale, true);
+      view.setFloat32(offset, v1.x, true);
       offset += 4;
-      view.setFloat32(offset, v1.y * scale, true);
+      view.setFloat32(offset, v1.y, true);
       offset += 4;
-      view.setFloat32(offset, v1.z * scale, true);
-      offset += 4;
-
-      view.setFloat32(offset, v2.x * scale, true);
-      offset += 4;
-      view.setFloat32(offset, v2.y * scale, true);
-      offset += 4;
-      view.setFloat32(offset, v2.z * scale, true);
+      view.setFloat32(offset, v1.z, true);
       offset += 4;
 
-      view.setFloat32(offset, v3.x * scale, true);
+      view.setFloat32(offset, v2.x, true);
       offset += 4;
-      view.setFloat32(offset, v3.y * scale, true);
+      view.setFloat32(offset, v2.y, true);
       offset += 4;
-      view.setFloat32(offset, v3.z * scale, true);
+      view.setFloat32(offset, v2.z, true);
+      offset += 4;
+
+      view.setFloat32(offset, v3.x, true);
+      offset += 4;
+      view.setFloat32(offset, v3.y, true);
+      offset += 4;
+      view.setFloat32(offset, v3.z, true);
       offset += 4;
     } else {
       throw new Error(`Buffer overflow at offset ${offset} while writing vertices`);
@@ -139,7 +132,7 @@ export function downloadSTL(
   mesh: SerializedMesh | THREE.Mesh,
   filename: string = 'model.stl'
 ): void {
-  const buffer = exportToSTL(mesh, { scale: 100 }); // Convert to millimeters by default
+  const buffer = exportToSTL(mesh);
   const blob = new Blob([buffer], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
 
