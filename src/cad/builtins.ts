@@ -455,6 +455,33 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
+    case 'cone': {
+      const radius = evalArg(0, 0.5);
+      const height = evalArg(1, 1);
+      if (typeof radius !== 'number' || typeof height !== 'number') {
+        throw parseError('cone radius and height must be numbers', call.location);
+      }
+
+      if (call.children?.length) {
+        throw parseError('cone does not accept children', call.location);
+      }
+
+      const halfHeight = height / 2;
+      // For conical surface, use 1/4 of base radius
+      const curvedMinSize = radius * 0.25;
+      const flatMinSize = height * 0.25;
+
+      // Cone SDF: length(vec2(xz)) - y*r/h - r <= 0 for -h/2 <= y <= h/2
+      return {
+        type: 'sdf',
+        expr: `max(face(sqrt(x*x + z*z) - (${radius} * (${halfHeight} - y)/${height}), ${curvedMinSize}), face(abs(y) - ${halfHeight}, ${flatMinSize}))`,
+        bounds: {
+          min: [-radius, -halfHeight, -radius],
+          max: [radius, halfHeight, radius],
+        },
+      };
+    }
+
     case 'translate': {
       const vec = checkVector(evalArg(0), 3, call.location);
       const [dx, dy, dz] = vec;

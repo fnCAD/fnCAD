@@ -53,6 +53,22 @@ export const builtinDocs: ModuleDoc[] = [
     ],
   },
   {
+    name: 'cone',
+    description: 'Creates a cone centered at the origin along the Y axis',
+    parameters: [
+      {
+        name: 'radius',
+        description: 'Base radius of the cone',
+        type: 'number',
+      },
+      {
+        name: 'height',
+        description: 'Height of the cone',
+        type: 'number',
+      },
+    ],
+  },
+  {
     name: 'translate',
     description: 'Translates its child by the given vector',
     parameters: [
