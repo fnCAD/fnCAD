@@ -426,25 +426,28 @@ export class AppState {
         });
       }
     } catch (err) {
-      if (err instanceof ParseError && window._editor) {
-        const from =
-          window._editor.state.doc.line(err.location.start.line).from +
-          err.location.start.column -
-          1;
-        const to =
-          window._editor.state.doc.line(err.location.end.line).from + err.location.end.column - 1;
+      if (err instanceof ParseError) {
+        if (window._editor) {
+          const from =
+            window._editor.state.doc.line(err.location.start.line).from +
+            err.location.start.column -
+            1;
+          const to =
+            window._editor.state.doc.line(err.location.end.line).from + err.location.end.column - 1;
 
-        window._editor.dispatch({
-          effects: [
-            errorDecorationFacet.of([
-              {
-                from,
-                to,
-                error: err.message,
-              },
-            ]),
-          ],
-        });
+          window._editor.dispatch({
+            effects: [
+              errorDecorationFacet.of([
+                {
+                  from,
+                  to,
+                  error: err.message,
+                },
+              ]),
+            ],
+          });
+        }
+        return;
       }
       throw err;
     }
