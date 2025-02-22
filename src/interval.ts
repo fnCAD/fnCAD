@@ -6,6 +6,9 @@ export class Interval {
     public readonly min: number,
     public readonly max: number
   ) {
+    if (min != min || max != max) {
+      throw new Error(`Tried to construct nan interval`);
+    }
     if (min > max) {
       throw new Error(`Invalid interval: min (${min}) must be <= max (${max})`);
     }
@@ -44,7 +47,8 @@ export class Interval {
 
   divide(other: Interval): Interval {
     if (other.contains(0)) {
-      throw new Error('Division by interval containing zero');
+      return new Interval(-Infinity, Infinity);
+      // throw new Error('Division by interval containing zero');
     }
     const quotients = [
       this.min / other.min,
@@ -150,6 +154,7 @@ export class Interval {
     // This is a naive implementation that works for small intervals
     const samples = 100;
     const step = (this.max - this.min) / samples;
+    if (step == Infinity) return new Interval(-Infinity, Infinity);
     let min = Infinity;
     let max = -Infinity;
 
@@ -168,6 +173,7 @@ export class Interval {
     // This is a naive implementation that works for small intervals
     const samples = 100;
     const step = (this.max - this.min) / samples;
+    if (step == Infinity) return new Interval(-Infinity, Infinity);
     let min = Infinity;
     let max = -Infinity;
 
