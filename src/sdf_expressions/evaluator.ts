@@ -230,6 +230,8 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       return new AABBFunctionCall(args);
     case 'face':
       return new FaceFunctionCall(args);
+    case 'atan2':
+      return new Atan2FunctionCall(args);
     default:
       throw new Error(`Unknown function: ${name}`);
   }
@@ -643,6 +645,62 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     if (nearishC1) return c1;
     if (nearishC2) return c2;
     throw 'unreachable';
+  }
+}
+
+class Atan2FunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
+  constructor(args: Node[]) {
+    super('atan2', args);
+    enforceArgumentLength('atan2', args, 2);
+    this.evaluate = this.compileEvaluate();
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const y = this.args[0].evaluateStr(xname, yname, zname, depth);
+    const x = this.args[1].evaluateStr(xname, yname, zname, depth);
+    return `Math.atan2(${y}, ${x})`;
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const y_val = this.args[0].evaluateInterval(x, y, z);
+    const x_val = this.args[1].evaluateInterval(x, y, z);
+
+    // Sample points in a grid to get tighter bounds
+    let min = Infinity;
+    let max = -Infinity;
+    const grid = 10; // 10x10 grid
+
+    for (let i = 0; i <= grid; i++) {
+      const tx = i / grid;
+      const x_sample = x_val.min + (x_val.max - x_val.min) * tx;
+
+      for (let j = 0; j <= grid; j++) {
+        const ty = j / grid;
+        const y_sample = y_val.min + (y_val.max - y_val.min) * ty;
+
+        const angle = Math.atan2(y_sample, x_sample);
+        min = Math.min(min, angle);
+        max = Math.max(max, angle);
+      }
+    }
+
+    // Add a small margin to account for sampling error
+    const margin = (max - min) * 0.1;
+    return new Interval(min - margin, max + margin);
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const y = this.args[0].toGLSL(context);
+    const x = this.args[1].toGLSL(context);
+    context.useVar(y);
+    context.useVar(x);
+    return context.save('float', () => `atan(${context.varExpr(y)}, ${context.varExpr(x)})`);
+  }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
   }
 }
 
