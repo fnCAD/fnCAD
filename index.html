@@ -44,6 +44,22 @@
             </div>
 
             <div class="section">
+              <h3>SDF Operators</h3>
+              <p>Specify a signed distance function manually:</p>
+              <ul><li><code>sdf(face(<br>&nbsp;&nbsp;sqrt(sqr(x) + sqr(y) + sqr(z)) - 2,<br>0.1))</code>
+              </li></ul>
+              <p>Expressions:</p>
+              <ul>
+                <li><code>x, y, z</code> - coordinates of current point</li>
+                <li><code>a + b, a - b, a * b, a / b, -a, sqrt(a), sqr(a), abs(a), sin(a), cos(a), exp(a), log(a), min(a, b), max(a, b),
+              atan2(a, b), smooth_union(a, b, r)</code></li>
+                <li><code>face(expr, size)</code> -
+                  Continuous surface for <code>expr</code>, minimum tri size <code>size</code>.
+                  Every discontinuity in the SDF surface should be marked by a <code>face</code>.</li>
+              </ul>
+            </div>
+
+            <div class="section">
               <h3>Transformations</h3>
               <ul>
                 <li><code>translate([x,y,z]) {}</code></li>
@@ -61,14 +77,6 @@
                 <li><code>smooth_union(r) {}</code></li>
                 <li><code>smooth_intersection(r) {}</code></li>
                 <li><code>smooth_difference(r) {}</code></li>
-              </ul>
-            </div>
-
-            <div class="section">
-              <h3>Variables</h3>
-              <ul>
-                <li><code>$minsize</code> - Control mesh detail</li>
-                <li><code>$maxerror</code> - Control mesh accuracy</li>
               </ul>
             </div>
 
