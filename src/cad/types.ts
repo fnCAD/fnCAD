@@ -310,3 +310,12 @@ export class IndexExpression extends Expression {
     super(location);
   }
 }
+
+export class SDFExpressionNode extends Expression {
+  constructor(
+    public readonly expression: string,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}

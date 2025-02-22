@@ -6,6 +6,7 @@ import {
   Value,
   Identifier,
   SDFExpression,
+  SDFExpressionNode,
   isSDFExpression,
   isSDFGroup,
   Expression,
@@ -267,6 +268,12 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
       throw parseError(`Assertion failed: ${message}`, node.location);
     }
     return undefined;
+  }
+  if (node instanceof SDFExpressionNode) {
+    return {
+      type: 'sdf',
+      expr: node.expression,
+    };
   }
   if (node instanceof Expression) {
     return evalExpression(node, context);

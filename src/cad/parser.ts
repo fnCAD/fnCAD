@@ -18,6 +18,7 @@ import {
   NumberLiteral,
   Identifier,
   SourceLocation,
+  SDFExpressionNode,
   ModuleCallLocation,
   ParameterLocation,
   VectorLiteral,
@@ -29,6 +30,7 @@ import {
   AssertStatement,
 } from './types';
 import { parseError } from './errors';
+import { parse as parseSDF } from '../sdf_expressions/parser';
 
 /* Parser class implementing recursive descent parsing.
  * The parser maintains state about the current position in the token stream
@@ -689,6 +691,34 @@ export class Parser {
     return left;
   }
 
+  private parseSDFExpression(startToken: Token): Expression {
+    this.advance(); // consume (
+    let parenCount = 1;
+    let sdfText = '';
+
+    while (parenCount > 0 && !this.isAtEnd()) {
+      const current = this.advance();
+      if (current.value === '(') parenCount++;
+      if (current.value === ')') {
+        parenCount--;
+        if (parenCount === 0) break;
+      }
+      sdfText += current.value;
+    }
+
+    if (parenCount > 0) {
+      throw parseError('Unclosed SDF expression', startToken.location);
+    }
+
+    validateSDF(sdfText, startToken.location);
+
+    return new SDFExpressionNode(sdfText, {
+      start: startToken.location.start,
+      end: this.previous().location.end,
+      source: this.source,
+    });
+  }
+
   private parsePrimary(): Expression {
     if (this.check('[')) {
       return this.parseVectorLiteral();
@@ -706,8 +736,12 @@ export class Parser {
         throw parseError('Unexpected string literal', token.location);
       case 'identifier':
         const name = token.value;
-        // Handle module call if it's followed by (
-        if (this.check('(')) {
+        // Special case for sdf()
+        if (name === 'sdf' && this.check('(')) {
+          expr = this.parseSDFExpression(token);
+        }
+        // Handle regular module call if it's followed by (
+        else if (this.check('(')) {
           this.beginModuleCall(name, token);
           expr = this.parseModuleCall(name, token.location);
         } else {
@@ -802,6 +836,17 @@ export class Parser {
       end: endToken.location.end,
       source: this.source,
     });
+  }
+}
+
+function validateSDF(expr: string, startToken: SourceLocation): void {
+  try {
+    parseSDF(expr);
+  } catch (e) {
+    if (e instanceof Error) {
+      throw parseError(`Invalid SDF expression: ${e.message}`, startToken);
+    }
+    throw parseError(`Invalid SDF expression`, startToken);
   }
 }
 
