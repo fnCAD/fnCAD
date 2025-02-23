@@ -595,6 +595,24 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       return wrapUnion(children);
     }
 
+    case 'detailed': {
+      if (!call.children?.length) {
+        throw parseError('detailed requires at least one child', call.location);
+      }
+      const size = evalArg(0, 0.1);
+      if (typeof size !== 'number') {
+        throw parseError('detailed size must be a number', call.location);
+      }
+
+      const children = flattenScope(call.children, context, 'detailed', call.location);
+      const childExpr = wrapUnion(children);
+      return {
+        type: 'sdf',
+        expr: `detailed(${size}, ${childExpr.expr})`,
+        bounds: childExpr.bounds,
+      };
+    }
+
     case 'difference': {
       if (!call.children?.length) {
         throw parseError('difference requires at least one child', call.location);

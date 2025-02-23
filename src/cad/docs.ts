@@ -90,6 +90,18 @@ export const builtinDocs: ModuleDoc[] = [
       },
     ],
   },
+  {
+    name: 'detailed',
+    description: 'Sets minimum feature size for contained geometry',
+    parameters: [
+      {
+        name: 'size',
+        description: 'Minimum feature size',
+        type: 'number',
+        defaultValue: 0.1,
+      },
+    ],
+  },
 ];
 
 export function getModuleDoc(name: string): ModuleDoc | undefined {

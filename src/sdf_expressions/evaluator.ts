@@ -230,6 +230,8 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       return new AABBFunctionCall(args);
     case 'face':
       return new FaceFunctionCall(args);
+    case 'detailed':
+      return new DetailedFunctionCall(args);
     case 'atan2':
       return new Atan2FunctionCall(args);
     default:
@@ -1012,6 +1014,46 @@ class AABBFunctionCall extends FunctionCallNode {
     context.addRaw(`}`);
 
     return resultVar;
+  }
+}
+
+class DetailedFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+  #body: Node;
+  #size: number;
+
+  constructor(args: Node[]) {
+    super('detailed', args);
+    enforceArgumentLength('detailed', args, 2);
+    this.#size = constantValue(args[0]);
+    this.#body = args[1];
+    this.evaluate = this.compileEvaluate();
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    return this.#body.evaluateStr(xname, yname, zname, depth);
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    return this.#body.evaluateInterval(x, y, z);
+  }
+
+  toGLSL(context: GLSLContext): string {
+    return this.#body.toGLSL(context);
+  }
+
+  evaluateContent(x: Interval, y: Interval, z: Interval): Content {
+    const result = this.#body.evaluateContent(x, y, z);
+    if (!result) return null;
+
+    // Override minSize if this is a face or complex region
+    if (result.category === 'face' || result.category === 'complex') {
+      return {
+        ...result,
+        minSize: this.#size,
+      };
+    }
+    return result;
   }
 }
 
