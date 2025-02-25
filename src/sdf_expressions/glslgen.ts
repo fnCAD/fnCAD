@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RotationUtils } from '../utils/rotation';
 
 interface PendingVar {
   type: 'float' | 'vec3';
@@ -150,12 +151,8 @@ export class GLSLContext {
   }
 
   rotate(ax: number, ay: number, az: number): GLSLContext {
-    // Create rotation matrix using THREE.js
-    const rotMatrix = new THREE.Matrix4();
-    // We use 'ZYX' order for matrix construction because matrix multiplication
-    // applies transforms from right to left. This results in the same point
-    // transformations as applying rotations in XYZ order.
-    rotMatrix.makeRotationFromEuler(new THREE.Euler(ax, ay, az, 'ZYX'));
+    // Create rotation matrix using our utility
+    const rotMatrix = RotationUtils.createRotationMatrix(ax, ay, az);
     const m = rotMatrix.elements;
 
     // Format matrix values with consistent precision

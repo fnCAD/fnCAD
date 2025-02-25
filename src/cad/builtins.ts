@@ -743,6 +743,8 @@ function growAABB(bounds: AABB | undefined, radius: number): AABB | undefined {
   };
 }
 
+import { RotationUtils } from '../utils/rotation';
+
 // Helper to rotate an AABB and return a new AABB that contains the rotated box
 function rotateAABB(
   bounds: AABB | undefined,
@@ -750,59 +752,5 @@ function rotateAABB(
   ry: number,
   rz: number
 ): AABB | undefined {
-  if (bounds === undefined) return;
-  // Get all 8 corners of the AABB
-  const corners: [number, number, number][] = [
-    [bounds.min[0], bounds.min[1], bounds.min[2]],
-    [bounds.min[0], bounds.min[1], bounds.max[2]],
-    [bounds.min[0], bounds.max[1], bounds.min[2]],
-    [bounds.min[0], bounds.max[1], bounds.max[2]],
-    [bounds.max[0], bounds.min[1], bounds.min[2]],
-    [bounds.max[0], bounds.min[1], bounds.max[2]],
-    [bounds.max[0], bounds.max[1], bounds.min[2]],
-    [bounds.max[0], bounds.max[1], bounds.max[2]],
-  ];
-  // Like evaluator.ts:'rotate' (TODO factor into common function)
-
-  // Compute trig values
-  const cx = Math.cos(rx),
-    sx = Math.sin(rx);
-  const cy = Math.cos(ry),
-    sy = Math.sin(ry);
-  const cz = Math.cos(rz),
-    sz = Math.sin(rz);
-
-  // Rotate each corner
-  const rotated = corners.map(([x, y, z]) => {
-    // First rotate around X
-    const x1 = x;
-    const y1 = y * cx - z * sx;
-    const z1 = y * sx + z * cx;
-
-    // Then around Y
-    const x2 = x1 * cy + z1 * sy;
-    const y2 = y1;
-    const z2 = -x1 * sy + z1 * cy;
-
-    // Finally around Z
-    const nx = x2 * cz - y2 * sz;
-    const ny = x2 * sz + y2 * cz;
-    const nz = z2;
-
-    return [nx, ny, nz] as [number, number, number];
-  });
-
-  // Find new min/max
-  const min: [number, number, number] = [
-    Math.min(...rotated.map((p) => p[0])),
-    Math.min(...rotated.map((p) => p[1])),
-    Math.min(...rotated.map((p) => p[2])),
-  ];
-  const max: [number, number, number] = [
-    Math.max(...rotated.map((p) => p[0])),
-    Math.max(...rotated.map((p) => p[1])),
-    Math.max(...rotated.map((p) => p[2])),
-  ];
-
-  return { min, max };
+  return RotationUtils.rotateAABB(bounds, rx, ry, rz);
 }

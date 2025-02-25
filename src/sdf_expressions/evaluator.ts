@@ -1096,70 +1096,14 @@ class FaceFunctionCall extends FunctionCallNode {
   }
 }
 
+import { RotationUtils } from '../utils/rotation';
+
 class RotateFunctionCall extends FunctionCallNode {
   evaluate: (x: number, y: number, z: number) => number;
-
-  // Cache trig values for evaluateInterval
-  #cx: number;
-  #sx: number;
-  #cy: number;
-  #sy: number;
-  #cz: number;
-  #sz: number;
   #body: Node;
-
-  // Helper to compute rotated intervals
-  #rotateInterval(
-    x: Interval,
-    y: Interval,
-    z: Interval
-  ): { x: Interval; y: Interval; z: Interval } {
-    let minX = Number.MAX_VALUE,
-      maxX = -Number.MAX_VALUE;
-    let minY = Number.MAX_VALUE,
-      maxY = -Number.MAX_VALUE;
-    let minZ = Number.MAX_VALUE,
-      maxZ = -Number.MAX_VALUE;
-
-    // Transform each corner of the box
-    for (let iz = 0; iz < 2; iz++) {
-      for (let iy = 0; iy < 2; iy++) {
-        for (let ix = 0; ix < 2; ix++) {
-          const px = ix === 0 ? x.min : x.max;
-          const py = iy === 0 ? y.min : y.max;
-          const pz = iz === 0 ? z.min : z.max;
-
-          // First rotate around X
-          const rx1 = px;
-          const ry1 = py * this.#cx - pz * this.#sx;
-          const rz1 = py * this.#sx + pz * this.#cx;
-
-          // Then around Y
-          const rx2 = rx1 * this.#cy + rz1 * this.#sy;
-          const ry2 = ry1;
-          const rz2 = -rx1 * this.#sy + rz1 * this.#cy;
-
-          // Finally around Z
-          const rx3 = rx2 * this.#cz - ry2 * this.#sz;
-          const ry3 = rx2 * this.#sz + ry2 * this.#cz;
-          const rz3 = rz2;
-
-          minX = rx3 < minX ? rx3 : minX;
-          minY = ry3 < minY ? ry3 : minY;
-          minZ = rz3 < minZ ? rz3 : minZ;
-          maxX = rx3 > maxX ? rx3 : maxX;
-          maxY = ry3 > maxY ? ry3 : maxY;
-          maxZ = rz3 > maxZ ? rz3 : maxZ;
-        }
-      }
-    }
-
-    return {
-      x: new Interval(minX, maxX),
-      y: new Interval(minY, maxY),
-      z: new Interval(minZ, maxZ),
-    };
-  }
+  #rx: number;
+  #ry: number;
+  #rz: number;
 
   constructor(args: Node[]) {
     super('rotate', args);
@@ -1168,23 +1112,15 @@ class RotateFunctionCall extends FunctionCallNode {
     const [rx, ry, rz, body] = args;
 
     // Get rotation angles
-    const ax = constantValue(rx);
-    const ay = constantValue(ry);
-    const az = constantValue(rz);
-
-    // Compute and cache trig values for evaluateInterval
-    this.#cx = Math.cos(ax);
-    this.#sx = Math.sin(ax);
-    this.#cy = Math.cos(ay);
-    this.#sy = Math.sin(ay);
-    this.#cz = Math.cos(az);
-    this.#sz = Math.sin(az);
+    this.#rx = constantValue(rx);
+    this.#ry = constantValue(ry);
+    this.#rz = constantValue(rz);
     this.#body = body;
     this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    const rotated = this.#rotateInterval(x, y, z);
+    const rotated = RotationUtils.rotateIntervals(x, y, z, this.#rx, this.#ry, this.#rz);
     return this.#body.evaluateInterval(rotated.x, rotated.y, rotated.z);
   }
 
@@ -1222,7 +1158,7 @@ class RotateFunctionCall extends FunctionCallNode {
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
-    const rotated = this.#rotateInterval(x, y, z);
+    const rotated = RotationUtils.rotateIntervals(x, y, z, this.#rx, this.#ry, this.#rz);
     const result = this.#body.evaluateContent(rotated.x, rotated.y, rotated.z);
     if (!result) return null;
     return {
