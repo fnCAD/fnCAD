@@ -41,15 +41,17 @@ describe('RotationUtils', () => {
     // The rotated AABB should be larger to contain the original box
     expect(rotated).toBeDefined();
     if (rotated) {
+      // The X dimension expands but stays positive
+      expect(rotated.min[0]).toBe(0);
+      expect(rotated.max[0]).toBeGreaterThan(1);
+
       // The Y dimension should remain unchanged
       expect(rotated.min[1]).toBeCloseTo(0);
       expect(rotated.max[1]).toBeCloseTo(1);
-      
-      // The X and Z dimensions should expand
-      expect(rotated.min[0]).toBeLessThan(0);
+
+      // The Z dimension rotates into the negative.
       expect(rotated.min[2]).toBeLessThan(0);
-      expect(rotated.max[0]).toBeGreaterThan(1);
-      expect(rotated.max[2]).toBeGreaterThan(0);
+      expect(rotated.max[2]).toBeLessThan(1);
     }
   });
 

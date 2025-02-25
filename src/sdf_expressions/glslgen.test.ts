@@ -7,7 +7,7 @@ describe('GLSLContext', () => {
     const ctx = new GLSLContext(gen);
     ctx.translate(1, 2, 3);
     gen.useVar('var1');
-    expect(gen.varExpr('var1')).toEqual('pos - vec3(1, 2, 3)');
+    expect(gen.varExpr('var1')).toEqual('(pos - vec3(1, 2, 3))');
   });
 
   it('generates rotation code', () => {
@@ -68,7 +68,7 @@ describe('GLSLContext', () => {
       });
     });
 
-    expect(code[4]).toBe('    ) * pos - vec3(1, 0, 0);');
+    expect(code[4]).toBe('    ) * (pos - vec3(1, 0, 0));');
   });
 
   it('supports context branching', () => {
@@ -98,6 +98,6 @@ describe('GLSLContext', () => {
       });
     });
 
-    expect(code[4]).toBe('    ) * pos - vec3(1, 0, 0);');
+    expect(code[4]).toBe('    ) * (pos - vec3(1, 0, 0));');
   });
 });

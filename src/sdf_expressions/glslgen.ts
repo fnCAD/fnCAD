@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { RotationUtils } from '../utils/rotation';
 
 interface PendingVar {

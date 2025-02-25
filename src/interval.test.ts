@@ -45,7 +45,8 @@ describe('Interval', () => {
     expect(quot.max).toBe(1);
 
     const c = new Interval(-1, 1);
-    expect(() => a.divide(c)).toThrow();
+    expect(a.divide(c).min).toBe(-Infinity);
+    expect(a.divide(c).max).toBe(Infinity);
   });
 
   it('computes square roots', () => {

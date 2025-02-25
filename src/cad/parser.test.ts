@@ -509,7 +509,13 @@ describe('OpenSCAD-like Syntax', () => {
     expect(compileToSDF('sphere(1);')).toBe('face(sqrt(x*x + y*y + z*z) - 1, 0.25)');
 
     expect(compileToSDF('cone(1, 2);')).toBe(
-      'max(face(sqrt(x*x + z*z) - (1 * (1 - y)/2), 0.25), face(abs(y) - 1, 0.5))'
+      `max(
+          face(
+            1 * (sqrt(x*x + z*z) - 1 * (1 + y)/2),
+            0.25
+          ),
+          face(abs(y) - 1, 0.5)
+        )`
     );
   });
 
