@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fnCAD Gist Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      color: #333;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    #configureButton {
+      background-color: #2196F3;
+    }
+    #configureButton:hover {
+      background-color: #0b7dda;
+    }
+    #statusMessage {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+    }
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+    }
+    .info {
+      background-color: #d9edf7;
+      color: #31708f;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 4px;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: black;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .token-status {
+      margin-top: 10px;
+      font-style: italic;
+    }
+    ol {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>fnCAD Gist Test</h1>
+  
+  <textarea id="codeEditor" placeholder="Enter your code here...">sphere(1);</textarea>
+  
+  <div>
+    <button id="saveButton">Save to Gist</button>
+    <button id="configureButton">Configure GitHub Token</button>
+  </div>
+  
+  <div id="statusMessage" style="display: none;"></div>
+  
+  <div id="tokenModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Configure GitHub Personal Access Token</h2>
+      
+      <ol>
+        <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Personal Access Tokens</a></li>
+        <li>Click "Generate new token" and select "Generate new token (classic)"</li>
+        <li>Give it a name like "fnCAD Gist Access"</li>
+        <li>Select only the "gist" scope</li>
+        <li>Click "Generate token" at the bottom</li>
+        <li>Copy the token and paste it below</li>
+      </ol>
+      
+      <label for="tokenInput">GitHub Personal Access Token:</label>
+      <input type="text" id="tokenInput" placeholder="ghp_...">
+      
+      <div class="token-status" id="tokenStatus">
+        Status: <span id="tokenStatusText">No token configured</span>
+      </div>
+      
+      <button id="saveTokenButton">Save Token</button>
+      <button id="clearTokenButton">Clear Token</button>
+    </div>
+  </div>
+
+  <script>
+    // Constants
+    const TOKEN_KEY = 'fncad_gist_token';
+    
+    // DOM Elements
+    const codeEditor = document.getElementById('codeEditor');
+    const saveButton = document.getElementById('saveButton');
+    const configureButton = document.getElementById('configureButton');
+    const statusMessage = document.getElementById('statusMessage');
+    const tokenModal = document.getElementById('tokenModal');
+    const tokenInput = document.getElementById('tokenInput');
+    const saveTokenButton = document.getElementById('saveTokenButton');
+    const clearTokenButton = document.getElementById('clearTokenButton');
+    const tokenStatusText = document.getElementById('tokenStatusText');
+    const closeModal = document.querySelector('.close');
+    
+    // Helper Functions
+    function showStatus(message, type) {
+      statusMessage.textContent = message;
+      statusMessage.className = type;
+      statusMessage.style.display = 'block';
+      
+      // Auto-hide success messages after 5 seconds
+      if (type === 'success') {
+        setTimeout(() => {
+          statusMessage.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    function getGistToken() {
+      return localStorage.getItem(TOKEN_KEY);
+    }
+    
+    function saveGistToken(token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+    
+    function clearGistToken() {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+    
+    function updateTokenStatus() {
+      const token = getGistToken();
+      if (token) {
+        tokenStatusText.textContent = 'Token configured';
+        saveButton.disabled = false;
+      } else {
+        tokenStatusText.textContent = 'No token configured';
+        saveButton.disabled = true;
+      }
+    }
+    
+    function updateUrlWithGistId(gistId) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('gist', gistId);
+      window.history.pushState({}, '', url.toString());
+    }
+    
+    function getGistIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('gist');
+    }
+    
+    // API Functions
+    async function createGist(content, description = 'fnCAD Model', filename = 'model.fncad') {
+      const token = getGistToken();
+      
+      if (!token) {
+        throw new Error('GitHub token not configured');
+      }
+      
+      const response = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          description,
+          public: true,
+          files: {
+            [filename]: {
+              content
+            }
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Failed to create gist: ${error.message || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data.id;
+    }
+    
+    async function loadGist(gistId) {
+      const response = await fetch(`https://api.github.com/gists/${gistId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load gist: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Get the first file
+      const files = Object.values(data.files);
+      
+      if (files.length === 0) {
+        throw new Error('Gist contains no files');
+      }
+      
+      return {
+        content: files[0].content,
+        filename: files[0].filename
+      };
+    }
+    
+    // Event Handlers
+    saveButton.addEventListener('click', async () => {
+      try {
+        const content = codeEditor.value;
+        if (!content.trim()) {
+          showStatus('Please enter some code first', 'error');
+          return;
+        }
+        
+        showStatus('Saving to GitHub Gist...', 'info');
+        const gistId = await createGist(content);
+        updateUrlWithGistId(gistId);
+        
+        showStatus(`Saved successfully! Gist ID: ${gistId}`, 'success');
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+        console.error(error);
+      }
+    });
+    
+    configureButton.addEventListener('click', () => {
+      const token = getGistToken();
+      if (token) {
+        tokenInput.value = token;
+      } else {
+        tokenInput.value = '';
+      }
+      tokenModal.style.display = 'block';
+    });
+    
+    closeModal.addEventListener('click', () => {
+      tokenModal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', (event) => {
+      if (event.target === tokenModal) {
+        tokenModal.style.display = 'none';
+      }
+    });
+    
+    saveTokenButton.addEventListener('click', () => {
+      const token = tokenInput.value.trim();
+      if (token) {
+        saveGistToken(token);
+        showStatus('Token saved successfully', 'success');
+        updateTokenStatus();
+      } else {
+        showStatus('Please enter a valid token', 'error');
+      }
+      tokenModal.style.display = 'none';
+    });
+    
+    clearTokenButton.addEventListener('click', () => {
+      clearGistToken();
+      tokenInput.value = '';
+      updateTokenStatus();
+      showStatus('Token cleared', 'info');
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      updateTokenStatus();
+      
+      // Check if we have a gist ID in the URL
+      const gistId = getGistIdFromUrl();
+      if (gistId) {
+        try {
+          showStatus('Loading gist...', 'info');
+          const { content } = await loadGist(gistId);
+          codeEditor.value = content;
+          showStatus('Gist loaded successfully', 'success');
+        } catch (error) {
+          showStatus(`Error loading gist: ${error.message}`, 'error');
+          console.error(error);
+        }
+      }
+    });
+    
+    // Initialize on load
+    updateTokenStatus();
+    
+    // Check for gist ID in URL on page load
+    const gistId = getGistIdFromUrl();
+    if (gistId) {
+      (async () => {
+        try {
+          showStatus('Loading gist...', 'info');
+          const { content } = await loadGist(gistId);
+          codeEditor.value = content;
+          showStatus('Gist loaded successfully', 'success');
+        } catch (error) {
+          showStatus(`Error loading gist: ${error.message}`, 'error');
+          console.error(error);
+        }
+      })();
+    }
+  </script>
+</body>
+</html>
