@@ -305,6 +305,11 @@ window.addEventListener('resize', () => {
   appState.handleResize();
 });
 
+// Save state when window is closing
+window.addEventListener('beforeunload', () => {
+  appState.saveDocumentsToLocalStorage();
+});
+
 import { examples } from './examples';
 
 // Initialize app state

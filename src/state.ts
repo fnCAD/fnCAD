@@ -8,15 +8,21 @@ import { errorDecorationFacet } from './main';
 import { SerializedMesh } from './types';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-export enum ViewMode {
-  Preview, // GLSL raymarching preview
-  Mesh, // Triangle mesh view
+export interface CameraState {
+  position: { x: number; y: number; z: number };
+  target?: { x: number; y: number; z: number }; // For orbit controls
 }
 
-interface Document {
+export interface Document {
   id: string;
   name: string;
   content: string;
+  cameraState?: CameraState;
+}
+
+export enum ViewMode {
+  Preview, // GLSL raymarching preview
+  Mesh, // Triangle mesh view
 }
 
 export class AppState {
@@ -64,13 +70,6 @@ export class AppState {
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.previewPane.appendChild(this.renderer.domElement);
-
-    // Restore camera position from localStorage
-    const savedCamera = localStorage.getItem('cameraPosition');
-    if (savedCamera) {
-      const pos = JSON.parse(savedCamera);
-      this.camera.position.set(pos.x, pos.y, pos.z);
-    }
 
     // Initialize worker
     this.worker = new Worker(new URL('./worker/mesh-worker.ts', import.meta.url), {
@@ -136,9 +135,18 @@ export class AppState {
       RIGHT: THREE.MOUSE.PAN,
     };
     this.controls.addEventListener('change', () => {
-      localStorage.setItem('cameraPosition', JSON.stringify(this.camera.position));
+      // Update camera state in current document when controls change
+      // And save it to localStorage immediately
+      this.saveCurrentCameraState();
+      this.saveDocuments();
     });
     this.controls.update();
+
+    // Restore camera position from active document if available
+    const activeDoc = this.documents.find((d) => d.id === this.activeDocumentId);
+    if (activeDoc?.cameraState) {
+      this.restoreCameraState(activeDoc);
+    }
 
     // Set up initial size
     this.updateSize();
@@ -335,12 +343,29 @@ export class AppState {
   }
 
   createNewDocument() {
+    // Save camera state of current document before creating new one
+    if (this.activeDocumentId) {
+      this.saveCurrentCameraState();
+    }
+    
     const id = crypto.randomUUID();
     const num = this.documents.length + 1;
     const doc: Document = {
       id,
       name: `model${num}`,
       content: `sphere(1);`,
+      cameraState: {
+        position: {
+          x: this.camera.position.x,
+          y: this.camera.position.y,
+          z: this.camera.position.z
+        },
+        target: {
+          x: this.controls.target.x,
+          y: this.controls.target.y,
+          z: this.controls.target.z
+        }
+      }
     };
     this.documents.push(doc);
     this.saveDocuments();
@@ -348,8 +373,67 @@ export class AppState {
   }
 
   private saveDocuments() {
+    // Save camera state of current document before saving
+    if (this.activeDocumentId) {
+      this.saveCurrentCameraState();
+    }
+    
     localStorage.setItem('documents', JSON.stringify(this.documents));
     localStorage.setItem('activeDocumentId', this.activeDocumentId || '');
+  }
+  
+  // Public method to save documents, can be called from outside
+  saveDocumentsToLocalStorage() {
+    this.saveDocuments();
+  }
+  
+  private saveCurrentCameraState() {
+    const activeDoc = this.getActiveDocument();
+    if (!activeDoc) return;
+    
+    // Get orbit controls target
+    const target = this.controls.target;
+    
+    activeDoc.cameraState = {
+      position: {
+        x: this.camera.position.x,
+        y: this.camera.position.y,
+        z: this.camera.position.z
+      },
+      target: {
+        x: target.x,
+        y: target.y,
+        z: target.z
+      }
+    };
+  }
+  
+  private restoreCameraState(doc: Document) {
+    if (!doc.cameraState) {
+      return;
+    }
+    
+    // Restore position
+    this.camera.position.set(
+      doc.cameraState.position.x,
+      doc.cameraState.position.y,
+      doc.cameraState.position.z
+    );
+    
+    // Restore orbit controls target if available
+    if (doc.cameraState.target && this.controls) {
+      this.controls.target.set(
+        doc.cameraState.target.x,
+        doc.cameraState.target.y,
+        doc.cameraState.target.z
+      );
+      
+      // Make sure camera and controls are fully updated
+      this.camera.lookAt(this.controls.target);
+      this.camera.updateProjectionMatrix();
+      this.camera.updateMatrixWorld();
+      this.controls.update();
+    }
   }
 
   getDocuments(): Document[] {
@@ -363,8 +447,20 @@ export class AppState {
   }
 
   setActiveDocument(id: string) {
+    // Save camera state of current document before switching
+    if (this.activeDocumentId) {
+      this.saveCurrentCameraState();
+    }
+    
     if (this.documents.find((d) => d.id === id)) {
       this.activeDocumentId = id;
+      
+      // Restore camera state for the new document
+      const doc = this.documents.find(d => d.id === id);
+      if (doc && doc.cameraState) {
+        this.restoreCameraState(doc);
+      }
+      
       this.saveDocuments();
       this.updateShader();
     }
@@ -403,6 +499,10 @@ export class AppState {
         this.setViewMode(ViewMode.Preview);
       }
     }
+  }
+  
+  handleResize(): void {
+    this.updateSize();
   }
 
   private updateShader() {
