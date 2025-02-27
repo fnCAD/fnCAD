@@ -7,7 +7,8 @@ const span = document.querySelector('.close') as HTMLElement;
 modal.style.display = 'none';
 
 // Show modal when help button is clicked
-btn.onclick = () => {
+btn.onclick = (e) => {
+  e.preventDefault();
   modal.style.display = 'block';
 };
 

@@ -296,18 +296,102 @@ const appState = new AppState(camera);
 // Initial tab update
 updateTabs();
 
-// Initialize examples dropdown
-const examplesSelect = document.getElementById('examples') as HTMLSelectElement;
+// Initialize examples menu
+const examplesDropdown = document.getElementById('examples-dropdown') as HTMLElement;
 examples.forEach((example, index) => {
-  const option = document.createElement('option');
-  option.value = index.toString();
-  option.textContent = example.name;
-  examplesSelect.appendChild(option);
+  const exampleLink = document.createElement('a');
+  exampleLink.href = '#';
+  exampleLink.textContent = example.name;
+  exampleLink.dataset.index = index.toString();
+  exampleLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    loadExample(index);
+    // Hide examples dropdown after selection
+    examplesDropdown.style.display = 'none';
+    setTimeout(() => { examplesDropdown.style.display = ''; }, 300);
+  });
+  examplesDropdown.appendChild(exampleLink);
 });
 
-examplesSelect.addEventListener('change', () => {
-  const selectedIndex = parseInt(examplesSelect.value);
-  const example = examples[selectedIndex];
+// Variables for hover delay
+let examplesMenuTimeout: number | null = null;
+const MENU_CLOSE_DELAY = 500; // 500ms delay before closing
+
+// Make examples menu also respond to click (not just hover)
+document.querySelector('.examples-menu-trigger')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const dropdown = document.getElementById('examples-dropdown');
+  if (dropdown) {
+    if (dropdown.style.display === 'block') {
+      dropdown.style.display = 'none';
+      dropdown.classList.remove('active');
+    } else {
+      // Position the dropdown correctly
+      const trigger = e.currentTarget as HTMLElement;
+      const rect = trigger.getBoundingClientRect();
+      dropdown.style.top = `${rect.top}px`;
+      dropdown.style.left = `${rect.right + 5}px`;
+      dropdown.style.display = 'block';
+      dropdown.classList.add('active');
+    }
+  }
+});
+
+// Position examples dropdown on mouseover
+document.querySelector('.examples-menu-trigger')?.addEventListener('mouseover', (e) => {
+  // Clear any existing timeout to close the menu
+  if (examplesMenuTimeout) {
+    window.clearTimeout(examplesMenuTimeout);
+    examplesMenuTimeout = null;
+  }
+  
+  const dropdown = document.getElementById('examples-dropdown');
+  if (dropdown) {
+    const trigger = e.currentTarget as HTMLElement;
+    const rect = trigger.getBoundingClientRect();
+    dropdown.style.top = `${rect.top}px`;
+    dropdown.style.left = `${rect.right + 5}px`;
+    dropdown.style.display = 'block';
+    dropdown.classList.add('active');
+  }
+});
+
+// Handle mouseout with delay
+document.querySelector('.examples-menu-trigger')?.addEventListener('mouseout', () => {
+  const dropdown = document.getElementById('examples-dropdown');
+  if (dropdown && !dropdown.matches(':hover')) {
+    // Set a timeout to close the menu
+    examplesMenuTimeout = window.setTimeout(() => {
+      if (!dropdown.matches(':hover')) {
+        dropdown.style.display = 'none';
+        dropdown.classList.remove('active');
+      }
+    }, MENU_CLOSE_DELAY);
+  }
+});
+
+// Keep menu open when hovering over the dropdown itself
+document.getElementById('examples-dropdown')?.addEventListener('mouseleave', () => {
+  const dropdown = document.getElementById('examples-dropdown');
+  if (dropdown) {
+    // Set a timeout to close the menu
+    examplesMenuTimeout = window.setTimeout(() => {
+      dropdown.style.display = 'none';
+      dropdown.classList.remove('active');
+    }, MENU_CLOSE_DELAY);
+  }
+});
+
+// Cancel close if we move back to the dropdown
+document.getElementById('examples-dropdown')?.addEventListener('mouseenter', () => {
+  if (examplesMenuTimeout) {
+    window.clearTimeout(examplesMenuTimeout);
+    examplesMenuTimeout = null;
+  }
+});
+
+function loadExample(index: number) {
+  const example = examples[index];
   if (example) {
     const id = appState.createNewDocument();
     appState.setActiveDocument(id);
@@ -320,10 +404,8 @@ examplesSelect.addEventListener('change', () => {
       },
     });
     updateTabs();
-    // Reset select to placeholder
-    examplesSelect.selectedIndex = 0;
   }
-});
+}
 
 // Create tab bar elements
 function createTabElement(doc: { id: string; name: string }, isActive: boolean): HTMLDivElement {
@@ -383,11 +465,11 @@ function createTabElement(doc: { id: string; name: string }, isActive: boolean):
 }
 
 function updateTabs() {
-  const tabBar = document.querySelector('.tab-bar')!;
-  const newTabButton = tabBar.querySelector('.new-tab-button')!;
+  const tabContainer = document.querySelector('.tab-container')!;
+  const newTabButton = tabContainer.querySelector('.new-tab-button')!;
 
   // Remove all tabs but keep the new tab button
-  Array.from(tabBar.children).forEach((child) => {
+  Array.from(tabContainer.children).forEach((child) => {
     if (!child.classList.contains('new-tab-button')) {
       child.remove();
     }
@@ -398,7 +480,7 @@ function updateTabs() {
   const activeDoc = appState.getActiveDocument();
   docs.forEach((doc) => {
     const tab = createTabElement(doc, doc.id === activeDoc.id);
-    tabBar.insertBefore(tab, newTabButton);
+    tabContainer.insertBefore(tab, newTabButton);
   });
 }
 
@@ -486,12 +568,9 @@ function regenerateMesh(highDetail: boolean = false) {
   appState.generateMesh(highDetail);
 }
 
-// Add button handlers
-const saveStlButton = document.getElementById('save-stl') as HTMLButtonElement;
-const generateMeshButton = document.getElementById('generate-mesh') as HTMLButtonElement;
-const generateMeshHDButton = document.getElementById('generate-mesh-hd') as HTMLButtonElement;
-
-saveStlButton.addEventListener('click', () => {
+// Add menu handlers
+document.getElementById('export-stl')?.addEventListener('click', (e) => {
+  e.preventDefault();
   const currentMesh = appState.getCurrentMesh();
   if (currentMesh) {
     const activeDoc = appState.getActiveDocument();
@@ -501,12 +580,43 @@ saveStlButton.addEventListener('click', () => {
   }
 });
 
-generateMeshButton.addEventListener('click', () => {
+document.getElementById('new-document')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const id = appState.createNewDocument();
+  appState.setActiveDocument(id);
+  updateTabs();
+  editor.dispatch({
+    changes: {
+      from: 0,
+      to: editor.state.doc.length,
+      insert: appState.getActiveDocument().content,
+    },
+  });
+  appState.setViewMode(ViewMode.Preview);
+});
+
+document.getElementById('view-preview')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  appState.setViewMode(ViewMode.Preview);
+  appState.cancelCurrentOperation();
+});
+
+document.getElementById('view-mesh')?.addEventListener('click', (e) => {
+  e.preventDefault();
   appState.setViewMode(ViewMode.Mesh);
   regenerateMesh(false);
 });
 
-generateMeshHDButton.addEventListener('click', () => {
+document.getElementById('view-mesh-hd')?.addEventListener('click', (e) => {
+  e.preventDefault();
   appState.setViewMode(ViewMode.Mesh);
   regenerateMesh(true);
+});
+
+// Stub event listeners for import/export features that will be implemented later
+['export-pastebin', 'export-gdrive', 'import-file', 'import-pastebin', 'import-gdrive', 'import-url'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', (e) => {
+    e.preventDefault();
+    alert('This feature is coming soon!');
+  });
 });
