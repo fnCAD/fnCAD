@@ -1,6 +1,10 @@
 import './style-common.css';
 import './style-dark.css';
 
+import { oneDark } from '@codemirror/theme-one-dark';
+import { materialLight } from '@uiw/codemirror-theme-material';
+import { solarizedDark, solarizedLight } from '@uiw/codemirror-theme-solarized';
+
 // Add dynamic styles for mesh progress
 const style = document.createElement('style');
 style.textContent = `
@@ -29,7 +33,7 @@ import {
   DecorationSet,
   WidgetType,
 } from '@codemirror/view';
-import { EditorState, StateEffect, StateField } from '@codemirror/state';
+import { EditorState, StateEffect, StateField, Extension, Compartment } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { Parser } from './cad/parser';
 import { ParseError } from './cad/errors';
@@ -311,6 +315,96 @@ window.addEventListener('beforeunload', () => {
   appState.saveDocumentsToLocalStorage();
 });
 
+// Create theme compartment to isolate theme changes
+const themeCompartment = new Compartment();
+
+// Theme switching functionality
+const THEME_STORAGE_KEY = 'fncad-theme';
+let currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+
+// Map application themes to editor themes
+const editorThemes = {
+  'dark': oneDark,
+  'solarized-light': solarizedLight,
+  'blue': solarizedDark,
+  'high-contrast': oneDark // Fallback to oneDark for high-contrast
+};
+
+// Function to load and apply a theme
+function applyTheme(theme: string) {
+  // Update active class in the menu
+  document.querySelectorAll('.theme-option').forEach(el => {
+    el.classList.remove('active');
+  });
+  const activeThemeOption = document.getElementById(`theme-${theme}`);
+  if (activeThemeOption) {
+    activeThemeOption.classList.add('active');
+  }
+
+  // Dynamically load the theme CSS file if not already loaded
+  let themeLink = document.getElementById('theme-style') as HTMLLinkElement;
+  if (!themeLink) {
+    themeLink = document.createElement('link');
+    themeLink.id = 'theme-style';
+    themeLink.rel = 'stylesheet';
+    document.head.appendChild(themeLink);
+  }
+  
+  // Use a relative path which works in both dev and production
+  themeLink.href = `./src/style-${theme}.css`;
+  currentTheme = theme;
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+
+  // Update the editor theme if it exists
+  if (window._editor) {
+    const editorTheme = editorThemes[theme as keyof typeof editorThemes];
+    if (editorTheme) {
+      // Apply the new theme only to the theme compartment
+      window._editor.dispatch({
+        effects: themeCompartment.reconfigure(editorTheme)
+      });
+    }
+  }
+}
+
+// Apply the saved theme or default to dark
+applyTheme(currentTheme);
+
+// Add event listeners for theme switching
+document.getElementById('theme-dark')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  applyTheme('dark');
+});
+
+document.getElementById('theme-solarized-light')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  applyTheme('solarized-light');
+});
+
+document.getElementById('theme-blue')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  applyTheme('blue');
+});
+
+document.getElementById('theme-high-contrast')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  applyTheme('high-contrast');
+});
+
+// Add fullscreen toggle functionality
+document.getElementById('toggle-fullscreen')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.error(`Error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+});
+
 import { examples } from './examples';
 
 // Initialize app state
@@ -416,7 +510,7 @@ document.getElementById('examples-dropdown')?.addEventListener('mouseenter', () 
 function loadExample(index: number) {
   const example = examples[index];
   if (example) {
-    const id = appState.createNewDocument();
+    const id = appState.createNewDocument(); // This will create a document with default camera
     appState.setActiveDocument(id);
     appState.renameDocument(id, example.name);
     editor.dispatch({
@@ -427,6 +521,9 @@ function loadExample(index: number) {
       },
     });
     updateTabs();
+    
+    // Reset camera to default position for the example
+    appState.resetCameraPosition();
   }
 }
 
@@ -536,7 +633,7 @@ const editor = new EditorView({
           appState.updateEditorContent(content);
         }
       }),
-      oneDark,
+      themeCompartment.of(editorThemes[currentTheme as keyof typeof editorThemes] || oneDark),
       errorDecorationField,
       callHighlightField,
       EditorView.updateListener.of((update: ViewUpdate) => {

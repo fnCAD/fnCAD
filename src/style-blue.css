@@ -1,31 +1,31 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
   color: rgba(255, 255, 255, 0.95);
-  background-color: #242424;
+  background-color: #001a36;
 }
 
 a {
-  color: #646cff;
+  color: #4da6ff;
 }
 a:hover {
-  color: #535bf2;
+  color: #80bfff;
 }
 
 #menu-bar {
-  background: #1a1a1a;
-  border-bottom: 2px solid #444; /* Thicker border for better separation */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Added shadow for depth */
+  background: #002952;
+  border-bottom: 2px solid #003d7a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .github-link {
-  background: #2d2d2d;
-  border: 1px solid #444;
+  background: #003d7a;
+  border: 1px solid #0059b3;
   color: #ddd;
   border-radius: 4px;
 }
 
 .github-link:hover {
-  background: #3d3d3d;
+  background: #004c99;
 }
 
 .dropdown-button {
@@ -35,13 +35,13 @@ a:hover {
 }
 
 .dropdown-button:hover {
-  background-color: #2d2d2d;
+  background-color: #003d7a;
 }
 
 .dropdown-content {
-  background-color: #2d2d2d;
+  background-color: #003366;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-  border: 1px solid #444;
+  border: 1px solid #004c99;
   border-radius: 4px;
 }
 
@@ -50,7 +50,7 @@ a:hover {
 }
 
 .dropdown-content a:hover {
-  background-color: #3d3d3d;
+  background-color: #004c99;
 }
 
 .dropdown-content a.disabled {
@@ -59,85 +59,80 @@ a:hover {
   pointer-events: none;
 }
 
-.dropdown-content a.active::after {
-  content: " ✓";
-  float: right;
-}
-
 .shortcut {
-  color: #888;
-  background: rgba(0, 0, 0, 0.2);
+  color: #80bfff;
+  background: rgba(0, 41, 82, 0.5);
 }
 
 .furigana-container::before {
-  color: #aaa;
+  color: #80bfff;
 }
 
 .dropdown-divider {
-  background-color: #444;
+  background-color: #004c99;
 }
 
 .examples-dropdown {
-  background-color: #2d2d2d;
+  background-color: #003366;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-  border: 1px solid #444;
+  border: 1px solid #004c99;
   border-radius: 4px;
 }
 
 #menu-bar .tab-container {
-  border-left-color: #444;
+  border-left-color: #004c99;
 }
 
 #menu-bar .tab {
-  background: rgba(45, 45, 45, 0.5);
-  border-right-color: #333;
+  background: rgba(0, 61, 122, 0.5);
+  border-right-color: #004c99;
   color: #aaa;
 }
 
 #menu-bar .tab.active {
-  background: #2d2d2d;
+  background: #003d7a;
   color: white;
-  box-shadow: inset 0 -2px 0 #646cff; /* Use box-shadow instead of border */
+  box-shadow: inset 0 -2px 0 #4da6ff;
 }
 
 #menu-bar .tab:hover {
-  background: #2d2d2d;
+  background: #003d7a;
 }
 
 #menu-bar .new-tab-button {
   background: transparent;
-  border-right-color: #333;
+  border-right-color: #004c99;
 }
 
 .gutter {
-  background-color: #333;
+  background-color: #002952;
 }
 
 .gutter:hover {
-  background-color: #444;
+  background-color: #003d7a;
 }
 
 #editor-pane {
-  background: #1e1e1e;
+  background: #001a36;
 }
 
 .tab-title[contenteditable="true"] {
-  background: #333;
+  background: #003d7a;
 }
 
 .new-tab-button {
   background: transparent;
-  color: #888;
+  color: #80bfff;
 }
 
 .new-tab-button:hover {
   color: #fff;
-  background: #333;
+  background: #003d7a;
 }
 
 #preview-pane {
-  background: #2d2d2d;
-  color: #888;
+  background: #00264d;
+  color: #80bfff;
 }
 
 .cm-error-mark {
@@ -146,35 +141,35 @@ a:hover {
 }
 
 .error-message {
-  color: #ff4444;
+  color: #ff6666;
 }
 
 .parameter-help {
-  background: #1e1e1e;
-  border: 1px solid #646cff;
+  background: #001a36;
+  border: 1px solid #4da6ff;
   color: #ddd;
-  box-shadow: 0 2px 8px rgba(100,108,255,0.3);
+  box-shadow: 0 2px 8px rgba(77,166,255,0.3);
 }
 
 .cm-active-call {
-  background-color: rgba(100,108,255,0.1);
+  background-color: rgba(77,166,255,0.2);
 }
 
 .parameter-help .current {
-  color: #646cff;
+  color: #4da6ff;
   font-weight: bold;
 }
 
 .parameter-help .optional {
-  color: #888;
+  color: #80bfff;
   font-style: italic;
 }
 
 button {
-  background-color: #1a1a1a;
+  background-color: #002952;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #4da6ff;
 }
 button:focus,
 button:focus-visible {
@@ -186,12 +181,12 @@ button:focus-visible {
 }
 
 .modal-content {
-  background-color: #1e1e1e;
-  border: 1px solid #444;
+  background-color: #002952;
+  border: 1px solid #004c99;
 }
 
 .close {
-  color: #888;
+  color: #80bfff;
 }
 
 .close:hover {
@@ -199,30 +194,30 @@ button:focus-visible {
 }
 
 .cheatsheet .section {
-  background: #2d2d2d;
-  border: 1px solid #444;
+  background: #003366;
+  border: 1px solid #004c99;
 }
 
 .cheatsheet h3 {
-  color: #646cff;
-  border-bottom: 1px solid #444;
+  color: #4da6ff;
+  border-bottom: 1px solid #004c99;
 }
 
 .cheatsheet dd {
-  color: #888;
+  color: #80bfff;
 }
 
 .cheatsheet code {
-  background: #1a1a1a;
+  background: #002952;
   color: #e6e6e6;
 }
 
 .cheatsheet pre {
-  background: #1a1a1a;
+  background: #002952;
 }
 
 .cheatsheet .links a {
-  color: #646cff;
+  color: #4da6ff;
 }
 
 .cheatsheet .links a:hover {
@@ -230,5 +225,5 @@ button:focus-visible {
 }
 
 .cheatsheet table th {
-  color: #646cff;
+  color: #4da6ff;
 }

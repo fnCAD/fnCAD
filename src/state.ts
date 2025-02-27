@@ -356,14 +356,14 @@ export class AppState {
       content: `sphere(1);`,
       cameraState: {
         position: {
-          x: this.camera.position.x,
-          y: this.camera.position.y,
-          z: this.camera.position.z
+          x: 0,
+          y: 0,
+          z: 5 // Default camera position
         },
         target: {
-          x: this.controls.target.x,
-          y: this.controls.target.y,
-          z: this.controls.target.z
+          x: 0,
+          y: 0,
+          z: 0 // Default camera target
         }
       }
     };
@@ -591,5 +591,16 @@ export class AppState {
 
   isMeshGenerationInProgress(): boolean {
     return this.meshGenerationInProgress;
+  }
+  
+  resetCameraPosition(): void {
+    // Reset to default viewing position
+    this.camera.position.set(0, 0, 5);
+    this.controls.target.set(0, 0, 0);
+    this.camera.lookAt(this.controls.target);
+    this.controls.update();
+    
+    // Save this reset position to the current document
+    this.saveCurrentCameraState();
   }
 }
