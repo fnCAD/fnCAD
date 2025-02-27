@@ -277,16 +277,29 @@ const errorDecorationField = StateField.define<DecorationSet>({
 // Set runtime base path for assets
 getRuntimeBasePath(); // Initialize runtime base path
 
-// Initialize split panes
-Split(['#editor-pane', '#preview-pane'], {
-  sizes: [50, 50],
+// Initialize split panes with localStorage persistence
+const savedSizes = localStorage.getItem('split-sizes');
+const splitInstance = Split(['#editor-pane', '#preview-pane'], {
+  sizes: savedSizes ? JSON.parse(savedSizes) : [50, 50],
   minSize: [300, 300],
   gutterSize: 8,
+  onDragEnd: function(sizes) {
+    // Save sizes to localStorage
+    localStorage.setItem('split-sizes', JSON.stringify(sizes));
+    
+    // Trigger resize for the renderer to update
+    window.dispatchEvent(new Event('resize'));
+  }
 });
 
 // Initialize camera
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 5;
+
+// Add resize event listener to handle split view changes
+window.addEventListener('resize', () => {
+  appState.handleResize();
+});
 
 import { examples } from './examples';
 

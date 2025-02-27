@@ -261,6 +261,16 @@ body {
   display: flex;
 }
 
+/* Split.js gutter styling */
+.gutter {
+  background-color: #333;
+  cursor: col-resize;
+}
+
+.gutter:hover {
+  background-color: #444;
+}
+
 #editor-pane {
   height: 100%;
   display: flex;
