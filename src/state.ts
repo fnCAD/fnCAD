@@ -477,14 +477,40 @@ export class AppState {
   removeDocument(id: string) {
     const index = this.documents.findIndex((d) => d.id === id);
     if (index !== -1) {
+      const wasActive = (this.activeDocumentId === id);
       this.documents.splice(index, 1);
-      if (this.activeDocumentId === id) {
+      
+      if (wasActive) {
+        // Switch to the previous document
         this.activeDocumentId = this.documents[Math.max(0, index - 1)]?.id || null;
+        
+        // If we have a new active document
+        if (this.activeDocumentId) {
+          // Find the document
+          const newActiveDoc = this.documents.find(d => d.id === this.activeDocumentId);
+          
+          // Update the editor content
+          if (window._editor && newActiveDoc) {
+            window._editor.dispatch({
+              changes: {
+                from: 0,
+                to: window._editor.state.doc.length,
+                insert: newActiveDoc.content,
+              },
+            });
+          }
+          
+          // Restore camera state if available
+          if (newActiveDoc?.cameraState) {
+            this.restoreCameraState(newActiveDoc);
+          }
+          
+          // Update the shader for the new document
+          this.updateShader();
+        }
       }
+      
       this.saveDocuments();
-      if (this.activeDocumentId) {
-        this.updateShader();
-      }
     }
   }
 
