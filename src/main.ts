@@ -283,6 +283,10 @@ const splitInstance = Split(['#editor-pane', '#preview-pane'], {
   sizes: savedSizes ? JSON.parse(savedSizes) : [50, 50],
   minSize: [300, 300],
   gutterSize: 8,
+  onDrag: function() {
+    // Trigger resize for the renderer to update during dragging
+    window.dispatchEvent(new Event('resize'));
+  },
   onDragEnd: function(sizes) {
     // Save sizes to localStorage
     localStorage.setItem('split-sizes', JSON.stringify(sizes));
