@@ -1,4 +1,5 @@
-import './style.css';
+import './style-common.css';
+import './style-dark.css';
 
 // Add dynamic styles for mesh progress
 const style = document.createElement('style');

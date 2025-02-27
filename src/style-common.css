@@ -2,11 +2,6 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.95);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,11 +10,7 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
   text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
 }
 
 body {
@@ -39,9 +30,6 @@ body {
 
 #menu-bar {
   height: 36px; /* Fixed height to prevent scrollbar */
-  background: #1a1a1a;
-  border-bottom: 2px solid #444; /* Thicker border for better separation */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Added shadow for depth */
   display: flex;
   align-items: center;
   padding: 0 10px;
@@ -65,20 +53,12 @@ body {
 .github-link {
   width: 30px;
   height: 30px;
-  background: #2d2d2d;
-  border: 1px solid #444;
-  color: #ddd;
-  border-radius: 4px;
   cursor: pointer;
   text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 8px;
-}
-
-.github-link:hover {
-  background: #3d3d3d;
 }
 
 /* Dropdown menu styles */
@@ -89,9 +69,6 @@ body {
 }
 
 .dropdown-button {
-  background: transparent;
-  color: #ddd;
-  border: none;
   font-size: 14px;
   cursor: pointer;
   padding: 0 12px;
@@ -100,20 +77,12 @@ body {
   align-items: center;
 }
 
-.dropdown-button:hover {
-  background-color: #2d2d2d;
-}
-
 .dropdown-content {
   display: none;
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: #2d2d2d;
   min-width: 180px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-  border: 1px solid #444;
-  border-radius: 4px;
   z-index: 100;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
@@ -129,7 +98,6 @@ body {
 }
 
 .dropdown-content a {
-  color: #ddd;
   padding: 8px 12px;
   text-decoration: none;
   display: block;
@@ -137,22 +105,10 @@ body {
   font-size: 14px;
 }
 
-.dropdown-content a:hover {
-  background-color: #3d3d3d;
-}
-
-.dropdown-content a.disabled {
-  color: #777;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
 .shortcut {
   float: right;
   margin-left: 12px;
-  color: #888;
   font-size: 12px;
-  background: rgba(0, 0, 0, 0.2);
   padding: 0 5px;
   border-radius: 3px;
   font-family: monospace;
@@ -170,13 +126,11 @@ body {
   left: 0;
   width: 100%;
   font-size: 9px;
-  color: #aaa;
   text-align: center;
 }
 
 .dropdown-divider {
   height: 1px;
-  background-color: #444;
   margin: 4px 0;
 }
 
@@ -188,11 +142,7 @@ body {
 .examples-dropdown {
   display: none;
   position: fixed; /* Changed from absolute to fixed */
-  background-color: #2d2d2d;
   min-width: 180px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-  border: 1px solid #444;
-  border-radius: 4px;
   z-index: 101;
   max-height: 400px;
   overflow-y: auto;
@@ -215,7 +165,7 @@ body {
   max-width: calc(100% - 180px); /* Reduced from 300px to allow more space */
   height: 100%;
   margin-left: 10px;
-  border-left: 2px solid #444;
+  border-left: 2px solid;
   padding-left: 8px;
 }
 
@@ -225,33 +175,20 @@ body {
   border-radius: 0;
   margin: 0;
   padding: 0 15px;
-  background: rgba(45, 45, 45, 0.5);
-  border-right: 1px solid #333;
-  color: #aaa;
+  border-right: 1px solid;
   display: flex;
   align-items: center;
   font-size: 13px;
 }
 
-#menu-bar .tab.active {
-  background: #2d2d2d;
-  color: white;
-  box-shadow: inset 0 -2px 0 #646cff; /* Use box-shadow instead of border */
-}
-
-#menu-bar .tab:hover {
-  background: #2d2d2d;
-}
-
 #menu-bar .new-tab-button {
   height: 100%;
   width: 40px;
-  background: transparent;
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid #333;
+  border-right: 1px solid;
 }
 
 #split-container {
@@ -263,12 +200,7 @@ body {
 
 /* Split.js gutter styling */
 .gutter {
-  background-color: #333;
   cursor: col-resize;
-}
-
-.gutter:hover {
-  background-color: #444;
 }
 
 #editor-pane {
@@ -276,10 +208,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;  /* Important for nested flex! */
-  background: #1e1e1e;
 }
-
-/* Tabs are now in the menu bar - see styles above */
 
 .tab-title {
   flex: 1;
@@ -290,7 +219,6 @@ body {
 }
 
 .tab-title[contenteditable="true"] {
-  background: #333;
   outline: none;
   padding: 0 4px;
   border-radius: 2px;
@@ -311,30 +239,19 @@ body {
   align-items: center;
   justify-content: center;
   width: 32px;
-  background: transparent;
   border: none;
-  color: #888;
   font-size: 20px;
   cursor: pointer;
   padding: 0;
 }
 
-.new-tab-button:hover {
-  color: #fff;
-  background: #333;
-}
-
 #preview-pane {
   height: 100%;
-  background: #2d2d2d;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
   position: relative;
 }
-
-
 
 .logo {
   height: 6em;
@@ -342,9 +259,11 @@ body {
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.vanilla:hover {
   filter: drop-shadow(0 0 2em #3178c6aa);
 }
@@ -358,14 +277,11 @@ body {
 }
 
 .cm-error-mark {
-  background-color: rgba(255, 68, 68, 0.1);
-  border-bottom: 1px wavy #ff4444;
   position: relative;
 }
 
 .error-message {
   position: absolute;
-  color: #ff4444;
   font-size: 0.9em;
   white-space: nowrap;
   pointer-events: none;
@@ -374,16 +290,12 @@ body {
 
 .parameter-help {
   position: absolute;
-  background: #1e1e1e;
-  border: 1px solid #646cff;
   border-radius: 4px;
   padding: 8px;
   font-size: 0.9em;
-  color: #ddd;
   pointer-events: none;
   z-index: 1000;
   max-width: 300px;
-  box-shadow: 0 2px 8px rgba(100,108,255,0.3);
   display: none; /* Hidden by default */
   transition: opacity 0.2s;
   opacity: 0;
@@ -394,53 +306,12 @@ body {
   opacity: 1;
 }
 
-.cm-active-call {
-  background-color: rgba(100,108,255,0.1);
-}
-
-.parameter-help .current {
-  color: #646cff;
-  font-weight: bold;
-}
-
-.parameter-help .optional {
-  color: #888;
-  font-style: italic;
-}
-
-.parameter-help {
-  position: absolute;
-  background: #1e1e1e;
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 8px;
-  font-size: 0.9em;
-  color: #ddd;
-  pointer-events: none;
-  z-index: 1000;
-  max-width: 300px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  line-height: 1.4;
-}
-
 .parameter-help strong {
-  color: #fff;
   font-weight: 600;
-}
-
-.parameter-help .current {
-  color: #646cff;
-  font-weight: bold;
-}
-
-.parameter-help .optional {
-  color: #888;
-  font-style: italic;
 }
 
 .parameter-help small {
   display: block;
-  color: #888;
   margin-top: 4px;
   font-size: 0.9em;
 }
@@ -452,18 +323,9 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
 
 .modal {
   display: none;
@@ -473,14 +335,11 @@ button:focus-visible {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.7);
 }
 
 .modal-content {
-  background-color: #1e1e1e;
   margin: 2% auto;
   padding: 15px;
-  border: 1px solid #444;
   width: 90%;
   max-width: 1200px;
   border-radius: 5px;
@@ -493,13 +352,8 @@ button:focus-visible {
   position: absolute;
   right: 20px;
   top: 15px;
-  color: #888;
   font-size: 24px;
   cursor: pointer;
-}
-
-.close:hover {
-  color: #fff;
 }
 
 .cheatsheet {
@@ -510,8 +364,6 @@ button:focus-visible {
 }
 
 .cheatsheet .section {
-  background: #2d2d2d;
-  border: 1px solid #444;
   border-radius: 4px;
   padding: 10px;
 }
@@ -527,7 +379,6 @@ button:focus-visible {
 }
 
 .cheatsheet table th {
-  color: #646cff;
   font-weight: 600;
   text-align: left;
   padding-bottom: 8px;
@@ -538,11 +389,9 @@ button:focus-visible {
 }
 
 .cheatsheet h3 {
-  color: #646cff;
   margin-top: 0;
   margin-bottom: 15px;
   font-size: 1.1em;
-  border-bottom: 1px solid #444;
   padding-bottom: 5px;
 }
 
@@ -557,20 +406,16 @@ button:focus-visible {
 .cheatsheet dd {
   margin-left: 20px;
   margin-bottom: 15px;
-  color: #888;
   font-size: 0.9em;
 }
 
 .cheatsheet code {
-  background: #1a1a1a;
   padding: 2px 5px;
   border-radius: 3px;
-  color: #e6e6e6;
   font-family: monospace;
 }
 
 .cheatsheet pre {
-  background: #1a1a1a;
   padding: 10px;
   border-radius: 4px;
   overflow-x: auto;
@@ -580,13 +425,4 @@ button:focus-visible {
 .cheatsheet .links {
   grid-column: 1 / -1;
   text-align: center;
-}
-
-.cheatsheet .links a {
-  color: #646cff;
-  text-decoration: none;
-}
-
-.cheatsheet .links a:hover {
-  text-decoration: underline;
 }
