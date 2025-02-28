@@ -1,7 +1,10 @@
 import { Node } from './sdf_expressions/types';
 import { GLSLContext, GLSLGenerator } from './sdf_expressions/glslgen';
 
-export function generateShader(ast: Node): string {
+export function generateShader(
+  ast: Node,
+  options: { rainbowMode: boolean } = { rainbowMode: true }
+): string {
   const generator = new GLSLGenerator();
   const context = new GLSLContext(generator);
   const result = ast.toGLSL(context);
@@ -94,8 +97,8 @@ export function generateShader(ast: Node): string {
       vec3 rd = getRayDirection(gl_FragCoord.xy / resolution.xy, ro, customViewMatrix);
 
       // Background visualization based on ray direction
-      vec3 background = rd * 0.5 + 0.5; // Map from [-1,1] to [0,1]
-      background *= background; // Make colors more vibrant
+      vec3 background = ${options.rainbowMode ? 'rd * 0.5 + 0.5' : 'vec3(0.1, 0.1, 0.12)'};
+      ${options.rainbowMode ? 'background *= background; // Make colors more vibrant' : '// Solid background color'}
 
       // Raymarching
       float t = 0.0;
@@ -115,9 +118,12 @@ export function generateShader(ast: Node): string {
           // Enhanced lighting with ambient
           float diff = max(dot(n, normalize(vec3(1,1,1))), 0.2);
           
-          // Get background color in normal's direction for ambient
-          vec3 bgColor = normalize(n) * 0.5 + 0.5;
-          bgColor *= bgColor; // Make colors more vibrant
+          // Get color in normal's direction for ambient
+          vec3 bgColor = ${
+            options.rainbowMode
+              ? 'normalize(n) * 0.5 + 0.5;\n          bgColor *= bgColor; // Make colors more vibrant'
+              : 'vec3(0.7, 0.7, 0.7); // Neutral gray color for non-rainbow mode'
+          };
 
           // Create two-level checkerboard pattern
           // Fine grid at natural unit (1mm)

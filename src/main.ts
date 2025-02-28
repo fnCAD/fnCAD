@@ -336,6 +336,23 @@ window.addEventListener('resize', () => {
   appState.handleResize();
 });
 
+// Add rainbow mode setting
+const RAINBOW_MODE_KEY = 'fncad-rainbow-mode';
+let rainbowMode = localStorage.getItem(RAINBOW_MODE_KEY) !== 'false'; // Default to true
+
+// Function to update rainbow mode
+function updateRainbowMode(enabled: boolean) {
+  rainbowMode = enabled;
+  localStorage.setItem(RAINBOW_MODE_KEY, enabled.toString());
+  // Update UI
+  const menuItem = document.getElementById('view-rainbow-mode');
+  if (menuItem) {
+    menuItem.classList.toggle('active', enabled);
+  }
+  // Always refresh the shader when the rainbow mode changes
+  appState.refreshPreview();
+}
+
 // Save state when window is closing
 window.addEventListener('beforeunload', () => {
   appState.saveDocumentsToLocalStorage();
@@ -766,6 +783,20 @@ document.getElementById('view-mesh-hd')?.addEventListener('click', (e) => {
   e.preventDefault();
   appState.setViewMode(ViewMode.Mesh);
   regenerateMesh(true);
+});
+
+// Add rainbow mode toggle handler
+document.getElementById('view-rainbow-mode')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  updateRainbowMode(!rainbowMode);
+});
+
+// Initialize rainbow mode UI on load
+document.addEventListener('DOMContentLoaded', () => {
+  const rainbowModeMenuItem = document.getElementById('view-rainbow-mode');
+  if (rainbowModeMenuItem) {
+    rainbowModeMenuItem.classList.toggle('active', rainbowMode);
+  }
 });
 
 // Stub event listeners for import/export features that will be implemented later

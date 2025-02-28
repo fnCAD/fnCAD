@@ -537,7 +537,9 @@ export class AppState {
       const cadAst = parseCAD(editorContent);
       const sdfScene = moduleToSDF(cadAst);
       const sdfNode = parseSDF(sdfScene.expr);
-      this.currentShader = generateShader(sdfNode);
+      // Get current rainbow mode setting
+      const rainbowMode = localStorage.getItem('fncad-rainbow-mode') !== 'false';
+      this.currentShader = generateShader(sdfNode, { rainbowMode });
 
       // Update preview material if it exists
       if (this.previewMaterial) {
@@ -617,6 +619,13 @@ export class AppState {
 
   isMeshGenerationInProgress(): boolean {
     return this.meshGenerationInProgress;
+  }
+
+  refreshPreview(): void {
+    if (this.viewMode === ViewMode.Preview) {
+      // Re-update the shader with current settings
+      this.updateShader();
+    }
   }
 
   resetCameraPosition(): void {
