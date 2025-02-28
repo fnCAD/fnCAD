@@ -21,7 +21,6 @@
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.34.3",
     "@datastructures-js/heap": "^4.3.3",
-    "@uiw/codemirror-theme-material": "^4.23.8",
     "@uiw/codemirror-theme-solarized": "^4.23.8",
     "codemirror": "^6.0.1",
     "split.js": "^1.6.5",

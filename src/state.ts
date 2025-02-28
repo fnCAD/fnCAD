@@ -347,7 +347,7 @@ export class AppState {
     if (this.activeDocumentId) {
       this.saveCurrentCameraState();
     }
-    
+
     const id = crypto.randomUUID();
     const num = this.documents.length + 1;
     const doc: Document = {
@@ -358,14 +358,14 @@ export class AppState {
         position: {
           x: 0,
           y: 0,
-          z: 5 // Default camera position
+          z: 5, // Default camera position
         },
         target: {
           x: 0,
           y: 0,
-          z: 0 // Default camera target
-        }
-      }
+          z: 0, // Default camera target
+        },
+      },
     };
     this.documents.push(doc);
     this.saveDocuments();
@@ -377,49 +377,49 @@ export class AppState {
     if (this.activeDocumentId) {
       this.saveCurrentCameraState();
     }
-    
+
     localStorage.setItem('documents', JSON.stringify(this.documents));
     localStorage.setItem('activeDocumentId', this.activeDocumentId || '');
   }
-  
+
   // Public method to save documents, can be called from outside
   saveDocumentsToLocalStorage() {
     this.saveDocuments();
   }
-  
+
   private saveCurrentCameraState() {
     const activeDoc = this.getActiveDocument();
     if (!activeDoc) return;
-    
+
     // Get orbit controls target
     const target = this.controls.target;
-    
+
     activeDoc.cameraState = {
       position: {
         x: this.camera.position.x,
         y: this.camera.position.y,
-        z: this.camera.position.z
+        z: this.camera.position.z,
       },
       target: {
         x: target.x,
         y: target.y,
-        z: target.z
-      }
+        z: target.z,
+      },
     };
   }
-  
+
   private restoreCameraState(doc: Document) {
     if (!doc.cameraState) {
       return;
     }
-    
+
     // Restore position
     this.camera.position.set(
       doc.cameraState.position.x,
       doc.cameraState.position.y,
       doc.cameraState.position.z
     );
-    
+
     // Restore orbit controls target if available
     if (doc.cameraState.target && this.controls) {
       this.controls.target.set(
@@ -427,7 +427,7 @@ export class AppState {
         doc.cameraState.target.y,
         doc.cameraState.target.z
       );
-      
+
       // Make sure camera and controls are fully updated
       this.camera.lookAt(this.controls.target);
       this.camera.updateProjectionMatrix();
@@ -451,16 +451,16 @@ export class AppState {
     if (this.activeDocumentId) {
       this.saveCurrentCameraState();
     }
-    
+
     if (this.documents.find((d) => d.id === id)) {
       this.activeDocumentId = id;
-      
+
       // Restore camera state for the new document
-      const doc = this.documents.find(d => d.id === id);
+      const doc = this.documents.find((d) => d.id === id);
       if (doc && doc.cameraState) {
         this.restoreCameraState(doc);
       }
-      
+
       this.saveDocuments();
       this.updateShader();
     }
@@ -477,18 +477,18 @@ export class AppState {
   removeDocument(id: string) {
     const index = this.documents.findIndex((d) => d.id === id);
     if (index !== -1) {
-      const wasActive = (this.activeDocumentId === id);
+      const wasActive = this.activeDocumentId === id;
       this.documents.splice(index, 1);
-      
+
       if (wasActive) {
         // Switch to the previous document
         this.activeDocumentId = this.documents[Math.max(0, index - 1)]?.id || null;
-        
+
         // If we have a new active document
         if (this.activeDocumentId) {
           // Find the document
-          const newActiveDoc = this.documents.find(d => d.id === this.activeDocumentId);
-          
+          const newActiveDoc = this.documents.find((d) => d.id === this.activeDocumentId);
+
           // Update the editor content
           if (window._editor && newActiveDoc) {
             window._editor.dispatch({
@@ -499,17 +499,17 @@ export class AppState {
               },
             });
           }
-          
+
           // Restore camera state if available
           if (newActiveDoc?.cameraState) {
             this.restoreCameraState(newActiveDoc);
           }
-          
+
           // Update the shader for the new document
           this.updateShader();
         }
       }
-      
+
       this.saveDocuments();
     }
   }
@@ -526,7 +526,7 @@ export class AppState {
       }
     }
   }
-  
+
   handleResize(): void {
     this.updateSize();
   }
@@ -618,14 +618,14 @@ export class AppState {
   isMeshGenerationInProgress(): boolean {
     return this.meshGenerationInProgress;
   }
-  
+
   resetCameraPosition(): void {
     // Reset to default viewing position
     this.camera.position.set(0, 0, 5);
     this.controls.target.set(0, 0, 0);
     this.camera.lookAt(this.controls.target);
     this.controls.update();
-    
+
     // Save this reset position to the current document
     this.saveCurrentCameraState();
   }

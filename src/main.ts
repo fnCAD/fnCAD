@@ -1,9 +1,28 @@
+import Split from 'split.js';
+import { getRuntimeBasePath } from './utils/runtime-base';
+import { downloadSTL } from './stlexporter';
+import { indentWithTab } from '@codemirror/commands';
+import {
+  EditorView,
+  keymap,
+  ViewUpdate,
+  Decoration,
+  DecorationSet,
+  WidgetType,
+} from '@codemirror/view';
+import { EditorState, StateEffect, StateField, Compartment } from '@codemirror/state';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { solarizedDark, solarizedLight } from '@uiw/codemirror-theme-solarized';
+import { javascript } from '@codemirror/lang-javascript';
+import { Parser } from './cad/parser';
+import { ParseError } from './cad/errors';
+import { getModuleDoc } from './cad/docs';
+import { basicSetup } from 'codemirror';
+import * as THREE from 'three';
+import { AppState, ViewMode } from './state';
+
 import './style-common.css';
 import './style-dark.css';
-
-import { oneDark } from '@codemirror/theme-one-dark';
-import { materialLight } from '@uiw/codemirror-theme-material';
-import { solarizedDark, solarizedLight } from '@uiw/codemirror-theme-solarized';
 
 // Add dynamic styles for mesh progress
 const style = document.createElement('style');
@@ -21,27 +40,6 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
-import Split from 'split.js';
-import { getRuntimeBasePath } from './utils/runtime-base';
-import { downloadSTL } from './stlexporter';
-import { indentWithTab } from '@codemirror/commands';
-import {
-  EditorView,
-  keymap,
-  ViewUpdate,
-  Decoration,
-  DecorationSet,
-  WidgetType,
-} from '@codemirror/view';
-import { EditorState, StateEffect, StateField, Extension, Compartment } from '@codemirror/state';
-import { javascript } from '@codemirror/lang-javascript';
-import { Parser } from './cad/parser';
-import { ParseError } from './cad/errors';
-import { getModuleDoc } from './cad/docs';
-import { basicSetup } from 'codemirror';
-import { oneDark } from '@codemirror/theme-one-dark';
-import * as THREE from 'three';
-import { AppState, ViewMode } from './state';
 
 // Error decoration setup
 interface ErrorDecoration {
@@ -284,21 +282,22 @@ getRuntimeBasePath(); // Initialize runtime base path
 
 // Initialize split panes with localStorage persistence
 const savedSizes = localStorage.getItem('split-sizes');
-const splitInstance = Split(['#editor-pane', '#preview-pane'], {
+
+Split(['#editor-pane', '#preview-pane'], {
   sizes: savedSizes ? JSON.parse(savedSizes) : [50, 50],
   minSize: [300, 300],
   gutterSize: 8,
-  onDrag: function() {
+  onDrag: function () {
     // Trigger resize for the renderer to update during dragging
     window.dispatchEvent(new Event('resize'));
   },
-  onDragEnd: function(sizes) {
+  onDragEnd: function (sizes) {
     // Save sizes to localStorage
     localStorage.setItem('split-sizes', JSON.stringify(sizes));
-    
+
     // Trigger resize for the renderer to update
     window.dispatchEvent(new Event('resize'));
-  }
+  },
 });
 
 // Initialize camera
@@ -324,16 +323,16 @@ let currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
 
 // Map application themes to editor themes
 const editorThemes = {
-  'dark': oneDark,
+  dark: oneDark,
   'solarized-light': solarizedLight,
-  'blue': solarizedDark,
-  'high-contrast': oneDark // Fallback to oneDark for high-contrast
+  blue: solarizedDark,
+  'high-contrast': oneDark, // Fallback to oneDark for high-contrast
 };
 
 // Function to load and apply a theme
 function applyTheme(theme: string) {
   // Update active class in the menu
-  document.querySelectorAll('.theme-option').forEach(el => {
+  document.querySelectorAll('.theme-option').forEach((el) => {
     el.classList.remove('active');
   });
   const activeThemeOption = document.getElementById(`theme-${theme}`);
@@ -349,7 +348,7 @@ function applyTheme(theme: string) {
     themeLink.rel = 'stylesheet';
     document.head.appendChild(themeLink);
   }
-  
+
   // Use a relative path which works in both dev and production
   themeLink.href = `./src/style-${theme}.css`;
   currentTheme = theme;
@@ -361,7 +360,7 @@ function applyTheme(theme: string) {
     if (editorTheme) {
       // Apply the new theme only to the theme compartment
       window._editor.dispatch({
-        effects: themeCompartment.reconfigure(editorTheme)
+        effects: themeCompartment.reconfigure(editorTheme),
       });
     }
   }
@@ -395,7 +394,7 @@ document.getElementById('theme-high-contrast')?.addEventListener('click', (e) =>
 document.getElementById('toggle-fullscreen')?.addEventListener('click', (e) => {
   e.preventDefault();
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => {
+    document.documentElement.requestFullscreen().catch((err) => {
       console.error(`Error attempting to enable fullscreen: ${err.message}`);
     });
   } else {
@@ -425,7 +424,9 @@ examples.forEach((example, index) => {
     loadExample(index);
     // Hide examples dropdown after selection
     examplesDropdown.style.display = 'none';
-    setTimeout(() => { examplesDropdown.style.display = ''; }, 300);
+    setTimeout(() => {
+      examplesDropdown.style.display = '';
+    }, 300);
   });
   examplesDropdown.appendChild(exampleLink);
 });
@@ -461,7 +462,7 @@ document.querySelector('.examples-menu-trigger')?.addEventListener('mouseover', 
     window.clearTimeout(examplesMenuTimeout);
     examplesMenuTimeout = null;
   }
-  
+
   const dropdown = document.getElementById('examples-dropdown');
   if (dropdown) {
     const trigger = e.currentTarget as HTMLElement;
@@ -521,7 +522,7 @@ function loadExample(index: number) {
       },
     });
     updateTabs();
-    
+
     // Reset camera to default position for the example
     appState.resetCameraPosition();
   }
@@ -734,7 +735,14 @@ document.getElementById('view-mesh-hd')?.addEventListener('click', (e) => {
 });
 
 // Stub event listeners for import/export features that will be implemented later
-['export-pastebin', 'export-gdrive', 'import-file', 'import-pastebin', 'import-gdrive', 'import-url'].forEach(id => {
+[
+  'export-pastebin',
+  'export-gdrive',
+  'import-file',
+  'import-pastebin',
+  'import-gdrive',
+  'import-url',
+].forEach((id) => {
   document.getElementById(id)?.addEventListener('click', (e) => {
     e.preventDefault();
     alert('This feature is coming soon!');
