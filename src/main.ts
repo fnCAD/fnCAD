@@ -21,12 +21,18 @@ import { basicSetup } from 'codemirror';
 import * as THREE from 'three';
 import { AppState, ViewMode } from './state';
 
+// Import all CSS themes to ensure they're bundled
 import './assets/themes/common.css';
-// Import all themes to ensure they're bundled
 import './assets/themes/dark.css';
 import './assets/themes/blue.css';
 import './assets/themes/high-contrast.css';
 import './assets/themes/solarized-light.css';
+
+// Import the theme URLs for dynamic loading
+import darkThemeUrl from './assets/themes/dark.css?url';
+import blueThemeUrl from './assets/themes/blue.css?url';
+import highContrastThemeUrl from './assets/themes/high-contrast.css?url';
+import solarizedLightThemeUrl from './assets/themes/solarized-light.css?url';
 
 // Add dynamic styles for mesh progress
 const style = document.createElement('style');
@@ -353,9 +359,15 @@ function applyTheme(theme: string) {
     document.head.appendChild(themeLink);
   }
 
-  // In development, files are served from /src, but in production they're in /assets
-  const basePath = import.meta.env.DEV ? '/src/assets' : './assets';
-  themeLink.href = `${basePath}/themes/${theme}.css`;
+  // Use imported URLs for dynamic loading
+  const themeUrls = {
+    dark: darkThemeUrl,
+    blue: blueThemeUrl,
+    'high-contrast': highContrastThemeUrl,
+    'solarized-light': solarizedLightThemeUrl,
+  };
+
+  themeLink.href = themeUrls[theme as keyof typeof themeUrls] || themeUrls['dark'];
   currentTheme = theme;
   localStorage.setItem(THEME_STORAGE_KEY, theme);
 
