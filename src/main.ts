@@ -21,8 +21,12 @@ import { basicSetup } from 'codemirror';
 import * as THREE from 'three';
 import { AppState, ViewMode } from './state';
 
-import './style-common.css';
-import './style-dark.css';
+import './assets/themes/common.css';
+// Import all themes to ensure they're bundled
+import './assets/themes/dark.css';
+import './assets/themes/blue.css';
+import './assets/themes/high-contrast.css';
+import './assets/themes/solarized-light.css';
 
 // Add dynamic styles for mesh progress
 const style = document.createElement('style');
@@ -349,8 +353,9 @@ function applyTheme(theme: string) {
     document.head.appendChild(themeLink);
   }
 
-  // Use a relative path which works in both dev and production
-  themeLink.href = `./src/style-${theme}.css`;
+  // In development, files are served from /src, but in production they're in /assets
+  const basePath = import.meta.env.DEV ? '/src/assets' : './assets';
+  themeLink.href = `${basePath}/themes/${theme}.css`;
   currentTheme = theme;
   localStorage.setItem(THEME_STORAGE_KEY, theme);
 
