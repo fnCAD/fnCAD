@@ -21,9 +21,10 @@ import { basicSetup } from 'codemirror';
 import * as THREE from 'three';
 import { AppState, ViewMode } from './state';
 
-// Import all CSS themes to ensure they're bundled
-import './assets/themes/common.css';
+// Import the default theme first to prevent flash of wrong theme
 import './assets/themes/dark.css';
+// Import other CSS themes to ensure they're bundled
+import './assets/themes/common.css';
 import './assets/themes/blue.css';
 import './assets/themes/high-contrast.css';
 import './assets/themes/solarized-light.css';
@@ -33,6 +34,22 @@ import darkThemeUrl from './assets/themes/dark.css?url';
 import blueThemeUrl from './assets/themes/blue.css?url';
 import highContrastThemeUrl from './assets/themes/high-contrast.css?url';
 import solarizedLightThemeUrl from './assets/themes/solarized-light.css?url';
+
+// Function to reveal content when CSS is loaded
+function revealContent() {
+  document.documentElement.style.visibility = 'visible';
+  document.body.style.visibility = 'visible';
+  const loader = document.getElementById('css-loader');
+  if (loader) {
+    loader.style.display = 'none';
+  }
+}
+
+// Wait for the DOM and initial CSS to be loaded
+window.addEventListener('DOMContentLoaded', () => {
+  // Small delay to ensure CSS is processed
+  setTimeout(revealContent, 50);
+});
 
 // Add dynamic styles for mesh progress
 const style = document.createElement('style');
