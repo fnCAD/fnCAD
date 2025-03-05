@@ -82,6 +82,10 @@ export class Interval {
     return new Interval(-this.max, -this.min);
   }
 
+  size(): number {
+    return this.max - this.min;
+  }
+
   // Special SDF operations
   smooth_union(other: Interval, radius: number): Interval {
     // For points far from both shapes (> 5*radius), just use regular min.

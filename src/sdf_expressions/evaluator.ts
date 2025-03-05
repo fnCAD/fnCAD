@@ -613,10 +613,12 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
         sdfEstimate: interval,
       };
     }
-    const nearishC1 =
-      c1.category === 'face' || c1.category === 'complex' || c1.sdfEstimate.minDist(0) < r * 5.0;
-    const nearishC2 =
-      c2.category === 'face' || c2.category === 'complex' || c2.sdfEstimate.minDist(0) < r * 5.0;
+    const c1face = c1.category === 'face' || c1.category === 'complex';
+    const c2face = c2.category === 'face' || c2.category === 'complex';
+    const c1dist = c1.sdfEstimate.minDist(0);
+    const c2dist = c2.sdfEstimate.minDist(0);
+    const nearishC1 = c1face || c1dist < r * 5.0;
+    const nearishC2 = c2face || c2dist < r * 5.0;
     if (!nearishC1 && !nearishC2) {
       return {
         category: 'outside',
@@ -625,14 +627,15 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     }
 
     if (nearishC1 && nearishC2) {
-      var minSize = r / 10.0;
+      var minSize = r / 5.0;
       if (c1.category === 'face' || c1.category === 'complex')
         minSize = Math.min(minSize, c1.minSize!);
       if (c2.category === 'face' || c2.category === 'complex')
         minSize = Math.min(minSize, c2.minSize!);
+      var complex = c1.category === 'complex' || c2.category === 'complex';
       if (interval.contains(0)) {
         return {
-          category: c1.category === 'complex' || c2.category === 'complex' ? 'complex' : 'face',
+          category: complex ? 'complex' : 'face',
           node: this,
           sdfEstimate: interval,
           minSize: minSize,
@@ -644,8 +647,24 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
         minSize: minSize,
       };
     }
-    if (nearishC1) return c1;
-    if (nearishC2) return c2;
+    if (nearishC1) {
+      // safety margin: on c1, but close enough to c2 that our points would drift into the smooth transition.
+      var forceSubdivide = c1face && c2dist > r * 4.0 && c2dist < x.size();
+      return {
+        ...c1,
+        category: forceSubdivide ? 'complex' : c1.category,
+        minSize: forceSubdivide ? Math.min(c1.minSize!, 0.1) : c1.minSize,
+      };
+    }
+    if (nearishC2) {
+      // safety margin: on c1, but close enough to c2 that our points would drift into the smooth transition.
+      var forceSubdivide = c2face && c1dist > r * 4.0 && c1dist < x.size();
+      return {
+        ...c2,
+        category: forceSubdivide ? 'complex' : c2.category,
+        minSize: forceSubdivide ? Math.min(c2.minSize!, 0.1) : c2.minSize,
+      };
+    }
     throw 'unreachable';
   }
 }
