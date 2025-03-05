@@ -813,42 +813,107 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Function to show a notification
+function showNotification(message: string, type: 'info' | 'success' | 'error' = 'info') {
+  // Remove any existing notification
+  const existingNotification = document.getElementById('status-notification');
+  if (existingNotification) {
+    document.body.removeChild(existingNotification);
+  }
+  
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.id = 'status-notification';
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  notification.style.position = 'fixed';
+  notification.style.bottom = '20px';
+  notification.style.right = '20px';
+  notification.style.padding = '10px 15px';
+  notification.style.borderRadius = '4px';
+  notification.style.zIndex = '9999';
+  notification.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+  
+  // Set color based on type
+  if (type === 'info') {
+    notification.style.backgroundColor = '#2196F3';
+    notification.style.color = 'white';
+  } else if (type === 'success') {
+    notification.style.backgroundColor = '#4CAF50';
+    notification.style.color = 'white';
+  } else if (type === 'error') {
+    notification.style.backgroundColor = '#F44336';
+    notification.style.color = 'white';
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Auto-hide success and info notifications after 3 seconds
+  if (type !== 'error') {
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 3000);
+  }
+  
+  return notification;
+}
+
 // Add event listeners for share buttons
 document.getElementById('share-gist')?.addEventListener('click', async (e) => {
   e.preventDefault();
   
-  // Remove any existing share dialogs first
-  const existingDialog = document.getElementById('share-modal');
-  if (existingDialog) {
-    document.body.removeChild(existingDialog);
-  }
+  // Close dropdown menus
+  const dropdowns = document.querySelectorAll('.dropdown-content');
+  dropdowns.forEach(dropdown => {
+    (dropdown as HTMLElement).style.display = 'none';
+  });
+  
+  // Show saving notification
+  const notification = showNotification('Saving to Gist...', 'info');
   
   try {
     const result = await storageManager.saveDocument(appState, 'gist');
     if (result) {
+      // Update notification
+      notification.textContent = 'Saved successfully!';
+      notification.className = 'notification success';
+      
+      // Show share dialog
       showShareDialog(result.url, result.filename);
     }
   } catch (error) {
-    alert(`Error sharing to Gist: ${(error as Error).message}`);
+    notification.textContent = `Error: ${(error as Error).message}`;
+    notification.className = 'notification error';
   }
 });
 
 document.getElementById('share-gdrive')?.addEventListener('click', async (e) => {
   e.preventDefault();
   
-  // Remove any existing share dialogs first
-  const existingDialog = document.getElementById('share-modal');
-  if (existingDialog) {
-    document.body.removeChild(existingDialog);
-  }
+  // Close dropdown menus
+  const dropdowns = document.querySelectorAll('.dropdown-content');
+  dropdowns.forEach(dropdown => {
+    (dropdown as HTMLElement).style.display = 'none';
+  });
+  
+  // Show saving notification
+  const notification = showNotification('Saving to Google Drive...', 'info');
   
   try {
     const result = await storageManager.saveDocument(appState, 'gdrive');
     if (result) {
+      // Update notification
+      notification.textContent = 'Saved successfully!';
+      notification.className = 'notification success';
+      
+      // Show share dialog
       showShareDialog(result.url, result.filename);
     }
   } catch (error) {
-    alert(`Error sharing to Google Drive: ${(error as Error).message}`);
+    notification.textContent = `Error: ${(error as Error).message}`;
+    notification.className = 'notification error';
   }
 });
 

@@ -31,6 +31,13 @@ export class StorageManager {
     let provider: StorageProvider | undefined;
     let existingId: string | undefined;
 
+    console.log('Starting save document:', {
+      providedName: providerName,
+      hasStorage: !!activeDoc.storage,
+      currentProvider: activeDoc.storage?.provider,
+      currentId: activeDoc.storage?.externalId
+    });
+
     if (activeDoc.storage) {
       if (!providerName) {
         // Use existing provider if not specified
@@ -41,6 +48,12 @@ export class StorageManager {
         existingId = activeDoc.storage.externalId;
       }
     }
+
+    console.log('After provider selection:', {
+      selectedProvider: providerName,
+      existingId,
+      willCreateNew: !existingId
+    });
 
     // If no provider specified or found, prompt user
     if (!providerName) {
