@@ -460,8 +460,8 @@ document.getElementById('toggle-fullscreen')?.addEventListener('click', (e) => {
 
 import { examples } from './examples';
 
-// Initialize storage manager
-const storageManager = new StorageManager();
+// Initialize storage manager with authentication status update callback
+const storageManager = new StorageManager(updateAuthStatusIcons);
 
 // Initialize app state
 const appState = new AppState(camera);
@@ -474,7 +474,7 @@ function updateAuthStatusIcons() {
   if (githubIcon) {
     githubIcon.style.display = githubToken ? 'block' : 'none';
   }
-  
+
   // Check Google Drive authentication
   const googleToken = localStorage.getItem('fncad-gdrive-token');
   const googleIcon = document.getElementById('google-auth-status');
@@ -483,23 +483,13 @@ function updateAuthStatusIcons() {
   }
 }
 
-// Function to update URL based on document storage
-function updateUrlForDocument(doc: Document) {
-  if (doc.storage?.provider && doc.storage?.externalId) {
-    // Create URL with provider and ID
-    const url = new URL(window.location.href);
-    url.searchParams.delete('gist');
-    url.searchParams.delete('gdrive');
-    url.searchParams.set(doc.storage.provider, doc.storage.externalId);
-    history.replaceState({}, '', url.toString());
-  } else {
-    // Remove storage parameters from URL
-    const url = new URL(window.location.href);
-    url.searchParams.delete('gist');
-    url.searchParams.delete('gdrive');
-    history.replaceState({}, '', url.toString());
+// Make this function globally available to be called from anywhere
+declare global {
+  interface Window {
+    updateAuthStatusIcons: () => void;
   }
 }
+window.updateAuthStatusIcons = updateAuthStatusIcons;
 
 // Check for shared URL parameters on load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -682,9 +672,9 @@ function createTabElement(doc: { id: string; name: string }, isActive: boolean):
       },
     });
     appState.setViewMode(ViewMode.Preview);
-    
+
     // Update URL based on document storage
-    updateUrlForDocument(doc);
+    updateUrlForDocument(appState.getActiveDocument());
   });
 
   return tab;
@@ -710,6 +700,24 @@ function updateTabs() {
   });
 }
 
+// Function to update URL based on document storage
+function updateUrlForDocument(doc: ReturnType<typeof appState.getActiveDocument>) {
+  if (doc.storage?.provider && doc.storage?.externalId) {
+    // Create URL with provider and ID
+    const url = new URL(window.location.href);
+    url.searchParams.delete('gist');
+    url.searchParams.delete('gdrive');
+    url.searchParams.set(doc.storage.provider, doc.storage.externalId);
+    history.replaceState({}, '', url.toString());
+  } else {
+    // Remove storage parameters from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('gist');
+    url.searchParams.delete('gdrive');
+    history.replaceState({}, '', url.toString());
+  }
+}
+
 // Add new tab button handler
 document.querySelector('.new-tab-button')?.addEventListener('click', () => {
   const id = appState.createNewDocument();
@@ -723,7 +731,7 @@ document.querySelector('.new-tab-button')?.addEventListener('click', () => {
     },
   });
   appState.setViewMode(ViewMode.Preview);
-  
+
   // Clear URL parameters for new document
   const url = new URL(window.location.href);
   url.searchParams.delete('gist');
@@ -866,7 +874,7 @@ function showNotification(message: string, type: 'info' | 'success' | 'error' = 
   if (existingNotification) {
     document.body.removeChild(existingNotification);
   }
-  
+
   // Create notification element
   const notification = document.createElement('div');
   notification.id = 'status-notification';
@@ -879,7 +887,7 @@ function showNotification(message: string, type: 'info' | 'success' | 'error' = 
   notification.style.borderRadius = '4px';
   notification.style.zIndex = '9999';
   notification.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-  
+
   // Set color based on type
   if (type === 'info') {
     notification.style.backgroundColor = '#2196F3';
@@ -891,9 +899,9 @@ function showNotification(message: string, type: 'info' | 'success' | 'error' = 
     notification.style.backgroundColor = '#F44336';
     notification.style.color = 'white';
   }
-  
+
   document.body.appendChild(notification);
-  
+
   // Auto-hide success and info notifications after 3 seconds
   if (type !== 'error') {
     setTimeout(() => {
@@ -902,35 +910,35 @@ function showNotification(message: string, type: 'info' | 'success' | 'error' = 
       }
     }, 3000);
   }
-  
+
   return notification;
 }
 
 // Add event listeners for share buttons
 document.getElementById('share-gist')?.addEventListener('click', async (e) => {
   e.preventDefault();
-  
+
   // Force close all dropdown menus
-  document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+  document.querySelectorAll('.dropdown-content').forEach((dropdown) => {
     // Force display: none
     (dropdown as HTMLElement).style.display = 'none';
-    
+
     // Reset the style after a brief delay to let CSS take over again
     setTimeout(() => {
       (dropdown as HTMLElement).style.removeProperty('display');
     }, 100);
   });
-  
+
   // Show saving notification
   const notification = showNotification('Saving to Gist...', 'info');
-  
+
   try {
     const result = await storageManager.saveDocument(appState, 'gist');
     if (result) {
       // Update notification
       notification.textContent = 'Saved successfully!';
       notification.className = 'notification success';
-      
+
       // Show share dialog
       showShareDialog(result.url, result.filename);
     }
@@ -942,28 +950,28 @@ document.getElementById('share-gist')?.addEventListener('click', async (e) => {
 
 document.getElementById('share-gdrive')?.addEventListener('click', async (e) => {
   e.preventDefault();
-  
+
   // Force close all dropdown menus
-  document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+  document.querySelectorAll('.dropdown-content').forEach((dropdown) => {
     // Force display: none
     (dropdown as HTMLElement).style.display = 'none';
-    
+
     // Reset the style after a brief delay to let CSS take over again
     setTimeout(() => {
       (dropdown as HTMLElement).style.removeProperty('display');
     }, 100);
   });
-  
+
   // Show saving notification
   const notification = showNotification('Saving to Google Drive...', 'info');
-  
+
   try {
     const result = await storageManager.saveDocument(appState, 'gdrive');
     if (result) {
       // Update notification
       notification.textContent = 'Saved successfully!';
       notification.className = 'notification success';
-      
+
       // Show share dialog
       showShareDialog(result.url, result.filename);
     }
@@ -993,18 +1001,18 @@ document.getElementById('import-url')?.addEventListener('click', (e) => {
 // GitHub logout
 document.getElementById('github-logout')?.addEventListener('click', (e) => {
   e.preventDefault();
-  
+
   // Close dropdown menu
-  document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+  document.querySelectorAll('.dropdown-content').forEach((dropdown) => {
     // Force display: none
     (dropdown as HTMLElement).style.display = 'none';
-    
+
     // Reset the style after a brief delay to let CSS take over again
     setTimeout(() => {
       (dropdown as HTMLElement).style.removeProperty('display');
     }, 100);
   });
-  
+
   localStorage.removeItem('fncad-gist-token');
   updateAuthStatusIcons();
   showNotification('Logged out from GitHub', 'info');
@@ -1013,18 +1021,18 @@ document.getElementById('github-logout')?.addEventListener('click', (e) => {
 // Google Drive logout
 document.getElementById('google-logout')?.addEventListener('click', async (e) => {
   e.preventDefault();
-  
+
   // Close dropdown menu
-  document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+  document.querySelectorAll('.dropdown-content').forEach((dropdown) => {
     // Force display: none
     (dropdown as HTMLElement).style.display = 'none';
-    
+
     // Reset the style after a brief delay to let CSS take over again
     setTimeout(() => {
       (dropdown as HTMLElement).style.removeProperty('display');
     }, 100);
   });
-  
+
   // Get the GDrive provider and properly revoke access
   try {
     const gdriveProvider = storageManager.getProvider('gdrive') as GDriveProvider;
@@ -1037,7 +1045,7 @@ document.getElementById('google-logout')?.addEventListener('click', async (e) =>
     console.error('Error revoking Google Drive access:', error);
     localStorage.removeItem('fncad-gdrive-token');
   }
-  
+
   updateAuthStatusIcons();
   showNotification('Logged out from Google Drive', 'info');
 });

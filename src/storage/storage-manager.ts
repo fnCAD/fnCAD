@@ -5,11 +5,15 @@ import { GDriveProvider } from './gdrive-provider';
 
 export class StorageManager {
   private providers: Map<string, StorageProvider> = new Map();
+  private updateAuthStatusIcons: () => void;
 
-  constructor() {
+  constructor(updateAuthStatusIcons: () => void) {
     // Register default providers
     this.registerProvider(new GistProvider());
     this.registerProvider(new GDriveProvider());
+
+    // Store the callback
+    this.updateAuthStatusIcons = updateAuthStatusIcons;
   }
 
   registerProvider(provider: StorageProvider) {
@@ -35,7 +39,7 @@ export class StorageManager {
       providedName: providerName,
       hasStorage: !!activeDoc.storage,
       currentProvider: activeDoc.storage?.provider,
-      currentId: activeDoc.storage?.externalId
+      currentId: activeDoc.storage?.externalId,
     });
 
     if (activeDoc.storage) {
@@ -52,7 +56,7 @@ export class StorageManager {
     console.log('After provider selection:', {
       selectedProvider: providerName,
       existingId,
-      willCreateNew: !existingId
+      willCreateNew: !existingId,
     });
 
     // If no provider specified or found, prompt user
@@ -71,6 +75,9 @@ export class StorageManager {
       if (!authenticated) {
         throw new Error(`Authentication failed for ${providerName}`);
       }
+
+      // Update authentication status icons after successful authentication
+      this.updateAuthStatusIcons();
     }
 
     try {
@@ -98,11 +105,9 @@ export class StorageManager {
 
       // Save updated document info to localStorage
       appState.saveDocumentsToLocalStorage();
-      
-      // Update authentication icons if they exist
-      if (typeof updateAuthStatusIcons === 'function') {
-        updateAuthStatusIcons();
-      }
+
+      // Update authentication icons
+      this.updateAuthStatusIcons();
 
       return { url: shareUrl, filename: result.filename };
     } catch (error) {
@@ -132,9 +137,9 @@ export class StorageManager {
     }
 
     // Check if we already have a document with this external ID
-    const existingDocument = appState.getDocuments().find(doc => 
-      doc.storage?.provider === providerName && doc.storage?.externalId === id
-    );
+    const existingDocument = appState
+      .getDocuments()
+      .find((doc) => doc.storage?.provider === providerName && doc.storage?.externalId === id);
 
     if (existingDocument) {
       // If we already have this document, just set it as active

@@ -1,5 +1,5 @@
 import { StorageProvider } from './storage-provider';
-// We don't need to import these - they'll be recognized through @types packages
+// Types will be provided by @types/gapi and @types/gapi.auth2
 
 export class GDriveProvider implements StorageProvider {
   private readonly TOKEN_KEY = 'fncad-gdrive-token';
@@ -20,11 +20,11 @@ export class GDriveProvider implements StorageProvider {
     if (window.gapi?.client) {
       return;
     }
-    
+
     if (typeof window.gapi === 'undefined') {
       await this.loadScript('https://apis.google.com/js/api.js');
     }
-    
+
     // Convert callback-based API to Promise
     await new Promise<void>((resolve) => {
       window.gapi.load('client', () => resolve());
@@ -44,7 +44,7 @@ export class GDriveProvider implements StorageProvider {
     if (window.google?.accounts) {
       return;
     }
-    
+
     await this.loadScript('https://accounts.google.com/gsi/client');
   }
 
@@ -76,7 +76,7 @@ export class GDriveProvider implements StorageProvider {
     try {
       // Only initialize GAPI if we have a token
       await this.loadGapiIfNeeded();
-      
+
       const token = JSON.parse(tokenStr);
       window.gapi.client.setToken(token);
       return true;
@@ -99,7 +99,7 @@ export class GDriveProvider implements StorageProvider {
       // Load both APIs only when authenticating
       await this.loadGapiIfNeeded();
       await this.loadGisIfNeeded();
-      
+
       // For OAuth flow, we need to use a Promise because the flow uses callbacks
       return new Promise<boolean>((resolve) => {
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -119,8 +119,15 @@ export class GDriveProvider implements StorageProvider {
 
         tokenClient.requestAccessToken({ prompt: 'consent' });
       });
+
+      // Try to update authentication icons if window function exists
+      setTimeout(() => {
+        if (typeof window.updateAuthStatusIcons === 'function') {
+          window.updateAuthStatusIcons();
+        }
+      }, 500); // Small delay to ensure token is saved before checking
     } catch (error) {
-      console.error("Failed to load Google APIs:", error);
+      console.error('Failed to load Google APIs:', error);
       return false;
     }
   }
@@ -255,7 +262,7 @@ export class GDriveProvider implements StorageProvider {
 
           // Use fallback name if name is undefined for any reason
           const filename = metadataResponse.result.name || `file_${id}.fncad`;
-          
+
           return {
             content: response.body,
             filename: filename,
@@ -282,25 +289,25 @@ export class GDriveProvider implements StorageProvider {
   async revokeAccess(): Promise<boolean> {
     const tokenStr = localStorage.getItem(this.TOKEN_KEY);
     if (!tokenStr) return false;
-    
+
     try {
       // Parse the token JSON
       const token = JSON.parse(tokenStr);
       const accessToken = token.access_token;
-      
+
       if (!accessToken) return false;
-      
+
       // Call Google's revocation endpoint
       const response = await fetch(`https://oauth2.googleapis.com/revoke?token=${accessToken}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
-      
+
       // Remove from localStorage regardless of response
       localStorage.removeItem(this.TOKEN_KEY);
-      
+
       // Try to also sign out with gapi if available
       if (window.gapi?.auth2) {
         try {
@@ -312,14 +319,14 @@ export class GDriveProvider implements StorageProvider {
           console.warn('Could not sign out with gapi.auth2', error);
         }
       }
-      
+
       return response.ok;
     } catch (error) {
       console.error('Error revoking access token:', error);
-      
+
       // Still remove from localStorage
       localStorage.removeItem(this.TOKEN_KEY);
-      
+
       return false;
     }
   }

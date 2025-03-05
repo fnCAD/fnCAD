@@ -29,6 +29,7 @@
   "devDependencies": {
     "@babel/runtime": "*",
     "@types/gapi": "^0.0.47",
+    "@types/gapi.auth2": "^0.0.61",
     "@types/gapi.client": "^1.0.8",
     "@types/gapi.client.drive": "^3.0.15",
     "@types/google.accounts": "^0.0.15",
