@@ -46,6 +46,12 @@ export function showShareDialog(url: string, filename: string) {
   // Add copy button
   const copyButton = document.createElement('button');
   copyButton.textContent = 'Copy Link';
+  copyButton.style.backgroundColor = '#4CAF50';
+  copyButton.style.color = 'white';
+  copyButton.style.border = 'none';
+  copyButton.style.padding = '8px 16px';
+  copyButton.style.borderRadius = '4px';
+  copyButton.style.cursor = 'pointer';
   copyButton.onclick = () => {
     urlInput.select();
     document.execCommand('copy');

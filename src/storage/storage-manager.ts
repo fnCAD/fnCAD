@@ -36,6 +36,9 @@ export class StorageManager {
         // Use existing provider if not specified
         providerName = activeDoc.storage.provider as string;
         existingId = activeDoc.storage.externalId;
+      } else if (providerName === activeDoc.storage.provider) {
+        // If explicitly saving to the same provider, use the existing ID
+        existingId = activeDoc.storage.externalId;
       }
     }
 

@@ -816,6 +816,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // Add event listeners for share buttons
 document.getElementById('share-gist')?.addEventListener('click', async (e) => {
   e.preventDefault();
+  
+  // Remove any existing share dialogs first
+  const existingDialog = document.getElementById('share-modal');
+  if (existingDialog) {
+    document.body.removeChild(existingDialog);
+  }
+  
   try {
     const result = await storageManager.saveDocument(appState, 'gist');
     if (result) {
@@ -828,6 +835,13 @@ document.getElementById('share-gist')?.addEventListener('click', async (e) => {
 
 document.getElementById('share-gdrive')?.addEventListener('click', async (e) => {
   e.preventDefault();
+  
+  // Remove any existing share dialogs first
+  const existingDialog = document.getElementById('share-modal');
+  if (existingDialog) {
+    document.body.removeChild(existingDialog);
+  }
+  
   try {
     const result = await storageManager.saveDocument(appState, 'gdrive');
     if (result) {
