@@ -94,10 +94,15 @@ export class StorageManager {
 
       // Update URL
       const shareUrl = provider.getShareUrl(result.id);
-      history.pushState({}, '', shareUrl);
+      history.replaceState({}, '', shareUrl);
 
       // Save updated document info to localStorage
       appState.saveDocumentsToLocalStorage();
+      
+      // Update authentication icons if they exist
+      if (typeof updateAuthStatusIcons === 'function') {
+        updateAuthStatusIcons();
+      }
 
       return { url: shareUrl, filename: result.filename };
     } catch (error) {

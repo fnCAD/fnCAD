@@ -465,10 +465,46 @@ const storageManager = new StorageManager();
 // Initialize app state
 const appState = new AppState(camera);
 
+// Function to update authentication status icons
+function updateAuthStatusIcons() {
+  // Check GitHub authentication
+  const githubToken = localStorage.getItem('fncad-gist-token');
+  const githubIcon = document.getElementById('github-auth-status');
+  if (githubIcon) {
+    githubIcon.style.display = githubToken ? 'block' : 'none';
+  }
+  
+  // Check Google Drive authentication
+  const googleToken = localStorage.getItem('fncad-gdrive-token');
+  const googleIcon = document.getElementById('google-auth-status');
+  if (googleIcon) {
+    googleIcon.style.display = googleToken ? 'block' : 'none';
+  }
+}
+
+// Function to update URL based on document storage
+function updateUrlForDocument(doc: Document) {
+  if (doc.storage?.provider && doc.storage?.externalId) {
+    // Create URL with provider and ID
+    const url = new URL(window.location.href);
+    url.searchParams.delete('gist');
+    url.searchParams.delete('gdrive');
+    url.searchParams.set(doc.storage.provider, doc.storage.externalId);
+    history.replaceState({}, '', url.toString());
+  } else {
+    // Remove storage parameters from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('gist');
+    url.searchParams.delete('gdrive');
+    history.replaceState({}, '', url.toString());
+  }
+}
+
 // Check for shared URL parameters on load
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     await storageManager.checkUrlParameters(appState);
+    updateAuthStatusIcons(); // Update auth icons on page load
   } catch (error) {
     console.error('Error loading from URL parameters:', error);
   }
@@ -645,6 +681,9 @@ function createTabElement(doc: { id: string; name: string }, isActive: boolean):
       },
     });
     appState.setViewMode(ViewMode.Preview);
+    
+    // Update URL based on document storage
+    updateUrlForDocument(doc);
   });
 
   return tab;
@@ -683,6 +722,12 @@ document.querySelector('.new-tab-button')?.addEventListener('click', () => {
     },
   });
   appState.setViewMode(ViewMode.Preview);
+  
+  // Clear URL parameters for new document
+  const url = new URL(window.location.href);
+  url.searchParams.delete('gist');
+  url.searchParams.delete('gdrive');
+  history.replaceState({}, '', url.toString());
 });
 
 // Initialize CodeMirror editor
@@ -942,4 +987,59 @@ document.getElementById('import-url')?.addEventListener('click', (e) => {
         alert(`Error importing from URL: ${(error as Error).message}`);
       });
   }
+});
+
+// GitHub logout
+document.getElementById('github-logout')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  
+  // Close dropdown menu
+  document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+    // Force display: none
+    (dropdown as HTMLElement).style.display = 'none';
+    
+    // Reset the style after a brief delay to let CSS take over again
+    setTimeout(() => {
+      (dropdown as HTMLElement).style.removeProperty('display');
+    }, 100);
+  });
+  
+  localStorage.removeItem('fncad-gist-token');
+  updateAuthStatusIcons();
+  showNotification('Logged out from GitHub', 'info');
+});
+
+// Google Drive logout
+document.getElementById('google-logout')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  
+  // Close dropdown menu
+  document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+    // Force display: none
+    (dropdown as HTMLElement).style.display = 'none';
+    
+    // Reset the style after a brief delay to let CSS take over again
+    setTimeout(() => {
+      (dropdown as HTMLElement).style.removeProperty('display');
+    }, 100);
+  });
+  
+  localStorage.removeItem('fncad-gdrive-token');
+  
+  // Additionally, revoke Google access if possible
+  if (window.gapi?.auth2) {
+    try {
+      const auth2 = window.gapi.auth2.getAuthInstance();
+      if (auth2) {
+        auth2.signOut().then(() => {
+          console.log('User signed out of Google.');
+        });
+      }
+    } catch (error) {
+      console.error('Error signing out of Google:', error);
+    }
+  }
+  
+  updateAuthStatusIcons();
+  showNotification('Logged out from Google Drive', 'info');
 });
