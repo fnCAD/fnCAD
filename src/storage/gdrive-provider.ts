@@ -1,9 +1,5 @@
 import { StorageProvider } from './storage-provider';
-// Let TypeScript know these types are available globally
-import 'gapi';
-import 'gapi.client';
-import 'gapi.client.drive';
-import 'google.accounts';
+// We don't need to import these - they'll be recognized through @types packages
 
 export class GDriveProvider implements StorageProvider {
   private readonly TOKEN_KEY = 'fncad-gdrive-token';
