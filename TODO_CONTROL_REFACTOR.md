@@ -16,7 +16,7 @@ The UI which made sense for testing also needs to be rethought.
   - Ctrl+5: Render and show mesh (like openscad)
   - Ctrl+6: Render and show mesh at higher default detail
   - Esc: Cancel current operation
-- [ ] Low Priority: move visualization settings into CAD language:
+- [/] Low Priority: move visualization settings into CAD language:
   ```
   $minerror = 0.01;
   $minsize = 0.01;
@@ -24,6 +24,7 @@ The UI which made sense for testing also needs to be rethought.
     // your model here
   }
   ```
+  - Done via `detailed()`.
 
 ### State Management
 - [x] Remove manager classes

@@ -71,18 +71,18 @@
 ## 9. Language Redesign
 - [x] Switch to OpenSCAD-like syntax (see TODO_OPENSCAD.md)
 - [x] SDF lowering layer for OpenSCAD operations
-- [ ] Preserve direct SDF function support as escape hatch
+- [x] Preserve direct SDF function support as escape hatch
 
 ## 10. Advanced Features
 - [x] Undo/redo
 - [x] Localstorage
-- [ ] Project save/load
+- [x] Project save/load
 - [ ] Material/color support
 
 ## 11. Documentation & Examples
 - [x] User guide
 - [x] OpenSCAD compatibility guide
-- [ ] SDF function reference
+- [x] SDF function reference
 - [x] Example gallery
 - [ ] Tutorial content
 

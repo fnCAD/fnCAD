@@ -117,6 +117,6 @@
 
 Current extensions to standard OpenSCAD:
 - [x] Smooth boolean operations
-- [ ] Direct SDF function support
+- [x] Direct SDF function support
 - [x] Live preview with ray marching
-- [ ] Adaptive mesh generation
+- [x] Adaptive mesh generation
