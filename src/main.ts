@@ -2,6 +2,7 @@ import Split from 'split.js';
 import { getRuntimeBasePath } from './utils/runtime-base';
 import { downloadSTL } from './stlexporter';
 import { StorageManager } from './storage/storage-manager';
+import { GDriveProvider } from './storage/gdrive-provider';
 import { showShareDialog } from './share-dialog';
 import { indentWithTab } from '@codemirror/commands';
 import {
@@ -1010,7 +1011,7 @@ document.getElementById('github-logout')?.addEventListener('click', (e) => {
 });
 
 // Google Drive logout
-document.getElementById('google-logout')?.addEventListener('click', (e) => {
+document.getElementById('google-logout')?.addEventListener('click', async (e) => {
   e.preventDefault();
   
   // Close dropdown menu
@@ -1024,20 +1025,17 @@ document.getElementById('google-logout')?.addEventListener('click', (e) => {
     }, 100);
   });
   
-  localStorage.removeItem('fncad-gdrive-token');
-  
-  // Additionally, revoke Google access if possible
-  if (window.gapi?.auth2) {
-    try {
-      const auth2 = window.gapi.auth2.getAuthInstance();
-      if (auth2) {
-        auth2.signOut().then(() => {
-          console.log('User signed out of Google.');
-        });
-      }
-    } catch (error) {
-      console.error('Error signing out of Google:', error);
+  // Get the GDrive provider and properly revoke access
+  try {
+    const gdriveProvider = storageManager.getProvider('gdrive') as GDriveProvider;
+    if (gdriveProvider) {
+      await gdriveProvider.revokeAccess();
+    } else {
+      localStorage.removeItem('fncad-gdrive-token');
     }
+  } catch (error) {
+    console.error('Error revoking Google Drive access:', error);
+    localStorage.removeItem('fncad-gdrive-token');
   }
   
   updateAuthStatusIcons();

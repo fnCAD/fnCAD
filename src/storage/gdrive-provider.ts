@@ -275,6 +275,55 @@ export class GDriveProvider implements StorageProvider {
     return `${window.location.origin}${window.location.pathname}?gdrive=${id}`;
   }
 
+  /**
+   * Revokes the Google Drive access token
+   * This properly removes permission from Google's side
+   */
+  async revokeAccess(): Promise<boolean> {
+    const tokenStr = localStorage.getItem(this.TOKEN_KEY);
+    if (!tokenStr) return false;
+    
+    try {
+      // Parse the token JSON
+      const token = JSON.parse(tokenStr);
+      const accessToken = token.access_token;
+      
+      if (!accessToken) return false;
+      
+      // Call Google's revocation endpoint
+      const response = await fetch(`https://oauth2.googleapis.com/revoke?token=${accessToken}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      
+      // Remove from localStorage regardless of response
+      localStorage.removeItem(this.TOKEN_KEY);
+      
+      // Try to also sign out with gapi if available
+      if (window.gapi?.auth2) {
+        try {
+          const auth2 = window.gapi.auth2.getAuthInstance();
+          if (auth2) {
+            await auth2.signOut();
+          }
+        } catch (error) {
+          console.warn('Could not sign out with gapi.auth2', error);
+        }
+      }
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Error revoking access token:', error);
+      
+      // Still remove from localStorage
+      localStorage.removeItem(this.TOKEN_KEY);
+      
+      return false;
+    }
+  }
+
   private async findOrCreateFolder(): Promise<string> {
     // First check if the folder already exists
     const folderResponse = await window.gapi.client.drive.files.list({
