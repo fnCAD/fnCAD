@@ -864,11 +864,18 @@ function showNotification(message: string, type: 'info' | 'success' | 'error' = 
 document.getElementById('share-gist')?.addEventListener('click', async (e) => {
   e.preventDefault();
   
-  // Close dropdown menus
-  const dropdowns = document.querySelectorAll('.dropdown-content');
-  dropdowns.forEach(dropdown => {
-    (dropdown as HTMLElement).style.display = 'none';
-  });
+  // Close dropdown menus by removing hover focus
+  // Let the CSS :hover rules handle showing/hiding naturally
+  const openDropdown = document.querySelector('.dropdown:hover');
+  if (openDropdown) {
+    (openDropdown as HTMLElement).blur();
+    // Move mouse focus away to ensure hover state is cleared
+    const event = new MouseEvent('mouseleave', {
+      bubbles: true,
+      cancelable: true,
+    });
+    openDropdown.dispatchEvent(event);
+  }
   
   // Show saving notification
   const notification = showNotification('Saving to Gist...', 'info');
@@ -892,11 +899,18 @@ document.getElementById('share-gist')?.addEventListener('click', async (e) => {
 document.getElementById('share-gdrive')?.addEventListener('click', async (e) => {
   e.preventDefault();
   
-  // Close dropdown menus
-  const dropdowns = document.querySelectorAll('.dropdown-content');
-  dropdowns.forEach(dropdown => {
-    (dropdown as HTMLElement).style.display = 'none';
-  });
+  // Close dropdown menus by removing hover focus
+  // Let the CSS :hover rules handle showing/hiding naturally
+  const openDropdown = document.querySelector('.dropdown:hover');
+  if (openDropdown) {
+    (openDropdown as HTMLElement).blur();
+    // Move mouse focus away to ensure hover state is cleared
+    const event = new MouseEvent('mouseleave', {
+      bubbles: true,
+      cancelable: true,
+    });
+    openDropdown.dispatchEvent(event);
+  }
   
   // Show saving notification
   const notification = showNotification('Saving to Google Drive...', 'info');
