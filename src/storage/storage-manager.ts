@@ -110,6 +110,17 @@ export class StorageManager {
       return false;
     }
 
+    // Check if we already have a document with this external ID
+    const existingDocument = appState.getDocuments().find(doc => 
+      doc.storage?.provider === providerName && doc.storage?.externalId === id
+    );
+
+    if (existingDocument) {
+      // If we already have this document, just set it as active
+      appState.setActiveDocument(existingDocument.id);
+      return true;
+    }
+
     const provider = this.getProvider(providerName);
     if (!provider) {
       throw new Error(`Provider ${providerName} not found`);

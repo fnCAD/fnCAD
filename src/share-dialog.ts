@@ -8,6 +8,8 @@ export function showShareDialog(url: string, filename: string) {
   // Create modal content
   const modalContent = document.createElement('div');
   modalContent.className = 'modal-content';
+  modalContent.style.maxWidth = '500px'; // Make it narrower
+  modalContent.style.margin = '10% auto'; // Better vertical centering
 
   // Add close button
   const closeButton = document.createElement('span');
@@ -36,6 +38,7 @@ export function showShareDialog(url: string, filename: string) {
   urlInput.style.width = '100%';
   urlInput.style.padding = '8px';
   urlInput.style.marginBottom = '10px';
+  urlInput.style.boxSizing = 'border-box'; // Prevent overflow
   urlInput.onclick = () => {
     urlInput.select();
   };
