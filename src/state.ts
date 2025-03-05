@@ -13,11 +13,19 @@ export interface CameraState {
   target?: { x: number; y: number; z: number }; // For orbit controls
 }
 
+export interface DocumentStorage {
+  provider: 'gist' | 'gdrive' | null;
+  externalId?: string;
+  writable: boolean;
+  filename?: string;
+}
+
 export interface Document {
   id: string;
   name: string;
   content: string;
   cameraState?: CameraState;
+  storage?: DocumentStorage;
 }
 
 export enum ViewMode {

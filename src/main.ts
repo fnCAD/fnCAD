@@ -1,6 +1,8 @@
 import Split from 'split.js';
 import { getRuntimeBasePath } from './utils/runtime-base';
 import { downloadSTL } from './stlexporter';
+import { StorageManager } from './storage/storage-manager';
+import { showShareDialog } from './share-dialog';
 import { indentWithTab } from '@codemirror/commands';
 import {
   EditorView,
@@ -457,8 +459,20 @@ document.getElementById('toggle-fullscreen')?.addEventListener('click', (e) => {
 
 import { examples } from './examples';
 
+// Initialize storage manager
+const storageManager = new StorageManager();
+
 // Initialize app state
 const appState = new AppState(camera);
+
+// Check for shared URL parameters on load
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await storageManager.checkUrlParameters(appState);
+  } catch (error) {
+    console.error('Error loading from URL parameters:', error);
+  }
+});
 
 // Initial tab update
 updateTabs();
@@ -799,17 +813,44 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Stub event listeners for import/export features that will be implemented later
-[
-  'export-pastebin',
-  'export-gdrive',
-  'import-file',
-  'import-pastebin',
-  'import-gdrive',
-  'import-url',
-].forEach((id) => {
-  document.getElementById(id)?.addEventListener('click', (e) => {
-    e.preventDefault();
-    alert('This feature is coming soon!');
-  });
+// Add event listeners for share buttons
+document.getElementById('share-gist')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  try {
+    const result = await storageManager.saveDocument(appState, 'gist');
+    if (result) {
+      showShareDialog(result.url, result.filename);
+    }
+  } catch (error) {
+    alert(`Error sharing to Gist: ${(error as Error).message}`);
+  }
+});
+
+document.getElementById('share-gdrive')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  try {
+    const result = await storageManager.saveDocument(appState, 'gdrive');
+    if (result) {
+      showShareDialog(result.url, result.filename);
+    }
+  } catch (error) {
+    alert(`Error sharing to Google Drive: ${(error as Error).message}`);
+  }
+});
+
+document.getElementById('import-url')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const url = prompt('Enter URL to import (must be a fnCAD share link):');
+  if (url) {
+    storageManager
+      .loadFromUrl(appState, url)
+      .then((success) => {
+        if (!success) {
+          alert('Invalid or unsupported URL. Please use a fnCAD share link.');
+        }
+      })
+      .catch((error) => {
+        alert(`Error importing from URL: ${(error as Error).message}`);
+      });
+  }
 });
