@@ -493,6 +493,18 @@ window.updateAuthStatusIcons = updateAuthStatusIcons;
 
 // Check for shared URL parameters on load
 window.addEventListener('DOMContentLoaded', async () => {
+  // Check if URL has parameters that might need loading
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasGistParam = urlParams.has('gist');
+  const hasGdriveParam = urlParams.has('gdrive');
+
+  // Only show loading notification if we have relevant parameters
+  let loadingNotification = null;
+  if (hasGistParam || hasGdriveParam) {
+    const provider = hasGistParam ? 'GitHub Gist' : 'Google Drive';
+    loadingNotification = showNotification(`Loading from ${provider}...`, 'info');
+  }
+
   try {
     const didLoadFromUrl = await storageManager.checkUrlParameters(appState);
     if (didLoadFromUrl) {
@@ -504,10 +516,32 @@ window.addEventListener('DOMContentLoaded', async () => {
           insert: appState.getActiveDocument().content,
         },
       });
+
+      // Update notification if it exists
+      if (loadingNotification) {
+        loadingNotification.textContent = 'Document loaded successfully!';
+        loadingNotification.className = 'notification success';
+        // Auto-hide success notification after 3 seconds
+        setTimeout(() => {
+          if (loadingNotification.parentNode) {
+            loadingNotification.parentNode.removeChild(loadingNotification);
+          }
+        }, 3000);
+      }
+    } else if (loadingNotification) {
+      // If we had parameters but nothing loaded, remove the notification
+      if (loadingNotification.parentNode) {
+        loadingNotification.parentNode.removeChild(loadingNotification);
+      }
     }
     updateAuthStatusIcons(); // Update auth icons on page load
   } catch (error) {
     console.error('Error loading from URL parameters:', error);
+    // Update notification if it exists
+    if (loadingNotification) {
+      loadingNotification.textContent = `Error loading document: ${(error as Error).message}`;
+      loadingNotification.className = 'notification error';
+    }
   }
 });
 
