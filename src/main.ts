@@ -506,8 +506,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const didLoadFromUrl = await storageManager.checkUrlParameters(appState);
-    if (didLoadFromUrl) {
+    const loadResult = await storageManager.checkUrlParameters(appState);
+    if (loadResult.success) {
       updateTabs(); // Update tabs after loading from URL
       editor.dispatch({
         changes: {
@@ -519,14 +519,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       // Update notification if it exists
       if (loadingNotification) {
-        loadingNotification.textContent = 'Document loaded successfully!';
-        loadingNotification.className = 'notification success';
-        // Auto-hide success notification after 3 seconds
-        setTimeout(() => {
+        if (loadResult.existingDoc) {
+          // If we just activated an existing document, don't show success notification
           if (loadingNotification.parentNode) {
             loadingNotification.parentNode.removeChild(loadingNotification);
           }
-        }, 3000);
+        } else {
+          loadingNotification.textContent = 'Document loaded successfully!';
+          loadingNotification.className = 'notification success';
+          // Auto-hide success notification after 3 seconds
+          setTimeout(() => {
+            if (loadingNotification.parentNode) {
+              loadingNotification.parentNode.removeChild(loadingNotification);
+            }
+          }, 3000);
+        }
       }
     } else if (loadingNotification) {
       // If we had parameters but nothing loaded, remove the notification

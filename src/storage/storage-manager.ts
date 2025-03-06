@@ -116,7 +116,14 @@ export class StorageManager {
     }
   }
 
-  async loadFromUrl(appState: AppState, url: string): Promise<boolean> {
+  async loadFromUrl(
+    appState: AppState,
+    url: string
+  ): Promise<{
+    success: boolean;
+    existingDoc: boolean;
+    filename?: string;
+  }> {
     const urlObj = new URL(url);
     let providerName: string | null = null;
     let id: string | null = null;
@@ -133,7 +140,7 @@ export class StorageManager {
     }
 
     if (!providerName || !id) {
-      return false;
+      return { success: false, existingDoc: false };
     }
 
     // Check if we already have a document with this external ID
@@ -144,7 +151,11 @@ export class StorageManager {
     if (existingDocument) {
       // If we already have this document, just set it as active
       appState.setActiveDocument(existingDocument.id);
-      return true;
+      return {
+        success: true,
+        existingDoc: true,
+        filename: existingDocument.name,
+      };
     }
 
     const provider = this.getProvider(providerName);
@@ -181,19 +192,27 @@ export class StorageManager {
       // Save updated document info to localStorage
       appState.saveDocumentsToLocalStorage();
 
-      return true;
+      return {
+        success: true,
+        existingDoc: false,
+        filename,
+      };
     } catch (error) {
       console.error('Error loading document:', error);
       throw error;
     }
   }
 
-  async checkUrlParameters(appState: AppState): Promise<boolean> {
+  async checkUrlParameters(appState: AppState): Promise<{
+    success: boolean;
+    existingDoc: boolean;
+    filename?: string;
+  }> {
     try {
       return await this.loadFromUrl(appState, window.location.href);
     } catch (error) {
       console.error('Error loading from URL:', error);
-      return false;
+      return { success: false, existingDoc: false };
     }
   }
 }
