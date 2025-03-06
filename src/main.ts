@@ -494,7 +494,17 @@ window.updateAuthStatusIcons = updateAuthStatusIcons;
 // Check for shared URL parameters on load
 window.addEventListener('DOMContentLoaded', async () => {
   try {
-    await storageManager.checkUrlParameters(appState);
+    const didLoadFromUrl = await storageManager.checkUrlParameters(appState);
+    if (didLoadFromUrl) {
+      updateTabs(); // Update tabs after loading from URL
+      editor.dispatch({
+        changes: {
+          from: 0,
+          to: editor.state.doc.length,
+          insert: appState.getActiveDocument().content,
+        },
+      });
+    }
     updateAuthStatusIcons(); // Update auth icons on page load
   } catch (error) {
     console.error('Error loading from URL parameters:', error);
