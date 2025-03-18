@@ -562,22 +562,23 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
   constructor(args: Node[]) {
     super('smooth_union', args);
-    enforceArgumentLength('smooth_union', args, 3);
+    if (args.length < 2) {
+      throw new Error(`${name} requires at least two argument(s), got ${args.length}`);
+    }
     this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const r = constantValue(this.args[0]);
     const d1 = this.args[0].evaluateInterval(x, y, z);
     const d2 = this.args[1].evaluateInterval(x, y, z);
-    const r = constantValue(this.args[2]);
-    return d1.smooth_union(d2, r);
+    return Interval.smooth_union([d1, d2], r);
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const d1 = this.args[0].evaluateStr(xname, yname, zname, depth);
     const d2 = this.args[1].evaluateStr(xname, yname, zname, depth);
     const r = this.args[2].evaluateStr(xname, yname, zname, depth);
-    // TODO move into shared helper
     return `(() => {
       const d1 = ${d1};
       const d2 = ${d2};
@@ -606,7 +607,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     const r = constantValue(this.args[2]);
     if (!c1 || !c2) return null;
 
-    const interval = c1.sdfEstimate.smooth_union(c2.sdfEstimate, r);
+    const interval = Interval.smooth_union([c1.sdfEstimate, c2.sdfEstimate], r);
     if (c1.category === 'inside' || c2.category === 'inside') {
       return {
         category: 'inside',
