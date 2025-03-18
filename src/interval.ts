@@ -26,6 +26,10 @@ export class Interval {
     return this.max >= other.min && other.max >= this.min;
   }
 
+  intersection(other: Interval): Interval {
+    return new Interval(Math.max(this.min, other.min), Math.min(this.max, other.max));
+  }
+
   // Basic arithmetic operations
   add(other: Interval): Interval {
     return new Interval(this.min + other.min, this.max + other.max);
@@ -87,44 +91,48 @@ export class Interval {
   }
 
   // Special SDF operations
-  smooth_union(other: Interval, radius: number): Interval {
+
+  static smooth_union(intervals: Interval[], radius: number): Interval {
     // For points far from both shapes (> 5*radius), just use regular min.
     const limit = 5 * radius;
-    // fully below -limit
-    if (this.max <= -limit || other.max <= -limit) return Interval.min(this, other);
-    // fully above +limit
-    if (this.min >= limit || other.min >= limit) return Interval.min(this, other);
-
-    // has part below -limit
-    if (this.min < -limit) {
-      return this.below(-limit)
-        .smooth_union(other, radius)
-        .merge(this.above(-limit).smooth_union(other, radius));
-    }
-    // has part above limit
-    if (this.max > limit) {
-      return this.above(limit)
-        .smooth_union(other, radius)
-        .merge(this.below(limit).smooth_union(other, radius));
-    }
-    // and the same for other
-    if (other.min < -limit) {
-      return this.smooth_union(other.below(-limit), radius).merge(
-        this.smooth_union(other.above(-limit), radius)
+    const smooth_zone = new Interval(-limit, limit);
+    const smoothParts = intervals
+      .filter((i) => i.intersects(smooth_zone))
+      .map((i) => i.intersection(smooth_zone));
+    if (smoothParts.length === 0) {
+      // All totally outside the smooth zone - we can just use min for both.
+      return new Interval(
+        Math.min(...intervals.map((i) => i.min)),
+        Math.min(...intervals.map((i) => i.max))
       );
     }
-    if (other.max > limit) {
-      return this.smooth_union(other.above(limit), radius).merge(
-        this.smooth_union(other.below(limit), radius)
-      );
-    }
-
-    // we're now fully within -limit .. limit.
+    // so now we know at least some intervals overlap the smooth zone.
+    // precompute the bounded interval for the parts that do
     const k = Interval.from(-1 / radius);
-    const e1 = this.multiply(k).exp();
-    const e2 = other.multiply(k).exp();
+    let sumExp = smoothParts[0].multiply(k).exp();
+    for (let i = 1; i < smoothParts.length; i++) {
+      sumExp = sumExp.add(smoothParts[i].multiply(k).exp());
+    }
+    const smoothInterval = sumExp.log().multiply(Interval.from(-radius));
+    var min = smoothInterval.min,
+      max = smoothInterval.max;
 
-    return e1.add(e2).log().multiply(Interval.from(-radius));
+    // These adjustments help correct for extreme values produced by the log/exp logic.
+    // if any intervals stretch below -limit, use plain min() for the lower limit.
+    if (intervals.some((i) => i.min < -limit)) {
+      min = Math.min(...intervals.map((i) => i.min));
+      if (intervals.some((i) => i.max < -limit)) {
+        max = Math.min(...intervals.map((i) => i.max));
+      }
+    }
+    // if *all* are above limit, use plain min() for the max.
+    if (intervals.every((i) => i.max > limit)) {
+      max = Math.min(...intervals.map((i) => i.max));
+      if (intervals.every((i) => i.min > limit)) {
+        min = Math.min(...intervals.map((i) => i.min));
+      }
+    }
+    return new Interval(min, max);
   }
 
   // minimum distance to number

@@ -570,23 +570,27 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     const r = constantValue(this.args[0]);
-    const d1 = this.args[0].evaluateInterval(x, y, z);
-    const d2 = this.args[1].evaluateInterval(x, y, z);
-    return Interval.smooth_union([d1, d2], r);
+    const intervals = this.args.slice(1).map(arg => arg.evaluateInterval(x, y, z));
+    return Interval.smooth_union(intervals, r);
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
-    const d1 = this.args[0].evaluateStr(xname, yname, zname, depth);
-    const d2 = this.args[1].evaluateStr(xname, yname, zname, depth);
-    const r = this.args[2].evaluateStr(xname, yname, zname, depth);
+    const r = this.args[0].evaluateStr(xname, yname, zname, depth);
+    const shapeExprs = this.args.slice(1)
+      .map(arg => arg.evaluateStr(xname, yname, zname, depth));
+    const shapesDecl = shapeExprs.map((expr, i) => `const d${i} = ${expr};`).join(' ');
+    const minDistCalc = `const minDist = Math.min(${shapeExprs.map((_, i) => `d${i}`).join(', ')});`;
+    const expSum = shapeExprs
+      .map((_, i) => `Math.exp(-k * d${i})`)
+      .join(' + ');
+
     return `(() => {
-      const d1 = ${d1};
-      const d2 = ${d2};
       const r = ${r};
-      const minDist = Math.min(d1, d2);
-      if (minDist > r * 10.0 || minDist < -r * 10.0) return Math.min(d1, d2);
+      ${shapesDecl}
+      ${minDistCalc}
+      if (minDist > r * 10.0 || minDist < -r * 10.0) return minDist;
       const k = 1.0/r;
-      return -Math.log(Math.exp(-k * d1) + Math.exp(-k * d2)) * r;
+      return -Math.log(${expSum}) * r;
     })()`;
   }
 
@@ -595,6 +599,8 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     for (const arg of evalArgs) {
       context.useVar(arg);
     }
+
+    // TODO only works for two args rn, TODO split up into log part and exp part, do the addition here
     return context.save(
       'float',
       () => `smooth_union(${evalArgs.map((arg) => context.varExpr(arg)).join(', ')})`
@@ -602,38 +608,44 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
-    const c1 = this.args[0].evaluateContent(x, y, z);
-    const c2 = this.args[1].evaluateContent(x, y, z);
-    const r = constantValue(this.args[2]);
-    if (!c1 || !c2) return null;
+    const r = constantValue(this.args[0]);
+    const contents_ = this.args.slice(1).map(arg => arg.evaluateContent(x, y, z));
+    if (contents_.some(c => c === null)) return null;
+    const contents = contents_ as NonNullable<Content>[];
 
-    const interval = Interval.smooth_union([c1.sdfEstimate, c2.sdfEstimate], r);
-    if (c1.category === 'inside' || c2.category === 'inside') {
+    const interval = Interval.smooth_union(contents.map(c => c.sdfEstimate), r);
+    if (contents.some(c => c.category === 'inside')) {
       return {
         category: 'inside',
         sdfEstimate: interval,
       };
     }
-    const c1face = c1.category === 'face' || c1.category === 'complex';
-    const c2face = c2.category === 'face' || c2.category === 'complex';
-    const c1dist = c1.sdfEstimate.minDist(0);
-    const c2dist = c2.sdfEstimate.minDist(0);
-    const nearishC1 = c1face || c1dist < r * 5.0;
-    const nearishC2 = c2face || c2dist < r * 5.0;
-    if (!nearishC1 && !nearishC2) {
+
+    const isFace = contents.map(c => c.category === 'face' || c.category === 'complex');
+    const distance = contents.map(c => c.sdfEstimate.minDist(0));
+    const nearishIndices = contents
+      .map((_c, i) => (isFace[i] || distance[i] < r * 5.0) ? i : -1)
+      .filter((i) => i !== -1);
+    if (nearishIndices.length == 0) {
       return {
         category: 'outside',
         sdfEstimate: interval,
       };
     }
 
-    if (nearishC1 && nearishC2) {
+    if (nearishIndices.length > 1) {
+      // near more than one surface
       var minSize = r / 5.0;
-      if (c1.category === 'face' || c1.category === 'complex')
-        minSize = Math.min(minSize, c1.minSize!);
-      if (c2.category === 'face' || c2.category === 'complex')
-        minSize = Math.min(minSize, c2.minSize!);
-      var complex = c1.category === 'complex' || c2.category === 'complex';
+      var complex = false;
+      for (var i = 0; i < contents.length; i++) {
+        if (isFace[i]) {
+          minSize = Math.min(minSize, contents[i].minSize!);
+        }
+        if (contents[i].category === 'complex') {
+          complex = true;
+        }
+      }
+
       if (interval.contains(0)) {
         return {
           category: complex ? 'complex' : 'face',
@@ -642,31 +654,25 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
           minSize: minSize,
         };
       }
+
       return {
         category: interval.max < 0 ? 'inside' : 'outside',
         sdfEstimate: interval,
         minSize: minSize,
       };
     }
-    if (nearishC1) {
-      // safety margin: on c1, but close enough to c2 that our points would drift into the smooth transition.
-      var forceSubdivide = c1face && c2dist > r * 4.0 && c2dist < x.size();
-      return {
-        ...c1,
-        category: forceSubdivide ? 'complex' : c1.category,
-        minSize: forceSubdivide ? Math.min(c1.minSize!, 0.1) : c1.minSize,
-      };
-    }
-    if (nearishC2) {
-      // safety margin: on c1, but close enough to c2 that our points would drift into the smooth transition.
-      var forceSubdivide = c2face && c1dist > r * 4.0 && c1dist < x.size();
-      return {
-        ...c2,
-        category: forceSubdivide ? 'complex' : c2.category,
-        minSize: forceSubdivide ? Math.min(c2.minSize!, 0.1) : c2.minSize,
-      };
-    }
-    throw 'unreachable';
+
+    // Only one shape is nearish
+    const nearIndex = nearishIndices[0];
+    const nearContent = contents[nearIndex];
+
+    // Check if we're near enough to any other shape to force subdivision
+    const forceSubdivide = isFace[nearIndex] && distance.some((d, i) => i != nearIndex && d >= r * 4.0 && d < x.size());
+    return {
+      ...nearContent,
+      category: forceSubdivide ? 'complex' : nearContent.category,
+      minSize: forceSubdivide ? Math.min(nearContent.minSize!, 0.1) : nearContent.minSize,
+    };
   }
 }
 
