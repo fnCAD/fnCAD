@@ -321,7 +321,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
       return {
         type: 'sdf',
-        expr: children.map((c) => c.expr).reduce((acc, curr) => smooth_union(radius, acc, curr)),
+        expr: smooth_union(radius, children.map(c => c.expr)),
         bounds: growAABB(combineAABBs(children), radius),
       };
     }
@@ -357,9 +357,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
           : undefined;
       return {
         type: 'sdf',
-        expr: children
-          .map((c) => c.expr)
-          .reduce((acc, curr) => smooth_intersection(acc, curr, radius)),
+        expr: smooth_intersection(children.map(c => c.expr), radius),
         bounds,
       };
     }
@@ -380,9 +378,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
       return {
         type: 'sdf',
-        expr: children
-          .map((c) => c.expr)
-          .reduce((acc, curr) => smooth_difference(acc, curr, radius)),
+        expr: smooth_difference(children.map(c => c.expr), radius),
         bounds,
       };
     }
@@ -702,18 +698,30 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
   }
 }
 // Smooth blending operations using exponential smoothing with distance threshold
-export function smooth_union(radius: number, expr1: string, expr2: string): string {
-  return `smooth_union(${radius}, ${expr1}, ${expr2})`;
+export function smooth_union(radius: number, expressions: string[]): string {
+  if (expressions.length === 0) return '0';
+  if (expressions.length === 1) return expressions[0];
+  return `smooth_union(${radius}, ${expressions.join(', ')})`;
 }
 
-export function smooth_intersection(expr1: string, expr2: string, radius: number): string {
-  return `-${smooth_union(radius, `-(${expr1})`, `-(${expr2})`)}`;
+export function smooth_intersection(expressions: string[], radius: number): string {
+  if (expressions.length === 0) return '0';
+  if (expressions.length === 1) return expressions[0];
+  // Negate all expressions, apply smooth_union, then negate the result
+  return `-${smooth_union(radius, expressions.map(expr => `-(${expr})`))}`; 
 }
 
-export function smooth_difference(expr1: string, expr2: string, radius: number): string {
-  // For smooth difference, we need to grow the first shape's bounds by the blend radius
-  // since material can be removed up to radius distance away
-  return `-${smooth_union(radius, `-(${expr1})`, `${expr2}`)}`;
+export function smooth_difference(expressions: string[], radius: number): string {
+  if (expressions.length === 0) return '0';
+  if (expressions.length === 1) return expressions[0];
+  
+  // The first shape is the base to subtract from
+  const baseExpr = expressions[0];
+  // All other shapes are being subtracted
+  const subtractExprs = expressions.slice(1);
+  
+  // For smooth difference, negate the base, leave the rest, apply smooth_union, negate result
+  return `-${smooth_union(radius, [`-(${baseExpr})`, ...subtractExprs])}`;
 }
 
 // Helper to combine multiple AABBs into a single encompassing AABB
