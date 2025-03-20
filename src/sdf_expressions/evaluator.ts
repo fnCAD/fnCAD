@@ -570,19 +570,16 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     const r = constantValue(this.args[0]);
-    const intervals = this.args.slice(1).map(arg => arg.evaluateInterval(x, y, z));
+    const intervals = this.args.slice(1).map((arg) => arg.evaluateInterval(x, y, z));
     return Interval.smooth_union(intervals, r);
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const r = this.args[0].evaluateStr(xname, yname, zname, depth);
-    const shapeExprs = this.args.slice(1)
-      .map(arg => arg.evaluateStr(xname, yname, zname, depth));
+    const shapeExprs = this.args.slice(1).map((arg) => arg.evaluateStr(xname, yname, zname, depth));
     const shapesDecl = shapeExprs.map((expr, i) => `const d${i} = ${expr};`).join(' ');
     const minDistCalc = `const minDist = Math.min(${shapeExprs.map((_, i) => `d${i}`).join(', ')});`;
-    const expSum = shapeExprs
-      .map((_, i) => `Math.exp(-k * d${i})`)
-      .join(' + ');
+    const expSum = shapeExprs.map((_, i) => `Math.exp(-k * d${i})`).join(' + ');
 
     return `(() => {
       const r = ${r};
@@ -597,54 +594,62 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     // First arg is radius, remaining args are SDF values
     const radius = this.args[0].toGLSL(context);
-    const sdfArgs = this.args.slice(1).map(arg => arg.toGLSL(context));
-    
-    // Make sure all args are used in the context
-    context.useVar(radius);
-    sdfArgs.forEach(arg => context.useVar(arg));
-    
+    const sdfArgs = this.args.slice(1).map((arg) => arg.toGLSL(context));
+
+    const minDistVar = context.reserveVar();
+
+    // reserve use in min() and exp()
+    sdfArgs.forEach((arg) => {
+      context.useVar(radius);
+      context.useVar(arg);
+      context.useVar(arg);
+    });
+    context.generator.flushVars();
+
+    const r = context.varExpr(radius);
+    const dists = sdfArgs.map((arg) => context.varExpr(arg));
+
+    if (dists.length === 0) return '0.0';
+
+    // Find minimum distance and store in a variable
+    let minDistCalc = `${dists[0]}`;
+    for (let i = 1; i < dists.length; i++) {
+      minDistCalc = `min(${minDistCalc}, ${dists[i]})`;
+    }
+    context.addRaw(`float ${minDistVar} = ${minDistCalc};`);
+
     // Generate the code using the formula:
     // -r*ln(sum(exp(-d_i/r))) = min(d) - r*ln(sum(exp(-(d_i-min(d))/r)))
     return context.save('float', () => {
-      const r = context.varExpr(radius);
-      const dists = sdfArgs.map(arg => context.varExpr(arg));
-      
-      if (dists.length === 0) return '0.0';
-      if (dists.length === 1) return dists[0];
-      
-      // Find minimum distance
-      let minDist = `min(${dists[0]}, ${dists[1]})`;
-      for (let i = 2; i < dists.length; i++) {
-        minDist = `min(${minDist}, ${dists[i]})`;
-      }
-      
-      // Generate sum of exponentials
-      const expTerms = dists.map(d => `exp(-(${d}-${minDist})/${r})`);
+      // Generate sum of exponentials using the materialized min distance variable
+      const expTerms = dists.map((d) => `exp(-(${d}-${minDistVar})/${r})`);
       const sumExp = expTerms.join(' + ');
-      
-      // Final formula
-      return `${minDist} - ${r} * log(${sumExp})`;
+
+      return `${minDistVar} - ${r} * log(${sumExp})`;
     });
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const r = constantValue(this.args[0]);
-    const contents_ = this.args.slice(1).map(arg => arg.evaluateContent(x, y, z));
-    if (contents_.some(c => c === null)) return null;
+    const contents_ = this.args.slice(1).map((arg) => arg.evaluateContent(x, y, z));
+    if (contents_.some((c) => c === null)) return null;
     const contents = contents_ as NonNullable<Content>[];
 
-    const interval = Interval.smooth_union(contents.map(c => c.sdfEstimate), r);
-    if (contents.some(c => c.category === 'inside')) {
+    const interval = Interval.smooth_union(
+      contents.map((c) => c.sdfEstimate),
+      r
+    );
+    if (contents.some((c) => c.category === 'inside')) {
       return {
         category: 'inside',
         sdfEstimate: interval,
       };
     }
 
-    const isFace = contents.map(c => c.category === 'face' || c.category === 'complex');
-    const distance = contents.map(c => c.sdfEstimate.minDist(0));
+    const isFace = contents.map((c) => c.category === 'face' || c.category === 'complex');
+    const distance = contents.map((c) => c.sdfEstimate.minDist(0));
     const nearishIndices = contents
-      .map((_c, i) => (isFace[i] || distance[i] < r * 5.0) ? i : -1)
+      .map((_c, i) => (isFace[i] || distance[i] < r * 5.0 ? i : -1))
       .filter((i) => i !== -1);
     if (nearishIndices.length == 0) {
       return {
@@ -687,7 +692,8 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     const nearContent = contents[nearIndex];
 
     // Check if we're near enough to any other shape to force subdivision
-    const forceSubdivide = isFace[nearIndex] && distance.some((d, i) => i != nearIndex && d >= r * 4.0 && d < x.size());
+    const forceSubdivide =
+      isFace[nearIndex] && distance.some((d, i) => i != nearIndex && d >= r * 4.0 && d < x.size());
     return {
       ...nearContent,
       category: forceSubdivide ? 'complex' : nearContent.category,

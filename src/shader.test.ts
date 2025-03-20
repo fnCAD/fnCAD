@@ -99,7 +99,7 @@ describe('Shader Generation and Raymarching', () => {
     const sdfExpr = moduleToSDF(ast).expr;
     testRaymarchFromAllAngles(sdfExpr);
   });
-  
+
   it('handles n-argument smooth union', () => {
     const cadCode = `
       smooth_union(0.05) {

@@ -321,7 +321,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
       return {
         type: 'sdf',
-        expr: smooth_union(radius, children.map(c => c.expr)),
+        expr: smooth_union(
+          radius,
+          children.map((c) => c.expr)
+        ),
         bounds: growAABB(combineAABBs(children), radius),
       };
     }
@@ -357,7 +360,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
           : undefined;
       return {
         type: 'sdf',
-        expr: smooth_intersection(children.map(c => c.expr), radius),
+        expr: smooth_intersection(
+          children.map((c) => c.expr),
+          radius
+        ),
         bounds,
       };
     }
@@ -378,7 +384,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
       return {
         type: 'sdf',
-        expr: smooth_difference(children.map(c => c.expr), radius),
+        expr: smooth_difference(
+          children.map((c) => c.expr),
+          radius
+        ),
         bounds,
       };
     }
@@ -708,18 +717,21 @@ export function smooth_intersection(expressions: string[], radius: number): stri
   if (expressions.length === 0) return '0';
   if (expressions.length === 1) return expressions[0];
   // Negate all expressions, apply smooth_union, then negate the result
-  return `-${smooth_union(radius, expressions.map(expr => `-(${expr})`))}`; 
+  return `-${smooth_union(
+    radius,
+    expressions.map((expr) => `-(${expr})`)
+  )}`;
 }
 
 export function smooth_difference(expressions: string[], radius: number): string {
   if (expressions.length === 0) return '0';
   if (expressions.length === 1) return expressions[0];
-  
+
   // The first shape is the base to subtract from
   const baseExpr = expressions[0];
   // All other shapes are being subtracted
   const subtractExprs = expressions.slice(1);
-  
+
   // For smooth difference, negate the base, leave the rest, apply smooth_union, negate result
   return `-${smooth_union(radius, [`-(${baseExpr})`, ...subtractExprs])}`;
 }
