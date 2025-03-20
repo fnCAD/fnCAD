@@ -80,8 +80,67 @@ export const builtinDocs: ModuleDoc[] = [
     ],
   },
   {
+    name: 'rotate',
+    description: 'Rotates its children around the origin',
+    parameters: [
+      {
+        name: 'angles',
+        description: 'Rotation angles in degrees [x,y,z]',
+        type: 'vector',
+      },
+    ],
+  },
+  {
+    name: 'scale',
+    description: 'Scales its children relative to the origin',
+    parameters: [
+      {
+        name: 'factors',
+        description: 'Scale factors [x,y,z] or single uniform scale',
+        type: 'number | vector',
+      },
+    ],
+  },
+  {
+    name: 'union',
+    description: 'Combines all children (boolean OR operation)',
+    parameters: [],
+  },
+  {
+    name: 'difference',
+    description: 'Subtracts all subsequent children from the first child',
+    parameters: [],
+  },
+  {
+    name: 'intersection',
+    description: 'Keeps only the overlapping parts of all children (boolean AND)',
+    parameters: [],
+  },
+  {
     name: 'smooth_union',
     description: 'Smoothly blends its children together',
+    parameters: [
+      {
+        name: 'radius',
+        description: 'Blend radius',
+        type: 'number',
+      },
+    ],
+  },
+  {
+    name: 'smooth_difference',
+    description: 'Smoothly subtracts subsequent children from the first with blended edges',
+    parameters: [
+      {
+        name: 'radius',
+        description: 'Blend radius',
+        type: 'number',
+      },
+    ],
+  },
+  {
+    name: 'smooth_intersection',
+    description: 'Smoothly intersects all children with blended edges',
     parameters: [
       {
         name: 'radius',
@@ -106,4 +165,11 @@ export const builtinDocs: ModuleDoc[] = [
 
 export function getModuleDoc(name: string): ModuleDoc | undefined {
   return builtinDocs.find((doc) => doc.name === name);
+}
+
+/**
+ * Returns an array of all documented module names
+ */
+export function getAllModuleNames(): string[] {
+  return builtinDocs.map((doc) => doc.name);
 }

@@ -19,7 +19,7 @@ import { solarizedDark, solarizedLight } from '@uiw/codemirror-theme-solarized';
 import { javascript } from '@codemirror/lang-javascript';
 import { Parser } from './cad/parser';
 import { ParseError } from './cad/errors';
-import { getModuleDoc } from './cad/docs';
+import { getModuleDoc, getAllModuleNames } from './cad/docs';
 import { basicSetup } from 'codemirror';
 import * as THREE from 'three';
 import { AppState, ViewMode } from './state';
@@ -54,7 +54,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(revealContent, 50);
 });
 
-// Add dynamic styles for mesh progress
+// Add dynamic styles for mesh progress and completion
 const style = document.createElement('style');
 style.textContent = `
   .mesh-progress {
@@ -67,6 +67,47 @@ style.textContent = `
     border-radius: 4px;
     font-family: monospace;
     z-index: 1000;
+  }
+  
+  .completion-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 4px;
+  }
+  
+  .completion-item {
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .completion-item:hover {
+    background-color: rgba(100, 100, 255, 0.2);
+  }
+  
+  .completion-desc {
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+  }
+  
+  .parameter-help {
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    color: #eee;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 1000;
+    font-family: monospace;
+    max-width: 400px;
   }
 `;
 document.head.appendChild(style);
@@ -110,12 +151,87 @@ const helpPopup = document.createElement('div');
 helpPopup.className = 'parameter-help';
 document.querySelector('#editor-pane')?.appendChild(helpPopup);
 
+// Function to handle completion selection
+function handleCompletionSelection(view: EditorView, name: string, from: number, to: number) {
+  // Insert the selected completion
+  view.dispatch({
+    changes: { from, to, insert: name },
+  });
+
+  // Hide the popup after selection
+  helpPopup.style.display = 'none';
+  helpPopup.classList.remove('visible');
+
+  // Focus back on the editor
+  view.focus();
+}
+
 // Function to update help popup
 function updateHelpPopup(view: EditorView) {
   const pos = view.state.selection.main.head;
   if (!pos) {
     helpPopup.style.display = 'none';
     return;
+  }
+
+  // Get current line and character
+  const line = view.state.doc.lineAt(pos);
+  const lineText = line.text;
+  const col = pos - line.from;
+
+  // Check if we're potentially typing a function name
+  // This regex finds an incomplete word that might be at the cursor
+  const beforeCursor = lineText.substring(0, col);
+  const wordMatch = beforeCursor.match(/\b([a-zA-Z_][a-zA-Z0-9_]*)$/);
+
+  if (wordMatch) {
+    // We're typing what looks like a function name, show autocomplete
+    const currentWord = wordMatch[1];
+    const wordStart = pos - currentWord.length;
+
+    // Get all module names for autocomplete
+    const allModuleNames = getAllModuleNames();
+
+    const moduleNames = allModuleNames.filter((name) =>
+      name.toLowerCase().startsWith(currentWord.toLowerCase())
+    );
+
+    if (moduleNames.length > 0) {
+      // Show autocomplete suggestions directly in the help popup
+      let completionHtml = ``;
+      moduleNames.forEach((name) => {
+        const doc = getModuleDoc(name);
+        const description = doc ? doc.description : '';
+
+        completionHtml += `
+          <div class="completion-item" data-name="${name}" data-from="${wordStart}" data-to="${pos}">
+            <strong>${name}</strong>
+            ${description ? `<span class="completion-desc">${description}</span>` : ''}
+          </div>
+        `;
+      });
+
+      helpPopup.innerHTML = completionHtml;
+      helpPopup.style.display = 'block';
+
+      // Position below current line
+      const lineRect = view.coordsAtPos(line.from)!;
+      helpPopup.style.top = `${lineRect.bottom + window.scrollY}px`;
+      helpPopup.style.left = `${lineRect.left + window.scrollX}px`;
+      helpPopup.classList.add('visible');
+
+      // Add click handlers for completion items
+      helpPopup.querySelectorAll('.completion-item').forEach((item) => {
+        item.addEventListener('click', () => {
+          const name = (item as HTMLElement).dataset.name!;
+          const from = parseInt((item as HTMLElement).dataset.from!);
+          const to = parseInt((item as HTMLElement).dataset.to!);
+          handleCompletionSelection(view, name, from, to);
+        });
+      });
+
+      return;
+    }
   }
 
   // Find module call at current position
@@ -146,36 +262,6 @@ function updateHelpPopup(view: EditorView) {
           break;
         }
       }
-
-      // Build help content
-      let content = `<strong>${call.moduleName}</strong>(`;
-      if (doc) {
-        content += doc.parameters
-          .map((p, i) => {
-            const className = i === currentParamIndex ? 'current' : '';
-            const param = call.parameters[i];
-            const value = param?.value ? ` = ${param.value}` : '';
-            return `<span class="${className}">${p.name}: ${p.type}${value}</span>`;
-          })
-          .join(', ');
-        content += ')<br/>';
-        content += `<small>${doc.description}</small>`;
-
-        if (currentParamIndex >= 0 && currentParamIndex < doc.parameters.length) {
-          content += `<br/><small>${doc.parameters[currentParamIndex].description}</small>`;
-        }
-      } else {
-        content +=
-          call.parameters
-            .map((p, i) => {
-              const className = i === currentParamIndex ? 'current' : '';
-              const value = p.value ? ` = ${p.value}` : '';
-              return `<span class="${className}">${p.name || `arg${i}`}${value}</span>`;
-            })
-            .join(', ') + ')';
-      }
-
-      helpPopup.innerHTML = content;
 
       // Build parameter descriptions
       let paramDescriptions = '';
@@ -811,6 +897,18 @@ const editor = new EditorView({
         if (update.docChanged || update.selectionSet) {
           updateHelpPopup(update.view);
         }
+      }),
+      EditorView.domEventHandlers({
+        keydown: (event, _view) => {
+          // Handle escape key to hide the popup
+          if (helpPopup.style.display === 'block' && event.key === 'Escape') {
+            helpPopup.style.display = 'none';
+            helpPopup.classList.remove('visible');
+            return true;
+          }
+
+          return false;
+        },
       }),
       EditorView.theme({
         '&': {
