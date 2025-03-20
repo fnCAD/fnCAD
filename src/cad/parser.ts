@@ -813,18 +813,35 @@ export class Parser {
     const varName = this.expectIdentifier('Expected variable name').value;
     this.expect('=', 'Expected = after variable name');
 
-    // Parse range expression [start:end]
+    // Parse range expression [start:end] or [start:step:end]
     this.expect('[', 'Expected [ for range');
     const start = this.parseExpression();
     this.expect(':', 'Expected : in range');
-    const end = this.parseExpression();
+
+    let step: Expression | undefined;
+    let end: Expression;
+
+    // Parse the next expression (could be step or end)
+    const second = this.parseExpression();
+
+    // Check if there's a second colon (three-argument form)
+    if (this.match(':')) {
+      // Second expression was actually the step
+      step = second;
+      // Now parse the end
+      end = this.parseExpression();
+    } else {
+      // Second expression was the end
+      end = second;
+    }
+
     this.expect(']', 'Expected ] after range');
 
     this.expect(')', 'Expected ) after for header');
 
     const body = this.parseBlock();
 
-    return new ForLoop(varName, { start, end }, body, {
+    return new ForLoop(varName, { start, end, step }, body, {
       start: startLocation.start,
       end: this.previous().location.end,
       source: this.source,

@@ -31,7 +31,7 @@
 - [x] Variable declarations
 - [x] For loops with range `for(var i = [1:10])`
 - [ ] List comprehensions
-- [ ] Ranges with step `[start:step:end]`
+- [x] Ranges with step `[start:step:end]`
 - [/] String literals and concatenation
 - [x] Boolean operations (&&, ||, !)
 - [x] Comparison operators (<, >, ==, etc)

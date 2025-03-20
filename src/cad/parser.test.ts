@@ -239,6 +239,29 @@ describe('CAD Parser', () => {
     expect(ctx.get('sum')).toBe(6); // 1 + 2 + 3
   });
 
+  test('handles for loops with step', () => {
+    const ctx = new Context();
+    parse(`
+      var sum = 0;
+      for(var i = [1:2:9]) {
+        sum = sum + i;
+      }
+      sum;
+    `).map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('sum')).toBe(25); // 1 + 3 + 5 + 7 + 9
+
+    // Test negative step
+    const ctx2 = new Context();
+    parse(`
+      var sum = 0;
+      for(var i = [10:-2:0]) {
+        sum = sum + i;
+      }
+      sum;
+    `).map((stmt) => evalCAD(stmt, ctx2));
+    expect(ctx2.get('sum')).toBe(30); // 10 + 8 + 6 + 4 + 2 + 0
+  });
+
   test('handles whitespace only input', () => {
     const result = parse('   \n   \t   ');
     expect(result).toBeDefined();

@@ -252,20 +252,35 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
   if (node instanceof ForLoop) {
     const start = evalExpression(node.range.start, context);
     const end = evalExpression(node.range.end, context);
+    const step = node.range.step ? evalExpression(node.range.step, context) : 1;
 
-    if (typeof start !== 'number' || typeof end !== 'number') {
+    if (typeof start !== 'number' || typeof end !== 'number' || typeof step !== 'number') {
       throw parseError('For loop range must evaluate to numbers', node.location);
+    }
+
+    if (step === 0) {
+      throw parseError('For loop step cannot be zero', node.location);
     }
 
     // Create new scope for loop variable
     const loopContext = context.child();
     const results: SDFExpression[] = [];
 
-    for (let i = start; i <= end; i++) {
-      loopContext.set(node.variable, i);
-      // Evaluate body statements
-      results.push(...flattenScope(node.body, loopContext, 'for loop', node.location));
+    // Adjust the for loop based on step direction
+    if (step > 0) {
+      for (let i = start; i <= end; i += step) {
+        loopContext.set(node.variable, i);
+        // Evaluate body statements
+        results.push(...flattenScope(node.body, loopContext, 'for loop', node.location));
+      }
+    } else {
+      for (let i = start; i >= end; i += step) {
+        loopContext.set(node.variable, i);
+        // Evaluate body statements
+        results.push(...flattenScope(node.body, loopContext, 'for loop', node.location));
+      }
     }
+
     return {
       type: 'group',
       expressions: results,
