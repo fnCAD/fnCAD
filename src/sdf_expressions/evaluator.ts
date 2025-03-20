@@ -595,16 +595,36 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   }
 
   toGLSL(context: GLSLContext): string {
-    const evalArgs = this.args.map((arg) => arg.toGLSL(context));
-    for (const arg of evalArgs) {
-      context.useVar(arg);
-    }
-
-    // TODO only works for two args rn, TODO split up into log part and exp part, do the addition here
-    return context.save(
-      'float',
-      () => `smooth_union(${evalArgs.map((arg) => context.varExpr(arg)).join(', ')})`
-    );
+    // First arg is radius, remaining args are SDF values
+    const radius = this.args[0].toGLSL(context);
+    const sdfArgs = this.args.slice(1).map(arg => arg.toGLSL(context));
+    
+    // Make sure all args are used in the context
+    context.useVar(radius);
+    sdfArgs.forEach(arg => context.useVar(arg));
+    
+    // Generate the code using the formula:
+    // -r*ln(sum(exp(-d_i/r))) = min(d) - r*ln(sum(exp(-(d_i-min(d))/r)))
+    return context.save('float', () => {
+      const r = context.varExpr(radius);
+      const dists = sdfArgs.map(arg => context.varExpr(arg));
+      
+      if (dists.length === 0) return '0.0';
+      if (dists.length === 1) return dists[0];
+      
+      // Find minimum distance
+      let minDist = `min(${dists[0]}, ${dists[1]})`;
+      for (let i = 2; i < dists.length; i++) {
+        minDist = `min(${minDist}, ${dists[i]})`;
+      }
+      
+      // Generate sum of exponentials
+      const expTerms = dists.map(d => `exp(-(${d}-${minDist})/${r})`);
+      const sumExp = expTerms.join(' + ');
+      
+      // Final formula
+      return `${minDist} - ${r} * log(${sumExp})`;
+    });
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {

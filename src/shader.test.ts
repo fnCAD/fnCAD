@@ -99,6 +99,23 @@ describe('Shader Generation and Raymarching', () => {
     const sdfExpr = moduleToSDF(ast).expr;
     testRaymarchFromAllAngles(sdfExpr);
   });
+  
+  it('handles n-argument smooth union', () => {
+    const cadCode = `
+      smooth_union(0.05) {
+        cube(1);
+        translate([1, 0, 0]) {
+          sphere(0.6);
+        }
+        translate([0, 1, 0]) {
+          cylinder(0.4, 0.8);
+        }
+      }
+    `;
+    const ast = parse(cadCode);
+    const sdfExpr = moduleToSDF(ast).expr;
+    testRaymarchFromAllAngles(sdfExpr);
+  });
 
   function testRaymarchFromAllAngles(sdfExpr: string) {
     const ast = parseSDF(sdfExpr);

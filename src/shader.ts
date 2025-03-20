@@ -40,17 +40,6 @@ export function generateShader(
       return false;
     }
 
-    float smooth_union(float d1, float d2, float r) {
-      // If outside the central region, just use min.
-      float x = abs(d1 - d2) / r;
-      if (x > 10.0) {
-        return min(d1, d2);
-      }
-      // Otherwise compute the smooth union
-      float offset = -r * log(1.0 + exp(-x));
-      return min(d1, d2) + offset;
-    }
-
     float scene(vec3 pos) {
       ${generator.generateCode()}
       return ${generator.varExpr(result)};
