@@ -38,6 +38,20 @@ describe('CAD Parser', () => {
     expect(() => parse('-1.5;')).not.toThrow();
   });
 
+  test('handles negative expressions and variables', () => {
+    // This should work, not throw an error
+    expect(() => parse('var t = 0; sphere(-t);')).not.toThrow();
+
+    // Test variable negation with evaluation
+    const ctx = new Context();
+    parse('var t = 5; var r = -t;').map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('r')).toBe(-5);
+
+    // Test with function calls and operations
+    expect(() => parse('sphere(-radius);')).not.toThrow();
+    expect(() => parse('translate([0, -y, 0]) sphere(1);')).not.toThrow();
+  });
+
   test('handles vectors of different sizes', () => {
     // Should allow 2D vector
     expect(() => parse('foo([1, 2]);')).not.toThrow();
