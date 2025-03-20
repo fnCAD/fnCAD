@@ -11,6 +11,7 @@ import {
   isSDFGroup,
   Expression,
   BinaryExpression,
+  UnaryExpression,
   VectorLiteral,
   SourceLocation,
   IndexExpression,
@@ -53,6 +54,18 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
       throw parseError(`Variable ${expr.name} is not a number`, expr.location);
     }
     return value;
+  }
+  if (expr instanceof UnaryExpression) {
+    const operand = evalExpression(expr.operand, context);
+
+    if (typeof operand !== 'number') {
+      throw new Error('Unary operations require number operands');
+    }
+
+    switch (expr.operator) {
+      case '-':
+        return -operand;
+    }
   }
   if (expr instanceof BinaryExpression) {
     const left = evalExpression(expr.left, context);

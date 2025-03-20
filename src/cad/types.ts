@@ -273,6 +273,16 @@ export class BinaryExpression extends Expression {
   }
 }
 
+export class UnaryExpression extends Expression {
+  constructor(
+    public operator: '-', // For now, only handling unary minus
+    public operand: Expression,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
 export class Identifier extends Expression {
   constructor(
     public name: string,

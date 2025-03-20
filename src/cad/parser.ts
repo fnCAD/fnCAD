@@ -15,6 +15,7 @@ import {
   Parameter,
   Statement,
   BinaryExpression,
+  UnaryExpression,
   NumberLiteral,
   Identifier,
   SourceLocation,
@@ -720,6 +721,17 @@ export class Parser {
   }
 
   private parsePrimary(): Expression {
+    // Check for unary operators
+    if (this.peek().type === 'operator' && this.peek().value === '-') {
+      const operatorToken = this.advance(); // consume '-'
+      const operand = this.parsePrimary(); // Parse the operand
+      return new UnaryExpression('-', operand, {
+        start: operatorToken.location.start,
+        end: operand.location.end,
+        source: this.source,
+      });
+    }
+
     if (this.check('[')) {
       return this.parseVectorLiteral();
     }
