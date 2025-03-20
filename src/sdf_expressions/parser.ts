@@ -2,6 +2,7 @@ import { Node } from './types';
 import {
   VariableNode,
   NumberNode,
+  RelativeNumberNode,
   BinaryOpNode,
   UnaryOpNode,
   createFunctionCallNode,
@@ -75,6 +76,11 @@ class Parser {
       return new NumberNode(num);
     }
 
+    if (this.isRelativeNumber(this.peek())) {
+      const token = this.advance();
+      return new RelativeNumberNode(this.parseRelativeNumber(token));
+    }
+
     if (this.match('(')) {
       const expr = this.expression();
       this.consume(')');
@@ -135,7 +141,20 @@ class Parser {
   }
 
   private isNumber(token: string): boolean {
-    return !isNaN(parseFloat(token));
+    return !isNaN(Number(token));
+  }
+
+  private isRelativeNumber(token: string): boolean {
+    return /[0-9\.]+[%x]$/.test(token);
+  }
+
+  private parseRelativeNumber(token: string): number {
+    if (token.endsWith('%')) {
+      return parseFloat(token.slice(0, -1)) / 100.0;
+    } else if (token.endsWith('x')) {
+      return parseFloat(token.slice(0, -1));
+    }
+    throw new Error(`Invalid relative number: ${token}`);
   }
 }
 

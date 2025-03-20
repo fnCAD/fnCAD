@@ -35,6 +35,36 @@ export class NumberNode extends Node {
   }
 }
 
+export class RelativeNumberNode extends Node {
+  evaluate: (x: number, y: number, z: number) => number;
+
+  constructor(public readonly value: number) {
+    super();
+    this.evaluate = this.compileEvaluate();
+  }
+
+  evaluateStr(_xname: string, _yname: string, _zname: string, _depth: number): string {
+    return this.value.toString();
+  }
+
+  toGLSL(_context: GLSLContext): string {
+    throw new Error(`Relative number makes no sense in SDF tree. Logic error.`);
+  }
+
+  evaluateInterval(_x: Interval, _y: Interval, _z: Interval): Interval {
+    throw new Error(`Relative number makes no sense in SDF tree. Logic error.`);
+  }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    throw new Error(`Relative number makes no sense in SDF tree. Logic error.`);
+  }
+
+  // Convert to a normal number by applying the relative number to the base
+  applyTo(base: number): number {
+    return base * this.value;
+  }
+}
+
 export class VariableNode extends Node {
   evaluate: (x: number, y: number, z: number) => number;
 
@@ -562,21 +592,23 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
   constructor(args: Node[]) {
     super('smooth_union', args);
-    if (args.length < 2) {
-      throw new Error(`${name} requires at least two argument(s), got ${args.length}`);
+    if (args.length < 3) {
+      throw new Error(`${name} requires at least three argument(s), got ${args.length}`);
     }
     this.evaluate = this.compileEvaluate();
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
     const r = constantValue(this.args[0]);
-    const intervals = this.args.slice(1).map((arg) => arg.evaluateInterval(x, y, z));
+    // detailScale is irrelevant for interval
+    const intervals = this.args.slice(2).map((arg) => arg.evaluateInterval(x, y, z));
     return Interval.smooth_union(intervals, r);
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const r = this.args[0].evaluateStr(xname, yname, zname, depth);
-    const shapeExprs = this.args.slice(1).map((arg) => arg.evaluateStr(xname, yname, zname, depth));
+    // detailScale is irrelevant for evaluate()
+    const shapeExprs = this.args.slice(2).map((arg) => arg.evaluateStr(xname, yname, zname, depth));
     const shapesDecl = shapeExprs.map((expr, i) => `const d${i} = ${expr};`).join(' ');
     const minDistCalc = `const minDist = Math.min(${shapeExprs.map((_, i) => `d${i}`).join(', ')});`;
     const expSum = shapeExprs.map((_, i) => `Math.exp(-k * d${i})`).join(' + ');
@@ -594,7 +626,8 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     // First arg is radius, remaining args are SDF values
     const radius = this.args[0].toGLSL(context);
-    const sdfArgs = this.args.slice(1).map((arg) => arg.toGLSL(context));
+    // detailScale is irrelevant for GLSL
+    const sdfArgs = this.args.slice(2).map((arg) => arg.toGLSL(context));
 
     const minDistVar = context.reserveVar();
 
@@ -631,7 +664,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
     const r = constantValue(this.args[0]);
-    const contents_ = this.args.slice(1).map((arg) => arg.evaluateContent(x, y, z));
+    const contents_ = this.args.slice(2).map((arg) => arg.evaluateContent(x, y, z));
     if (contents_.some((c) => c === null)) return null;
     const contents = contents_ as NonNullable<Content>[];
 
@@ -660,7 +693,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
 
     if (nearishIndices.length > 1) {
       // near more than one surface
-      var minSize = r / 5.0;
+      var minSize = Math.max(1.0, r / 5.0);
       var complex = false;
       for (var i = 0; i < contents.length; i++) {
         if (isFace[i]) {
@@ -670,7 +703,12 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
           complex = true;
         }
       }
-
+      // Apply detail scaling
+      if (this.args[1] instanceof RelativeNumberNode) {
+        minSize = minSize * this.args[1].value;
+      } else {
+        minSize = constantValue(this.args[1]);
+      }
       if (interval.contains(0)) {
         return {
           category: complex ? 'complex' : 'face',
@@ -694,6 +732,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
     // Check if we're near enough to any other shape to force subdivision
     const forceSubdivide =
       isFace[nearIndex] && distance.some((d, i) => i != nearIndex && d >= r * 4.0 && d < x.size());
+
     return {
       ...nearContent,
       category: forceSubdivide ? 'complex' : nearContent.category,
@@ -831,9 +870,30 @@ class ScaleFunctionCall extends FunctionCallNode {
   constructor(args: Node[]) {
     super('scale', args);
     enforceArgumentLength('scale', args, 4);
-    this.#sx = constantValue(args[0]);
-    this.#sy = constantValue(args[1]);
-    this.#sz = constantValue(args[2]);
+
+    const sx = args[0];
+    const sy = args[1];
+    const sz = args[2];
+
+    // Handle relative values
+    if (
+      sx instanceof RelativeNumberNode ||
+      sy instanceof RelativeNumberNode ||
+      sz instanceof RelativeNumberNode
+    ) {
+      // For relative values, we need to use a base value
+      // This could be more sophisticated, but for now let's use 1.0 as the base
+      const baseValue = 1.0;
+
+      this.#sx = sx instanceof RelativeNumberNode ? sx.applyTo(baseValue) : constantValue(sx);
+      this.#sy = sy instanceof RelativeNumberNode ? sy.applyTo(baseValue) : constantValue(sy);
+      this.#sz = sz instanceof RelativeNumberNode ? sz.applyTo(baseValue) : constantValue(sz);
+    } else {
+      this.#sx = constantValue(sx);
+      this.#sy = constantValue(sy);
+      this.#sz = constantValue(sz);
+    }
+
     this.#body = args[3];
     this.evaluate = this.compileEvaluate();
   }

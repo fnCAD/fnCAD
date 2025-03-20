@@ -738,7 +738,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 export function smooth_union(radius: number, expressions: string[]): string {
   if (expressions.length === 0) return '0';
   if (expressions.length === 1) return expressions[0];
-  return `smooth_union(${radius}, ${expressions.join(', ')})`;
+  return `smooth_union(${radius}, 50%, ${expressions.join(', ')})`;
 }
 
 export function smooth_intersection(expressions: string[], radius: number): string {
