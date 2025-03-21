@@ -293,6 +293,18 @@ describe('CAD Parser', () => {
     }
   });
 
+  test('handles division by zero', () => {
+    // Test that 1/0 parses correctly
+    const ast = parse('1/0;');
+    expect(ast).toBeDefined();
+
+    // Test that evaluation throws the expected error
+    const ctx = new Context();
+    expect(() => {
+      ast.map((stmt) => evalCAD(stmt, ctx));
+    }).toThrow('Division by zero');
+  });
+
   test('compiles smooth union with detail parameter', () => {
     function compileToSDF(input: string): string {
       const ast = parse(input);
