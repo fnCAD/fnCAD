@@ -101,7 +101,7 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
       case '*':
         return left * right;
       case '/':
-        if (right === 0) throw new Error('Division by zero');
+        if (right === 0) throw parseError('Division by zero', expr.location);
         return left / right;
       case '==':
         return Number(left === right);
