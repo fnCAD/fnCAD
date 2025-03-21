@@ -78,6 +78,7 @@
 - [x] Localstorage
 - [x] Project save/load
 - [ ] Material/color support
+- [x] Improved parameter validation and error handling
 
 ## 11. Documentation & Examples
 - [x] User guide

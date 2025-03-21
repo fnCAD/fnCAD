@@ -35,17 +35,175 @@ export interface RelativeValue {
 export type EvalResult = number | number[] | RelativeValue;
 import { parseError } from './errors';
 
-function checkVector(value: any, requiredSize: number, location: SourceLocation): number[] {
-  if (!Array.isArray(value)) {
-    throw parseError(`Expected vector argument, got ${typeof value}`, location);
+// Parameter definition types
+interface ParameterDef {
+  name: string;
+  type: 'number' | 'vector' | 'boolean' | 'relative';
+  required?: boolean; // Default true
+  keywordOnly?: boolean; // Parameters that must be specified by name
+  defaultValue?: any;
+  validator?: (value: any) => boolean | string; // Return false or error message string
+  description?: string; // For error messages
+}
+
+// For typed parameter access
+interface ProcessedArgs {
+  [key: string]: number | number[] | RelativeValue | Array<number | number[] | RelativeValue>;
+  _positional: Array<number | number[] | RelativeValue>; // For varargs access
+}
+
+/**
+ * Process and validate function arguments according to parameter definitions
+ */
+function processArgs(
+  defs: ParameterDef[],
+  args: Record<string, Expression>,
+  context: Context,
+  location: SourceLocation
+): ProcessedArgs {
+  const result: ProcessedArgs = { _positional: [] };
+  const usedArgs = new Set<string>();
+
+  // First, handle positional arguments
+  let posIdx = 0;
+  const positionalParams = defs.filter((p) => !p.keywordOnly);
+
+  while (args[posIdx.toString()]) {
+    if (posIdx >= positionalParams.length) {
+      throw parseError(`Too many positional arguments`, location);
+    }
+
+    const param = positionalParams[posIdx];
+    const value = evalExpression(args[posIdx.toString()], context);
+
+    // Auto-convert types if needed (like number to vector)
+    let processedValue = value;
+
+    // Number to vector conversion
+    if (param.type === 'vector' && typeof value === 'number') {
+      processedValue = [value, value, value]; // Convert to 3D vector
+    }
+
+    // Validate type and run custom validator
+    const validationError = validateArgument(processedValue, param);
+    if (validationError) {
+      throw parseError(`Invalid value for ${param.name}: ${validationError}`, location);
+    }
+
+    result[param.name] = processedValue;
+    result._positional.push(processedValue);
+    usedArgs.add(posIdx.toString());
+    posIdx++;
   }
-  if (!value.every((x) => typeof x === 'number')) {
-    throw parseError(`Vector components must be numbers`, location);
+
+  // Then, handle keyword arguments
+  for (const [key, expr] of Object.entries(args)) {
+    if (!isNaN(Number(key))) continue; // Skip positional args
+
+    const param = defs.find((p) => p.name === key);
+    if (!param) {
+      throw parseError(`Unknown parameter: ${key}`, location);
+    }
+
+    if (result[param.name] !== undefined) {
+      throw parseError(`Parameter ${key} was already set positionally`, location);
+    }
+
+    const value = evalExpression(expr, context);
+
+    // Auto-convert types if needed (like number to vector)
+    let processedValue = value;
+
+    // Number to vector conversion
+    if (param.type === 'vector' && typeof value === 'number') {
+      processedValue = [value, value, value]; // Convert to 3D vector
+    }
+
+    // Validate type and run custom validator
+    const validationError = validateArgument(processedValue, param);
+    if (validationError) {
+      throw parseError(`Invalid value for ${param.name}: ${validationError}`, location);
+    }
+
+    result[param.name] = processedValue;
+    usedArgs.add(key);
   }
-  if (value.length !== requiredSize) {
-    throw parseError(`Expected ${requiredSize}D vector, got ${value.length}D`, location);
+
+  // Check for unknown arguments
+  for (const key of Object.keys(args)) {
+    if (!usedArgs.has(key) && isNaN(Number(key))) {
+      throw parseError(`Unknown parameter: ${key}`, location);
+    }
   }
-  return value;
+
+  // Apply defaults for missing arguments
+  for (const param of defs) {
+    if (result[param.name] === undefined) {
+      if (param.required !== false) {
+        throw parseError(`Missing required parameter: ${param.name}`, location);
+      }
+      if (param.defaultValue !== undefined) {
+        result[param.name] = param.defaultValue;
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Validate an argument against its parameter definition
+ */
+function validateArgument(value: any, param: ParameterDef): string | false {
+  // Auto-convert single numbers to vectors if needed
+  if (param.type === 'vector' && typeof value === 'number') {
+    // Don't report an error for numbers that can be auto-converted to vectors
+    return false;
+  }
+
+  // Type checking
+  switch (param.type) {
+    case 'number':
+      if (typeof value !== 'number') {
+        return `Expected number, got ${typeof value}`;
+      }
+      break;
+    case 'vector':
+      if (!Array.isArray(value) || !value.every((v) => typeof v === 'number')) {
+        return `Expected vector of numbers, got ${typeof value}`;
+      }
+      break;
+    case 'boolean':
+      if (typeof value !== 'number' || (value !== 0 && value !== 1)) {
+        return `Expected boolean (0 or 1), got ${typeof value}`;
+      }
+      break;
+    case 'relative':
+      if (
+        !(
+          typeof value === 'object' &&
+          value !== null &&
+          'type' in value &&
+          value.type === 'relative'
+        ) &&
+        typeof value !== 'number'
+      ) {
+        return `Expected number or relative value, got ${typeof value}`;
+      }
+      break;
+  }
+
+  // Custom validator
+  if (param.validator) {
+    const result = param.validator(value);
+    if (result === false) {
+      return `Failed validation`;
+    } else if (typeof result === 'string') {
+      return result;
+    }
+  }
+
+  return false;
 }
 
 // Export evalExpression so it can be used by types.ts
@@ -344,37 +502,36 @@ export function moduleToSDF(nodes: Node[]): SDFScene {
 }
 
 function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
-  const evalArg = (idx: number, defaultVal: number = 0): EvalResult => {
-    const arg = call.args[idx.toString()];
-    if (!arg) return defaultVal;
-    const val = evalExpression(arg, context);
-    if (Array.isArray(val) || typeof val === 'number') return val;
-    throw parseError(`Expected number or vector argument, got ${typeof val}`, arg.location);
-  };
-
   switch (call.name) {
     case 'smooth_union': {
+      const params: ParameterDef[] = [
+        { name: 'radius', type: 'number', required: true, description: 'Blend radius' },
+        {
+          name: 'detail',
+          type: 'relative',
+          required: false,
+          keywordOnly: true,
+          defaultValue: { type: 'relative', value: 2 },
+          description: 'Detail level in the blend region',
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+
       if (!call.children?.length) {
         throw parseError('smooth_union requires at least one child node', call.location);
       }
-      const radius = evalArg(0, 0.5);
-      if (typeof radius !== 'number') {
-        throw parseError('smooth_union radius must be a number', call.location);
-      }
 
-      // Get the detail parameter (optional)
-      const detailArg = call.args['detail'];
+      const radius = args.radius as number;
+      const detail = args.detail;
+
+      // Handle the detail parameter with proper typing
       let detailValue: string = '2x';
-
-      if (detailArg) {
-        const detail = evalExpression(detailArg, context);
-        if (typeof detail === 'object' && !Array.isArray(detail) && detail?.type === 'relative') {
-          detailValue = `${(detail as RelativeValue).value}x`;
+      if (detail !== undefined) {
+        if (typeof detail === 'object' && 'type' in detail) {
+          detailValue = `${detail.value}x`;
         } else if (typeof detail === 'number') {
-          // For absolute values, pass through as-is
           detailValue = detail.toString();
-        } else {
-          throw parseError('smooth_union detail must be a number or relative value', call.location);
         }
       }
 
@@ -392,30 +549,34 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'smooth_intersection': {
+      const params: ParameterDef[] = [
+        { name: 'radius', type: 'number', required: true, description: 'Blend radius' },
+        {
+          name: 'detail',
+          type: 'relative',
+          required: false,
+          keywordOnly: true,
+          defaultValue: { type: 'relative', value: 2 },
+          description: 'Detail level in the blend region',
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+
       if (!call.children?.length) {
         throw parseError('smooth_intersection requires at least one child node', call.location);
       }
-      const radius = evalArg(0, 0.5);
-      if (typeof radius !== 'number') {
-        throw parseError('smooth_intersection radius must be a number', call.location);
-      }
 
-      // Get the detail parameter (optional)
-      const detailArg = call.args['detail'];
+      const radius = args.radius as number;
+      const detail = args.detail;
+
+      // Handle the detail parameter with proper typing
       let detailValue: string = '2x';
-
-      if (detailArg) {
-        const detail = evalExpression(detailArg, context);
-        if (typeof detail === 'object' && !Array.isArray(detail) && detail?.type === 'relative') {
-          detailValue = `${(detail as RelativeValue).value}x`;
+      if (detail !== undefined) {
+        if (typeof detail === 'object' && 'type' in detail) {
+          detailValue = `${detail.value}x`;
         } else if (typeof detail === 'number') {
-          // For absolute values, pass through as-is
           detailValue = detail.toString();
-        } else {
-          throw parseError(
-            'smooth_intersection detail must be a number or relative value',
-            call.location
-          );
         }
       }
 
@@ -451,29 +612,34 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'smooth_difference': {
+      const params: ParameterDef[] = [
+        { name: 'radius', type: 'number', required: true, description: 'Blend radius' },
+        {
+          name: 'detail',
+          type: 'relative',
+          required: false,
+          keywordOnly: true,
+          defaultValue: { type: 'relative', value: 2 },
+          description: 'Detail level in the blend region',
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+
       if (!call.children?.length) {
         throw parseError('smooth_difference requires at least one child node', call.location);
       }
-      const radius = evalArg(0, 0.5);
-      if (typeof radius !== 'number') {
-        throw parseError('smooth_difference radius must be a number', call.location);
-      }
 
-      // Get the detail parameter (optional)
-      const detailArg = call.args['detail'];
+      const radius = args.radius as number;
+      const detail = args.detail;
+
+      // Handle the detail parameter with proper typing
       let detailValue: string = '2x';
-
-      if (detailArg) {
-        const detail = evalExpression(detailArg, context);
-        if (typeof detail === 'object' && !Array.isArray(detail) && detail?.type === 'relative') {
-          detailValue = `${(detail as RelativeValue).value}x`;
+      if (detail !== undefined) {
+        if (typeof detail === 'object' && 'type' in detail) {
+          detailValue = `${detail.value}x`;
         } else if (typeof detail === 'number') {
           detailValue = detail.toString();
-        } else {
-          throw parseError(
-            'smooth_difference detail must be a number or relative value',
-            call.location
-          );
         }
       }
 
@@ -493,20 +659,27 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
     case 'cube': {
-      const sizeArg = evalArg(0, 1);
-      let sizes: number[];
+      const params: ParameterDef[] = [
+        {
+          name: 'size',
+          type: 'vector',
+          required: true,
+          description: 'Size of the cube (single number or [x,y,z] vector)',
+          validator: (value) => {
+            if (Array.isArray(value) && value.length === 3) return true;
+            return 'Must be a [x,y,z] vector';
+          },
+        },
+      ];
 
-      if (typeof sizeArg === 'number') {
-        sizes = [sizeArg, sizeArg, sizeArg];
-      } else if (Array.isArray(sizeArg) && sizeArg.length === 3) {
-        sizes = sizeArg;
-      } else {
-        throw parseError('cube size must be a number or [x,y,z] vector', call.location);
-      }
+      const args = processArgs(params, call.args, context, call.location);
 
       if (call.children?.length) {
         throw parseError('cube does not accept children', call.location);
       }
+
+      // After our auto-conversion, size will always be an array
+      const sizes = args.size as number[];
 
       const halfSizes = sizes.map((s) => s / 2);
       // For flat surfaces, use 1/4 of the smallest dimension as minSize
@@ -522,42 +695,49 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'sphere': {
-      const r = evalArg(0, 1);
-      if (typeof r !== 'number') {
-        throw parseError('sphere radius must be a number', call.location);
-      }
+      const params: ParameterDef[] = [
+        { name: 'radius', type: 'number', required: true, description: 'Radius of the sphere' },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
 
       if (call.children?.length) {
         throw parseError('sphere does not accept children', call.location);
       }
 
-      // For spherical surfaces, use 1/4 of the radius as minSize
-      const minSize = r * 0.25;
+      const radius = args.radius as number;
+      const minSize = radius * 0.25;
+
       return {
         type: 'sdf',
-        expr: `face(sqrt(x*x + y*y + z*z) - ${r}, ${minSize})`,
+        expr: `face(sqrt(x*x + y*y + z*z) - ${radius}, ${minSize})`,
         bounds: {
-          min: [-r, -r, -r],
-          max: [r, r, r],
+          min: [-radius, -radius, -radius],
+          max: [radius, radius, radius],
         },
       };
     }
 
     case 'cylinder': {
-      const radius = evalArg(0, 0.5);
-      const height = evalArg(1, 1);
-      if (typeof radius !== 'number' || typeof height !== 'number') {
-        throw parseError('cylinder radius and height must be numbers', call.location);
-      }
+      const params: ParameterDef[] = [
+        { name: 'radius', type: 'number', required: true, description: 'Radius of the cylinder' },
+        { name: 'height', type: 'number', required: true, description: 'Height of the cylinder' },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
 
       if (call.children?.length) {
         throw parseError('cylinder does not accept children', call.location);
       }
 
+      const radius = args.radius as number;
+      const height = args.height as number;
       const halfHeight = height / 2;
+
       // For cylindrical surfaces, use 1/4 of radius for curved surface and 1/4 of height for flat ends
       const curvedMinSize = radius * 0.25;
       const flatMinSize = height * 0.25;
+
       return {
         type: 'sdf',
         expr: `max(face(sqrt(x*x + z*z) - ${radius}, ${curvedMinSize}), face(abs(y) - ${halfHeight}, ${flatMinSize}))`,
@@ -569,17 +749,21 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'cone': {
-      const radius = evalArg(0, 0.5);
-      const height = evalArg(1, 1);
-      if (typeof radius !== 'number' || typeof height !== 'number') {
-        throw parseError('cone radius and height must be numbers', call.location);
-      }
+      const params: ParameterDef[] = [
+        { name: 'radius', type: 'number', required: true, description: 'Base radius of the cone' },
+        { name: 'height', type: 'number', required: true, description: 'Height of the cone' },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
 
       if (call.children?.length) {
         throw parseError('cone does not accept children', call.location);
       }
 
+      const radius = args.radius as number;
+      const height = args.height as number;
       const halfHeight = height / 2;
+
       // For conical surface, use 1/4 of base radius
       const curvedMinSize = radius * 0.25;
       const flatMinSize = height * 0.25;
@@ -607,7 +791,19 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'translate': {
-      const vec = checkVector(evalArg(0), 3, call.location);
+      const params: ParameterDef[] = [
+        {
+          name: 'vec',
+          type: 'vector',
+          required: true,
+          description: 'Translation vector [x,y,z]',
+          validator: (vec) =>
+            Array.isArray(vec) && vec.length === 3 ? true : 'Must be a 3D vector [x,y,z]',
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+      const vec = args.vec as number[];
       const [dx, dy, dz] = vec;
 
       const children = flattenScope(call.children, context, 'translate', call.location);
@@ -639,7 +835,22 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'rotate': {
-      const vec = checkVector(evalArg(0), 3, call.location);
+      const params: ParameterDef[] = [
+        {
+          name: 'angles',
+          type: 'vector',
+          required: true,
+          description: 'Rotation angles in degrees [x,y,z]',
+          validator: (vec) =>
+            Array.isArray(vec) && vec.length === 3
+              ? true
+              : 'Must be a 3D vector [x,y,z] of rotation angles in degrees',
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+      const vec = args.angles as number[];
+
       // Convert degrees to radians
       const [rx, ry, rz] = vec.map((deg) => (deg * Math.PI) / 180);
 
@@ -658,7 +869,31 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'scale': {
-      const vec = checkVector(evalArg(0), 3, call.location);
+      const params: ParameterDef[] = [
+        {
+          name: 'factors',
+          type: 'vector',
+          required: true,
+          description: 'Scale factors [x,y,z] or single uniform scale',
+          validator: (value) => {
+            if (typeof value === 'number') return true;
+            if (Array.isArray(value) && value.length === 3) return true;
+            return 'Must be a number or [x,y,z] vector';
+          },
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+
+      let vec: number[];
+      const factorsArg = args.factors;
+
+      if (typeof factorsArg === 'number') {
+        vec = [factorsArg, factorsArg, factorsArg];
+      } else {
+        vec = factorsArg as number[];
+      }
+
       const [sx, sy, sz] = vec;
 
       const children = flattenScope(call.children, context, 'scale', call.location);
@@ -694,6 +929,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'union': {
+      const params: ParameterDef[] = [];
+
+      processArgs(params, call.args, context, call.location);
+
       if (!call.children?.length) {
         return { type: 'sdf', expr: '0' };
       }
@@ -702,13 +941,23 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'detailed': {
+      const params: ParameterDef[] = [
+        {
+          name: 'size',
+          type: 'number',
+          required: false,
+          defaultValue: 0.1,
+          description: 'Minimum feature size',
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+
       if (!call.children?.length) {
         throw parseError('detailed requires at least one child', call.location);
       }
-      const size = evalArg(0, 0.1);
-      if (typeof size !== 'number') {
-        throw parseError('detailed size must be a number', call.location);
-      }
+
+      const size = args.size as number;
 
       const children = flattenScope(call.children, context, 'detailed', call.location);
       const childExpr = wrapUnion(children);
@@ -720,6 +969,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'difference': {
+      const params: ParameterDef[] = [];
+
+      processArgs(params, call.args, context, call.location);
+
       if (!call.children?.length) {
         throw parseError('difference requires at least one child', call.location);
       }
@@ -750,6 +1003,10 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
     }
 
     case 'intersection': {
+      const params: ParameterDef[] = [];
+
+      processArgs(params, call.args, context, call.location);
+
       if (!call.children?.length) {
         throw parseError('intersection requires at least one child', call.location);
       }

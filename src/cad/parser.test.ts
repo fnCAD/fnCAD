@@ -318,6 +318,53 @@ describe('CAD Parser', () => {
     expect(sdf2).toContain('smooth_union(0.5, 2x');
   });
 
+  describe('Parameter Validation', () => {
+    function compileToSDF(input: string): string {
+      const ast = parse(input);
+      return moduleToSDF(ast).expr;
+    }
+
+    test('throws error for unknown parameters', () => {
+      expect(() => moduleToSDF(parse('cube(unknown=5);'))).toThrow('Unknown parameter: unknown');
+    });
+
+    test('throws error for invalid parameter types', () => {
+      // Use rotate with an incomplete vector - it specifically requires a 3D vector
+      expect(() => moduleToSDF(parse('rotate([1, 2]);'))).toThrow('Must be a 3D vector');
+    });
+
+    test('throws error for missing required parameters', () => {
+      expect(() => moduleToSDF(parse('translate();'))).toThrow('Missing required parameter: vec');
+    });
+
+    test('throws error for double assignment', () => {
+      expect(() => moduleToSDF(parse('translate([1,2,3], vec=[4,5,6]);'))).toThrow(
+        'Parameter vec was already set positionally'
+      );
+    });
+
+    test('throws error for too many positional arguments', () => {
+      // Use translate instead of cube since cube now handles the first parameter specially
+      expect(() => moduleToSDF(parse('translate([1,2,3], [4,5,6], [7,8,9]);'))).toThrow(
+        'Too many positional arguments'
+      );
+    });
+
+    test('correctly handles cube with single number', () => {
+      const result = compileToSDF('cube(5);');
+      expect(result).toContain('abs(x) - 2.5'); // Half of size
+      expect(result).toContain('abs(y) - 2.5');
+      expect(result).toContain('abs(z) - 2.5');
+    });
+
+    test('correctly handles cube with vector', () => {
+      const result = compileToSDF('cube([1, 2, 3]);');
+      expect(result).toContain('abs(x) - 0.5'); // Half of each dimension
+      expect(result).toContain('abs(y) - 1');
+      expect(result).toContain('abs(z) - 1.5');
+    });
+  });
+
   test('tracks parameter ranges correctly', () => {
     const parser = new Parser('foo(bar=baz, qux);');
     parser.parse();
