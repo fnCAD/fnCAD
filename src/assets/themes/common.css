@@ -119,15 +119,7 @@ body {
   display: inline-block;
 }
 
-.furigana-container::before {
-  content: "unlimited";
-  position: absolute;
-  top: -8px;
-  left: 0;
-  width: 100%;
-  font-size: 9px;
-  text-align: center;
-}
+/* Removed unlimited label */
 
 .dropdown-divider {
   height: 1px;

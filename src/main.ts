@@ -942,20 +942,12 @@ document.addEventListener('keydown', (event) => {
   if (event.key === '5' && event.ctrlKey) {
     event.preventDefault();
     appState.setViewMode(ViewMode.Mesh);
-    regenerateMesh(false); // Normal detail
-  } else if (event.key === '6' && event.ctrlKey) {
-    event.preventDefault();
-    appState.setViewMode(ViewMode.Mesh);
-    regenerateMesh(true); // High detail
+    appState.generateMesh();
   } else if (event.key === 'Escape') {
     appState.setViewMode(ViewMode.Preview);
     appState.cancelCurrentOperation();
   }
 });
-
-function regenerateMesh(highDetail: boolean = false) {
-  appState.generateMesh(highDetail);
-}
 
 // Add menu handlers
 document.getElementById('export-stl')?.addEventListener('click', (e) => {
@@ -993,13 +985,7 @@ document.getElementById('view-preview')?.addEventListener('click', (e) => {
 document.getElementById('view-mesh')?.addEventListener('click', (e) => {
   e.preventDefault();
   appState.setViewMode(ViewMode.Mesh);
-  regenerateMesh(false);
-});
-
-document.getElementById('view-mesh-hd')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  appState.setViewMode(ViewMode.Mesh);
-  regenerateMesh(true);
+  appState.generateMesh();
 });
 
 // Add rainbow mode toggle handler

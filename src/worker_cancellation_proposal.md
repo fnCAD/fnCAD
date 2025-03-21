@@ -45,7 +45,6 @@ interface WorkerMessage {
   type: 'start' | 'cancel';
   taskId: number;
   code?: string;
-  highDetail?: boolean;
 }
 
 export interface ProgressMessage {
@@ -80,7 +79,6 @@ export function subdivideOctree(
   sdf: Node,
   center: THREE.Vector3,
   size: number,
-  budgetTracker: BudgetTracker,
   cancellationToken?: CancellationToken,
   progressCallback?: (cellsProcessed: number, totalCells: number) => void
 ): void {
@@ -90,9 +88,7 @@ export function subdivideOctree(
   // Existing code...
   
   // Report progress periodically
-  if (progressCallback && (node.octant === -1 || node.octant % 8 === 0)) {
-    progressCallback(budgetTracker.cellsProcessed, budgetTracker.totalBudget);
-  }
+  /* figure this out */
   
   // Existing code...
 }
@@ -139,15 +135,12 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
       // Generate octree with cancellation support
       token.throwIfCancelled();
       const octree = new OctreeNode(CellState.Boundary);
-      const cellBudget = e.data.highDetail ? 1000000 : 100000;
-      const budgetTracker = new BudgetTracker(cellBudget);
       
       subdivideOctree(
         octree, 
         sdfNode, 
         new THREE.Vector3(0, 0, 0), 
         65536, 
-        budgetTracker,
         token,
         (cellsProcessed, totalCells) => {
           self.postMessage({ 

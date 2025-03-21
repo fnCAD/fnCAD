@@ -601,7 +601,7 @@ export class AppState {
     return this.currentMesh;
   }
 
-  generateMesh(highDetail: boolean = false): void {
+  generateMesh(): void {
     this.meshGenerationInProgress = true;
     this.setViewMode(ViewMode.Mesh);
     const taskId = ++this.currentTaskId;
@@ -610,7 +610,6 @@ export class AppState {
       type: 'start',
       taskId: taskId,
       code: this.getActiveDocument().content,
-      highDetail,
     });
   }
 
