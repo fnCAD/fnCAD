@@ -940,7 +940,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       return wrapUnion(children);
     }
 
-    case 'detailed': {
+    case 'detail': {
       const params: ParameterDef[] = [
         {
           name: 'size',
@@ -954,16 +954,16 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const args = processArgs(params, call.args, context, call.location);
 
       if (!call.children?.length) {
-        throw parseError('detailed requires at least one child', call.location);
+        throw parseError('detail requires at least one child', call.location);
       }
 
       const size = args.size as number;
 
-      const children = flattenScope(call.children, context, 'detailed', call.location);
+      const children = flattenScope(call.children, context, 'detail', call.location);
       const childExpr = wrapUnion(children);
       return {
         type: 'sdf',
-        expr: `detailed(${size}, ${childExpr.expr})`,
+        expr: `detail(${size}, ${childExpr.expr})`,
         bounds: childExpr.bounds,
       };
     }

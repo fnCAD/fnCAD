@@ -171,7 +171,7 @@ export const builtinDocs: ModuleDoc[] = [
     ],
   },
   {
-    name: 'detailed',
+    name: 'detail',
     description: 'Sets minimum feature size for contained geometry',
     parameters: [
       {
