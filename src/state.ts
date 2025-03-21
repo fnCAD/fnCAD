@@ -111,6 +111,12 @@ export class AppState {
         this.setCurrentMesh(e.data.mesh);
         this.meshGenerationInProgress = false;
 
+        // Hide spinner when mesh generation completes
+        const spinnerOverlay = document.getElementById('spinner-overlay');
+        if (spinnerOverlay) {
+          spinnerOverlay.classList.add('hidden');
+        }
+
         // Update the view with the new mesh if we're in mesh mode
         if (this.viewMode === ViewMode.Mesh) {
           this.setViewMode(ViewMode.Mesh);
@@ -601,15 +607,39 @@ export class AppState {
     return this.currentMesh;
   }
 
-  generateMesh(): void {
+  generateMesh(): Promise<void> {
+    // Show spinner when starting mesh generation
+    const spinnerOverlay = document.getElementById('spinner-overlay');
+    if (spinnerOverlay) {
+      spinnerOverlay.classList.remove('hidden');
+    }
+
     this.meshGenerationInProgress = true;
     this.setViewMode(ViewMode.Mesh);
     const taskId = ++this.currentTaskId;
 
-    this.worker.postMessage({
-      type: 'start',
-      taskId: taskId,
-      code: this.getActiveDocument().content,
+    return new Promise<void>((resolve, reject) => {
+      // Set up a one-time message handler for this specific task
+      const messageHandler = (e: MessageEvent) => {
+        // Ignore messages from old tasks
+        if (e.data.taskId !== taskId) return;
+
+        if (e.data.type === 'complete') {
+          this.worker.removeEventListener('message', messageHandler);
+          resolve();
+        } else if (e.data.type === 'error') {
+          this.worker.removeEventListener('message', messageHandler);
+          reject(new Error(e.data.error));
+        }
+      };
+
+      this.worker.addEventListener('message', messageHandler);
+
+      this.worker.postMessage({
+        type: 'start',
+        taskId: taskId,
+        code: this.getActiveDocument().content,
+      });
     });
   }
 
@@ -617,6 +647,13 @@ export class AppState {
     // Don't terminate the worker, just increment the task ID to ignore old messages
     ++this.currentTaskId;
     this.meshGenerationInProgress = false;
+
+    // Hide spinner when operation is canceled
+    const spinnerOverlay = document.getElementById('spinner-overlay');
+    if (spinnerOverlay) {
+      spinnerOverlay.classList.add('hidden');
+    }
+
     this.setViewMode(ViewMode.Preview);
   }
 
