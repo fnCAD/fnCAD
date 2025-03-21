@@ -260,8 +260,8 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       return new AABBFunctionCall(args);
     case 'face':
       return new FaceFunctionCall(args);
-    case 'detailed':
-      return new DetailedFunctionCall(args);
+    case 'detail':
+      return new DetailFunctionCall(args);
     case 'atan2':
       return new Atan2FunctionCall(args);
     default:
@@ -1129,14 +1129,14 @@ class AABBFunctionCall extends FunctionCallNode {
   }
 }
 
-class DetailedFunctionCall extends FunctionCallNode {
+class DetailFunctionCall extends FunctionCallNode {
   evaluate: (x: number, y: number, z: number) => number;
   #body: Node;
   #size: number;
 
   constructor(args: Node[]) {
-    super('detailed', args);
-    enforceArgumentLength('detailed', args, 2);
+    super('detail', args);
+    enforceArgumentLength('detail', args, 2);
     this.#size = constantValue(args[0]);
     this.#body = args[1];
     this.evaluate = this.compileEvaluate();
