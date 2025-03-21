@@ -466,16 +466,24 @@ export class AppState {
       this.saveCurrentCameraState();
     }
 
-    if (this.documents.find((d) => d.id === id)) {
+    const doc = this.documents.find((d) => d.id === id);
+    if (doc) {
       this.activeDocumentId = id;
 
       // Restore camera state for the new document
-      const doc = this.documents.find((d) => d.id === id);
-      if (doc && doc.cameraState) {
+      if (doc.cameraState) {
         this.restoreCameraState(doc);
       }
-
       this.saveDocuments();
+
+      window._editor?.dispatch({
+        changes: {
+          from: 0,
+          to: window._editor.state.doc.length,
+          insert: doc.content,
+        },
+      });
+
       this.updateShader();
     }
   }
@@ -546,6 +554,7 @@ export class AppState {
   }
 
   private updateShader() {
+    const editor = window._editor;
     const editorContent = this.getActiveDocument().content;
     try {
       const cadAst = parseCAD(editorContent);
@@ -562,22 +571,20 @@ export class AppState {
       }
 
       // Clear any existing error decorations
-      if (window._editor) {
-        window._editor.dispatch({
+      if (editor) {
+        editor.dispatch({
           effects: [errorDecorationFacet.of([])],
         });
       }
     } catch (err) {
       if (err instanceof ParseError) {
-        if (window._editor) {
+        if (editor) {
           const from =
-            window._editor.state.doc.line(err.location.start.line).from +
-            err.location.start.column -
-            1;
+            editor.state.doc.line(err.location.start.line).from + err.location.start.column - 1;
           const to =
-            window._editor.state.doc.line(err.location.end.line).from + err.location.end.column - 1;
+            editor.state.doc.line(err.location.end.line).from + err.location.end.column - 1;
 
-          window._editor.dispatch({
+          editor.dispatch({
             effects: [
               errorDecorationFacet.of([
                 {

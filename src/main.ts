@@ -801,13 +801,6 @@ function createTabElement(doc: { id: string; name: string }, isActive: boolean):
   tab.addEventListener('click', () => {
     appState.setActiveDocument(doc.id);
     updateTabs();
-    editor.dispatch({
-      changes: {
-        from: 0,
-        to: editor.state.doc.length,
-        insert: appState.getActiveDocument().content,
-      },
-    });
     appState.setViewMode(ViewMode.Preview);
 
     // Update URL based on document storage
