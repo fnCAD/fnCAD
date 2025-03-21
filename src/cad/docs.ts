@@ -125,6 +125,12 @@ export const builtinDocs: ModuleDoc[] = [
         description: 'Blend radius',
         type: 'number',
       },
+      {
+        name: 'detail',
+        description: 'Detail level in the blend region (can be a percentage like 50% or ratio like 2x)',
+        type: 'number | vector',
+        defaultValue: '50%'
+      },
     ],
   },
   {
@@ -136,6 +142,12 @@ export const builtinDocs: ModuleDoc[] = [
         description: 'Blend radius',
         type: 'number',
       },
+      {
+        name: 'detail',
+        description: 'Detail level in the blend region (can be a percentage like 50% or ratio like 2x)',
+        type: 'number | vector',
+        defaultValue: '50%'
+      },
     ],
   },
   {
@@ -146,6 +158,12 @@ export const builtinDocs: ModuleDoc[] = [
         name: 'radius',
         description: 'Blend radius',
         type: 'number',
+      },
+      {
+        name: 'detail',
+        description: 'Detail level in the blend region (can be a percentage like 50% or ratio like 2x)',
+        type: 'number | vector',
+        defaultValue: '50%'
       },
     ],
   },

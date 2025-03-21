@@ -267,6 +267,42 @@ describe('CAD Parser', () => {
     expect(result).toBeDefined();
   });
 
+  test('handles relative number literals', () => {
+    // Test percentage values
+    const ctx1 = new Context();
+    parse('var x = 50%;').map((stmt) => evalCAD(stmt, ctx1));
+    const xValue = ctx1.get('x');
+    expect(xValue).toBeDefined();
+    expect(typeof xValue === 'object' && xValue !== null && 'type' in xValue).toBe(true);
+    if (typeof xValue === 'object' && xValue !== null && 'type' in xValue) {
+      const relValue = xValue as RelativeValue;
+      expect(relValue.type).toBe('relative');
+      expect(relValue.relType).toBe('percent');
+      expect(relValue.value).toBe(0.5); // 50% = 0.5
+    }
+
+    // Test ratio values
+    const ctx2 = new Context();
+    parse('var x = 2x;').map((stmt) => evalCAD(stmt, ctx2));
+    const yValue = ctx2.get('x');
+    expect(yValue).toBeDefined();
+    expect(typeof yValue === 'object' && yValue !== null && 'type' in yValue).toBe(true);
+    if (typeof yValue === 'object' && yValue !== null && 'type' in yValue) {
+      const relValue = yValue as RelativeValue;
+      expect(relValue.type).toBe('relative');
+      expect(relValue.relType).toBe('ratio');
+      expect(relValue.value).toBe(2); // 2x = 2
+    }
+  });
+
+  test('compiles smooth union with detail parameter', () => {
+    const sdf1 = compileToSDF('smooth_union(1, detail=50%) { sphere(1); cube(1); }');
+    expect(sdf1).toContain('smooth_union(1, 50%');
+
+    const sdf2 = compileToSDF('smooth_union(0.5, detail=2x) { sphere(1); cube(1); }');
+    expect(sdf2).toContain('smooth_union(0.5, 2x');
+  });
+
   test('tracks parameter ranges correctly', () => {
     const parser = new Parser('foo(bar=baz, qux);');
     parser.parse();

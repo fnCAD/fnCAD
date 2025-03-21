@@ -28,8 +28,15 @@ export interface ParameterLocation {
   value?: string;
 }
 
+// Relative value type for percentage and ratio values
+export interface RelativeValue {
+  type: 'relative';
+  value: number;
+  relType: 'percent' | 'ratio';
+}
+
 // Result types for evaluation
-export type Value = number | SDFExpression | number[] | SDFGroup;
+export type Value = number | SDFExpression | number[] | SDFGroup | RelativeValue;
 
 export interface SDFGroup {
   type: 'group';
@@ -256,6 +263,16 @@ export abstract class Expression implements Node {
 export class NumberLiteral extends Expression {
   constructor(
     public value: number,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
+export class RelativeNumberLiteral extends Expression {
+  constructor(
+    public value: number,
+    public type: 'percent' | 'ratio',
     location: SourceLocation
   ) {
     super(location);

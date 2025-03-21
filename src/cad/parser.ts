@@ -17,6 +17,7 @@ import {
   BinaryExpression,
   UnaryExpression,
   NumberLiteral,
+  RelativeNumberLiteral,
   Identifier,
   SourceLocation,
   SDFExpressionNode,
@@ -250,13 +251,29 @@ export class Parser {
       this.column++;
     }
 
+    // Parse the numeric part
     while (current < this.source.length && /[0-9.]/.test(this.source[current])) {
       value += this.source[current];
       current++;
       this.column++;
     }
+
+    // Check for relative number suffixes (% or x)
+    let type: 'number' | 'percent' | 'ratio' = 'number';
+    if (current < this.source.length) {
+      if (this.source[current] === '%') {
+        type = 'percent';
+        current++;
+        this.column++;
+      } else if (this.source[current] === 'x') {
+        type = 'ratio';
+        current++;
+        this.column++;
+      }
+    }
+
     this.tokens.push({
-      type: 'number',
+      type: type,
       value,
       location: {
         start: { line: this.line, column: startColumn, offset: startOffset },
@@ -743,6 +760,12 @@ export class Parser {
     switch (token.type) {
       case 'number':
         expr = new NumberLiteral(parseFloat(token.value), token.location);
+        break;
+      case 'percent':
+        expr = new RelativeNumberLiteral(parseFloat(token.value) / 100, 'percent', token.location);
+        break;
+      case 'ratio':
+        expr = new RelativeNumberLiteral(parseFloat(token.value), 'ratio', token.location);
         break;
       case 'string':
         throw parseError('Unexpected string literal', token.location);

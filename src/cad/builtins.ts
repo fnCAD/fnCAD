@@ -42,16 +42,24 @@ function checkVector(value: any, requiredSize: number, location: SourceLocation)
 
 // Export evalExpression so it can be used by types.ts
 export function evalExpression(expr: Expression, context: Context): EvalResult {
-  if ('value' in expr && typeof expr.value === 'number') {
+  if (expr instanceof NumberLiteral) {
     return expr.value;
+  }
+  if (expr instanceof RelativeNumberLiteral) {
+    return {
+      type: 'relative',
+      value: expr.value,
+      relType: expr.type
+    };
   }
   if (expr instanceof Identifier) {
     const value = context.get(expr.name);
     if (value === undefined) {
       throw parseError(`Undefined variable: ${expr.name}`, expr.location);
     }
-    if (typeof value !== 'number') {
-      throw parseError(`Variable ${expr.name} is not a number`, expr.location);
+    if (typeof value !== 'number' && 
+        !(typeof value === 'object' && value !== null && 'type' in value && value.type === 'relative')) {
+      throw parseError(`Variable ${expr.name} is not a number or relative value`, expr.location);
     }
     return value;
   }
@@ -344,6 +352,28 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (typeof radius !== 'number') {
         throw parseError('smooth_union radius must be a number', call.location);
       }
+      
+      // Get the detail parameter (optional)
+      const detailArg = call.args['detail'];
+      let detailValue: string | undefined;
+      
+      if (detailArg) {
+        const detail = evalExpression(detailArg, context);
+        if (typeof detail === 'object' && detail !== null && 'type' in detail && detail.type === 'relative') {
+          // Convert relative value to string representation for SDF
+          const relVal = detail as RelativeValue;
+          if (relVal.relType === 'percent') {
+            detailValue = `${relVal.value * 100}%`;
+          } else { // ratio
+            detailValue = `${relVal.value}x`;
+          }
+        } else if (typeof detail === 'number') {
+          // For absolute values, pass through as-is
+          detailValue = detail.toString();
+        } else {
+          throw parseError('smooth_union detail must be a number or relative value', call.location);
+        }
+      }
 
       const children = flattenScope(call.children, context, 'smooth_union', call.location);
 
@@ -351,7 +381,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         type: 'sdf',
         expr: smooth_union(
           radius,
-          children.map((c) => c.expr)
+          children.map((c) => c.expr),
+          detailValue
         ),
         bounds: growAABB(combineAABBs(children), radius),
       };
@@ -364,6 +395,28 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const radius = evalArg(0, 0.5);
       if (typeof radius !== 'number') {
         throw parseError('smooth_intersection radius must be a number', call.location);
+      }
+      
+      // Get the detail parameter (optional)
+      const detailArg = call.args['detail'];
+      let detailValue: string | undefined;
+      
+      if (detailArg) {
+        const detail = evalExpression(detailArg, context);
+        if (typeof detail === 'object' && detail !== null && 'type' in detail && detail.type === 'relative') {
+          // Convert relative value to string representation for SDF
+          const relVal = detail as RelativeValue;
+          if (relVal.relType === 'percent') {
+            detailValue = `${relVal.value * 100}%`;
+          } else { // ratio
+            detailValue = `${relVal.value}x`;
+          }
+        } else if (typeof detail === 'number') {
+          // For absolute values, pass through as-is
+          detailValue = detail.toString();
+        } else {
+          throw parseError('smooth_intersection detail must be a number or relative value', call.location);
+        }
       }
 
       const children = flattenScope(call.children, context, 'smooth_intersection', call.location);
@@ -390,7 +443,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         type: 'sdf',
         expr: smooth_intersection(
           children.map((c) => c.expr),
-          radius
+          radius,
+          detailValue
         ),
         bounds,
       };
@@ -404,6 +458,28 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       if (typeof radius !== 'number') {
         throw parseError('smooth_difference radius must be a number', call.location);
       }
+      
+      // Get the detail parameter (optional)
+      const detailArg = call.args['detail'];
+      let detailValue: string | undefined;
+      
+      if (detailArg) {
+        const detail = evalExpression(detailArg, context);
+        if (typeof detail === 'object' && detail !== null && 'type' in detail && detail.type === 'relative') {
+          // Convert relative value to string representation for SDF
+          const relVal = detail as RelativeValue;
+          if (relVal.relType === 'percent') {
+            detailValue = `${relVal.value * 100}%`;
+          } else { // ratio
+            detailValue = `${relVal.value}x`;
+          }
+        } else if (typeof detail === 'number') {
+          // For absolute values, pass through as-is
+          detailValue = detail.toString();
+        } else {
+          throw parseError('smooth_difference detail must be a number or relative value', call.location);
+        }
+      }
 
       const children = flattenScope(call.children, context, 'smooth_difference', call.location);
 
@@ -414,7 +490,8 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
         type: 'sdf',
         expr: smooth_difference(
           children.map((c) => c.expr),
-          radius
+          radius,
+          detailValue
         ),
         bounds,
       };
