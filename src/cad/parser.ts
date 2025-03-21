@@ -474,11 +474,12 @@ export class Parser {
       throw parseError(`Expected ; after expression`, this.previous().location);
     }
 
-    if (token.type === 'number') {
-      const num = this.advance();
-      if (this.match(';')) {
-        return new NumberLiteral(parseFloat(num.value), num.location);
-      }
+    // Handle number, percent, ratio tokens as potential expressions
+    if (token.type === 'number' || token.type === 'percent' || token.type === 'ratio') {
+      // Parse the entire expression starting with the number
+      const expr = this.parseExpression();
+      this.expect(';', 'Expected ; after expression');
+      return expr;
     }
 
     if (token.type === 'semicolon') {
