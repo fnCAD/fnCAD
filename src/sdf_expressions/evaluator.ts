@@ -705,7 +705,7 @@ class SmoothUnionFunctionCall extends FunctionCallNode {
       }
       // Apply detail scaling
       if (this.args[1] instanceof RelativeNumberNode) {
-        minSize = minSize * this.args[1].value;
+        minSize = minSize / this.args[1].value;
       } else {
         minSize = constantValue(this.args[1]);
       }

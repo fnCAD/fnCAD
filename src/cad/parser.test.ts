@@ -1,7 +1,7 @@
 import { describe, it, expect, test, vi, beforeEach, afterEach, SpyInstance } from 'vitest';
 import { parse, Parser } from './parser';
 import { AABB, Context, ModuleDeclaration, SDFExpression } from './types';
-import { evalCAD, moduleToSDF, flattenScope, wrapUnion } from './builtins';
+import { evalCAD, moduleToSDF, flattenScope, RelativeValue, wrapUnion } from './builtins';
 import { ParseError } from './errors';
 
 describe('CAD Parser', () => {
@@ -277,7 +277,6 @@ describe('CAD Parser', () => {
     if (typeof xValue === 'object' && xValue !== null && 'type' in xValue) {
       const relValue = xValue as RelativeValue;
       expect(relValue.type).toBe('relative');
-      expect(relValue.relType).toBe('percent');
       expect(relValue.value).toBe(0.5); // 50% = 0.5
     }
 
@@ -290,14 +289,18 @@ describe('CAD Parser', () => {
     if (typeof yValue === 'object' && yValue !== null && 'type' in yValue) {
       const relValue = yValue as RelativeValue;
       expect(relValue.type).toBe('relative');
-      expect(relValue.relType).toBe('ratio');
       expect(relValue.value).toBe(2); // 2x = 2
     }
   });
 
   test('compiles smooth union with detail parameter', () => {
+    function compileToSDF(input: string): string {
+      const ast = parse(input);
+      return moduleToSDF(ast).expr;
+    }
+
     const sdf1 = compileToSDF('smooth_union(1, detail=50%) { sphere(1); cube(1); }');
-    expect(sdf1).toContain('smooth_union(1, 50%');
+    expect(sdf1).toContain('smooth_union(1, 0.5x');
 
     const sdf2 = compileToSDF('smooth_union(0.5, detail=2x) { sphere(1); cube(1); }');
     expect(sdf2).toContain('smooth_union(0.5, 2x');

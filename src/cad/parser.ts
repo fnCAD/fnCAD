@@ -762,10 +762,10 @@ export class Parser {
         expr = new NumberLiteral(parseFloat(token.value), token.location);
         break;
       case 'percent':
-        expr = new RelativeNumberLiteral(parseFloat(token.value) / 100, 'percent', token.location);
+        expr = new RelativeNumberLiteral(parseFloat(token.value) / 100, token.location);
         break;
       case 'ratio':
-        expr = new RelativeNumberLiteral(parseFloat(token.value), 'ratio', token.location);
+        expr = new RelativeNumberLiteral(parseFloat(token.value), token.location);
         break;
       case 'string':
         throw parseError('Unexpected string literal', token.location);

@@ -1,4 +1,4 @@
-import { evalExpression, wrapUnion, flattenScope } from './builtins';
+import { evalExpression, wrapUnion, flattenScope, RelativeValue } from './builtins';
 
 export interface Position {
   line: number;
@@ -26,13 +26,6 @@ export interface ParameterLocation {
   range: SourceLocation;
   nameRange?: SourceLocation;
   value?: string;
-}
-
-// Relative value type for percentage and ratio values
-export interface RelativeValue {
-  type: 'relative';
-  value: number;
-  relType: 'percent' | 'ratio';
 }
 
 // Result types for evaluation
@@ -272,7 +265,6 @@ export class NumberLiteral extends Expression {
 export class RelativeNumberLiteral extends Expression {
   constructor(
     public value: number,
-    public type: 'percent' | 'ratio',
     location: SourceLocation
   ) {
     super(location);
