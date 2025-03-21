@@ -58,7 +58,8 @@
 ### fnCAD Advanced Operations
 - [x] smooth_union()
 - [x] smooth_difference()
-- [x] smooth_intersection()
+- [x] smooth_intersection() 
+- [x] detail
 - [ ] `repeated(x=2) {}`
 
 ## Primitives
