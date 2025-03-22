@@ -57,8 +57,17 @@ export class AppState {
     try {
       const savedDocs = localStorage.getItem('documents');
       if (savedDocs) {
+        // Parse documents from localStorage
         this.documents = JSON.parse(savedDocs);
+
+        // Ensure editorState is undefined for all loaded documents
+        // There was a bug where we stored editorState in localstorage, and removing it
+        // will guarantee that we'll recreate it when the document is activated.
+        this.documents.forEach((doc) => {
+          doc.editorState = undefined;
+        });
       }
+
       const activeId = localStorage.getItem('activeDocumentId');
       if (activeId && this.documents.find((d) => d.id === activeId)) {
         this.activeDocumentId = activeId;
@@ -397,7 +406,7 @@ export class AppState {
 
   private prepareDocumentsForStorage(): Omit<Document, 'editorState'>[] {
     // Create a deep copy of documents without the editorState property
-    return this.documents.map(doc => {
+    return this.documents.map((doc) => {
       // Destructure to omit editorState
       const { editorState, ...docWithoutEditorState } = doc;
       return docWithoutEditorState;
