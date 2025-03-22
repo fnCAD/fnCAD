@@ -144,8 +144,12 @@ export class GLSLContext {
   scale(sx: number, sy: number, sz: number): GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
+    const minScale = Math.min(sx, sy, sz);
     return this.withPoint(
-      this.generator.save('vec3', () => `${self.currentPoint} / vec3(${sx}, ${sy}, ${sz})`)
+      this.generator.save(
+        'vec3',
+        () => `${self.currentPoint} * ${minScale} / vec3(${sx}, ${sy}, ${sz})`
+      )
     );
   }
 

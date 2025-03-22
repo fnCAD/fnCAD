@@ -899,22 +899,26 @@ class ScaleFunctionCall extends FunctionCallNode {
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
-    return this.#body.evaluateInterval(
-      x.divide(Interval.from(this.#sx)),
-      y.divide(Interval.from(this.#sy)),
-      z.divide(Interval.from(this.#sz))
-    );
+    const minScale = Math.min(this.#sx, this.#sy, this.#sz);
+    return this.#body
+      .evaluateInterval(
+        x.divide(Interval.from(this.#sx)),
+        y.divide(Interval.from(this.#sy)),
+        z.divide(Interval.from(this.#sz))
+      )
+      .multiply(Interval.from(minScale));
   }
 
   evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
     const newx = `x${depth}`,
       newy = `y${depth}`,
       newz = `z${depth}`;
+    const minScale = Math.min(this.#sx, this.#sy, this.#sz);
     return `(() => {
       const ${newx} = ${xname} / ${this.#sx};
       const ${newy} = ${yname} / ${this.#sy};
       const ${newz} = ${zname} / ${this.#sz};
-      return ${this.#body.evaluateStr(newx, newy, newz, depth + 1)};
+      return ${this.#body.evaluateStr(newx, newy, newz, depth + 1)} * ${minScale};
     })()`;
   }
 
@@ -931,13 +935,13 @@ class ScaleFunctionCall extends FunctionCallNode {
     );
     if (!result) return null;
 
-    // Scale the minSize by the minimum scale factor
+    // Scale the minSize and SDF by the minimum scale factor
     const minScale = Math.min(this.#sx, this.#sy, this.#sz);
 
     return {
       category: result.category,
       node: this,
-      sdfEstimate: result.sdfEstimate,
+      sdfEstimate: result.sdfEstimate.multiply(Interval.from(minScale)),
       minSize: result.minSize ? result.minSize * minScale : undefined,
     };
   }
@@ -1163,9 +1167,13 @@ class DetailFunctionCall extends FunctionCallNode {
       return {
         ...result,
         minSize: this.#size,
+        node: this,
       };
     }
-    return result;
+    return {
+      ...result,
+      node: this,
+    };
   }
 }
 
