@@ -395,13 +395,23 @@ export class AppState {
     return id;
   }
 
+  private prepareDocumentsForStorage(): Omit<Document, 'editorState'>[] {
+    // Create a deep copy of documents without the editorState property
+    return this.documents.map(doc => {
+      // Destructure to omit editorState
+      const { editorState, ...docWithoutEditorState } = doc;
+      return docWithoutEditorState;
+    });
+  }
+
   private saveDocuments() {
     // Save camera state of current document before saving
     if (this.activeDocumentId) {
       this.saveCurrentCameraState();
     }
 
-    localStorage.setItem('documents', JSON.stringify(this.documents));
+    // Save documents without editor state
+    localStorage.setItem('documents', JSON.stringify(this.prepareDocumentsForStorage()));
     localStorage.setItem('activeDocumentId', this.activeDocumentId || '');
   }
 
