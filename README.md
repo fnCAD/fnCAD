@@ -1,9 +1,9 @@
 # fnCAD
 
-A CAD single-page app: OpenSCAD but with Signed Distance Fields (SDFs). Shader-based realtime preview, octree mesher for
-STL export.
+A single-page CAD app; like OpenSCAD but with Signed Distance Fields (SDFs).
+Features real-time shader-based preview, octree mesher for STL export.
 
-Click here to open: https://fncad.github.io/
+**Try it now:** [https://fncad.github.io/](https://fncad.github.io/)
 
 Intended for 3D printing.
 
@@ -15,12 +15,11 @@ On the other hand, you get smooth-edged CSG! So it's not all bad.
 ## Key Features
 
 - **OpenSCAD-like syntax** with familiar modules, transformations, and operations
-  - Note: only a fraction of operators is currently implemented, and some syntax is different.
+  - Note: many OpenSCAD features like fonts are not implemented, and the syntax is a bit different.
 - **Real-time preview** using GPU-accelerated ray marching
-- **Octree mesh generation** with adaptive resolution
-- **Export to STL** for 3D printing
-- **Smooth CSG** for creating organic shapes
-- **Save and share** using GitHub Gists and Google Drive, directly via the URL
+- **Adaptive octree mesh generation** for STL export
+- **Traditional and smooth CSG** for creating smooth-edged shapes
+- **File export and sharing** via GitHub Gists or Google Drive
 - **Direct SDF function support** for advanced users
 
 ## Getting Started
@@ -138,6 +137,46 @@ module rounded_cylinder(r, h, corner_radius) {
 rounded_cylinder(radius, height, 2);
 ```
 
+### Detail Control
+
+The `detail()` operator controls the minimum feature size during mesh generation:
+
+```
+// Set minimum feature size to 0.05 units
+detail(size=0.05) {
+  sphere(1);
+}
+```
+
+Smaller values create finer details but take longer to generate. Adjust as required.
+
+### Smooth Boolean Operations
+
+Smooth operations create a transition area where the objects overlap.
+
+```
+smooth_union(0.3) {
+  cube(1);
+  sphere(1.5);
+}
+```
+
+Available smooth operations:
+- `smooth_union(radius) {}`
+- `smooth_difference(radius) {}`
+- `smooth_intersection(radius) {}`
+
+All smooth operations support a detail parameter that controls mesh resolution in the blend area:
+
+```
+smooth_union(0.3, detail=2x) {
+  cube(1);
+  sphere(1.5);
+}
+```
+
+The default is 2x. You can also use an absolute value to set the minimum feature size in the blend area.
+
 ### Advanced SDF Functions
 
 For advanced users, direct SDF expressions are supported:
@@ -149,18 +188,21 @@ sdf(sqrt(sqr(x) + sqr(y) + sqr(z)) - 10);
 ## Keyboard Shortcuts
 
 - `Ctrl+5` - Generate standard resolution mesh
-- `Ctrl+6` - Generate high resolution mesh
 - `Esc` - Return to preview mode
 - `Tab` - Indent code
 - `Shift+Tab` - Unindent code
 
-## Sharing
+### Storage and Sharing
 
-Projects can be saved and shared via:
-- GitHub Gists (requires GitHub token with gist scope)
-- Google Drive (requires authentication)
+Your designs are automatically saved to browser local storage. For sharing with others, you can use:
 
-Files are autosaved to browser local storage.
+1. **GitHub Gists:** Requires a GitHub personal access token with "gist" scope
+  - Your token is stored locally in your browser
+  - Used only to create your own gists
+
+2. **Google Drive:** Requires Google authentication
+  - Authentication details are stored locally in your browser.
+  - Designs are saved to your Google Drive in the `fncad` folder.
 
 ## License
 

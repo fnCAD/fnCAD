@@ -372,23 +372,6 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
 
 // Evaluate OpenSCAD-style AST to produce values (numbers or SDF expressions)
 // Returns undefined for statements that don't produce values (like module declarations)
-/**
- * Helper functions for handling SDF children
- *
- * Module handler checklist for conversion:
- * [x] smooth_union
- * [x] smooth_intersection
- * [x] smooth_difference
- * [x] cube (no children)
- * [x] sphere (no children)
- * [x] cylinder (no children)
- * [x] translate
- * [x] rotate
- * [x] scale
- * [x] union
- * [x] difference
- * [x] custom modules
- */
 
 export function flattenScope(
   nodes: Node[],
