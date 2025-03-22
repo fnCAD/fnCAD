@@ -573,6 +573,8 @@ function updateAuthStatusIcons() {
 declare global {
   interface Window {
     updateAuthStatusIcons: () => void;
+    _editor?: EditorView;
+    createEditorExtensions?: () => any[];
   }
 }
 window.updateAuthStatusIcons = updateAuthStatusIcons;
@@ -873,59 +875,67 @@ document.querySelector('.new-tab-button')?.addEventListener('click', () => {
 const editor = new EditorView({
   state: EditorState.create({
     doc: appState.getActiveDocument().content,
-    extensions: [
-      basicSetup,
-      keymap.of([indentWithTab]),
-      javascript(),
-      EditorView.updateListener.of(async (update: ViewUpdate) => {
-        if (update.docChanged) {
-          const content = update.state.doc.toString();
-          appState.updateEditorContent(content);
-        }
-      }),
-      themeCompartment.of(editorThemes[currentTheme as keyof typeof editorThemes] || oneDark),
-      errorDecorationField,
-      callHighlightField,
-      EditorView.updateListener.of((update: ViewUpdate) => {
-        if (update.docChanged || update.selectionSet) {
-          updateHelpPopup(update.view);
-        }
-      }),
-      EditorView.domEventHandlers({
-        keydown: (event, _view) => {
-          // Handle escape key to hide the popup
-          if (helpPopup.style.display === 'block' && event.key === 'Escape') {
-            helpPopup.style.display = 'none';
-            helpPopup.classList.remove('visible');
-            return true;
-          }
-
-          return false;
-        },
-      }),
-      EditorView.theme({
-        '&': {
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0 /* Important for nested flex! */,
-          overflow: 'hidden',
-        },
-        '.cm-scroller': {
-          overflow: 'auto',
-          flex: 1,
-          minHeight: 0 /* Important for nested flex! */,
-        },
-        '.cm-content': {
-          minHeight: '100%',
-        },
-        '.cm-gutters': { backgroundColor: 'transparent' },
-        '.cm-lineNumbers': { color: '#666' },
-      }),
-    ],
+    extensions: createEditorExtensions(),
   }),
   parent: document.getElementById('editor-pane')!,
 });
+
+// Create a function to generate editor extensions
+function createEditorExtensions() {
+  return [
+    basicSetup,
+    keymap.of([indentWithTab]),
+    javascript(),
+    EditorView.updateListener.of(async (update: ViewUpdate) => {
+      if (update.docChanged) {
+        const content = update.state.doc.toString();
+        appState.updateEditorContent(content);
+      }
+    }),
+    themeCompartment.of(editorThemes[currentTheme as keyof typeof editorThemes] || oneDark),
+    errorDecorationField,
+    callHighlightField,
+    EditorView.updateListener.of((update: ViewUpdate) => {
+      if (update.docChanged || update.selectionSet) {
+        updateHelpPopup(update.view);
+      }
+    }),
+    EditorView.domEventHandlers({
+      keydown: (event, _view) => {
+        // Handle escape key to hide the popup
+        if (helpPopup.style.display === 'block' && event.key === 'Escape') {
+          helpPopup.style.display = 'none';
+          helpPopup.classList.remove('visible');
+          return true;
+        }
+
+        return false;
+      },
+    }),
+    EditorView.theme({
+      '&': {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0 /* Important for nested flex! */,
+        overflow: 'hidden',
+      },
+      '.cm-scroller': {
+        overflow: 'auto',
+        flex: 1,
+        minHeight: 0 /* Important for nested flex! */,
+      },
+      '.cm-content': {
+        minHeight: '100%',
+      },
+      '.cm-gutters': { backgroundColor: 'transparent' },
+      '.cm-lineNumbers': { color: '#666' },
+    }),
+  ];
+}
+
+// Make extension creation function globally available
+window.createEditorExtensions = createEditorExtensions;
 
 // Store editor instance for later use
 window._editor = editor;

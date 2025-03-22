@@ -7,6 +7,7 @@ import { ParseError } from './cad/errors';
 import { errorDecorationFacet } from './main';
 import { SerializedMesh } from './types';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EditorState } from '@codemirror/state';
 
 export interface CameraState {
   position: { x: number; y: number; z: number };
@@ -26,6 +27,7 @@ export interface Document {
   content: string;
   cameraState?: CameraState;
   storage?: DocumentStorage;
+  editorState?: EditorState; // Store editor state with history
 }
 
 export enum ViewMode {
@@ -360,6 +362,12 @@ export class AppState {
     // Save camera state of current document before creating new one
     if (this.activeDocumentId) {
       this.saveCurrentCameraState();
+
+      // Also save current editor state to the current document
+      const currentDoc = this.documents.find((d) => d.id === this.activeDocumentId);
+      if (currentDoc && window._editor) {
+        currentDoc.editorState = window._editor.state;
+      }
     }
 
     const id = crypto.randomUUID();
@@ -380,6 +388,7 @@ export class AppState {
           z: 0, // Default camera target
         },
       },
+      // editorState will be created when the document is first activated
     };
     this.documents.push(doc);
     this.saveDocuments();
@@ -464,6 +473,12 @@ export class AppState {
     // Save camera state of current document before switching
     if (this.activeDocumentId) {
       this.saveCurrentCameraState();
+
+      // Also save current editor state to the current document
+      const currentDoc = this.documents.find((d) => d.id === this.activeDocumentId);
+      if (currentDoc && window._editor) {
+        currentDoc.editorState = window._editor.state;
+      }
     }
 
     const doc = this.documents.find((d) => d.id === id);
@@ -474,16 +489,23 @@ export class AppState {
       if (doc.cameraState) {
         this.restoreCameraState(doc);
       }
+
+      // Restore editor state if it exists, or create a new one
+      if (window._editor) {
+        if (doc.editorState) {
+          // Use the stored editor state (with its history)
+          window._editor.setState(doc.editorState);
+        } else {
+          // Create a new state with the document content (no history)
+          const state = EditorState.create({
+            doc: doc.content,
+            extensions: window.createEditorExtensions!(),
+          });
+          window._editor.setState(state);
+        }
+      }
+
       this.saveDocuments();
-
-      window._editor?.dispatch({
-        changes: {
-          from: 0,
-          to: window._editor.state.doc.length,
-          insert: doc.content,
-        },
-      });
-
       this.updateShader();
     }
   }
@@ -511,15 +533,18 @@ export class AppState {
           // Find the document
           const newActiveDoc = this.documents.find((d) => d.id === this.activeDocumentId);
 
-          // Update the editor content
+          // Restore editor state if available
           if (window._editor && newActiveDoc) {
-            window._editor.dispatch({
-              changes: {
-                from: 0,
-                to: window._editor.state.doc.length,
-                insert: newActiveDoc.content,
-              },
-            });
+            if (newActiveDoc.editorState) {
+              window._editor.setState(newActiveDoc.editorState);
+            } else {
+              // Create a new state with the document content (no history)
+              const state = EditorState.create({
+                doc: newActiveDoc.content,
+                extensions: window.createEditorExtensions!(),
+              });
+              window._editor.setState(state);
+            }
           }
 
           // Restore camera state if available
@@ -540,6 +565,8 @@ export class AppState {
     const doc = this.getActiveDocument();
     if (content !== doc.content) {
       doc.content = content;
+      // Don't need to update editorState here since it's automatically
+      // reflected in the current state of the editor
       this.saveDocuments();
       this.updateShader();
       // Switch back to preview mode when content changes
