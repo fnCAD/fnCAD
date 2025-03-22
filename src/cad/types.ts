@@ -330,6 +330,16 @@ export class IndexExpression extends Expression {
   }
 }
 
+export class FunctionCallExpression extends Expression {
+  constructor(
+    public name: string,
+    public args: Record<string, Expression>,
+    location: SourceLocation
+  ) {
+    super(location);
+  }
+}
+
 export class SDFExpressionNode extends Expression {
   constructor(
     public readonly expression: string,

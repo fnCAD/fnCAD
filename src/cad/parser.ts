@@ -30,6 +30,7 @@ import {
   AssignmentStatement,
   IfStatement,
   AssertStatement,
+  FunctionCallExpression,
 } from './types';
 import { parseError } from './errors';
 import { parse as parseSDF } from '../sdf_expressions/parser';
@@ -772,8 +773,17 @@ export class Parser {
         throw parseError('Unexpected string literal', token.location);
       case 'identifier':
         const name = token.value;
+        // Check if it's a math function
+        if (this.isMathFunction(name) && this.check('(')) {
+          const args = this.parseArguments();
+          expr = new FunctionCallExpression(name, args, {
+            start: token.location.start,
+            end: this.previous().location.end,
+            source: this.source,
+          });
+        }
         // Special case for sdf()
-        if (name === 'sdf' && this.check('(')) {
+        else if (name === 'sdf' && this.check('(')) {
           expr = this.parseSDFExpression(token);
         }
         // Handle regular module call if it's followed by (
@@ -870,6 +880,28 @@ export class Parser {
       end: this.previous().location.end,
       source: this.source,
     });
+  }
+
+  private isMathFunction(name: string): boolean {
+    return [
+      'sin',
+      'cos',
+      'tan',
+      'asin',
+      'acos',
+      'atan',
+      'atan2',
+      'abs',
+      'floor',
+      'ceil',
+      'round',
+      'sqrt',
+      'pow',
+      'log',
+      'exp',
+      'min',
+      'max',
+    ].includes(name);
   }
 
   private parseVectorLiteral(): VectorLiteral {

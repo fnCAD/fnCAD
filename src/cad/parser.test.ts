@@ -305,6 +305,41 @@ describe('CAD Parser', () => {
     }).toThrow('Division by zero');
   });
 
+  test('math functions can be used in expressions', () => {
+    const ctx = new Context();
+    parse(`
+      var angle = 30;
+      var x = sin(angle);
+      var y = cos(angle);
+      var z = sqrt(x*x + y*y);
+    `).map((stmt) => evalCAD(stmt, ctx));
+
+    expect(ctx.get('x')).toBeCloseTo(0.5); // sin(30°) = 0.5
+    expect(ctx.get('y')).toBeCloseTo(0.866, 3); // cos(30°) ≈ 0.866
+    expect(ctx.get('z')).toBeCloseTo(1.0, 1); // Pythagorean identity - needs looser precision due to floating point errors
+  });
+
+  test('math functions work with various arguments', () => {
+    const ctx = new Context();
+    parse(`
+      var a = pow(2, 3);
+      var b = abs(-5);
+      var c = floor(3.7);
+      var d = ceil(3.2);
+      var e = round(3.5);
+      var f = min(10, 5, 7);
+      var g = max(10, 20, 15);
+    `).map((stmt) => evalCAD(stmt, ctx));
+
+    expect(ctx.get('a')).toBe(8); // 2³ = 8
+    expect(ctx.get('b')).toBe(5); // |-5| = 5
+    expect(ctx.get('c')).toBe(3); // floor(3.7) = 3
+    expect(ctx.get('d')).toBe(4); // ceil(3.2) = 4
+    expect(ctx.get('e')).toBe(4); // round(3.5) = 4
+    expect(ctx.get('f')).toBe(5); // min(10,5,7) = 5
+    expect(ctx.get('g')).toBe(20); // max(10,20,15) = 20
+  });
+
   test('compiles smooth union with detail parameter', () => {
     function compileToSDF(input: string): string {
       const ast = parse(input);

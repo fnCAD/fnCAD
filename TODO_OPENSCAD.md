@@ -85,7 +85,8 @@
 - [x] intersection()
 
 ## Standard Library
-- [ ] Math functions (sin, cos, etc)
+- [x] Math functions (sin, cos, tan, asin, acos, atan, atan2)
+- [x] Math utilities (abs, floor, ceil, round, sqrt, pow, log, exp, min, max)
 - [ ] List operations
 - [ ] String functions
 - [ ] Common shapes (regular_polygon, etc)

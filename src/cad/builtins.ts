@@ -24,6 +24,7 @@ import {
   AABB,
   AssertStatement,
   SDFScene,
+  FunctionCallExpression,
 } from './types';
 
 // Relative value type for percentage and ratio values
@@ -300,6 +301,71 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
     }
 
     return array[index];
+  }
+  if (expr instanceof FunctionCallExpression) {
+    // Evaluate the arguments first
+    const evaluatedArgs: Record<string, Value> = {};
+    for (const [key, argExpr] of Object.entries(expr.args)) {
+      evaluatedArgs[key] = evalExpression(argExpr, context);
+    }
+
+    // Use the logic from the math functions in evalModuleCall
+    switch (expr.name) {
+      case 'sin':
+        // Convert degrees to radians (OpenSCAD compatibility)
+        return Math.sin(((evaluatedArgs['0'] as number) * Math.PI) / 180);
+      case 'cos':
+        return Math.cos(((evaluatedArgs['0'] as number) * Math.PI) / 180);
+      case 'tan':
+        return Math.tan(((evaluatedArgs['0'] as number) * Math.PI) / 180);
+      case 'asin':
+        // Convert radians to degrees
+        return (Math.asin(evaluatedArgs['0'] as number) * 180) / Math.PI;
+      case 'acos':
+        return (Math.acos(evaluatedArgs['0'] as number) * 180) / Math.PI;
+      case 'atan':
+        return (Math.atan(evaluatedArgs['0'] as number) * 180) / Math.PI;
+      case 'atan2': {
+        const y = evaluatedArgs['0'] as number;
+        const x = evaluatedArgs['1'] as number;
+        return (Math.atan2(y, x) * 180) / Math.PI;
+      }
+      case 'abs':
+        return Math.abs(evaluatedArgs['0'] as number);
+      case 'floor':
+        return Math.floor(evaluatedArgs['0'] as number);
+      case 'ceil':
+        return Math.ceil(evaluatedArgs['0'] as number);
+      case 'round':
+        return Math.round(evaluatedArgs['0'] as number);
+      case 'sqrt':
+        return Math.sqrt(evaluatedArgs['0'] as number);
+      case 'pow': {
+        const base = evaluatedArgs['base'] || (evaluatedArgs['0'] as number);
+        const exponent = evaluatedArgs['exponent'] || (evaluatedArgs['1'] as number);
+        return Math.pow(base as number, exponent as number);
+      }
+      case 'log':
+        return Math.log(evaluatedArgs['0'] as number);
+      case 'exp':
+        return Math.exp(evaluatedArgs['0'] as number);
+      case 'min': {
+        // Get all positional arguments
+        const values = Object.keys(evaluatedArgs)
+          .filter((key) => !isNaN(Number(key)))
+          .map((key) => evaluatedArgs[key] as number);
+        return Math.min(...values);
+      }
+      case 'max': {
+        // Get all positional arguments
+        const values = Object.keys(evaluatedArgs)
+          .filter((key) => !isNaN(Number(key)))
+          .map((key) => evaluatedArgs[key] as number);
+        return Math.max(...values);
+      }
+      default:
+        throw parseError(`Unknown function: ${expr.name}`, expr.location);
+    }
   }
   throw new Error(`Unsupported expression type: ${expr.constructor.name}`);
 }

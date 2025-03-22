@@ -13,6 +13,240 @@ export interface ModuleDoc {
   parameters: ParameterDoc[];
 }
 
+export interface FunctionDoc {
+  name: string;
+  description: string;
+  parameters: ParameterDoc[];
+  returns: string;
+}
+
+export const mathFunctionDocs: FunctionDoc[] = [
+  {
+    name: 'sin',
+    description: 'Returns the sine of the given angle in degrees',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Angle in degrees',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'cos',
+    description: 'Returns the cosine of the given angle in degrees',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Angle in degrees',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'tan',
+    description: 'Returns the tangent of the given angle in degrees',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Angle in degrees',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'asin',
+    description: 'Returns the arcsine in degrees of the given value',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Value between -1 and 1',
+        type: 'number',
+      },
+    ],
+    returns: 'number (degrees)',
+  },
+  {
+    name: 'acos',
+    description: 'Returns the arccosine in degrees of the given value',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Value between -1 and 1',
+        type: 'number',
+      },
+    ],
+    returns: 'number (degrees)',
+  },
+  {
+    name: 'atan',
+    description: 'Returns the arctangent in degrees of the given value',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number (degrees)',
+  },
+  {
+    name: 'atan2',
+    description: 'Returns the arctangent in degrees of y/x, using signs to determine quadrant',
+    parameters: [
+      {
+        name: 'y',
+        description: 'Y coordinate',
+        type: 'number',
+      },
+      {
+        name: 'x',
+        description: 'X coordinate',
+        type: 'number',
+      },
+    ],
+    returns: 'number (degrees)',
+  },
+  {
+    name: 'abs',
+    description: 'Returns the absolute value of the input',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'floor',
+    description: 'Returns the largest integer less than or equal to the input',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'ceil',
+    description: 'Returns the smallest integer greater than or equal to the input',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'round',
+    description: 'Returns the input rounded to the nearest integer',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'sqrt',
+    description: 'Returns the square root of the input',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Non-negative input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'pow',
+    description: 'Returns base raised to the power of exponent',
+    parameters: [
+      {
+        name: 'base',
+        description: 'Base value',
+        type: 'number',
+      },
+      {
+        name: 'exponent',
+        description: 'Exponent value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'log',
+    description: 'Returns the natural logarithm (base e) of the input',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Positive input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'exp',
+    description: 'Returns e raised to the power of the input',
+    parameters: [
+      {
+        name: 'value',
+        description: 'Input value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'min',
+    description: 'Returns the smallest of the given values',
+    parameters: [
+      {
+        name: 'a',
+        description: 'First value',
+        type: 'number',
+      },
+      {
+        name: 'b',
+        description: 'Second value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+  {
+    name: 'max',
+    description: 'Returns the largest of the given values',
+    parameters: [
+      {
+        name: 'a',
+        description: 'First value',
+        type: 'number',
+      },
+      {
+        name: 'b',
+        description: 'Second value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
+];
+
 export const builtinDocs: ModuleDoc[] = [
   {
     name: 'sphere',
@@ -193,4 +427,18 @@ export function getModuleDoc(name: string): ModuleDoc | undefined {
  */
 export function getAllModuleNames(): string[] {
   return builtinDocs.map((doc) => doc.name);
+}
+
+/**
+ * Returns documentation for a math function
+ */
+export function getMathFunctionDoc(name: string): FunctionDoc | undefined {
+  return mathFunctionDocs.find((doc) => doc.name === name);
+}
+
+/**
+ * Returns an array of all documented math function names
+ */
+export function getAllMathFunctionNames(): string[] {
+  return mathFunctionDocs.map((doc) => doc.name);
 }
