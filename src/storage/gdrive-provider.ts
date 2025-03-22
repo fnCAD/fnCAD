@@ -118,14 +118,14 @@ export class GDriveProvider implements StorageProvider {
         });
 
         tokenClient.requestAccessToken({ prompt: 'consent' });
-      });
 
-      // Try to update authentication icons if window function exists
-      setTimeout(() => {
-        if (typeof window.updateAuthStatusIcons === 'function') {
-          window.updateAuthStatusIcons();
-        }
-      }, 500); // Small delay to ensure token is saved before checking
+        // Try to update authentication icons if window function exists
+        setTimeout(() => {
+          if (typeof window.updateAuthStatusIcons === 'function') {
+            window.updateAuthStatusIcons();
+          }
+        }, 500); // Small delay to ensure token is saved before checking
+      });
     } catch (error) {
       console.error('Failed to load Google APIs:', error);
       return false;
