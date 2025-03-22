@@ -662,7 +662,13 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'smooth_difference': {
       const params: ParameterDef[] = [
-        { name: 'radius', type: 'number', required: true, description: 'Blend radius' },
+        {
+          name: 'radius',
+          type: 'number',
+          required: false,
+          defaultValue: 0.5,
+          description: 'Blend radius',
+        },
         {
           name: 'detail',
           type: 'relative',

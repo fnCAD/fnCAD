@@ -353,6 +353,24 @@ describe('CAD Parser', () => {
     expect(sdf2).toContain('smooth_union(0.5, 2x');
   });
 
+  test('smooth_difference works with default radius', () => {
+    function compileToSDF(input: string): string {
+      const ast = parse(input);
+      return moduleToSDF(ast).expr;
+    }
+
+    // Should compile without error with default radius
+    const result = compileToSDF('smooth_difference() { sphere(1); cube(1); }');
+    expect(result).toBeDefined();
+
+    // smooth_difference compiles to a smooth_union with negation
+    expect(result).toContain('smooth_union(0.5');
+
+    // Explicit radius should still work
+    const explicitRadius = compileToSDF('smooth_difference(0.8) { sphere(1); cube(1); }');
+    expect(explicitRadius).toContain('smooth_union(0.8');
+  });
+
   describe('Parameter Validation', () => {
     function compileToSDF(input: string): string {
       const ast = parse(input);
