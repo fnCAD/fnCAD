@@ -554,7 +554,13 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
   switch (call.name) {
     case 'smooth_union': {
       const params: ParameterDef[] = [
-        { name: 'radius', type: 'number', required: true, description: 'Blend radius' },
+        {
+          name: 'radius',
+          type: 'number',
+          required: false,
+          defaultValue: 0.5,
+          description: 'Blend radius',
+        },
         {
           name: 'detail',
           type: 'relative',
@@ -599,7 +605,13 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
 
     case 'smooth_intersection': {
       const params: ParameterDef[] = [
-        { name: 'radius', type: 'number', required: true, description: 'Blend radius' },
+        {
+          name: 'radius',
+          type: 'number',
+          required: false,
+          defaultValue: 0.5,
+          description: 'Blend radius',
+        },
         {
           name: 'detail',
           type: 'relative',
