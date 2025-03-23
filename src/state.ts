@@ -392,14 +392,14 @@ translate([-5, 0, 0]) union() { sphere(1); translate([0, 0, 1]) cube(1.4); }
 translate([0, 0, 0]) difference() { sphere(1.2); translate([0, 0, 0.8]) cube(1.6); }
 translate([5, 0, 0]) intersection() { sphere(1.2); translate([0, 0, 0]) cube(1.8); }
 
-translate([-5, 0, -5]) smooth_union(0.4) { sphere(1); translate([0, 0, 1]) cube(1.4); }
+translate([-5, 0, -5]) smooth_union(0.1) { sphere(1); translate([0, 0, 1]) cube(1.4); }
 
-translate([0, 0, -5]) smooth_difference(0.4) {
+translate([0, 0, -5]) smooth_difference(0.1) {
   sphere(1.2);
   translate([0, 0, 0.8]) cube(1.6);
 }
 
-translate([5, 0, -5]) smooth_intersection(0.4) {
+translate([5, 0, -5]) smooth_intersection(0.1) {
   sphere(1.2);
   translate([0, 0, 0]) cube(1.8);
 }`,
