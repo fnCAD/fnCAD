@@ -384,17 +384,35 @@ export class AppState {
     const doc: Document = {
       id,
       name: `model${num}`,
-      content: `sphere(1);`,
+      content: `translate([-5, 0, 5]) sphere(1);
+translate([0, 0, 5]) cube(1.5);
+translate([5, 0, 5]) cylinder(radius=1, height=1.5);
+
+translate([-5, 0, 0]) union() { sphere(1); translate([0, 0, 1]) cube(1.4); }
+translate([0, 0, 0]) difference() { sphere(1.2); translate([0, 0, 0.8]) cube(1.6); }
+translate([5, 0, 0]) intersection() { sphere(1.2); translate([0, 0, 0]) cube(1.8); }
+
+translate([-5, 0, -5]) smooth_union(0.4) { sphere(1); translate([0, 0, 1]) cube(1.4); }
+
+translate([0, 0, -5]) smooth_difference(0.4) {
+  sphere(1.2);
+  translate([0, 0, 0.8]) cube(1.6);
+}
+
+translate([5, 0, -5]) smooth_intersection(0.4) {
+  sphere(1.2);
+  translate([0, 0, 0]) cube(1.8);
+}`,
       cameraState: {
         position: {
-          x: 0,
-          y: 0,
-          z: 5, // Default camera position
+          x: 4,
+          y: 7,
+          z: 12, // see all examples
         },
         target: {
           x: 0,
           y: 0,
-          z: 0, // Default camera target
+          z: 0,
         },
       },
       // editorState will be created when the document is first activated
