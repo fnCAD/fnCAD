@@ -123,6 +123,9 @@ export class Interval {
       min = Math.min(...intervals.map((i) => i.min));
       if (intervals.some((i) => i.max < -limit)) {
         max = Math.min(...intervals.map((i) => i.max));
+      } else {
+        // ensure the approximation doesn't break Interval semantics.
+        max = Math.min(max, min);
       }
     }
     // if *all* are above limit, use plain min() for the max.
