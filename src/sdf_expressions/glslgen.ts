@@ -145,7 +145,6 @@ export class GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
     const minScale = Math.min(sx, sy, sz);
-    const formatNum = (n: number) => n.toFixed(8);
     return this.withPoint(
       this.generator.save(
         'vec3',
@@ -158,9 +157,6 @@ export class GLSLContext {
     // Create rotation matrix using our utility
     const rotMatrix = RotationUtils.createRotationMatrix(ax, ay, az);
     const m = rotMatrix.elements;
-
-    // Format matrix values with consistent precision
-    const formatNum = (n: number) => n.toFixed(8);
 
     // Convert to mat3 for GLSL, taking just the rotation part
     const glslMatrix = `mat3(
@@ -175,4 +171,9 @@ export class GLSLContext {
       this.generator.save('vec3', () => `${glslMatrix} * ${self.varExpr(self.currentPoint)}`)
     );
   }
+}
+
+// Helper function to format numbers with consistent precision
+function formatNum(n: number): string {
+  return n.toFixed(8);
 }
