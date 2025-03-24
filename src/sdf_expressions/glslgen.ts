@@ -145,10 +145,11 @@ export class GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
     const minScale = Math.min(sx, sy, sz);
+    const formatNum = (n: number) => n.toFixed(8);
     return this.withPoint(
       this.generator.save(
         'vec3',
-        () => `${self.currentPoint} * ${minScale} / vec3(${sx}, ${sy}, ${sz})`
+        () => `${self.currentPoint} * ${formatNum(minScale)} / vec3(${sx}, ${sy}, ${sz})`
       )
     );
   }

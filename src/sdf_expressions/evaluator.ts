@@ -875,19 +875,16 @@ class ScaleFunctionCall extends FunctionCallNode {
     const sy = args[1];
     const sz = args[2];
 
-    // Handle relative values
     if (
       sx instanceof RelativeNumberNode ||
       sy instanceof RelativeNumberNode ||
       sz instanceof RelativeNumberNode
     ) {
-      // For relative values, we need to use a base value
-      // This could be more sophisticated, but for now let's use 1.0 as the base
-      const baseValue = 1.0;
-
-      this.#sx = sx instanceof RelativeNumberNode ? sx.applyTo(baseValue) : constantValue(sx);
-      this.#sy = sy instanceof RelativeNumberNode ? sy.applyTo(baseValue) : constantValue(sy);
-      this.#sz = sz instanceof RelativeNumberNode ? sz.applyTo(baseValue) : constantValue(sz);
+      // relative values work just like regular values as they're just decorative here;
+      // there is no absolute meaning of scale.
+      this.#sx = sx instanceof RelativeNumberNode ? sx.applyTo(1.0) : constantValue(sx);
+      this.#sy = sy instanceof RelativeNumberNode ? sy.applyTo(1.0) : constantValue(sy);
+      this.#sz = sz instanceof RelativeNumberNode ? sz.applyTo(1.0) : constantValue(sz);
     } else {
       this.#sx = constantValue(sx);
       this.#sy = constantValue(sy);
