@@ -137,7 +137,10 @@ export class GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
     return this.withPoint(
-      this.generator.save('vec3', () => `(${self.varExpr(self.currentPoint)} - vec3(${dx}, ${dy}, ${dz}))`)
+      this.generator.save(
+        'vec3',
+        () => `(${self.varExpr(self.currentPoint)} - vec3(${dx}, ${dy}, ${dz}))`
+      )
     );
   }
 
@@ -146,7 +149,10 @@ export class GLSLContext {
     this.useVar(this.currentPoint);
     const self = this;
     return this.withPoint(
-      this.generator.save('vec3', () => `${self.varExpr(self.currentPoint)} / vec3(${sx}, ${sy}, ${sz})`)
+      this.generator.save(
+        'vec3',
+        () => `${self.varExpr(self.currentPoint)} / vec3(${sx}, ${sy}, ${sz})`
+      )
     );
   }
 
