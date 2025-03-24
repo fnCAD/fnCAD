@@ -73,14 +73,14 @@ export class GLSLGenerator {
     this.statements.push(' '.repeat(this.indent_) + stmt);
   }
 
-  flushVars() {
+  flushVars(flushAll: boolean = false) {
     // Process pending variables
     for (const [name, pending] of Object.entries(this.pendingVars)) {
       if (pending.flushed) {
         continue;
       }
       const expr = pending.callback();
-      if (pending.useCount > 1 || expr.length > 40) {
+      if (pending.useCount > 1 || expr.length > 40 || flushAll) {
         // Create variable if used multiple times
         this.statements.push(' '.repeat(this.indent_) + `${pending.type} ${name} = ${expr};`);
         this.pendingVars[name].flushed = true;

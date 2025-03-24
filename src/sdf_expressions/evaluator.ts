@@ -1112,6 +1112,8 @@ class AABBFunctionCall extends FunctionCallNode {
     const resultVar = context.reserveVar();
     context.useVar(context.getPoint());
 
+    // Ensure that variables that we'll need outside aren't flushed inside the AABB.
+    context.generator.flushVars(true);
     // Initialize result variable
     context.addRaw(`float ${resultVar} = 0.0;`);
     // Generate AABB check (`aabb_check` does its own expansion)
