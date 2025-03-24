@@ -41,7 +41,7 @@ export function generateShader(
     }
 
     float scene(vec3 pos) {
-      ${generator.generateCode()}
+      ${generator.generateCode(result)}
       return ${generator.varExpr(result)};
     }
 

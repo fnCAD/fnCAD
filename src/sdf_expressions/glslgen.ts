@@ -3,7 +3,8 @@ import { RotationUtils } from '../utils/rotation';
 interface PendingVar {
   type: 'float' | 'vec3';
   useCount: number;
-  flushed: boolean;
+  flushed: boolean; // has been assigned a variable
+  dead: boolean; // will never be used again
   callback: () => string;
 }
 
@@ -19,6 +20,7 @@ export class GLSLGenerator {
       type: 'vec3',
       useCount: 0,
       flushed: true,
+      dead: false,
       callback: () => 'FAIL',
     };
   }
@@ -31,10 +33,12 @@ export class GLSLGenerator {
   save(type: 'float' | 'vec3', callback: () => string): string {
     const varName = this.freshVar();
     const flushed = false;
+    const dead = false;
     this.pendingVars[varName] = {
       type,
       useCount: 0,
       flushed,
+      dead,
       callback,
     };
     return varName;
@@ -46,6 +50,7 @@ export class GLSLGenerator {
       type: 'float',
       useCount: 0,
       flushed: true,
+      dead: false,
       callback: () => 'FAIL',
     };
     return varName;
@@ -54,6 +59,16 @@ export class GLSLGenerator {
   // Increment use count for a pending variable
   useVar(name: string): void {
     this.pendingVars[name].useCount++;
+  }
+
+  /*
+   * This var won't be used again. The effect is that even in flushVars(),
+   * the variable does not need to be emitted, because all the variables that
+   * will ever use it *will* be emitted.
+   * This is equivalent to mark-and-sweep GC, with the open variables being the GC roots.
+   */
+  killVar(name: string): void {
+    this.pendingVars[name].dead = true;
   }
 
   varExpr(name: string): string {
@@ -73,14 +88,17 @@ export class GLSLGenerator {
     this.statements.push(' '.repeat(this.indent_) + stmt);
   }
 
-  flushVars(flushAll: boolean = false) {
+  flushVars(resultVar: string | null = null) {
     // Process pending variables
     for (const [name, pending] of Object.entries(this.pendingVars)) {
       if (pending.flushed) {
         continue;
       }
       const expr = pending.callback();
-      if (pending.useCount > 1 || expr.length > 40 || flushAll) {
+      // The result var, if set, is always allowed survive the flush:
+      // we assume that it's only used once.
+      // This is to avoid `var a = 5.0; return a;`
+      if (pending.useCount > 1 || expr.length > 40 || (!pending.dead && name !== resultVar)) {
         // Create variable if used multiple times
         this.statements.push(' '.repeat(this.indent_) + `${pending.type} ${name} = ${expr};`);
         this.pendingVars[name].flushed = true;
@@ -89,8 +107,8 @@ export class GLSLGenerator {
   }
 
   // Generate final GLSL code
-  generateCode(): string {
-    this.flushVars();
+  generateCode(resultVar: string | null = null): string {
+    this.flushVars(resultVar);
     return this.statements.join('\n');
   }
 }
@@ -115,7 +133,24 @@ export class GLSLContext {
   getPoint(): string {
     return this.currentPoint;
   }
-
+  consumePoint(callback: (context: GLSLContext) => string): string {
+    var ret = callback(this);
+    this.killPoint();
+    return ret;
+  }
+  killPoint(): void {
+    this.generator.killVar(this.currentPoint);
+  }
+  consume(type: 'float' | 'vec3', consumed: string[], callback: () => string): string {
+    for (const id of consumed) {
+      this.generator.useVar(id);
+    }
+    const ret = this.generator.save(type, callback);
+    for (const id of consumed) {
+      this.generator.killVar(id);
+    }
+    return ret;
+  }
   save(type: 'float' | 'vec3', callback: () => string): string {
     return this.generator.save(type, callback);
   }

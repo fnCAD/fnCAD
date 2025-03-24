@@ -135,10 +135,9 @@ export class BinaryOpNode extends Node {
   toGLSL(context: GLSLContext): string {
     const lvar = this.left.toGLSL(context);
     const rvar = this.right.toGLSL(context);
-    context.useVar(lvar);
-    context.useVar(rvar);
-    return context.save(
+    return context.consume(
       'float',
+      [lvar, rvar],
       () => `(${context.varExpr(lvar)} ${this.operator} ${context.varExpr(rvar)})`
     );
   }
@@ -180,8 +179,7 @@ export class UnaryOpNode extends Node {
 
   toGLSL(context: GLSLContext): string {
     const val = this.operand.toGLSL(context);
-    context.useVar(val);
-    return context.save('float', () => `-(${context.varExpr(val)})`);
+    return context.consume('float', [val], () => `-(${context.varExpr(val)})`);
   }
 
   evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
@@ -288,8 +286,7 @@ class SinFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const arg = this.args[0].toGLSL(context);
-    context.useVar(arg);
-    return context.save('float', () => `sin(${context.varExpr(arg)})`);
+    return context.consume('float', [arg], () => `sin(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -316,8 +313,7 @@ class CosFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const arg = this.args[0].toGLSL(context);
-    context.useVar(arg);
-    return context.save('float', () => `cos(${context.varExpr(arg)})`);
+    return context.consume('float', [arg], () => `cos(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -344,8 +340,7 @@ class SqrtFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const arg = this.args[0].toGLSL(context);
-    context.useVar(arg);
-    return context.save('float', () => `sqrt(${context.varExpr(arg)})`);
+    return context.consume('float', [arg], () => `sqrt(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -403,8 +398,7 @@ class LogFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const arg = this.args[0].toGLSL(context);
-    context.useVar(arg);
-    return context.save('float', () => `log(${context.varExpr(arg)})`);
+    return context.consume('float', [arg], () => `log(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -439,9 +433,11 @@ class MinFunctionCall extends FunctionCallNode {
     if (evalArgs.length === 1) return evalArgs[0];
     return evalArgs.reduce((acc, arg, i) => {
       if (i === 0) return arg;
-      context.useVar(acc);
-      context.useVar(arg);
-      return context.save('float', () => `min(${context.varExpr(acc)}, ${context.varExpr(arg)})`);
+      return context.consume(
+        'float',
+        [acc, arg],
+        () => `min(${context.varExpr(acc)}, ${context.varExpr(arg)})`
+      );
     });
   }
 
@@ -527,9 +523,11 @@ class MaxFunctionCall extends FunctionCallNode {
     if (evalArgs.length === 1) return evalArgs[0];
     return evalArgs.reduce((acc, arg, i) => {
       if (i === 0) return arg;
-      context.useVar(acc);
-      context.useVar(arg);
-      return context.save('float', () => `max(${context.varExpr(acc)}, ${context.varExpr(arg)})`);
+      return context.consume(
+        'float',
+        [acc, arg],
+        () => `max(${context.varExpr(acc)}, ${context.varExpr(arg)})`
+      );
     });
   }
 
@@ -787,9 +785,11 @@ class Atan2FunctionCall extends FunctionCallNode {
   toGLSL(context: GLSLContext): string {
     const y = this.args[0].toGLSL(context);
     const x = this.args[1].toGLSL(context);
-    context.useVar(y);
-    context.useVar(x);
-    return context.save('float', () => `atan(${context.varExpr(y)}, ${context.varExpr(x)})`);
+    return context.consume(
+      'float',
+      [y, x],
+      () => `atan(${context.varExpr(y)}, ${context.varExpr(x)})`
+    );
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -816,8 +816,7 @@ class ExpFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const arg = this.args[0].toGLSL(context);
-    context.useVar(arg);
-    return context.save('float', () => `exp(${context.varExpr(arg)})`);
+    return context.consume('float', [arg], () => `exp(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -851,8 +850,7 @@ class AbsFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const arg = this.args[0].toGLSL(context);
-    context.useVar(arg);
-    return context.save('float', () => `abs(${context.varExpr(arg)})`);
+    return context.consume('float', [arg], () => `abs(${context.varExpr(arg)})`);
   }
 
   evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
@@ -923,9 +921,12 @@ class ScaleFunctionCall extends FunctionCallNode {
     const newContext = context.scale(this.#sx, this.#sy, this.#sz);
     const minScale = Math.min(this.#sx, this.#sy, this.#sz);
     const ret = this.#body.toGLSL(newContext);
-    context.useVar(ret);
     // scale back
-    return context.save('float', () => `(${context.varExpr(ret)} * ${minScale.toFixed(8)})`);
+    return context.consume(
+      'float',
+      [ret],
+      () => `(${context.varExpr(ret)} * ${minScale.toFixed(8)})`
+    );
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
@@ -995,9 +996,9 @@ class TranslateFunctionCall extends FunctionCallNode {
     const evalDx = constantValue(this.#dx);
     const evalDy = constantValue(this.#dy);
     const evalDz = constantValue(this.#dz);
-
-    const newContext = context.translate(evalDx, evalDy, evalDz);
-    return this.#body.toGLSL(newContext);
+    return context
+      .translate(evalDx, evalDy, evalDz)
+      .consumePoint((context) => this.#body.toGLSL(context));
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
@@ -1113,7 +1114,8 @@ class AABBFunctionCall extends FunctionCallNode {
     context.useVar(context.getPoint());
 
     // Ensure that variables that we'll need outside aren't flushed inside the AABB.
-    context.generator.flushVars(true);
+    // (but also the point can survive)
+    context.generator.flushVars(context.getPoint());
     // Initialize result variable
     context.addRaw(`float ${resultVar} = 0.0;`);
     // Generate AABB check (`aabb_check` does its own expansion)
@@ -1127,7 +1129,7 @@ class AABBFunctionCall extends FunctionCallNode {
     // Inside AABB - evaluate actual function
     const innerResult = this.#fn.toGLSL(context);
     context.useVar(innerResult);
-    context.generator.flushVars();
+    context.generator.flushVars(innerResult);
     context.addRaw(`${resultVar} = ${context.varExpr(innerResult)};`);
     context.generator.indent(-2);
     context.addRaw(`}`);
@@ -1276,8 +1278,9 @@ class RotateFunctionCall extends FunctionCallNode {
     const evalRx = constantValue(rx);
     const evalRy = constantValue(ry);
     const evalRz = constantValue(rz);
-    const newContext = context.rotate(evalRx, evalRy, evalRz);
-    return this.#body.toGLSL(newContext);
+    return context
+      .rotate(evalRx, evalRy, evalRz)
+      .consumePoint((context) => this.#body.toGLSL(context));
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {

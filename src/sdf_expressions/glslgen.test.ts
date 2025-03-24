@@ -44,7 +44,10 @@ describe('GLSLContext', () => {
   it('chains transformations', () => {
     const gen = new GLSLGenerator();
     const ctx = new GLSLContext(gen);
-    ctx.translate(1, 0, 0).rotate(0, Math.PI / 2, 0);
+    const tranCtx = ctx.translate(1, 0, 0);
+    tranCtx.rotate(0, Math.PI / 2, 0);
+    tranCtx.killPoint();
+
     const code = gen.generateCode().split('\n');
     // Extract and verify matrix for Y rotation
     expect(code[0]).toBe('vec3 var2 = mat3(');
@@ -76,6 +79,7 @@ describe('GLSLContext', () => {
     const ctx1 = new GLSLContext(gen);
     const ctx2 = ctx1.translate(1, 0, 0);
     ctx2.withPoint(ctx2.getPoint()).rotate(0, Math.PI / 2, 0);
+    ctx2.killPoint();
     const code = gen.generateCode().split('\n');
     expect(code[0]).toBe('vec3 var2 = mat3(');
 
