@@ -921,7 +921,11 @@ class ScaleFunctionCall extends FunctionCallNode {
 
   toGLSL(context: GLSLContext): string {
     const newContext = context.scale(this.#sx, this.#sy, this.#sz);
-    return this.#body.toGLSL(newContext);
+    const minScale = Math.min(this.#sx, this.#sy, this.#sz);
+    const ret = this.#body.toGLSL(newContext);
+    context.useVar(ret);
+    // scale back
+    return context.save('float', () => `(${context.varExpr(ret)} * ${minScale.toFixed(8)})`);
   }
 
   evaluateContent(x: Interval, y: Interval, z: Interval): Content {
