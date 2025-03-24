@@ -1055,7 +1055,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       // For difference, we keep the first child's bounds since that's the maximum possible extent
       const bounds = base.bounds;
 
-      const expr = `max(${base.expr}, ${negatedChildren.join(', ')})`;
+      const expr = (negatedChildren.length === 0) ? base.expr : `max(${base.expr}, ${negatedChildren.join(', ')})`;
 
       if (!bounds) return { type: 'sdf', expr };
 
