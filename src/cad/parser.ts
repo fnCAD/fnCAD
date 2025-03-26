@@ -258,15 +258,12 @@ export class Parser {
       this.column++;
     }
 
-    // Check for relative number suffixes (% or x)
-    let type: 'number' | 'percent' | 'ratio' = 'number';
+    // Check for relative number suffix (%)
+    // TODO: Add support for an alternative syntax to replace "Nx" (maybe "by N")
+    let type: 'number' | 'percent' = 'number';
     if (current < this.source.length) {
       if (this.source[current] === '%') {
         type = 'percent';
-        current++;
-        this.column++;
-      } else if (this.source[current] === 'x') {
-        type = 'ratio';
         current++;
         this.column++;
       }
@@ -475,7 +472,7 @@ export class Parser {
     }
 
     // Handle number, percent, ratio tokens as potential expressions
-    if (token.type === 'number' || token.type === 'percent' || token.type === 'ratio') {
+    if (token.type === 'number' || token.type === 'percent') {
       // Parse the entire expression starting with the number
       const expr = this.parseExpression();
       this.expect(';', 'Expected ; after expression');
@@ -755,10 +752,12 @@ export class Parser {
       // Look ahead to see if we have a number followed by x, y, or z
       const current = this.tokens[this.current];
       const next = this.tokens[this.current + 1];
-      
-      if ((current.type === 'number' || current.type === 'percent' || current.type === 'ratio') && 
-          next.type === 'identifier' && 
-          ['x', 'y', 'z'].includes(next.value)) {
+
+      if (
+        (current.type === 'number' || current.type === 'percent') &&
+        next.type === 'identifier' &&
+        ['x', 'y', 'z'].includes(next.value)
+      ) {
         return this.parseAxisNotation();
       }
     }
@@ -777,9 +776,6 @@ export class Parser {
         break;
       case 'percent':
         expr = new RelativeNumberLiteral(parseFloat(token.value) / 100, token.location);
-        break;
-      case 'ratio':
-        expr = new RelativeNumberLiteral(parseFloat(token.value), token.location);
         break;
       case 'string':
         throw parseError('Unexpected string literal', token.location);
@@ -920,44 +916,42 @@ export class Parser {
   private parseAxisNotation(): VectorLiteral {
     const startLocation = this.peek().location;
     const valueToken = this.advance();
-    
+
     // Get the value
     let value: number;
     if (valueToken.type === 'number') {
       value = parseFloat(valueToken.value);
     } else if (valueToken.type === 'percent') {
       value = parseFloat(valueToken.value) / 100;
-    } else if (valueToken.type === 'ratio') {
-      value = parseFloat(valueToken.value);
     } else {
       throw parseError(`Expected number before axis notation`, valueToken.location);
     }
-    
+
     // Check for axis identifier
     const axisToken = this.advance();
     if (axisToken.type !== 'identifier' || !['x', 'y', 'z'].includes(axisToken.value)) {
       throw parseError(`Expected x, y, or z after number`, axisToken.location);
     }
-    
+
     // Initialize components with zeros
     const components: Expression[] = [
       new NumberLiteral(0, startLocation),
       new NumberLiteral(0, startLocation),
-      new NumberLiteral(0, startLocation)
+      new NumberLiteral(0, startLocation),
     ];
-    
+
     // Set the appropriate component
-    const index = axisToken.value === 'x' ? 0 : (axisToken.value === 'y' ? 1 : 2);
+    const index = axisToken.value === 'x' ? 0 : axisToken.value === 'y' ? 1 : 2;
     components[index] = new NumberLiteral(value, {
       start: valueToken.location.start,
       end: axisToken.location.end,
-      source: this.source
+      source: this.source,
     });
-    
+
     return new VectorLiteral(components, {
       start: startLocation.start,
       end: axisToken.location.end,
-      source: this.source
+      source: this.source,
     });
   }
 

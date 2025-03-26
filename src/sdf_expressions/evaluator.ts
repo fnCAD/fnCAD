@@ -60,6 +60,7 @@ export class RelativeNumberNode extends Node {
   }
 
   // Convert to a normal number by applying the relative number to the base
+  // This is only used for percentage values now
   applyTo(base: number): number {
     return base * this.value;
   }
@@ -909,13 +910,14 @@ class ScaleFunctionCall extends FunctionCallNode {
     const sy = args[1];
     const sz = args[2];
 
+    // Only handle percentage values now
+    // TODO: Add alternative syntax for scaling (e.g. "by N")
     if (
       sx instanceof RelativeNumberNode ||
       sy instanceof RelativeNumberNode ||
       sz instanceof RelativeNumberNode
     ) {
-      // relative values work just like regular values as they're just decorative here;
-      // there is no absolute meaning of scale.
+      // Only percentage values are supported as relative values now
       this.#sx = sx instanceof RelativeNumberNode ? sx.applyTo(1.0) : constantValue(sx);
       this.#sy = sy instanceof RelativeNumberNode ? sy.applyTo(1.0) : constantValue(sy);
       this.#sz = sz instanceof RelativeNumberNode ? sz.applyTo(1.0) : constantValue(sz);

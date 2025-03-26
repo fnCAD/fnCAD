@@ -378,8 +378,7 @@ export const builtinDocs: ModuleDoc[] = [
       },
       {
         name: 'detail',
-        description:
-          'Detail level in the blend region (can be a percentage like 50% or ratio like 2x)',
+        description: 'Detail level in the blend region (can be a percentage like 50%)',
         type: 'number | vector',
         defaultValue: '50%',
       },
@@ -396,8 +395,7 @@ export const builtinDocs: ModuleDoc[] = [
       },
       {
         name: 'detail',
-        description:
-          'Detail level in the blend region (can be a percentage like 50% or ratio like 2x)',
+        description: 'Detail level in the blend region (can be a percentage like 50%)',
         type: 'number | vector',
         defaultValue: '50%',
       },
@@ -414,8 +412,7 @@ export const builtinDocs: ModuleDoc[] = [
       },
       {
         name: 'detail',
-        description:
-          'Detail level in the blend region (can be a percentage like 50% or ratio like 2x)',
+        description: 'Detail level in the blend region (can be a percentage like 50%)',
         type: 'number | vector',
         defaultValue: '50%',
       },

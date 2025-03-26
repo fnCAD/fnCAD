@@ -145,14 +145,13 @@ class Parser {
   }
 
   private isRelativeNumber(token: string): boolean {
-    return /[0-9\.]+[%x]$/.test(token);
+    // TODO: Maybe add "by X" syntax in the future as replacement for the removed "Nx" syntax
+    return /[0-9\.]+%$/.test(token);
   }
 
   private parseRelativeNumber(token: string): number {
     if (token.endsWith('%')) {
       return parseFloat(token.slice(0, -1)) / 100.0;
-    } else if (token.endsWith('x')) {
-      return parseFloat(token.slice(0, -1));
     }
     throw new Error(`Invalid relative number: ${token}`);
   }

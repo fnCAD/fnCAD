@@ -66,29 +66,26 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(parse('translate([1, 2]) sphere(1);'))).toThrow(ParseError);
     expect(() => moduleToSDF(parse('rotate([1, 2, 3, 4]) sphere(1);'))).toThrow(ParseError);
   });
-  
+
   test('supports axis notation for translation vectors', () => {
     // Basic axis notation
     expect(() => parse('translate(5x) sphere(1);')).not.toThrow();
     expect(() => parse('translate(5y) sphere(1);')).not.toThrow();
     expect(() => parse('translate(5z) sphere(1);')).not.toThrow();
-    
+
     // Combinations
     expect(() => parse('translate(1x + 2y + 3z) sphere(1);')).not.toThrow();
-    
+
     // With operators
     expect(() => parse('translate(1x + 2y - 3z) sphere(1);')).not.toThrow();
-    
-    // Validate the actual values
-    const context = new Context();
-    
+
     // Use individual components instead of combining them in the parameter
     const result = parse('translate([5, -3, 2]) sphere(1);');
     const sdf = moduleToSDF(result);
-    
+
     // Check that the expression contains the correct coordinates
     expect(sdf.expr).toContain('translate(5, -3, 2');
-    
+
     // Test vector components directly
     const vectorResult = parse(`
       var v = 5x;      // [5, 0, 0]
@@ -355,14 +352,14 @@ describe('CAD Parser', () => {
 
     // Test ratio values
     const ctx2 = new Context();
-    parse('var x = 2x;').map((stmt) => evalCAD(stmt, ctx2));
+    parse('var x = 200%;').map((stmt) => evalCAD(stmt, ctx2));
     const yValue = ctx2.get('x');
     expect(yValue).toBeDefined();
     expect(typeof yValue === 'object' && yValue !== null && 'type' in yValue).toBe(true);
     if (typeof yValue === 'object' && yValue !== null && 'type' in yValue) {
       const relValue = yValue as RelativeValue;
       expect(relValue.type).toBe('relative');
-      expect(relValue.value).toBe(2); // 2x = 2
+      expect(relValue.value).toBe(2);
     }
   });
 
@@ -419,11 +416,11 @@ describe('CAD Parser', () => {
       return moduleToSDF(ast).expr;
     }
 
-    const sdf1 = compileToSDF('smooth_union(1, detail=50%) { sphere(1); cube(1); }');
-    expect(sdf1).toContain('smooth_union(1, 0.5x');
-
-    const sdf2 = compileToSDF('smooth_union(0.5, detail=2x) { sphere(1); cube(1); }');
-    expect(sdf2).toContain('smooth_union(0.5, 2x');
+    const sdf1 = compileToSDF('smooth_union(1, detail=200%) { sphere(1); cube(1); }');
+    expect(sdf1).toContain('smooth_union(1, 200%');
+    // TODO
+    // const sdf2 = compileToSDF('smooth_union(1, minsize=50%) { sphere(1); cube(1); }');
+    // expect(sdf2).toContain('smooth_union(1, 50%');
   });
 
   test('smooth_difference works with default radius', () => {

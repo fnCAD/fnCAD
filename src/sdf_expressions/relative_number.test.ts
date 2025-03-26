@@ -17,11 +17,5 @@ describe('RelativeNumberNode', () => {
     }
   });
 
-  it('parses ratio values', () => {
-    const ast = parse('2.5x');
-    expect(ast instanceof RelativeNumberNode).toBe(true);
-    if (ast instanceof RelativeNumberNode) {
-      expect(ast.value).toBe(2.5);
-    }
-  });
+  // TODO: Add tests for any new relative syntax when implemented
 });
