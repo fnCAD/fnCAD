@@ -276,9 +276,10 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
     }
     if (
       typeof value !== 'number' &&
+      !Array.isArray(value) &&
       !(typeof value === 'object' && value !== null && 'type' in value && value.type === 'relative')
     ) {
-      throw parseError(`Variable ${expr.name} is not a number or relative value`, expr.location);
+      throw parseError(`Variable ${expr.name} is not a number, vector, or relative value`, expr.location);
     }
     return value;
   }
@@ -298,37 +299,91 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
     const left = evalExpression(expr.left, context);
     const right = evalExpression(expr.right, context);
 
-    // Both operands must be numbers for arithmetic
-    if (typeof left !== 'number' || typeof right !== 'number') {
-      throw new Error('Arithmetic operations require number operands');
-    }
+    // Helper function to describe a value's type for error messages
+    const describeType = (value: any): string => {
+      if (Array.isArray(value)) return `vector[${value.length}]`;
+      if (typeof value === 'object' && value !== null && 'type' in value) return value.type;
+      return typeof value;
+    };
 
-    switch (expr.operator) {
-      case '+':
-        return left + right;
-      case '-':
-        return left - right;
-      case '*':
-        return left * right;
-      case '/':
+    // Arithmetic operators (+, -, *, /)
+    if (['+', '-', '*', '/'].includes(expr.operator)) {
+      // Vector arithmetic
+      if (Array.isArray(left) && Array.isArray(right)) {
+        // Vector + Vector or Vector - Vector
+        if (expr.operator === '+' || expr.operator === '-') {
+          if (left.length !== right.length) {
+            throw parseError(
+              `Vector dimensions must match for ${expr.operator === '+' ? 'addition' : 'subtraction'}: ` +
+              `${describeType(left)} ${expr.operator} ${describeType(right)}`,
+              expr.location
+            );
+          }
+          
+          // Use eval for simplicity since we're in a safe context
+          return left.map((val, i) => eval(`(${val} ${expr.operator} ${right[i]})`));
+        }
+      }
+      
+      // Vector * Number or Number * Vector
+      if (expr.operator === '*' && 
+          ((Array.isArray(left) && typeof right === 'number') || 
+           (typeof left === 'number' && Array.isArray(right)))) {
+        const vector = Array.isArray(left) ? left : right;
+        const scalar = Array.isArray(left) ? right : left;
+        return vector.map(val => val as number * scalar);
+      }
+      
+      // Vector / Number
+      if (expr.operator === '/' && Array.isArray(left) && typeof right === 'number') {
         if (right === 0) throw parseError('Division by zero', expr.location);
-        return left / right;
-      case '==':
-        return Number(left === right);
-      case '!=':
-        return Number(left !== right);
-      case '<':
-        return Number(left < right);
-      case '<=':
-        return Number(left <= right);
-      case '>':
-        return Number(left > right);
-      case '>=':
-        return Number(left >= right);
-      case '&&':
-        return left !== 0 && right !== 0 ? 1 : 0;
-      case '||':
-        return left !== 0 || right !== 0 ? 1 : 0;
+        return left.map(val => (val as number) / right);
+      }
+      
+      // Number op Number
+      if (typeof left === 'number' && typeof right === 'number') {
+        if (expr.operator === '/' && right === 0) {
+          throw parseError('Division by zero', expr.location);
+        }
+        // Use eval for simplicity
+        return eval(`${left} ${expr.operator} ${right}`);
+      }
+      
+      // If we get here, the types are incompatible
+      throw parseError(
+        `Incompatible types for operator '${expr.operator}': ` +
+        `${describeType(left)} and ${describeType(right)}`,
+        expr.location
+      );
+    }
+    
+    // Comparison operators
+    if (['==', '!=', '<', '<=', '>', '>='].includes(expr.operator)) {
+      if (typeof left !== 'number' || typeof right !== 'number') {
+        throw parseError(
+          `Comparison operation '${expr.operator}' requires number operands, got: ` +
+          `${describeType(left)} and ${describeType(right)}`,
+          expr.location
+        );
+      }
+      
+      // Use eval for simplicity
+      return Number(eval(`${left} ${expr.operator} ${right}`));
+    }
+    
+    // Logical operators
+    if (['&&', '||'].includes(expr.operator)) {
+      if (typeof left !== 'number' || typeof right !== 'number') {
+        throw parseError(
+          `Logical operation '${expr.operator}' requires number operands, got: ` +
+          `${describeType(left)} and ${describeType(right)}`,
+          expr.location
+        );
+      }
+      
+      return expr.operator === '&&'
+        ? (left !== 0 && right !== 0 ? 1 : 0)
+        : (left !== 0 || right !== 0 ? 1 : 0);
     }
   }
   if (expr instanceof VectorLiteral) {

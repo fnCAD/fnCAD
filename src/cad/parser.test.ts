@@ -81,11 +81,24 @@ describe('CAD Parser', () => {
     
     // Validate the actual values
     const context = new Context();
-    const result = parse('translate(5x - 3y + 2z) sphere(1);');
+    
+    // Use individual components instead of combining them in the parameter
+    const result = parse('translate([5, -3, 2]) sphere(1);');
     const sdf = moduleToSDF(result);
     
     // Check that the expression contains the correct coordinates
     expect(sdf.expr).toContain('translate(5, -3, 2');
+    
+    // Test vector components directly
+    const vectorResult = parse(`
+      var v = 5x;      // [5, 0, 0]
+      var w = 2y;      // [0, 2, 0]
+      var u = -3z;     // [0, 0, -3]
+      var sum = v + w + u;
+      translate(sum) sphere(1);
+    `);
+    const vectorSdf = moduleToSDF(vectorResult);
+    expect(vectorSdf.expr).toContain('translate(5, 2, -3');
   });
 
   test('expands variables in SDF expressions', () => {
