@@ -248,6 +248,8 @@ export function createFunctionCallNode(name: string, args: Node[]): FunctionCall
       return new ExpFunctionCall(args);
     case 'abs':
       return new AbsFunctionCall(args);
+    case 'mod':
+      return new ModFunctionCall(args);
     case 'rotate':
       return new RotateFunctionCall(args);
     case 'scale':
@@ -1218,6 +1220,70 @@ class FaceFunctionCall extends FunctionCallNode {
       category: interval.max < 0 ? 'inside' : 'outside',
       sdfEstimate: interval,
     };
+  }
+}
+
+class ModFunctionCall extends FunctionCallNode {
+  evaluate: (x: number, y: number, z: number) => number;
+
+  constructor(args: Node[]) {
+    super('mod', args);
+    enforceArgumentLength('mod', args, 2);
+    this.evaluate = this.compileEvaluate();
+  }
+
+  evaluateInterval(x: Interval, y: Interval, z: Interval): Interval {
+    const value = this.args[0].evaluateInterval(x, y, z);
+    const divisor = this.args[1].evaluateInterval(x, y, z);
+
+    // If divisor is not a constant, use a conservative approach
+    if (divisor.min !== divisor.max) {
+      // Return [0, max(divisor)) as a fallback
+      return new Interval(0, Math.max(divisor.min, divisor.max));
+    }
+
+    const d = divisor.min;
+    if (d <= 0) {
+      // Invalid divisor, return original value
+      return value;
+    }
+
+    // Handle if the interval spans multiple periods
+    if (value.max - value.min >= d) {
+      return new Interval(0, d);
+    }
+
+    // Calculate modular range
+    const minMod = ((value.min % d) + d) % d;
+    const maxMod = ((value.max % d) + d) % d;
+
+    // Check if the range crosses the period boundary
+    if (minMod > maxMod) {
+      return new Interval(0, d);
+    }
+
+    return new Interval(minMod, maxMod);
+  }
+
+  evaluateStr(xname: string, yname: string, zname: string, depth: number): string {
+    const x = this.args[0].evaluateStr(xname, yname, zname, depth);
+    const y = this.args[1].evaluateStr(xname, yname, zname, depth);
+    // Handle negative values by adding y and taking modulo again
+    return `((${x} % ${y}) + ${y}) % ${y}`;
+  }
+
+  toGLSL(context: GLSLContext): string {
+    const x = this.args[0].toGLSL(context);
+    const y = this.args[1].toGLSL(context);
+    return context.consume(
+      'float',
+      [x, y],
+      () => `mod(${context.varExpr(x)}, ${context.varExpr(y)})`
+    );
+  }
+
+  evaluateContent(_x: Interval, _y: Interval, _z: Interval): Content {
+    return null;
   }
 }
 

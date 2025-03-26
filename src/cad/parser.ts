@@ -901,6 +901,7 @@ export class Parser {
       'exp',
       'min',
       'max',
+      'mod',
     ].includes(name);
   }
 

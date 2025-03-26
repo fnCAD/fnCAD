@@ -340,6 +340,11 @@ export function evalExpression(expr: Expression, context: Context): EvalResult {
         return Math.round(evaluatedArgs['0'] as number);
       case 'sqrt':
         return Math.sqrt(evaluatedArgs['0'] as number);
+      case 'mod': {
+        const x = evaluatedArgs['0'] as number;
+        const y = evaluatedArgs['1'] as number;
+        return ((x % y) + y) % y; // Handle negative numbers correctly
+      }
       case 'pow': {
         const base = evaluatedArgs['base'] || (evaluatedArgs['0'] as number);
         const exponent = evaluatedArgs['exponent'] || (evaluatedArgs['1'] as number);

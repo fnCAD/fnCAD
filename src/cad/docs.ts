@@ -245,6 +245,23 @@ export const mathFunctionDocs: FunctionDoc[] = [
     ],
     returns: 'number',
   },
+  {
+    name: 'mod',
+    description: 'Returns the modulo of x divided by y, always in range [0,y)',
+    parameters: [
+      {
+        name: 'x',
+        description: 'Dividend value',
+        type: 'number',
+      },
+      {
+        name: 'y',
+        description: 'Divisor value',
+        type: 'number',
+      },
+    ],
+    returns: 'number',
+  },
 ];
 
 export const builtinDocs: ModuleDoc[] = [
