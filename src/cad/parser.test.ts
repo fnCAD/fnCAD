@@ -66,6 +66,27 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(parse('translate([1, 2]) sphere(1);'))).toThrow(ParseError);
     expect(() => moduleToSDF(parse('rotate([1, 2, 3, 4]) sphere(1);'))).toThrow(ParseError);
   });
+  
+  test('supports axis notation for translation vectors', () => {
+    // Basic axis notation
+    expect(() => parse('translate(5x) sphere(1);')).not.toThrow();
+    expect(() => parse('translate(5y) sphere(1);')).not.toThrow();
+    expect(() => parse('translate(5z) sphere(1);')).not.toThrow();
+    
+    // Combinations
+    expect(() => parse('translate(1x + 2y + 3z) sphere(1);')).not.toThrow();
+    
+    // With operators
+    expect(() => parse('translate(1x + 2y - 3z) sphere(1);')).not.toThrow();
+    
+    // Validate the actual values
+    const context = new Context();
+    const result = parse('translate(5x - 3y + 2z) sphere(1);');
+    const sdf = moduleToSDF(result);
+    
+    // Check that the expression contains the correct coordinates
+    expect(sdf.expr).toContain('translate(5, -3, 2');
+  });
 
   test('expands variables in SDF expressions', () => {
     // Create a context with variables

@@ -750,6 +750,19 @@ export class Parser {
       });
     }
 
+    // Try to parse axis notation (like 5x, -3y, etc.) for vectors
+    if (this.current + 1 < this.tokens.length) {
+      // Look ahead to see if we have a number followed by x, y, or z
+      const current = this.tokens[this.current];
+      const next = this.tokens[this.current + 1];
+      
+      if ((current.type === 'number' || current.type === 'percent' || current.type === 'ratio') && 
+          next.type === 'identifier' && 
+          ['x', 'y', 'z'].includes(next.value)) {
+        return this.parseAxisNotation();
+      }
+    }
+
     if (this.check('[')) {
       return this.parseVectorLiteral();
     }
@@ -902,6 +915,50 @@ export class Parser {
       'max',
       'mod',
     ].includes(name);
+  }
+
+  private parseAxisNotation(): VectorLiteral {
+    const startLocation = this.peek().location;
+    const valueToken = this.advance();
+    
+    // Get the value
+    let value: number;
+    if (valueToken.type === 'number') {
+      value = parseFloat(valueToken.value);
+    } else if (valueToken.type === 'percent') {
+      value = parseFloat(valueToken.value) / 100;
+    } else if (valueToken.type === 'ratio') {
+      value = parseFloat(valueToken.value);
+    } else {
+      throw parseError(`Expected number before axis notation`, valueToken.location);
+    }
+    
+    // Check for axis identifier
+    const axisToken = this.advance();
+    if (axisToken.type !== 'identifier' || !['x', 'y', 'z'].includes(axisToken.value)) {
+      throw parseError(`Expected x, y, or z after number`, axisToken.location);
+    }
+    
+    // Initialize components with zeros
+    const components: Expression[] = [
+      new NumberLiteral(0, startLocation),
+      new NumberLiteral(0, startLocation),
+      new NumberLiteral(0, startLocation)
+    ];
+    
+    // Set the appropriate component
+    const index = axisToken.value === 'x' ? 0 : (axisToken.value === 'y' ? 1 : 2);
+    components[index] = new NumberLiteral(value, {
+      start: valueToken.location.start,
+      end: axisToken.location.end,
+      source: this.source
+    });
+    
+    return new VectorLiteral(components, {
+      start: startLocation.start,
+      end: axisToken.location.end,
+      source: this.source
+    });
   }
 
   private parseVectorLiteral(): VectorLiteral {
