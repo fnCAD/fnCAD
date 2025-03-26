@@ -226,6 +226,40 @@ abstract class FunctionCallNode extends Node {
   abstract toGLSL(context: GLSLContext): string;
 }
 
+/**
+ * Returns a set of all known SDF variable and function names
+ * that should not be replaced during variable expansion
+ */
+export function getKnownSDFNames(): Set<string> {
+  return new Set([
+    'x',
+    'y',
+    'z', // Coordinates
+    'sin',
+    'cos',
+    'tan',
+    'asin',
+    'acos',
+    'atan',
+    'atan2',
+    'sqrt',
+    'sqr',
+    'log',
+    'exp',
+    'min',
+    'max',
+    'abs',
+    'mod',
+    'smooth_union',
+    'rotate',
+    'scale',
+    'translate',
+    'aabb',
+    'face',
+    'detail',
+  ]);
+}
+
 export function createFunctionCallNode(name: string, args: Node[]): FunctionCallNode {
   switch (name) {
     case 'sin':

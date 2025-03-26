@@ -67,6 +67,45 @@ describe('CAD Parser', () => {
     expect(() => moduleToSDF(parse('rotate([1, 2, 3, 4]) sphere(1);'))).toThrow(ParseError);
   });
 
+  test('expands variables in SDF expressions', () => {
+    // Create a context with variables
+    const ctx = new Context();
+
+    // Test basic variable expansion
+    const result1 = parse(`
+      var radius = 5;
+      var offset = 2; 
+      sdf(sqrt(x*x + y*y + z*z) - radius + offset);
+    `).map((stmt) => evalCAD(stmt, ctx));
+
+    // Get the last result which should be the SDF expression
+    const sdfExpr = result1[result1.length - 1] as SDFExpression;
+    expect(sdfExpr.expr).toContain('sqrt(x*x+y*y+z*z)-5+2');
+
+    // Test expressions with variables
+    const result2 = parse(`
+      var base = 10;
+      var factor = 0.5;
+      sdf(x * factor + base);
+    `).map((stmt) => evalCAD(stmt, ctx));
+
+    const sdfExpr2 = result2[result2.length - 1] as SDFExpression;
+    expect(sdfExpr2.expr).toContain('x*0.5+10');
+
+    // Variables should be updated if they change
+    parse(`
+      base = 20;
+      factor = 0.25;
+    `).map((stmt) => evalCAD(stmt, ctx));
+
+    const result3 = parse(`
+      sdf(x * factor + base);
+    `).map((stmt) => evalCAD(stmt, ctx));
+
+    const sdfExpr3 = result3[result3.length - 1] as SDFExpression;
+    expect(sdfExpr3.expr).toContain('x*0.25+20');
+  });
+
   test('handles boolean operators', () => {
     // Basic boolean operations
     expect(() => parse('if (1 && 0) {}')).not.toThrow();

@@ -33,7 +33,6 @@ import {
   FunctionCallExpression,
 } from './types';
 import { parseError } from './errors';
-import { parse as parseSDF } from '../sdf_expressions/parser';
 
 /* Parser class implementing recursive descent parsing.
  * The parser maintains state about the current position in the token stream
@@ -730,7 +729,7 @@ export class Parser {
       throw parseError('Unclosed SDF expression', startToken.location);
     }
 
-    validateSDF(sdfText, startToken.location);
+    // No validation at parse time - will be done after variable expansion
 
     return new SDFExpressionNode(sdfText, {
       start: startToken.location.start,
@@ -922,17 +921,6 @@ export class Parser {
       end: endToken.location.end,
       source: this.source,
     });
-  }
-}
-
-function validateSDF(expr: string, startToken: SourceLocation): void {
-  try {
-    parseSDF(expr);
-  } catch (e) {
-    if (e instanceof Error) {
-      throw parseError(`Invalid SDF expression: ${e.message}`, startToken);
-    }
-    throw parseError(`Invalid SDF expression`, startToken);
   }
 }
 

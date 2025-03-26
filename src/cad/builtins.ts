@@ -26,6 +26,8 @@ import {
   SDFScene,
   FunctionCallExpression,
 } from './types';
+import { parse as parseSDF } from '../sdf_expressions/parser';
+import { getKnownSDFNames } from '../sdf_expressions/evaluator';
 
 // Relative value type for percentage and ratio values
 export interface RelativeValue {
@@ -35,6 +37,55 @@ export interface RelativeValue {
 
 export type EvalResult = number | number[] | RelativeValue;
 import { parseError } from './errors';
+
+/**
+ * Expands CAD variables in an SDF expression
+ */
+function expandSDFWithContext(
+  expression: string,
+  context: Context,
+  location: SourceLocation
+): string {
+  const knownNames = getKnownSDFNames();
+
+  // Replace all identifiers in a single pass
+  const expandedExpr = expression.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g, (_match, identifier) => {
+    // If it's a known SDF function/variable, keep it as is
+    if (knownNames.has(identifier)) {
+      return identifier;
+    }
+
+    // Look up if it's a CAD variable
+    const value = context.get(identifier);
+
+    // If not a variable, it's an error
+    if (value === undefined) {
+      throw parseError(`SDF expression references undefined variable: ${identifier}`, location);
+    }
+
+    // Only numbers can be expanded
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+
+    throw parseError(
+      `Variable ${identifier} is not a number, cannot use in SDF expression`,
+      location
+    );
+  });
+
+  // Validate the expanded expression
+  try {
+    parseSDF(expandedExpr);
+  } catch (e) {
+    if (e instanceof Error) {
+      throw parseError(`Invalid SDF expression after expansion: ${e.message}`, location);
+    }
+    throw parseError(`Invalid SDF expression after expansion`, location);
+  }
+
+  return expandedExpr;
+}
 
 // Parameter definition types
 interface ParameterDef {
@@ -527,9 +578,11 @@ export function evalCAD(node: Node, context: Context): Value | undefined {
     return undefined;
   }
   if (node instanceof SDFExpressionNode) {
+    const expandedExpr = expandSDFWithContext(node.expression, context, node.location);
+
     return {
       type: 'sdf',
-      expr: node.expression,
+      expr: expandedExpr,
     };
   }
   if (node instanceof Expression) {
