@@ -883,6 +883,59 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
+    case 'smooth_cube': {
+      const params: ParameterDef[] = [
+        {
+          name: 'size',
+          type: 'vector',
+          required: true,
+          description: 'Size of the cube (single number or [x,y,z] vector)',
+          validator: (value) => {
+            if (Array.isArray(value) && value.length === 3) return true;
+            return 'Must be a [x,y,z] vector';
+          },
+        },
+        {
+          name: 'radius',
+          type: 'number',
+          required: false,
+          defaultValue: 0.1,
+          description: 'Radius of rounded edges',
+        },
+      ];
+
+      const args = processArgs(params, call.args, context, call.location);
+
+      if (call.children?.length) {
+        throw parseError('smooth_cube does not accept children', call.location);
+      }
+
+      // After our auto-conversion, size will always be an array
+      const sizes = args.size as number[];
+      const radius = args.radius as number;
+
+      const halfSizes = sizes.map((s) => s / 2);
+      
+      // For a smooth cube, we use smooth_intersection of 6 half-spaces
+      // Each half-space is defined by a plane at distance halfSize from the origin
+      // The SDF for a half-space is simply the distance to the plane
+      return {
+        type: 'sdf',
+        expr: `smooth_intersection(${radius}, 200%, 
+          face(x - ${halfSizes[0]}, ${radius}),
+          face(-x - ${halfSizes[0]}, ${radius}),
+          face(y - ${halfSizes[1]}, ${radius}),
+          face(-y - ${halfSizes[1]}, ${radius}),
+          face(z - ${halfSizes[2]}, ${radius}),
+          face(-z - ${halfSizes[2]}, ${radius})
+        )`,
+        bounds: {
+          min: [-halfSizes[0], -halfSizes[1], -halfSizes[2]],
+          max: [halfSizes[0], halfSizes[1], halfSizes[2]],
+        },
+      };
+    }
+
     case 'sphere': {
       const params: ParameterDef[] = [
         { name: 'radius', type: 'number', required: true, description: 'Radius of the sphere' },

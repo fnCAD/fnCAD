@@ -288,6 +288,23 @@ export const builtinDocs: ModuleDoc[] = [
     ],
   },
   {
+    name: 'smooth_cube',
+    description: 'Creates a cube with rounded edges centered at the origin',
+    parameters: [
+      {
+        name: 'size',
+        description: 'Length of cube sides (number) or [width,height,depth] vector',
+        type: 'number | vector',
+      },
+      {
+        name: 'radius',
+        description: 'Radius of rounded edges',
+        type: 'number',
+        defaultValue: 0.1,
+      },
+    ],
+  },
+  {
     name: 'cylinder',
     description: 'Creates a cylinder centered at the origin along the Y axis',
     parameters: [
