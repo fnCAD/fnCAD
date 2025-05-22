@@ -915,20 +915,23 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       const radius = args.radius as number;
 
       const halfSizes = sizes.map((s) => s / 2);
-      
+      // For flat surfaces, use 1/4 of the smallest dimension as minSize
+      const minSize = Math.min(...sizes) * 0.25;
+
       // For a smooth cube, we use smooth_intersection of 6 half-spaces
       // Each half-space is defined by a plane at distance halfSize from the origin
       // The SDF for a half-space is simply the distance to the plane
       return {
         type: 'sdf',
-        expr: `smooth_intersection(${radius}, 200%, 
-          face(x - ${halfSizes[0]}, ${radius}),
-          face(-x - ${halfSizes[0]}, ${radius}),
-          face(y - ${halfSizes[1]}, ${radius}),
-          face(-y - ${halfSizes[1]}, ${radius}),
-          face(z - ${halfSizes[2]}, ${radius}),
-          face(-z - ${halfSizes[2]}, ${radius})
-        )`,
+        expr: smooth_intersection(
+          [
+            `face(abs(x) - ${halfSizes[0]}, ${minSize})`,
+            `face(abs(y) - ${halfSizes[1]}, ${minSize})`,
+            `face(abs(z) - ${halfSizes[2]}, ${minSize})`,
+          ],
+          radius,
+          '200%'
+        ),
         bounds: {
           min: [-halfSizes[0], -halfSizes[1], -halfSizes[2]],
           max: [halfSizes[0], halfSizes[1], halfSizes[2]],
