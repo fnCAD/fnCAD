@@ -1262,7 +1262,7 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       return {
         type: 'sdf',
         expr: `face(abs(${childExpr.expr}) - ${thickness / 2}, ${minSize})`,
-        bounds: childExpr.bounds, // Conservative: same as child/union
+        bounds: growAABB(childExpr.bounds, thickness / 2),
       };
     }
 
