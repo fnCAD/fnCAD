@@ -68,7 +68,9 @@
               <ul>
                 <li><code>sphere(radius);</code></li>
                 <li><code>cube(size);</code></li>
+                <li><code>smooth_cube(size, radius=0.1);</code></li>
                 <li><code>cylinder(radius, height);</code></li>
+                <li><code>cone(radius, height);</code></li>
               </ul>
             </div>
 
@@ -103,10 +105,11 @@
                 <li><code>union() {}</code></li>
                 <li><code>intersection() {}</code></li>
                 <li><code>difference() {}</code></li>
-                <li><code>smooth_union(r) {}</code></li>
-                <li><code>smooth_intersection(r) {}</code></li>
-                <li><code>smooth_difference(r) {}</code></li>
+                <li><code>smooth_union(r, detail=200%) {}</code></li>
+                <li><code>smooth_intersection(r, detail=200%) {}</code></li>
+                <li><code>smooth_difference(r, detail=200%) {}</code></li>
                 <li><code>detail(size=0.1) {}</code> - Set minimum feature size</li>
+                <li><code>shell(thickness) {}</code> - Create a hollow shell</li>
               </ul>
             </div>
 
