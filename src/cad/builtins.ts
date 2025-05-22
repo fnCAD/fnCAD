@@ -1257,10 +1257,11 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       }
       const childExpr = wrapUnion(children);
       const thickness = args.thickness as number;
+      const minSize = thickness;
       // SDF shell: abs(child) - thickness/2
       return {
         type: 'sdf',
-        expr: `(abs(${childExpr.expr}) - ${thickness / 2})`,
+        expr: `face(abs(${childExpr.expr}) - ${thickness / 2}, ${minSize})`,
         bounds: childExpr.bounds, // Conservative: same as child/union
       };
     }
