@@ -1241,6 +1241,30 @@ function evalModuleCall(call: ModuleCall, context: Context): SDFExpression {
       };
     }
 
+    case 'shell': {
+      const params: ParameterDef[] = [
+        {
+          name: 'thickness',
+          type: 'number',
+          required: true,
+          description: 'Shell thickness',
+        },
+      ];
+      const args = processArgs(params, call.args, context, call.location);
+      const children = flattenScope(call.children, context, 'shell', call.location);
+      if (children.length === 0) {
+        throw parseError('shell requires at least one child', call.location);
+      }
+      const childExpr = wrapUnion(children);
+      const thickness = args.thickness as number;
+      // SDF shell: abs(child) - thickness/2
+      return {
+        type: 'sdf',
+        expr: `(abs(${childExpr.expr}) - ${thickness / 2})`,
+        bounds: childExpr.bounds, // Conservative: same as child/union
+      };
+    }
+
     default: {
       // Look for user-defined module with its lexical scope
       const scopedModule = context.getModule(call.name);
