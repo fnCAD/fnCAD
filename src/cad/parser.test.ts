@@ -1,4 +1,4 @@
-import { describe, it, expect, test, vi, beforeEach, afterEach, SpyInstance } from 'vitest';
+import { describe, it, expect, test, vi, beforeEach, afterEach, MockInstance } from 'vitest';
 import { parse, Parser } from './parser';
 import { AABB, Context, ModuleDeclaration, SDFExpression } from './types';
 import { evalCAD, moduleToSDF, flattenScope, RelativeValue, wrapUnion } from './builtins';
@@ -630,12 +630,11 @@ describe('OpenSCAD-like Syntax', () => {
   });
 
   describe('module parameter binding', () => {
-    let mockCall: SpyInstance<[Context], SDFExpression>;
+    let mockCall: MockInstance<(context: Context) => SDFExpression>;
 
     beforeEach(() => {
-      mockCall = vi.spyOn(ModuleDeclaration.prototype, 'call') as SpyInstance<
-        [Context],
-        SDFExpression
+      mockCall = vi.spyOn(ModuleDeclaration.prototype, 'call') as MockInstance<
+        (context: Context) => SDFExpression
       >;
     });
 
