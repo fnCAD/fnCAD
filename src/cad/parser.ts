@@ -749,6 +749,14 @@ export class Parser {
       });
     }
 
+    // Check for parenthesized expressions
+    if (this.check('(')) {
+      this.advance(); // consume '('
+      const expr = this.parseExpression();
+      this.expect(')', 'Expected ) after expression');
+      return expr;
+    }
+
     // Try to parse axis notation (like 5x, -3y, etc.) for vectors
     if (this.current + 1 < this.tokens.length) {
       // Look ahead to see if we have a number followed by x, y, or z

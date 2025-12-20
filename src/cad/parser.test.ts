@@ -388,6 +388,17 @@ describe('CAD Parser', () => {
     // Test nested function calls with expressions
     parse('var z = sqrt(3 * 3 + 4 * 4);').map((stmt) => evalCAD(stmt, ctx));
     expect(ctx.get('z')).toBe(5); // sqrt(9 + 16) = sqrt(25) = 5
+
+    // Test parenthesized expressions inside function calls
+    parse('var a = sin((30 + 30));').map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('a')).toBeCloseTo(0.866, 3); // sin((60)) = sin(60°) ≈ 0.866
+
+    parse('var b = pow((1 + 1), (1 + 2));').map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('b')).toBe(8); // pow((2), (3)) = 8
+
+    // Test deeply nested parentheses
+    parse('var c = sqrt(((3 * 3) + (4 * 4)));').map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('c')).toBe(5); // sqrt(((9) + (16))) = 5
   });
 
   test('math functions can be used in expressions', () => {
