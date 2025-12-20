@@ -672,31 +672,33 @@ export class Parser {
   }
 
   private parseExpression(): Expression {
-    return this.parseBinaryExpression();
+    return this.parseBinaryExpression(0);
   }
 
-  private parseBinaryExpression(precedence = 0): Expression {
-    const { precedence: operatorPrecedence } = getOperatorPrecedence(this.peek().value);
-    if (precedence > operatorPrecedence) {
-      return this.parsePrimary();
-    }
+  private parseBinaryExpression(minPrecedence: number): Expression {
+    // First, parse the left-hand side (a primary expression)
+    let left = this.parsePrimary();
 
-    let left = this.parseBinaryExpression(operatorPrecedence + 1);
-
+    // Then, loop consuming binary operators with sufficient precedence
     while (true) {
       const operatorToken = this.peek();
       const { associativity, precedence: currentPrecedence } = getOperatorPrecedence(
         operatorToken.value
       );
-      if (
-        currentPrecedence < precedence ||
-        (associativity === 'left' && currentPrecedence <= precedence) ||
-        (associativity === 'right' && currentPrecedence < precedence)
-      ) {
+
+      // Stop if this operator has lower precedence than our minimum
+      if (currentPrecedence < minPrecedence || currentPrecedence === 0) {
         break;
       }
-      this.advance();
-      const right = this.parseBinaryExpression(currentPrecedence);
+
+      this.advance(); // consume the operator
+
+      // For left-associative operators, use currentPrecedence + 1 to prevent same-precedence from binding
+      // For right-associative operators, use currentPrecedence to allow same-precedence to bind
+      const nextMinPrecedence =
+        associativity === 'left' ? currentPrecedence + 1 : currentPrecedence;
+      const right = this.parseBinaryExpression(nextMinPrecedence);
+
       left = new BinaryExpression(operatorToken.value as '+' | '-' | '*' | '/', left, right, {
         start: left.location.start,
         end: right.location.end,

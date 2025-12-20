@@ -375,6 +375,21 @@ describe('CAD Parser', () => {
     }).toThrow('Division by zero');
   });
 
+  test('parses mathematical expressions inside function calls', () => {
+    // This was a bug: expressions like sin(1 + 2) weren't parsed correctly
+    const ctx = new Context();
+    parse('var x = sin(30 + 30);').map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('x')).toBeCloseTo(0.866, 3); // sin(60°) ≈ 0.866
+
+    // Test more complex expressions in function calls
+    parse('var y = pow(1 + 1, 2 + 1);').map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('y')).toBe(8); // pow(2, 3) = 8
+
+    // Test nested function calls with expressions
+    parse('var z = sqrt(3 * 3 + 4 * 4);').map((stmt) => evalCAD(stmt, ctx));
+    expect(ctx.get('z')).toBe(5); // sqrt(9 + 16) = sqrt(25) = 5
+  });
+
   test('math functions can be used in expressions', () => {
     const ctx = new Context();
     parse(`
